@@ -26346,6 +26346,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-data-backfill-kpi-definitions-stories-2026-11-17",
+      "branch": "auto-impl/pm-data-backfill-kpi-definitions-stories-60320845",
+      "status": "merged",
+      "claimed_at": "2026-11-19T10:41:05Z",
+      "last_updated": "2026-11-19T12:40:14Z",
+      "status_changed_at": "2026-11-19T12:40:14Z",
+      "pr_number": 3638,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3638",
+      "merged_at": "2026-11-19T12:40:14Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=3638 status=done specialist=generic scope_drift=false code_reuse_warn=none note=docs/data/story-kpi-definitions.md backfills KPI+event defs for 44 done stories + canonical Events/KPI story-template section; verify green; draft PR vs dev [merged squash d10d577 2026-11-19; clean, required check+test green, docs-only]",
+      "reviewer_summary": "verdict=approve head_oid=30b39e9b38e55e654aaf2c0024e1df300e1bcd55 note=docs-only-clean-scope-links-ok",
+      "last_reviewed_oid": "30b39e9b38e55e654aaf2c0024e1df300e1bcd55",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-data-define-digest-kpis-counters-2026-11-17",
       "branch": "auto-impl/pm-data-define-digest-kpis-counters-2026-bf0f4245",
       "status": "merged",
@@ -30661,5 +30683,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T10:47:39Z"
+  "archived_at": "2026-11-19T12:41:26Z"
 }

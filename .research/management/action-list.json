@@ -290,40 +290,6 @@
       "source": "pm-analysis 2026-11-17"
     },
     {
-      "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
-      "action": "granular_notification.rs repo is a repeat churn hotspot (digest subsystem)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
-      "action": "notification_digest.rs is a repeat churn hotspot (digest subsystem)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-reality-web-inquiry-type-raw-enum-retry1",
       "action": "[stale-resolved @ 2026-11-10T09:10:40Z: finding already fixed on dev (inquiry-type.ts helper + all locales present, landed c5d7ca5); implementer confirmed no diff needed, no PR] reality web inquiry type raw enum [retry 1/2 of failed code-review-reality-web-inquiry-type-raw-enum]",
       "owner_role": "pm-backend",
@@ -349,20 +315,6 @@
       "depends_on": [],
       "first_open_at": "2026-11-17T20:34:55Z",
       "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-mobile-rn-voting-quorum-divzero-retry1",
-      "action": "mobile rn voting quorum divzero [retry 1/2 of failed code-review-mobile-rn-voting-quorum-divzero]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-mobile-rn-voting-quorum-divzero reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T16:41:17Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "retry_of": "code-review-mobile-rn-voting-quorum-divzero",
       "retry_round": 1
     },
     {
@@ -891,6 +843,74 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "code-review-reality-web-branding-query-unhandled-error",
+      "action": "reality-web useAgencyBranding error path unhandled — silent default-color clobber on fetch failure",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-alt-text",
+      "action": "reality-web agency branding preview uses hardcoded English alt text (Preview, Logo)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-price",
+      "action": "reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
+      "action": "reality-server /listings routes/listings.rs hit as repeated churn hotspot (runs_seen=2)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-11-19T03:14:20Z"
