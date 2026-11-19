@@ -328,6 +328,8 @@
       "errorTitle": "Ordner konnte nicht verschoben werden"
     },
     "detailLoadError": "Dokument konnte nicht geladen werden",
+    "openErrorTitle": "Dokument konnte nicht geöffnet werden",
+    "openErrorMessage": "Der Dateibetrachter ist auf diesem Gerät nicht verfügbar.",
     "notFound": "Dokument nicht gefunden"
   },
   "settings": {
@@ -438,7 +440,7 @@
   },
   "widgets": {
     "addedTitle": "Widget hinzugefugt",
-    "addedMessage": "Widget wurde konfiguriert.",
+    "addedMessage": "Widget {{name}} wurde konfiguriert.",
     "updatedTitle": "Widgets aktualisiert",
     "updatedMessage": "Alle Widgets wurden aktualisiert.",
     "emptyText": "Noch keine Widgets konfiguriert."

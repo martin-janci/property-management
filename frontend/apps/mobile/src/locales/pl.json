@@ -330,6 +330,8 @@
       "errorTitle": "Nie udalo sie przeniesc folderu"
     },
     "detailLoadError": "Nie można załadować dokumentu",
+    "openErrorTitle": "Nie można otworzyć dokumentu",
+    "openErrorMessage": "Przeglądarka plików jest niedostępna na tym urządzeniu.",
     "notFound": "Nie znaleziono dokumentu"
   },
   "settings": {
@@ -440,7 +442,7 @@
   },
   "widgets": {
     "addedTitle": "Widget dodany",
-    "addedMessage": "Widget zostal skonfigurowany.",
+    "addedMessage": "Widget {{name}} został skonfigurowany.",
     "updatedTitle": "Widgety zaktualizowane",
     "updatedMessage": "Wszystkie widgety zostały odświeżone.",
     "emptyText": "Nie skonfigurowano jeszcze żadnych widżetów."

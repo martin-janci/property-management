@@ -368,6 +368,8 @@
       }
     },
     "detailLoadError": "Couldn't load document",
+    "openErrorTitle": "Could not open document",
+    "openErrorMessage": "The file viewer is unavailable on this device.",
     "notFound": "Document not found"
   },
   "settings": {
@@ -478,7 +480,7 @@
   },
   "widgets": {
     "addedTitle": "Widget Added",
-    "addedMessage": "Widget has been configured.",
+    "addedMessage": "{{name}} widget has been configured.",
     "updatedTitle": "Widgets Updated",
     "updatedMessage": "All widgets have been refreshed.",
     "emptyText": "No widgets configured yet."
