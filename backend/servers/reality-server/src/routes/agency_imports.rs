@@ -83,9 +83,9 @@ pub struct ImportHistoryResponse {
 /// Import history query parameters.
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct ImportHistoryQuery {
-    /// Page size. Defaults to 20, clamped to `1..=100` (the documented
-    /// `MAX_LIST_LIMIT` cap) before reaching SQL. Page past the cap with
-    /// `offset`.
+    /// Page size. Defaults to 100 (the established no-param page size for this
+    /// endpoint), clamped to `1..=100` (the documented `MAX_LIST_LIMIT` cap)
+    /// before reaching SQL. Page past the cap with `offset`.
     pub limit: Option<i32>,
     /// Row offset for pagination. Defaults to 0, clamped to
     /// `0..=MAX_LIST_OFFSET`.
@@ -182,10 +182,11 @@ pub async fn list_import_history(
     // Clamp caller-supplied paging before it reaches SQL. The endpoint used to
     // hardcode `LIMIT 100` with no offset, silently truncating the history for
     // any agency with more than 100 jobs (and reporting `total` as the page
-    // length, so clients had no way to tell). Now it pages like the sibling
-    // portal list handlers: default page size 20, documented `1..=100` cap,
-    // reachable in full via `offset`.
-    let limit = crate::util::clamp_list_limit(query.limit, 20);
+    // length, so clients had no way to tell). Now it pages properly: the default
+    // page size stays at 100 (preserving the established no-param contract), the
+    // documented `1..=100` cap still applies to an explicit `?limit=`, and the
+    // full history is reachable via `offset`.
+    let limit = crate::util::clamp_list_limit(query.limit, 100);
     let offset = crate::util::clamp_offset_i32(query.offset);
 
     let rows = sqlx::query(
