@@ -10,9 +10,9 @@ use crate::services::{
 use api_core::TenantMembershipProvider;
 use db::{
     repositories::{
-        AccountingProviderRepository, AccountingRepository, AgencyRepository, AiChatRepository,
-        AnnouncementRepository, ApiEcosystemRepository, AuditLogRepository, AutomationRepository,
-        BackgroundJobRepository, BoardMeetingRepository, BudgetRepository,
+        AccConfigRepository, AccountingProviderRepository, AccountingRepository, AgencyRepository,
+        AiChatRepository, AnnouncementRepository, ApiEcosystemRepository, AuditLogRepository,
+        AutomationRepository, BackgroundJobRepository, BoardMeetingRepository, BudgetRepository,
         BuildingCertificationRepository, BuildingRepository, CommunityRepository,
         ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
         DataResidencyRepository, DelegationRepository, DevicePushTokenRepository,
@@ -650,7 +650,10 @@ impl AppState {
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
-        let accounting_service = AccountingService::new(accounting_repo.clone());
+        let accounting_service = AccountingService::new(
+            accounting_repo.clone(),
+            AccConfigRepository::new(db.clone()),
+        );
         let totp_service = TotpService::new("Property Management".to_string());
         // Wire the token-usage analytics recorder into the OAuth service so the
         // issuance / refresh / revocation paths emit best-effort events

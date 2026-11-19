@@ -20,7 +20,7 @@
 
 use crate::common::seed_org;
 use api_server::services::accounting::AccountingService;
-use db::repositories::AccountingRepository;
+use db::repositories::{AccConfigRepository, AccountingRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -64,7 +64,10 @@ async fn partial_upload_failure_rolls_back_all_writes(pool: PgPool) {
                2026-06-01,100.00,CZK,SK0000000000000000000000,VS1,First line (valid)\n\
                not-a-date,200.00,CZK,SK0000000000000000000000,VS2,Second line (bad date)\n";
 
-    let svc = AccountingService::new(AccountingRepository::new(pool.clone()));
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
     let mut conn = pool.acquire().await.unwrap();
     set_ctx(&mut conn, org).await;
 

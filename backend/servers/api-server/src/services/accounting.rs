@@ -2,10 +2,11 @@
 
 use chrono::{NaiveDate, Utc};
 use common::errors::AppError;
+use db::models::acc_config::AccBankAccount;
 use db::models::accounting::{
     BankStatement, BankStatementLine, Invoice, InvoiceStatus, PaymentMatch, PaymentMatchState,
 };
-use db::repositories::AccountingRepository;
+use db::repositories::{AccConfigRepository, AccountingRepository};
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::{Connection, PgConnection};
@@ -38,11 +39,23 @@ struct CsvLine {
 #[derive(Clone)]
 pub struct AccountingService {
     repo: AccountingRepository,
+    config_repo: AccConfigRepository,
 }
 
 impl AccountingService {
-    pub fn new(repo: AccountingRepository) -> Self {
-        Self { repo }
+    pub fn new(repo: AccountingRepository, config_repo: AccConfigRepository) -> Self {
+        Self { repo, config_repo }
+    }
+
+    /// The IBAN to record as the statement's own account.
+    ///
+    /// Bank-statement CSV exports carry only counterparty IBANs, never the
+    /// account the statement belongs to, so it is sourced from the company's
+    /// configured bank account (UC-ACC-02.10). Falls back to an empty string
+    /// when no bank account is configured yet, instead of a hardcoded
+    /// placeholder.
+    fn statement_account_iban(account: Option<&AccBankAccount>) -> String {
+        account.map(|a| a.iban.clone()).unwrap_or_default()
     }
 
     /// Process a bank statement upload.
@@ -56,6 +69,25 @@ impl AccountingService {
         let mut rdr = csv::ReaderBuilder::new()
             .has_headers(true)
             .from_reader(Cursor::new(content));
+
+        // Source the statement's own account IBAN from the company's configured
+        // bank account (UC-ACC-02.10) rather than a hardcoded placeholder. The
+        // company base currency drives currency-matched default selection,
+        // mirroring how invoices/documents resolve the paying account. These are
+        // read-only lookups and run before the write transaction opens.
+        let base_currency = self
+            .config_repo
+            .get_company_settings_rls(&mut *executor)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?
+            .map(|s| s.base_currency)
+            .unwrap_or_default();
+        let account = self
+            .config_repo
+            .resolve_bank_account_for_currency_rls(&mut *executor, &base_currency)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+        let account_iban = Self::statement_account_iban(account.as_ref());
 
         // Atomicity: every DB write for one upload — the `bank_statement` row,
         // each parsed `bank_statement_line`, and the payment-matcher side
@@ -77,13 +109,7 @@ impl AccountingService {
         // Create statement
         let statement = self
             .repo
-            .create_bank_statement_rls(
-                &mut *tx,
-                tenant_id,
-                filename,
-                None,
-                "CZ0000000000000000000000".to_string(), // Default IBAN if not in CSV
-            )
+            .create_bank_statement_rls(&mut *tx, tenant_id, filename, None, account_iban)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -450,5 +476,44 @@ impl AccountingService {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn bank_account(iban: &str) -> AccBankAccount {
+        let now = Utc::now();
+        AccBankAccount {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            label: "main".to_string(),
+            iban: iban.to_string(),
+            swift: None,
+            bank_name: None,
+            currency: "EUR".to_string(),
+            is_default: true,
+            is_active: true,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    // Regression: the statement's own-account IBAN must come from the company's
+    // configured bank account, never a hardcoded placeholder (the old code used
+    // "CZ0000000000000000000000").
+    #[test]
+    fn statement_account_iban_uses_configured_account() {
+        let account = bank_account("SK9611000000002918599669");
+        assert_eq!(
+            AccountingService::statement_account_iban(Some(&account)),
+            "SK9611000000002918599669",
+        );
+    }
+
+    #[test]
+    fn statement_account_iban_falls_back_to_empty_when_unconfigured() {
+        assert_eq!(AccountingService::statement_account_iban(None), "");
     }
 }
