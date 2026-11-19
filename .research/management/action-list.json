@@ -432,24 +432,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-ppt-web-core-financial-dash-no-error-state",
-      "action": "ppt web core financial dash no error state",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-web-crmconn-create-no-error",
       "action": "reality web crmconn create no error",
       "owner_role": "pm-backend",
@@ -470,24 +452,6 @@
     {
       "id": "code-review-reality-web-feedimport-create-no-error",
       "action": "reality web feedimport create no error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listings-no-error-state",
-      "action": "reality web listings no error state",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
