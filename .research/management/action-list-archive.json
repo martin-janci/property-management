@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-18T22:36:19Z",
+  "archived_at": "2026-11-19T02:29:58Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1538,6 +1538,30 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-07-16T22:12:34Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
+      "action": "Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-19T02:26:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T18:25:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3609,
+        "merged_at": "2026-11-18T23:09:11Z",
+        "at": "2026-11-19T02:26:17Z"
       }
     },
     {
@@ -3709,6 +3733,30 @@
       }
     },
     {
+      "id": "code-review-api-core-digest-abandoned-no-terminal-state",
+      "action": "report_abandoned has no persisted abandoned_at — abandoned digests are log-only",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-11-19T02:26:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-19T02:26:17Z"
+      }
+    },
+    {
       "id": "code-review-api-core-digest-send-failure-abandoned",
       "action": "api core digest send failure abandoned",
       "owner_role": "pm-backend",
@@ -5778,6 +5826,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-oauth-client-error-leak",
+      "action": "api handlers oauth client error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d api-handlers score=2 vector=security) | gc1-reconcile 2026-11-19T02:26:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-09-02T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3621,
+        "merged_at": "2026-11-18T23:09:11Z",
+        "at": "2026-11-19T02:26:17Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-ocr-photo-url-silent-loss",
       "action": "ai/ocr photo submit returns 201 with fabricated `pending-upload/…` URL when storage disabled — image bytes dropped, no reconciler",
       "owner_role": "pm-backend",
@@ -7138,6 +7211,30 @@
         "plan": null,
         "score": 1,
         "vector": "test-gap"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-alert-hardcoded-en",
+      "action": "mobile rn alert hardcoded en",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug) | dev-reconcile 2026-11-19T02:26:18Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "ec8cea2f6d252bc851ffe5e4adf71396ef97952d",
+        "subject": "code-review-mobile-rn-alert-hardcoded-en: route mobile Alert strings through i18n t() (#3626)",
+        "at": "2026-11-19T02:26:18Z"
       }
     },
     {
@@ -10926,6 +11023,25 @@
         "merged_pr": 3392,
         "merged_at": "2026-11-10T14:30:52Z",
         "at": "2026-11-10T16:25:51Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-toast-announcer-provider-value-not-memoized",
+      "action": "ppt-web Toast and Announcer context providers pass a fresh object literal as `value` on every render (Toast.tsx:199 `{ showToast, removeToast }`, Announcer.tsx:96 `{ announce }`), forcing all consumers to re-render. Both members are already useCallback-stable, so wrap each provider `value` in `useMemo`. Same symptom class as the org-provider finding (merged #3514); these two were out-of-scope there.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "status": "done",
+      "source": "org-provider implementer investigation 2026-11-17 (surfaced while confirming the org-provider finding was a dup of #3514) | gc1-reconcile 2026-11-19T02:26:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T13:01:40.474926Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3622,
+        "merged_at": "2026-11-18T23:09:11Z",
+        "at": "2026-11-19T02:26:17Z"
       }
     },
     {
@@ -32728,6 +32844,25 @@
         "merged_pr": 2520,
         "merged_at": "2026-07-24T10:26:07Z",
         "at": "2026-07-24T12:08:39Z"
+      }
+    },
+    {
+      "id": "tooling-ppt-implement-isolate-scratchpad-per-implementer",
+      "action": "ppt-implement: parallel implementer subagents spawned in the same dispatcher run write their PR-body to a SHARED scratchpad path (pr-body.md), so concurrent siblings clobber each other's file (observed 2026-11-17: authed-query-roots vs validation-i18n implementers collided; one recovered with a task-unique filename). Make the scratchpad path task-unique per implementer (e.g. include task_id or $$ in the filename) in the ppt-implement skill / pr-create step so parallel implementers cannot overwrite each other's transient files. Diffs are unaffected (separate worktrees); only the PR-body file collides.",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "done",
+      "source": "validation-i18n implementer note 2026-11-17 (concurrent scratchpad collision during parallel Phase 4 spawn) | gc1-reconcile 2026-11-19T02:26:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T13:03:05.808447Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3623,
+        "merged_at": "2026-11-18T23:09:11Z",
+        "at": "2026-11-19T02:26:17Z"
       }
     },
     {

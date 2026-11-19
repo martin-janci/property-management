@@ -16210,7 +16210,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "churn"
       ],
@@ -16222,7 +16222,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3609
+      }
     },
     {
       "id": "code-review-reality-server-search-missing-slug",
@@ -16393,7 +16398,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commit log 2026-11-18"
       ],
@@ -16405,7 +16410,12 @@
       ],
       "created_at": "2026-11-18",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3627
+      }
     },
     {
       "id": "screen-map-drift-pr-3606-ppt",
@@ -16413,7 +16423,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3606"
       ],
@@ -16428,7 +16438,12 @@
       ],
       "created_at": "2026-11-18",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3625
+      }
     },
     {
       "id": "screen-map-drift-pr-3595-reality",
@@ -16436,7 +16451,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3595"
       ],
@@ -16450,7 +16465,12 @@
       ],
       "created_at": "2026-11-18",
       "updated_at": "2026-11-18",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-19T02:26:18Z",
+        "assignment_status": "merged",
+        "pr_number": 3624
+      }
     },
     {
       "id": "stalled-review-pr-3380",
