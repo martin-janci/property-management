@@ -4025,6 +4025,28 @@
       "merge_attempted_at": "2026-08-06T12:16:08Z"
     },
     {
+      "task_id": "code-review-api-core-notif-push-channel-noop",
+      "branch": "auto-impl/code-review-api-core-notif-push-channel-83de7b8e",
+      "status": "failed",
+      "claimed_at": "2026-11-19T08:28:48Z",
+      "last_updated": "2026-11-19T08:36:11Z",
+      "status_changed_at": "2026-11-19T08:36:11Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=finding-obsolete-on-dev: api-server push channel is a full FCM+APNs impl (NotificationPipeline::dispatch->deliver_channel->CombinedPushAdapter::send, FCM HTTP v1 + APNs HTTP/2), not a no-op; 56 push_fanout tests + dispatch tests present; no change invented [Phase 4 fast-path pr=none]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-notify-send-before-stamp-dup",
       "branch": "auto-impl/code-review-api-core-notify-send-before-e7c6a73d",
       "status": "merged",
@@ -30573,5 +30595,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T06:42:22Z"
+  "archived_at": "2026-11-19T08:38:34Z"
 }
