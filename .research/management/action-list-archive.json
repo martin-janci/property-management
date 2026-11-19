@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-19T18:44:03Z",
+  "archived_at": "2026-11-19T20:43:25Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4008,6 +4008,31 @@
         "merged_pr": 2626,
         "merged_at": "2026-08-02T10:15:13Z",
         "at": "2026-08-02T10:17:53Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-idempotency-commit-swallow",
+      "action": "api core idempotency commit swallow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-19T20:25:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-28T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3640,
+        "merged_at": "2026-11-19T18:28:02Z",
+        "at": "2026-11-19T20:25:55Z"
       }
     },
     {
