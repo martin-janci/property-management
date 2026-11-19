@@ -3759,6 +3759,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+      "branch": "auto-impl/code-review-api-core-digest-candidates-i-37535d43",
+      "status": "failed",
+      "claimed_at": "2026-11-19T06:28:39Z",
+      "last_updated": "2026-11-19T06:42:14Z",
+      "status_changed_at": "2026-11-19T06:42:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=no-op: stale finding; LEFT JOIN+COALESCE fix & regression test already in dev (0d4a5973e), no diff to make",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-digest-send-failure-abandoned",
       "branch": "auto-impl/code-review-api-core-digest-send-failure-b6f19272",
       "status": "merged",
@@ -13317,6 +13339,28 @@
       "implementer_summary": "pr=3551 status=done specialist=rust-backend scope_drift=false note=localized GET /listings/categories labels sk/cs/de/en via Locale (?locale>Accept-Language>en); only listings.rs; fmt+clippy+16 lib tests pass (6 new locale regression, test/feat IG3 split); 3 cargo-test failures pre-existing DB sqlx::test (no Postgres in sandbox, covered by CI)",
       "reviewer_summary": "verdict=approve head_oid=3deee3b2f759ce312ea9be3fdfa6ad2c5222f997 note=sound-localization-no-injection-3failures-confirmed-preexisting-db-tests [pending backend CI (check/test) to go green; Phase5.5 merge BLOCKED by session permission classifier — awaiting operator/permitted run]",
       "last_reviewed_oid": "3deee3b2f759ce312ea9be3fdfa6ad2c5222f997",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-categories-labels-sk-only",
+      "branch": "auto-impl/code-review-reality-server-categories-la-0b8645e8",
+      "status": "failed",
+      "claimed_at": "2026-11-19T06:28:39Z",
+      "last_updated": "2026-11-19T06:42:14Z",
+      "status_changed_at": "2026-11-19T06:42:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=no-op: already locale-aware on dev via merged #3609 (90861548a); nothing to fix, no PR opened",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -26494,6 +26538,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-integration-compliance-list-limit-echo",
+      "branch": "auto-impl/pm-integration-compliance-list-limit-ech-6b61282a",
+      "status": "merged",
+      "claimed_at": "2026-11-19T04:34:07Z",
+      "last_updated": "2026-11-19T06:42:14Z",
+      "status_changed_at": "2026-11-19T06:42:14Z",
+      "pr_number": 3631,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3631",
+      "merged_at": "2026-11-19T06:41:15Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3631 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=compliance audit-log list routes echo clamp_limit_capped(limit,100,1000) effective limit (was raw param); MAX_AUDIT_LOG_LIMIT=1000; +2 limit=5000 regression tests; fmt/clippy/unit green, DB tests compile (CI exec); drift=benign owner-hint",
+      "reviewer_summary": "verdict=approve head_oid=3f8aa46e57c5574d4761212e40cefa7c3b8e16f9 note=clamped-limit-echo-correct-tests-pass-ci-green-scopedrift-benign (COMMENT review; self-approval blocked author==reviewer)",
+      "last_reviewed_oid": "3f8aa46e57c5574d4761212e40cefa7c3b8e16f9",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-19T06:42:14Z"
+    },
+    {
       "task_id": "pm-integration-document-sso-transient-401-contract",
       "branch": "auto-impl/pm-integration-document-sso-transient-40-6949232f",
       "status": "merged",
@@ -30507,5 +30573,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T04:44:42Z"
+  "archived_at": "2026-11-19T06:42:22Z"
 }

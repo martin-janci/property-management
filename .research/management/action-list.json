@@ -268,42 +268,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-widget-settings-i18n-leak",
-      "action": "mobile rn widget settings i18n leak",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-categories-labels-sk-only",
-      "action": "reality server categories labels sk only",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
-    },
-    {
       "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
       "action": "Review draft PRs #3582 (T33 quarantine tests), #3585 and #3586 (ppt-web locale churn plans), then mark ready or close",
       "owner_role": "pm-scrum-master",
@@ -324,23 +288,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
-      "action": "find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-17T20:34:55Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
     },
     {
       "id": "churn-hotspot-backend-crates-db-src-repositories-granular-notification-rs",
@@ -662,24 +609,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-ppt-web-core-personmonths-raw-fetch-noauth",
-      "action": "ppt web core personmonths raw fetch noauth",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d ppt-web-core score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-financial-dash-no-error-state",
       "action": "ppt web core financial dash no error state",
       "owner_role": "pm-backend",
@@ -886,17 +815,6 @@
       "depends_on": [
         "UNRESOLVED:pm-qa"
       ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19"
-    },
-    {
-      "id": "pm-integration-compliance-list-limit-echo",
-      "action": "Make compliance list routes echo the clamped limit (not raw param) and document max 1000; add test with limit=5000",
-      "owner_role": "pm-integration",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-19"
