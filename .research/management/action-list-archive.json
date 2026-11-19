@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-19T18:39:20Z",
+  "archived_at": "2026-11-19T18:44:03Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9974,6 +9974,28 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-15T06:47:20Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-init-no-exp-check",
+      "action": "ppt web core init no exp check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-28T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "note": "stale-resolved: AuthContext cold-boot init already guards stored token via isAccessTokenExpired() (landed 3e14ca7) + full vitest coverage; no diff needed",
+        "at": "2026-11-19T18:44:03Z"
       }
     },
     {
