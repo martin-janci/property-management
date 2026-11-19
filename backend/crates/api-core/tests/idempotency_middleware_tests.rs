@@ -446,6 +446,83 @@ async fn spoofed_tenant_header_cannot_change_scope(pool: db::DbPool) {
     );
 }
 
+/// Regression test for the swallowed idempotency-commit error.
+///
+/// After the wrapped handler returns a cacheable (non-5xx) response, the
+/// middleware writes the ledger row inside its transaction and then commits.
+/// Pre-fix that commit was discarded with `let _ = tx.commit().await`, so a
+/// commit that *failed* — rolling the ledger row back — was treated as a
+/// success: the client still received the freshly-computed 201, while nothing
+/// was persisted. A later retry with the same key would then re-run the
+/// non-idempotent handler, defeating the whole mechanism.
+///
+/// We force a deterministic commit failure (without touching the INSERT itself)
+/// with a `DEFERRABLE INITIALLY DEFERRED` constraint trigger on
+/// `idempotency_keys`: the trigger body is evaluated at COMMIT time, not at
+/// INSERT time, so `store_response`'s INSERT succeeds and only `tx.commit()`
+/// errors — exactly the swallowed path. Pre-fix the response is `201 CREATED`
+/// (the failure is hidden); with the fix it surfaces as `500`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn failed_commit_of_idempotency_record_surfaces_as_error(pool: db::DbPool) {
+    // A deferred constraint trigger that always raises: queued at INSERT,
+    // fired at COMMIT, so the ledger INSERT lands but the commit fails.
+    sqlx::query(
+        r#"
+        CREATE OR REPLACE FUNCTION idem_test_fail_on_commit() RETURNS trigger AS $$
+        BEGIN
+            RAISE EXCEPTION 'forced idempotency commit failure';
+        END;
+        $$ LANGUAGE plpgsql;
+        "#,
+    )
+    .execute(&pool)
+    .await
+    .expect("create trigger function");
+
+    sqlx::query(
+        r#"
+        CREATE CONSTRAINT TRIGGER idem_test_fail_commit
+        AFTER INSERT ON idempotency_keys
+        DEFERRABLE INITIALLY DEFERRED
+        FOR EACH ROW
+        EXECUTE FUNCTION idem_test_fail_on_commit();
+        "#,
+    )
+    .execute(&pool)
+    .await
+    .expect("create deferred constraint trigger");
+
+    let hits = Arc::new(AtomicUsize::new(0));
+    let app = build_app(pool, hits.clone());
+    let tenant_id = Uuid::new_v4();
+
+    let response = app
+        .clone()
+        .oneshot(post_demo(
+            "idem-commit-fail",
+            tenant_id,
+            json!({"value": 1}),
+        ))
+        .await
+        .expect("response");
+
+    // The handler ran (so a naive implementation has a "successful" response in
+    // hand), but persisting the ledger row failed at commit. The caller must be
+    // told the request was NOT idempotently recorded rather than handed a
+    // phantom success.
+    assert_eq!(
+        response.status(),
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "a failed commit of the idempotency record must surface as a 500, not a \
+         silently-successful response"
+    );
+    assert_eq!(
+        hits.load(Ordering::SeqCst),
+        1,
+        "the wrapped handler executes exactly once"
+    );
+}
+
 /// Reimplements `advisory_lock_id` (private to `idempotency.rs`) so the test
 /// can independently compute the exact lock id a given request will hash to,
 /// without needing the middleware to expose its internals.
