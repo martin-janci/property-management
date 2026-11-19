@@ -19,6 +19,59 @@ pub struct GranularNotificationRepository {
     pool: PgPool,
 }
 
+/// Per-channel enable overrides parsed from a single role-default
+/// `event_preferences` entry. Each field is `None` when the source JSON omitted
+/// the channel key or gave a non-boolean value — which flows through to
+/// [`GranularNotificationRepository::upsert_event_preference`] as "no override"
+/// (the `COALESCE(..., default/existing)` branch) rather than an explicit
+/// true/false.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ChannelOverrides {
+    push: Option<bool>,
+    email: Option<bool>,
+    in_app: Option<bool>,
+}
+
+/// Parse a role-default `event_preferences` JSONB blob into per-event channel
+/// overrides, exactly as [`GranularNotificationRepository::apply_role_defaults_to_user`]
+/// consumes it.
+///
+/// Shape contract (characterized by the unit tests in this module):
+/// - a non-object top-level value yields an empty result (nothing is applied);
+/// - each top-level entry whose value is itself a JSON object becomes one
+///   `(event_type, ChannelOverrides)` pair; entries with a non-object value are
+///   skipped;
+/// - within an entry, `push` / `email` / `in_app` each become `Some(bool)` only
+///   when present as a JSON boolean, otherwise `None`.
+///
+/// Extracted as a pure (DB-free) function so this fiddly JSON-shape handling —
+/// the part of the role-defaults path most prone to churn — can be unit-tested
+/// in isolation without a Postgres fixture.
+fn parse_role_event_preferences(
+    event_preferences: serde_json::Value,
+) -> Vec<(String, ChannelOverrides)> {
+    let serde_json::Value::Object(prefs) = event_preferences else {
+        return Vec::new();
+    };
+
+    prefs
+        .into_iter()
+        .filter_map(|(event_type, settings)| {
+            let serde_json::Value::Object(channels) = settings else {
+                return None;
+            };
+            Some((
+                event_type,
+                ChannelOverrides {
+                    push: channels.get("push").and_then(|v| v.as_bool()),
+                    email: channels.get("email").and_then(|v| v.as_bool()),
+                    in_app: channels.get("in_app").and_then(|v| v.as_bool()),
+                },
+            ))
+        })
+        .collect()
+}
+
 /// A user eligible for a 24h-inactivity email digest (Story 2B.3, PM #969 gap 1).
 /// Produced by [`GranularNotificationRepository::find_inactive_digest_candidates`].
 #[derive(Debug, Clone, FromRow)]
@@ -563,18 +616,17 @@ impl GranularNotificationRepository {
             None => return Ok(0),
         };
 
-        // Parse event preferences from JSONB
-        if let serde_json::Value::Object(prefs) = defaults.event_preferences {
-            for (event_type, settings) in prefs {
-                if let serde_json::Value::Object(channels) = settings {
-                    let push = channels.get("push").and_then(|v| v.as_bool());
-                    let email = channels.get("email").and_then(|v| v.as_bool());
-                    let in_app = channels.get("in_app").and_then(|v| v.as_bool());
-
-                    self.upsert_event_preference(user_id, &event_type, push, email, in_app)
-                        .await?;
-                }
-            }
+        // Parse event preferences from JSONB (pure helper — see
+        // `parse_role_event_preferences`), then apply each override.
+        for (event_type, overrides) in parse_role_event_preferences(defaults.event_preferences) {
+            self.upsert_event_preference(
+                user_id,
+                &event_type,
+                overrides.push,
+                overrides.email,
+                overrides.in_app,
+            )
+            .await?;
         }
 
         // Apply quiet hours if set
@@ -1192,5 +1244,108 @@ impl GranularNotificationRepository {
         .bind(digest_id)
         .fetch_all(&self.pool)
         .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{parse_role_event_preferences, ChannelOverrides};
+    use serde_json::json;
+
+    // Characterization tests for `parse_role_event_preferences`, the pure
+    // JSON-shape handling that drives `apply_role_defaults_to_user`. These run
+    // without a database and pin the current behavior so future refactors of
+    // this churn-hot file stay behavior-preserving.
+
+    #[test]
+    fn non_object_top_level_yields_empty() {
+        // A null / array / scalar `event_preferences` applies nothing.
+        assert!(parse_role_event_preferences(json!(null)).is_empty());
+        assert!(parse_role_event_preferences(json!([1, 2, 3])).is_empty());
+        assert!(parse_role_event_preferences(json!("fault_created")).is_empty());
+        assert!(parse_role_event_preferences(json!(42)).is_empty());
+    }
+
+    #[test]
+    fn empty_object_yields_empty() {
+        assert!(parse_role_event_preferences(json!({})).is_empty());
+    }
+
+    #[test]
+    fn full_channel_set_is_extracted() {
+        let out = parse_role_event_preferences(json!({
+            "fault_created": { "push": true, "email": false, "in_app": true }
+        }));
+        assert_eq!(
+            out,
+            vec![(
+                "fault_created".to_string(),
+                ChannelOverrides {
+                    push: Some(true),
+                    email: Some(false),
+                    in_app: Some(true),
+                },
+            )]
+        );
+    }
+
+    #[test]
+    fn missing_or_non_bool_channels_become_none() {
+        // Missing `in_app`, and a non-boolean `email` -> both None; only a real
+        // JSON boolean produces Some(_).
+        let out = parse_role_event_preferences(json!({
+            "vote_opened": { "push": true, "email": "yes" }
+        }));
+        assert_eq!(
+            out,
+            vec![(
+                "vote_opened".to_string(),
+                ChannelOverrides {
+                    push: Some(true),
+                    email: None,
+                    in_app: None,
+                },
+            )]
+        );
+    }
+
+    #[test]
+    fn non_object_entry_values_are_skipped() {
+        // The `fault_created` entry is a scalar, not an object, so it is dropped;
+        // the object entry is kept.
+        let out = parse_role_event_preferences(json!({
+            "fault_created": true,
+            "vote_opened": { "push": false }
+        }));
+        assert_eq!(
+            out,
+            vec![(
+                "vote_opened".to_string(),
+                ChannelOverrides {
+                    push: Some(false),
+                    email: None,
+                    in_app: None,
+                },
+            )]
+        );
+    }
+
+    #[test]
+    fn empty_entry_object_keeps_event_with_all_none() {
+        // An event present with an empty settings object still produces a pair
+        // (so `upsert_event_preference` is called with all-None overrides),
+        // distinct from a skipped non-object entry.
+        let out = parse_role_event_preferences(json!({ "comment_added": {} }));
+        assert_eq!(
+            out,
+            vec![(
+                "comment_added".to_string(),
+                ChannelOverrides {
+                    push: None,
+                    email: None,
+                    in_app: None,
+                },
+            )]
+        );
     }
 }
