@@ -97,44 +97,22 @@
       "branch": "auto-impl/code-review-reality-server-suggestions-h-16310b96",
       "status": "review",
       "claimed_at": "2026-11-18T22:36:09Z",
-      "last_updated": "2026-11-19T10:41:05Z",
+      "last_updated": "2026-11-19T14:39:54Z",
       "status_changed_at": "2026-11-18T23:09:11Z",
       "pr_number": 3628,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3628",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3628 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=env-verify-fail-only(no-pg); region derivation resolve_region+default_city_for_region; 3 new tests IG3-split; PR auto-opened from pushed branch, CI validates [dispatcher 2026-11-19T00:46:45Z: approved; base 2af2db33 includes lettre 0.11.24; CI had 0 checks (ci-unknown) - promoted draft->ready to trigger CI; merge candidate next cycle if green]",
+      "implementer_summary": "pr=3628 status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=env-verify-fail-only(no-pg); region derivation resolve_region+default_city_for_region; 3 new tests IG3-split; PR auto-opened from pushed branch, CI validates [dispatcher 2026-11-19T00:46:45Z: approved; base 2af2db33 includes lettre 0.11.24; CI had 0 checks (ci-unknown) - promoted draft->ready to trigger CI; merge candidate next cycle if green] [5.6 auto-rebase FAILED (attempt 1/3) 2026-11-19T14:39:54Z: non-mechanical conflict in reality-server/src/routes/listings.rs vs dev — same listings.rs refactor blocking #3617; needs manual rework/fresh impl — #3357]",
       "reviewer_summary": "verdict=approve head_oid=2422a8237767730cf7c102e994b3e01fb814d8d8 note=region-derived-seed-city-preserves-sk-default-good-tests-single-file; base-includes-lettre-fix",
       "last_reviewed_oid": "2422a8237767730cf7c102e994b3e01fb814d8d8",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 0,
+      "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-19T10:41:05Z"
-    },
-    {
-      "task_id": "code-review-api-core-vote-reminder-spam-5min",
-      "branch": "auto-impl/code-review-api-core-vote-reminder-spam-42039d11",
-      "status": "review",
-      "claimed_at": "2026-11-19T10:41:05Z",
-      "last_updated": "2026-11-19T12:58:00Z",
-      "status_changed_at": "2026-11-19T12:58:00Z",
-      "pr_number": 3639,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3639",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=3639 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=vote-reminder 5min dedup (votes.last_reminder_at migr 00248 + VoteRepository find_votes_due_for_reminder/mark_vote_reminder_sent, mirrors payment-reminder #1790); fmt+clippy green, cargo test env-blocked no-PG; DB test added (2-commit TDD split IG3 ok); draft PR for CI [5.7 respawn round1 2026-11-19: fix enum ColumnDecode in find_votes_due_for_reminder] [respawn round1 FIXED a70d891: enum ColumnDecode cast status::text/quorum_type::text in find_votes_due_for_reminder; merged dev clean; fmt+clippy green; dedup tests pass on local PG16; pushed to branch, PR open for CI+re-review]",
-      "reviewer_summary": "verdict=changes head_oid=367e2176ebea3a9a5f22412babe380e37bb5c7a8 note=required test RED: vote_reminder_dedup_tests panic ColumnDecode - find_votes_due_for_reminder bare SELECT * but votes.status/quorum_type are PG enums; needs status::text/quorum_type::text explicit column cast (mirror vote.rs:229/1440); method non-functional in prod too; migration 00248 safe, design sound",
-      "last_reviewed_oid": "367e2176ebea3a9a5f22412babe380e37bb5c7a8",
-      "scope_drift": false,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 1,
-      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-api-core-idempotency-commit-swallow",
@@ -181,5 +159,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-19T12:40:14Z"
+  "generated": "2026-11-19T14:43:50Z"
 }

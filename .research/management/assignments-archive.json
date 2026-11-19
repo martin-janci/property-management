@@ -4913,6 +4913,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-vote-reminder-spam-5min",
+      "branch": "auto-impl/code-review-api-core-vote-reminder-spam-42039d11",
+      "status": "merged",
+      "claimed_at": "2026-11-19T10:41:05Z",
+      "last_updated": "2026-11-19T14:41:49Z",
+      "status_changed_at": "2026-11-19T14:41:49Z",
+      "pr_number": 3639,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3639",
+      "merged_at": "2026-11-19T14:41:37Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3639 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=vote-reminder 5min dedup (votes.last_reminder_at migr 00248 + VoteRepository find_votes_due_for_reminder/mark_vote_reminder_sent, mirrors payment-reminder #1790); fmt+clippy green, cargo test env-blocked no-PG; DB test added (2-commit TDD split IG3 ok); draft PR for CI [5.7 respawn round1 2026-11-19: fix enum ColumnDecode in find_votes_due_for_reminder] [respawn round1 FIXED a70d891: enum ColumnDecode cast status::text/quorum_type::text in find_votes_due_for_reminder; merged dev clean; fmt+clippy green; dedup tests pass on local PG16; pushed to branch, PR open for CI+re-review]",
+      "reviewer_summary": "verdict=approve head_oid=a70d8910199f08602e9cebff1df0735b70733e42 note=enum-cast-fix-correct-dedup-test-proves-throttle-ci-green",
+      "last_reviewed_oid": "a70d8910199f08602e9cebff1df0735b70733e42",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-19T14:40:45Z"
+    },
+    {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
       "branch": "auto-impl/code-review-api-core-workflow-cond-parse-dd416f1f",
       "status": "failed",
@@ -30705,5 +30727,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T12:51:10Z"
+  "archived_at": "2026-11-19T14:43:50Z"
 }
