@@ -30,6 +30,7 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 ## Notes
 
 ### Specific (recent)
+- 2026-11-18 — **auth guard (PR #3606)**: `/financial/payments` is now wrapped in `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/financial.tsx` — previously a bare `<Route>` that rendered the page chrome for an anonymous visitor. Payments is `managerOnly: false` (residents view their own payments), so it stays auth-only; an anonymous visitor is now redirected to `/login` (return URL captured). The manager-gated `/financial/payments/new` record form is unchanged. `buildStatus`/`apiStatus` unchanged. Guard regression-covered by `routes/groups/core-route-groups-auth-guard.route.test.tsx`.
 - 2026-11-04 — **`/financial/payments/new` now registered** (`PaymentForm` →
   `recordPayment`, optional `?unitId=` preselect) in `routes/groups/financial-detail.tsx`,
   manager-gated. The Recent Payments "view all" link, which navigated to the first
@@ -57,6 +58,7 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 ## Agent Log
 
+- 2026-11-18 — agent: screen-map-drift-pr-3606-ppt — reconciled with merged PR #3606: the previously-bare `/financial/payments` route is now wrapped in `<ProtectedRoute>` (auth-only, `managerOnly: false`) in `routes/groups/financial.tsx`; anonymous visitors redirect to `/login` (return URL captured). No route/component/buildStatus/apiStatus change — docs-only.
 - 2026-11-05 — agent: screen-map-drift-pr-3242-ppt — reconcile i18n drift from PR #3242 (`fix(ppt-web): localize financial, buildings and my-unit pages`, merged 2026-11-04). `PaymentManagementPage` + `PaymentForm`/`RecentPaymentsList`/`ReconciliationTable` moved hardcoded English into `financial.*` i18n keys across en/sk/cs/de/pl/hu; payment-status/method enums map to keys with a raw-value fallback; the raw `common.startDate`/`common.endDate` filter labels were replaced with real keys; money/dates format via `i18n.language`. No frontmatter change — docs-only.
 - 2026-11-04 — agent: r3-nav-roles — "Record payment" only for managers (`onNavigateToRecord` omitted for residents) (audit r3 #14).
 - 2026-08-04 — agent: screen-map-drift-pr-2649-ppt — reconciled this screen-map

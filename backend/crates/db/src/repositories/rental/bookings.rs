@@ -89,22 +89,6 @@ impl RentalRepository {
         Ok(booking)
     }
 
-    /// Find booking by ID.
-    ///
-    /// Uses [`BOOKING_COLUMNS`] (enum columns cast to text) instead of a bare
-    /// `SELECT *` to avoid the FORCE-RLS-masked 42804 enum decode gap (GH #1363).
-    pub async fn find_booking_by_id(&self, id: Uuid) -> Result<Option<RentalBooking>, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
-            "SELECT {} FROM rental_bookings WHERE id = $1",
-            Self::BOOKING_COLUMNS
-        )))
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(booking)
-    }
-
     /// Find booking by ID scoped to an organization.
     ///
     /// SECURITY (#804): prevents reading another org's booking PII by UUID.
@@ -150,69 +134,6 @@ impl RentalRepository {
         .bind(external_id)
         .fetch_optional(&self.pool)
         .await?;
-
-        Ok(booking)
-    }
-
-    /// Update booking.
-    pub async fn update_booking(
-        &self,
-        id: Uuid,
-        data: UpdateBooking,
-    ) -> Result<RentalBooking, SqlxError> {
-        let booking = sqlx::query_as::<_, RentalBooking>(sqlx::AssertSqlSafe(format!(
-            r#"
-            UPDATE rental_bookings SET
-                guest_name = COALESCE($2, guest_name),
-                guest_email = COALESCE($3, guest_email),
-                guest_phone = COALESCE($4, guest_phone),
-                guest_count = COALESCE($5, guest_count),
-                check_in = COALESCE($6, check_in),
-                check_out = COALESCE($7, check_out),
-                check_in_time = COALESCE($8, check_in_time),
-                check_out_time = COALESCE($9, check_out_time),
-                total_amount = COALESCE($10, total_amount),
-                currency = COALESCE($11, currency),
-                guest_notes = COALESCE($12, guest_notes),
-                internal_notes = COALESCE($13, internal_notes),
-                updated_at = NOW()
-            WHERE id = $1
-            RETURNING {}
-            "#,
-            Self::BOOKING_COLUMNS
-        )))
-        .bind(id)
-        .bind(&data.guest_name)
-        .bind(&data.guest_email)
-        .bind(&data.guest_phone)
-        .bind(data.guest_count)
-        .bind(data.check_in)
-        .bind(data.check_out)
-        .bind(data.check_in_time)
-        .bind(data.check_out_time)
-        .bind(data.total_amount)
-        .bind(&data.currency)
-        .bind(&data.guest_notes)
-        .bind(&data.internal_notes)
-        .fetch_one(&self.pool)
-        .await?;
-
-        // Update calendar block if dates changed
-        if data.check_in.is_some() || data.check_out.is_some() {
-            sqlx::query(
-                r#"
-                UPDATE rental_calendar_blocks SET
-                    block_start = COALESCE($2, block_start),
-                    block_end = COALESCE($3, block_end)
-                WHERE booking_id = $1
-                "#,
-            )
-            .bind(id)
-            .bind(data.check_in)
-            .bind(data.check_out)
-            .execute(&self.pool)
-            .await?;
-        }
 
         Ok(booking)
     }

@@ -66,7 +66,7 @@ function SentimentLine({ trends }: { trends: SentimentTrend[] }): JSX.Element {
           cy={toY(s.t.avgSentiment).toFixed(1)}
           r="4"
           fill="#ef4444"
-          aria-label={`Spike on ${s.t.date}`}
+          aria-label={t('aria.sentimentSpike', { date: s.t.date })}
         />
       ))}
       {/* Labels */}

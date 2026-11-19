@@ -32,6 +32,12 @@ vi.mock('@ppt/api-client', () => ({
   listFacilities: (...args: unknown[]) => listFacilities(...args),
 }));
 
+// ─── auth: FacilitiesPage derives isManager from the real role ──────────────
+// (role is irrelevant to the fetch-error assertions; a manager is fine).
+vi.mock('../../../contexts', () => ({
+  useAuth: () => ({ user: { role: 'manager' } }),
+}));
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/buildings/b-1/facilities']}>

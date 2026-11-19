@@ -146,7 +146,7 @@ pub async fn handle_idempotent_request(
     }
 
     let response = next.run(request).await;
-    let response = match capture_response(response).await {
+    match capture_response(response).await {
         Ok(captured) => {
             if !captured.status.is_server_error() {
                 if let Err(err) = store_response(
@@ -167,15 +167,42 @@ pub async fn handle_idempotent_request(
                         "Failed to persist idempotent response",
                     );
                 }
+
+                // The idempotency record was written inside `tx`. It only
+                // becomes durable once the transaction commits, so the commit
+                // result MUST be checked: if the commit fails the record is
+                // rolled back and nothing is persisted. Discarding the error
+                // here (the previous `let _ = tx.commit().await`) returned the
+                // freshly-computed success response to the client while the
+                // ledger row silently vanished — a later retry with the same
+                // key would then re-run the non-idempotent handler, the exact
+                // failure the ledger exists to prevent. Surface it as a 500 so
+                // the caller knows the request was not idempotently recorded.
+                if let Err(err) = tx.commit().await {
+                    tracing::error!(error = %err, "failed to commit idempotency record");
+                    return error_response(
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "INTERNAL_ERROR",
+                        "Failed to persist idempotent response",
+                    );
+                }
+
+                return captured.into_response();
             }
 
+            // Server-error responses are never cached, so there is no ledger
+            // row riding on this commit — releasing the transaction is
+            // best-effort.
+            let _ = tx.commit().await;
             captured.into_response()
         }
-        Err(response) => response,
-    };
-
-    let _ = tx.commit().await;
-    response
+        Err(response) => {
+            // The response body could not be captured, so nothing was stored;
+            // the commit only releases the read/cleanup work — best-effort.
+            let _ = tx.commit().await;
+            response
+        }
+    }
 }
 
 /// Derive the idempotency cache-scope tenant.

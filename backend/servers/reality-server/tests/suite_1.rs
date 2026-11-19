@@ -9,6 +9,8 @@ mod common;
 mod agencies_authz_tests;
 #[path = "suites/agencies_happy_path_tests.rs"]
 mod agencies_happy_path_tests;
+#[path = "suites/agency_imports_pagination_tests.rs"]
+mod agency_imports_pagination_tests;
 #[path = "suites/agent_reviews_tests.rs"]
 mod agent_reviews_tests;
 #[path = "suites/articles_tests.rs"]

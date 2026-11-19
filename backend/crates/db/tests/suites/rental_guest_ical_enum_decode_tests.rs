@@ -161,19 +161,6 @@ async fn seed(pool: &PgPool) -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, String) {
 // ============================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn find_guest_by_id_decodes_status(pool: PgPool) {
-    let (_org, _unit, _booking, guest_id, _block, _feed, _token) = seed(&pool).await;
-    let repo = RentalRepository::new(pool.clone());
-
-    let guest = repo
-        .find_guest_by_id(guest_id)
-        .await
-        .expect("find_guest_by_id must decode the guest_registration_status enum (BIT-118)")
-        .expect("guest row exists");
-    assert_eq!(guest.status, "pending");
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn find_guest_for_org_decodes_status(pool: PgPool) {
     let (org_id, _unit, _booking, guest_id, _block, _feed, _token) = seed(&pool).await;
     let repo = RentalRepository::new(pool.clone());
@@ -184,38 +171,6 @@ async fn find_guest_for_org_decodes_status(pool: PgPool) {
         .expect("find_guest_for_org must decode the guest_registration_status enum (BIT-118)")
         .expect("guest row exists");
     assert_eq!(guest.status, "pending");
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-async fn update_guest_returning_decodes_status(pool: PgPool) {
-    let (_org, _unit, _booking, guest_id, _block, _feed, _token) = seed(&pool).await;
-    let repo = RentalRepository::new(pool.clone());
-
-    let updated = repo
-        .update_guest(
-            guest_id,
-            UpdateGuest {
-                first_name: Some("Ada Updated".to_string()),
-                last_name: None,
-                date_of_birth: None,
-                nationality: None,
-                id_type: None,
-                id_number: None,
-                id_issuing_country: None,
-                id_expiry_date: None,
-                id_document_url: None,
-                email: None,
-                phone: None,
-                address_street: None,
-                address_city: None,
-                address_postal_code: None,
-                address_country: None,
-            },
-        )
-        .await
-        .expect("update_guest RETURNING must decode the guest_registration_status enum (BIT-118)");
-    assert_eq!(updated.first_name, "Ada Updated");
-    assert_eq!(updated.status, "pending");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
@@ -252,17 +207,6 @@ async fn update_guest_for_org_returning_decodes_status(pool: PgPool) {
         .expect("row matched");
     assert_eq!(updated.first_name, "Ada Org Updated");
     assert_eq!(updated.status, "pending");
-}
-
-#[sqlx::test(migrator = "db::MIGRATOR")]
-async fn register_guest_returning_decodes_status(pool: PgPool) {
-    let (_org, _unit, _booking, guest_id, _block, _feed, _token) = seed(&pool).await;
-    let repo = RentalRepository::new(pool.clone());
-
-    let registered = repo.register_guest(guest_id).await.expect(
-        "register_guest RETURNING must decode the guest_registration_status enum (BIT-118)",
-    );
-    assert_eq!(registered.status, "registered");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]

@@ -4705,6 +4705,7 @@
     "searchDocuments": "Dokumentumok keresése",
     "selectFilesToUpload": "Válasszon feltöltendő fájlokat",
     "selectLanguage": "Nyelv kiválasztása",
+    "sentimentSpike": "Hangulatesés ekkor: {{date}}",
     "sentimentTrend": "Hangulati trend",
     "settingsPreview": "Beállítások előnézete",
     "tabs": "Lapok",

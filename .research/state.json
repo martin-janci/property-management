@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-18T03:15:25Z",
-  "last_run_ms": 5000,
-  "last_pr_seen": 3606,
-  "last_issue_seen": 3611,
-  "last_commit_sha": "8b111657270759801dd4c7e740cfa2566ce90782",
+  "last_run_iso": "2026-11-19T03:18:31Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3627,
+  "last_issue_seen": 3629,
+  "last_commit_sha": "5d14630969bdfb41b6b52a7b4bdbf332d2befea7",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -743,9 +743,9 @@
       "recent_churn": 266
     },
     "backend/servers/reality-server/src/routes/listings.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-11-16",
-      "recent_churn": 244
+      "runs_seen": 2,
+      "last_seen": "2026-11-19",
+      "recent_churn": 201
     },
     "backend/servers/api-server/src/services/notification_digest.rs": {
       "runs_seen": 2,
@@ -1169,6 +1169,7 @@
     "code-review-reality-web-agency-import-i18n",
     "code-review-reality-web-agency-page-i18n-gap",
     "code-review-reality-web-auth-ctx-transient-logout",
+    "code-review-reality-web-branding-query-unhandled-error",
     "code-review-reality-web-callback-hardcoded-login-string",
     "code-review-reality-web-comparison-parse-shape",
     "code-review-reality-web-comparison-share-all-or-nothing",
@@ -1187,6 +1188,8 @@
     "code-review-reality-web-listingform-nan-validation",
     "code-review-reality-web-listingform-no-i18n",
     "code-review-reality-web-listings-page-no-error-state",
+    "code-review-reality-web-preview-hardcoded-alt-text",
+    "code-review-reality-web-preview-hardcoded-price",
     "code-review-reality-web-price-alert-markread-silent-fail",
     "code-review-reality-web-profile-mock-data",
     "code-review-reality-web-protectedroute-i18n",
@@ -1342,6 +1345,7 @@
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+    "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
     "repeated-churn-backend/crates/db/src/repositories/granular_notification.rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
     "repeated-churn-backend/servers/api-server/src/routes/auth.rs",
@@ -1506,13 +1510,13 @@
     "reality-server": "2026-11-16",
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
-    "reality-web": "2026-11-13",
+    "reality-web": "2026-11-19",
     "mobile-rn": "2026-11-15",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 122,
-    "vectors_created": 556,
+    "runs": 123,
+    "vectors_created": 560,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1528,7 +1532,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 7,
+    "next_index": 0,
     "role_last_run": {
       "pm-tech-lead": "2026-10-22",
       "pm-backend": "2026-10-26",
@@ -1537,11 +1541,11 @@
       "pm-devops": "2026-11-13",
       "pm-security": "2026-11-16",
       "pm-data": "2026-11-17",
-      "pm-integration": "2026-10-19",
-      "pm-scrum-master": "2026-11-17"
+      "pm-integration": "2026-11-19",
+      "pm-scrum-master": "2026-11-19"
     }
   },
   "coverage_cursor": {
-    "next_index": 5
+    "next_index": 6
   }
 }

@@ -4,6 +4,7 @@
 
 #![allow(clippy::type_complexity)]
 
+use crate::routes::pagination::clamp_limit_capped;
 use crate::state::AppState;
 use api_core::extractors::{AuthUser, RlsConnection, TenantAuthUser};
 use axum::{
@@ -130,6 +131,16 @@ pub struct ReportQueryParams {
 // AUDIT LOG ENDPOINTS
 // ============================================================================
 
+/// Default audit-log page size when the caller omits `?limit`.
+const DEFAULT_AUDIT_LOG_LIMIT: i64 = 100;
+
+/// Maximum audit-log page size. A caller may request a larger page than the
+/// generic `MAX_PAGE_LIMIT` (100) because audit-log exports are a documented
+/// bulk-read, but the value is capped here so an unbounded `?limit` cannot
+/// become a full-table-scan `LIMIT`. Mirrors the downstream repository clamp
+/// (`AuditLogRepository::{query,get_user_logs}` apply `.min(1000)`).
+const MAX_AUDIT_LOG_LIMIT: i64 = 1000;
+
 /// Audit log entry response.
 #[derive(Debug, Serialize)]
 pub struct AuditLogResponse {
@@ -161,9 +172,21 @@ async fn get_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
+    // Reject malformed pagination (negative limit/offset) with a 400 before it
+    // reaches SQL and surfaces as an opaque 500 — see `validate_pagination`.
+    validate_pagination(params.limit, params.offset)?;
     // Reject an unrecognised action filter (400) instead of silently dropping
     // it and returning an unfiltered all-actions superset.
     let action = parse_action_filter(params.action.as_deref())?;
+
+    // Clamp the client-supplied limit to the documented max (1000) at the
+    // handler boundary so the value we apply to the query is the same value we
+    // echo back in the pagination metadata below. Previously the response
+    // echoed the RAW `params.limit`, so a caller asking for `?limit=5000` was
+    // told `limit: 5000` even though the repository had already capped the page
+    // at 1000 — misleading pagination metadata.
+    let effective_limit =
+        clamp_limit_capped(params.limit, DEFAULT_AUDIT_LOG_LIMIT, MAX_AUDIT_LOG_LIMIT);
 
     let query = AuditLogQuery {
         user_id: params.user_id,
@@ -173,7 +196,7 @@ async fn get_audit_logs(
         org_id: params.org_id,
         from_date: params.from_date,
         to_date: params.to_date,
-        limit: params.limit,
+        limit: Some(effective_limit),
         offset: params.offset,
     };
 
@@ -205,7 +228,9 @@ async fn get_audit_logs(
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
         total,
-        limit: params.limit.unwrap_or(100),
+        // Echo the CLAMPED limit actually applied to the query, not the raw
+        // `params.limit` — so the pagination metadata reflects reality.
+        limit: effective_limit,
         offset: params.offset.unwrap_or(0),
     }))
 }
@@ -278,18 +303,21 @@ async fn get_user_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Result<Json<AuditLogListResponse>, (StatusCode, String)> {
     require_super_admin(&user)?;
+    // Reject malformed pagination (negative limit/offset) with a 400 before it
+    // reaches SQL and surfaces as an opaque 500 — see `validate_pagination`.
+    validate_pagination(params.limit, params.offset)?;
     // Shares AuditLogQueryParams with get_audit_logs. This endpoint filters by
     // user_id only (via get_user_logs), so a *valid* `action` is not applied
     // here, but an unrecognised one must still be rejected (400) rather than
     // silently accepted — same compliance foot-gun as get_audit_logs.
     parse_action_filter(params.action.as_deref())?;
+    // Clamp to the documented max (1000) at the handler boundary so the applied
+    // limit matches the one echoed in the response metadata below.
+    let effective_limit =
+        clamp_limit_capped(params.limit, DEFAULT_AUDIT_LOG_LIMIT, MAX_AUDIT_LOG_LIMIT);
     let logs = state
         .audit_log_repo
-        .get_user_logs(
-            user_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .get_user_logs(user_id, effective_limit, params.offset.unwrap_or(0))
         .await
         .map_err(db_error)?;
 
@@ -332,7 +360,8 @@ async fn get_user_audit_logs(
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
         total,
-        limit: params.limit.unwrap_or(100),
+        // Echo the CLAMPED limit actually applied, not the raw `params.limit`.
+        limit: effective_limit,
         offset: params.offset.unwrap_or(0),
     }))
 }
@@ -823,6 +852,41 @@ async fn get_failed_logins_report(
 // HELPER FUNCTIONS
 // ============================================================================
 
+/// Validate client-supplied pagination parameters.
+///
+/// `limit` and `offset` map straight onto SQL `LIMIT`/`OFFSET`, which
+/// PostgreSQL rejects when negative ("LIMIT must not be negative" / "OFFSET
+/// must not be negative"). Without an up-front check a client that sends
+/// `?limit=-1` or `?offset=-5` trips that error deep in the repository, where
+/// [`db_error`] turns it into an opaque 500 — a server-error response to what
+/// is really malformed client input. Reject negatives here with a 400 that
+/// names the offending value, mirroring how [`parse_action_filter`] surfaces
+/// bad input instead of letting it reach the query.
+///
+/// Only the lower bound is enforced here: the upper bound on `limit` is clamped
+/// by the handlers to [`MAX_AUDIT_LOG_LIMIT`] (1000) via [`clamp_limit_capped`]
+/// before the query runs (and again downstream by
+/// `AuditLogRepository::{query,get_user_logs}` via `.min(1000)`), so an
+/// over-large `limit` is a safe no-op rather than a client error — and the
+/// clamped value is what the response echoes back.
+fn validate_pagination(
+    limit: Option<i64>,
+    offset: Option<i64>,
+) -> Result<(), (StatusCode, String)> {
+    for (name, value) in [("limit", limit), ("offset", offset)] {
+        match value {
+            Some(v) if v < 0 => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    format!("{name} must not be negative: {v}"),
+                ));
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
 /// Parse the optional client-supplied `action` filter.
 ///
 /// Distinguishes "no filter requested" from "filter requested but
@@ -987,6 +1051,38 @@ mod tests {
                 "400 message should name the offending value {bad:?}, got: {msg}"
             );
         }
+    }
+
+    #[test]
+    fn pagination_accepts_absent_and_non_negative() {
+        // No params, zero, and ordinary positive values are all fine.
+        assert!(validate_pagination(None, None).is_ok());
+        assert!(validate_pagination(Some(0), Some(0)).is_ok());
+        assert!(validate_pagination(Some(100), Some(500)).is_ok());
+        // An over-large limit is NOT a client error: the repository clamps the
+        // upper bound (`.min(1000)`), so it is a safe no-op here, not a 400.
+        assert!(validate_pagination(Some(1_000_000), None).is_ok());
+    }
+
+    #[test]
+    fn pagination_rejects_negative_limit_or_offset() {
+        // Regression (compliance foot-gun): a negative limit/offset maps
+        // straight onto SQL LIMIT/OFFSET, which PostgreSQL rejects — surfacing
+        // as an opaque 500 (via db_error) for what is really malformed client
+        // input. It must now be a 400 that names the offending value.
+        let (status, msg) = validate_pagination(Some(-1), None).unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(msg.contains("limit") && msg.contains("-1"), "got: {msg}");
+
+        let (status, msg) = validate_pagination(None, Some(-5)).unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert!(msg.contains("offset") && msg.contains("-5"), "got: {msg}");
+
+        // A valid limit does not excuse a negative offset.
+        assert_eq!(
+            validate_pagination(Some(10), Some(-1)).unwrap_err().0,
+            StatusCode::BAD_REQUEST
+        );
     }
 
     #[test]

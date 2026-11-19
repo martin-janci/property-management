@@ -125,11 +125,17 @@ plan's *Test plan* commands all exited 0. You're about to open the PR.
    `|intersection| >= 2` with at least one non-test file → same abort as
    above with `reason=file-overlap`.
 
-4. **Create**:
+4. **Create**. Stage the body in a **task-unique** scratchpad file first —
+   never a bare shared `pr-body.md`. Parallel implementers in one dispatcher
+   run each write their body before calling `gh pr create --body-file` or the
+   MCP `create_pull_request` tool; a shared path lets concurrent siblings
+   clobber each other (observed 2026-11-17). The `pr-body-path.sh` helper folds
+   `$SLUG`/`$TASK_ID` (or the PID) into the filename:
+
    ```bash
-   gh pr create --base "$BASE" --head "impl/$SLUG" \
-     --title "<vector>(<area>): <title>" \
-     --body "$(cat <<'EOF'
+   BODY_FILE="$(bash .claude/skills/ppt-implement/scripts/pr-body-path.sh \
+     --task-id "${TASK_ID:-$SLUG}")"   # e.g. /tmp/pr-body.<slug>.md
+   cat > "$BODY_FILE" <<'EOF'
    ## Summary
    <1–3 bullets, plain English>
 
@@ -170,7 +176,12 @@ plan's *Test plan* commands all exited 0. You're about to open the PR.
    ## Out-of-scope items I noticed
    - <one-liner — goes to next research scan>
    EOF
-   )"
+
+   # Local / interactive path:
+   gh pr create --base "$BASE" --head "impl/$SLUG" \
+     --title "<vector>(<area>): <title>" --body-file "$BODY_FILE"
+   # Cloud-runner path (gh/push 403'd): push via mcp__github__push_files, then
+   # mcp__github__create_pull_request with body = contents of "$BODY_FILE".
    ```
 
 ## CI surface (what will fire)

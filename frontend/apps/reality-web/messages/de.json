@@ -1290,7 +1290,8 @@
     "featured": "Empfohlen",
     "yourAgency": "Ihre Agentur",
     "sampleTitle": "Beispiel-Inseratstitel",
-    "contactAgent": "Makler kontaktieren"
+    "contactAgent": "Makler kontaktieren",
+    "saveError": "Branding-Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut."
   },
   "agencyInquiries": {
     "title": "Agentur-Anfragen",

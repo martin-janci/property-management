@@ -328,6 +328,8 @@
       "errorTitle": "Ordner konnte nicht verschoben werden"
     },
     "detailLoadError": "Dokument konnte nicht geladen werden",
+    "openErrorTitle": "Dokument konnte nicht geöffnet werden",
+    "openErrorMessage": "Der Dateibetrachter ist auf diesem Gerät nicht verfügbar.",
     "notFound": "Dokument nicht gefunden"
   },
   "settings": {
@@ -438,10 +440,23 @@
   },
   "widgets": {
     "addedTitle": "Widget hinzugefugt",
-    "addedMessage": "Widget wurde konfiguriert.",
+    "addedMessage": "Widget {{name}} wurde konfiguriert.",
     "updatedTitle": "Widgets aktualisiert",
     "updatedMessage": "Alle Widgets wurden aktualisiert.",
-    "emptyText": "Noch keine Widgets konfiguriert."
+    "emptyText": "Noch keine Widgets konfiguriert.",
+    "settingsTitle": "Widget-Einstellungen",
+    "notAvailableTitle": "Widgets nicht verfügbar",
+    "notAvailableIos": "Startbildschirm-Widgets erfordern iOS 14 oder neuer.",
+    "notAvailableAndroid": "Widgets werden auf diesem Gerät nicht unterstützt.",
+    "availableTitle": "Verfügbare Widgets",
+    "availableDescription": "Legen Sie fest, welche Widgets auf Ihrem Startbildschirm erscheinen.",
+    "activeTitle": "Aktive Widgets",
+    "metaInfo": "Größe: {{size}} • Aktualisierung: {{interval}} Min.",
+    "remove": "Entfernen",
+    "refreshAll": "🔄 Alle Widgets aktualisieren",
+    "instructionsTitle": "So fügen Sie Widgets hinzu",
+    "instructionsIos": "1. Halten Sie den Startbildschirm gedrückt\n2. Tippen Sie oben links auf die Schaltfläche +\n3. Suchen Sie nach „PPT“\n4. Wählen Sie eine Widget-Größe und tippen Sie auf „Widget hinzufügen“",
+    "instructionsAndroid": "1. Halten Sie den Startbildschirm gedrückt\n2. Tippen Sie auf „Widgets“\n3. Suchen Sie „PPT Property Management“\n4. Ziehen Sie ein Widget auf Ihren Startbildschirm"
   },
   "permissions": {
     "denied": "Berechtigung verweigert",
