@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-18 03:13 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-19 03:17 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -48,16 +48,18 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs` (+2) | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | bug | reality-web useAgencyBranding error path unhandled — silent default-color clobber on fetch failure | `frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx` | rotating-expert-review 2026-11-19 (reality-web) | 2026-11-19 | open | — |
+| 2 | bug | reality-web agency branding preview uses hardcoded English alt text (Preview, Logo) | `frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx` | rotating-expert-review 2026-11-19 (reality-web) | 2026-11-19 | open | — |
 | 2 | refactor | notification_digest.rs is a repeat churn hotspot (digest subsystem) | `backend/servers/api-server/src/services/notification_digest.rs` | PR #3574 (+2) | 2026-11-18 | open | — |
 | 2 | refactor | granular_notification.rs repo is a repeat churn hotspot (digest subsystem) | `backend/crates/db/src/repositories/granular_notification.rs` | PR #3574 (+2) | 2026-11-18 | open | — |
 | 2 | bug | find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row | `backend/crates/db/src/repositories/granular_notification.rs` | PR #3585 (+1) | 2026-11-18 | done | — |
 | 2 | bug | report_abandoned has no persisted abandoned_at — abandoned digests are log-only | `backend/servers/api-server/src/services/notification_digest.rs` | PR #3587 (+1) | 2026-11-18 | done | — |
-| 2 | test-gap | Screen-map drift: PR #3606 wrap route groups in ProtectedRoute without docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/announcements.tsx` (+3) | PR #3606 | 2026-11-18 | open | — |
-| 2 | test-gap | Screen-map drift: PR #3595 preserve locale in reality-web auth navigation without docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx` (+2) | PR #3595 | 2026-11-18 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3606 wrap route groups in ProtectedRoute without docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/announcements.tsx` (+3) | PR #3606 | 2026-11-18 | done | — |
+| 2 | test-gap | Screen-map drift: PR #3595 preserve locale in reality-web auth navigation without docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/auth/login/page.tsx` (+2) | PR #3595 | 2026-11-18 | done | — |
 | 2 | test-gap | PR #3486 gated community/disputes/messaging/neighbors behind ProtectedRoute without updating docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/community.tsx` (+3) | PR #3486 (+1) | 2026-11-17 | done | — |
 | 2 | test-gap | PR #3482 gated /settings/privacy behind ProtectedRoute without updating docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/core.tsx` | PR #3482 (+1) | 2026-11-17 | done | — |
-| 2 | test-gap | Screen-map drift: PR #3559 login open-redirect fix without docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx` (+3) | PR #3559 | 2026-11-16 | open | — |
-| 2 | test-gap | Screen-map drift: PR #3546 faults URL-param validation without docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/faults.tsx` (+2) | PR #3546 | 2026-11-16 | open | — |
+| 2 | test-gap | Screen-map drift: PR #3559 login open-redirect fix without docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/auth/callback/page.tsx` (+3) | PR #3559 | 2026-11-16 | done | — |
+| 2 | test-gap | Screen-map drift: PR #3546 faults URL-param validation without docs/screens/ppt update | `frontend/apps/ppt-web/src/routes/groups/faults.tsx` (+2) | PR #3546 | 2026-11-16 | done | — |
 | 2 | test-gap | PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test | `backend/servers/api-server/src/services/voice_commands.rs` | PR #3497 | 2026-11-15 | done | — |
 | 2 | test-gap | PR #3525 fix(api-handlers) non-admin peer-role mutation — privilege-escalation fix without a cross-tenant test | `backend/servers/api-server/src/routes/organizations/members.rs` | PR #3525 | 2026-11-15 | done | — |
 | 2 | test-gap | PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap | `frontend/apps/ppt-web/messages/pl.json` (+2) | PR #3524 (+1) | 2026-11-15 | dropped | — |
@@ -281,14 +283,16 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs` (+2) | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs` (+4) | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps) | `backend/servers/reality-server/src/routes/listings.rs` | churn (+1) | 2026-11-19 | done | — |
+| 1 | refactor | reality-server /listings routes/listings.rs hit as repeated churn hotspot (runs_seen=2) | `backend/servers/reality-server/src/routes/listings.rs` | commits 2026-11-18..19 (listings.rs 2 touches, 201 line churn) | 2026-11-19 | open | — |
+| 1 | bug | reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales | `frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx` | rotating-expert-review 2026-11-19 (reality-web) | 2026-11-19 | open | — |
 | 1 | bug | KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response | `mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/` | rotating-expert-review 2026-11-03 mobile-native-kmp (dispatcher Tier-1d) | 2026-11-18 | open | — |
 | 1 | refactor | release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak) | `backend/servers/api-server/src/services/notification_digest.rs` | PR #3591 (+1) | 2026-11-18 | done | — |
-| 1 | refactor | Churn hotspot: api-server routes/compliance.rs (compliance wave churn) | `backend/servers/api-server/src/routes/compliance.rs` | commit log 2026-11-18 | 2026-11-18 | open | — |
+| 1 | refactor | Churn hotspot: api-server routes/compliance.rs (compliance wave churn) | `backend/servers/api-server/src/routes/compliance.rs` | commit log 2026-11-18 | 2026-11-18 | done | — |
 | 1 | dx | Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision | `frontend/apps/reality-web/src/app/[locale]/dashboard/analytics/page.tsx` | PR #3380 | 2026-11-18 | open | — |
-| 1 | refactor | Churn hotspot: ppt-web features/reports/TrendChart.tsx (reports feature rollout) | `frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx` | churn | 2026-11-16 | open | — |
+| 1 | refactor | Churn hotspot: ppt-web features/reports/TrendChart.tsx (reports feature rollout) | `frontend/apps/ppt-web/src/features/reports/components/TrendChart.tsx` | churn | 2026-11-16 | done | — |
 | 1 | refactor | Churn hotspot: ppt-web features/reports/AnalyticsChart.tsx (reports feature rollout) | `frontend/apps/ppt-web/src/features/reports/components/AnalyticsChart.tsx` | churn | 2026-11-16 | dropped | — |
-| 1 | refactor | Churn hotspot: reality-server routes/listings.rs (slug + category i18n sweeps) | `backend/servers/reality-server/src/routes/listings.rs` | churn | 2026-11-16 | open | — |
-| 1 | test-gap | reality-server ListingSummary (/listings search) emits bare UUID; SEO slug only on /featured | `backend/servers/reality-server/src/routes/listings.rs` (+1) | rotating-expert-review 2026-11-16 | 2026-11-16 | open | — |
+| 1 | test-gap | reality-server ListingSummary (/listings search) emits bare UUID; SEO slug only on /featured | `backend/servers/reality-server/src/routes/listings.rs` (+1) | rotating-expert-review 2026-11-16 | 2026-11-16 | done | — |
 | 1 | bug | reality-server record_view: comment claims existence check but handler does not verify + no per-IP throttle | `backend/servers/reality-server/src/routes/listings.rs` (+1) | rotating-expert-review 2026-11-16 | 2026-11-16 | open | — |
 | 1 | refactor | ppt-web messages/pl.json churn-hotspot — 4 commits in 2d (i18n leaf-parity sweeps PR #3524 + locale-specific fixes) | `frontend/apps/ppt-web/messages/pl.json` | git-log 14d sweep 2026-11-15 | 2026-11-15 | done | — |
 | 1 | refactor | ppt-web messages/cs.json churn-hotspot — 4 commits in 2d (ambient i18n sweeps + UC-52 payments) | `frontend/apps/ppt-web/messages/cs.json` | git-log 14d sweep 2026-11-15 | 2026-11-15 | done | — |

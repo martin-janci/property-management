@@ -239,9 +239,11 @@
       "priority": "low",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "done",
       "deadline": null,
-      "source": "pm-analysis 2026-11-16"
+      "source": "pm-analysis 2026-11-16",
+      "resolved_at": "2026-11-19",
+      "resolution": "ongoing routine behavior; picked up by daily routine Phase 1.6"
     },
     {
       "id": "code-review-reality-server-record-view-no-check",
@@ -668,7 +670,7 @@
       "action": "Screen-map drift: PR #3595 preserve locale in reality-web auth navigation without docs/screens/reality update",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
@@ -678,14 +680,16 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
+      },
+      "resolved_at": "2026-11-19",
+      "resolution": "PR #3624 merged — reality auth screen-maps reconciled"
     },
     {
       "id": "screen-map-drift-pr-3606-ppt",
       "action": "Screen-map drift: PR #3606 wrap route groups in ProtectedRoute without docs/screens/ppt update",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
@@ -695,14 +699,16 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
+      },
+      "resolved_at": "2026-11-19",
+      "resolution": "PR #3625 merged — ppt screen-maps reconciled"
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-compliance-rs",
       "action": "Churn hotspot: api-server routes/compliance.rs (compliance wave churn)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=1 conf=high vector=refactor)",
       "deadline": null,
       "dependency": null,
@@ -712,7 +718,9 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
+      },
+      "resolved_at": "2026-11-19",
+      "resolution": "PR #3627 merged — validate_pagination returns 400 for negative limit/offset"
     },
     {
       "id": "stalled-review-pr-3380",
@@ -974,7 +982,106 @@
         "vector": "bug",
         "generated": "2026-08-26T18:36:06Z"
       }
+    },
+    {
+      "id": "pm-integration-slug-client-propagation",
+      "action": "Confirm #3616 ListingSummary slug reaches OpenAPI/TypeSpec and @ppt/reality-api-client + KMP/iOS clients; document slug as always-populated and state detail-lookup identifier",
+      "owner_role": "pm-integration",
+      "priority": "high",
+      "dependency": "pm-qa",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-integration-compliance-list-limit-echo",
+      "action": "Make compliance list routes echo the clamped limit (not raw param) and document max 1000; add test with limit=5000",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-integration-voice-oauth-rfc6749-shape",
+      "action": "Verify sanitized voice_oauth_error_response bodies follow RFC 6749 §5.2 (error+error_description, correct status codes) on Alexa/Google account-linking path; contract test required",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "pm-security",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-integration-compliance-400-spec",
+      "action": "Document compliance 400 behavior for negative limit/offset in TypeSpec/OpenAPI and decide: keep plain-text (StatusCode, String) or move to standard error envelope",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-integration-property-type-enum-stability",
+      "action": "Verify #3609 property_type i18n helper keeps API filter contract on stable enum codes across sk/cs/de/en; localize labels only in display fields",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "pm-qa",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19",
+      "action": "Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and #3628 (suggestions region seed); merge #3617 first (security-flavored)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-3612-supersede-check-2026-11-19",
+      "action": "Decide fate of #3612 (paginate agency import history): #3610 fixed total; confirm if #3612 still adds page/offset or close as superseded",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-backend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-airbnb-env-leak-flake-2026-11-19",
+      "action": "Fix env-var leak in tests/suites/airbnb_install_routes_tests.rs (set_var without cleanup) causing airbnb_oauth_routes_tests flake in parallel suite_1",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
+    },
+    {
+      "id": "pm-scrum-master-3630-widgetsettings-i18n-merge-2026-11-19",
+      "action": "Land #3630 (mobile WidgetSettings i18n) after CI; remaining no-hardcoded-strings warnings must drain before 2026-12-01 lint flip",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19"
     }
   ],
-  "generated": "2026-11-17T03:17:29Z"
+  "generated": "2026-11-19T03:14:20Z"
 }
