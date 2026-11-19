@@ -117,18 +117,18 @@
     {
       "task_id": "pm-integration-compliance-list-limit-echo",
       "branch": "auto-impl/pm-integration-compliance-list-limit-ech-6b61282a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-19T04:34:07Z",
-      "last_updated": "2026-11-19T04:44:41Z",
-      "status_changed_at": "2026-11-19T04:34:07Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-19T05:00:03Z",
+      "status_changed_at": "2026-11-19T05:00:03Z",
+      "pr_number": 3631,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3631",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3631 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=compliance audit-log list routes echo clamp_limit_capped(limit,100,1000) effective limit (was raw param); MAX_AUDIT_LOG_LIMIT=1000; +2 limit=5000 regression tests; fmt/clippy/unit green, DB tests compile (CI exec); drift=benign owner-hint",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -137,5 +137,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-19T04:44:41Z"
+  "generated": "2026-11-19T05:00:03Z"
 }
