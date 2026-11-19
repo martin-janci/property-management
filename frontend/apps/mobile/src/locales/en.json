@@ -483,7 +483,20 @@
     "addedMessage": "{{name}} widget has been configured.",
     "updatedTitle": "Widgets Updated",
     "updatedMessage": "All widgets have been refreshed.",
-    "emptyText": "No widgets configured yet."
+    "emptyText": "No widgets configured yet.",
+    "settingsTitle": "Widget Settings",
+    "notAvailableTitle": "Widgets Not Available",
+    "notAvailableIos": "Home screen widgets require iOS 14 or later.",
+    "notAvailableAndroid": "Widgets are not supported on this device.",
+    "availableTitle": "Available Widgets",
+    "availableDescription": "Configure which widgets appear on your home screen.",
+    "activeTitle": "Active Widgets",
+    "metaInfo": "Size: {{size}} • Refresh: {{interval}}min",
+    "remove": "Remove",
+    "refreshAll": "🔄 Refresh All Widgets",
+    "instructionsTitle": "How to Add Widgets",
+    "instructionsIos": "1. Long press on your home screen\n2. Tap the + button in the top left\n3. Search for \"PPT\"\n4. Choose a widget size and tap \"Add Widget\"",
+    "instructionsAndroid": "1. Long press on your home screen\n2. Tap \"Widgets\"\n3. Find \"PPT Property Management\"\n4. Drag a widget to your home screen"
   },
   "permissions": {
     "denied": "Permission Denied",
