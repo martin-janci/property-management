@@ -1283,7 +1283,8 @@
     "featured": "Wyróżnione",
     "yourAgency": "Twoja agencja",
     "sampleTitle": "Przykładowy tytuł oferty",
-    "contactAgent": "Skontaktuj się z agentem"
+    "contactAgent": "Skontaktuj się z agentem",
+    "saveError": "Nie udało się zapisać zmian brandingu. Spróbuj ponownie."
   },
   "agencyInquiries": {
     "title": "Zapytania agencji",

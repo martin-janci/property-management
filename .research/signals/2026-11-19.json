@@ -1,0 +1,190 @@
+{
+  "date": "2026-11-19",
+  "run_start_iso": "2026-11-19T03:14:20Z",
+  "run_lag_hours": 23,
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-18..19",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/reality-server/src/routes/listings.rs — 2 touches, 201 line churn (property_type i18n #3609 + ListingSummary slug #3616). Cumulative re-emit — score NOT re-applied."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
+      "type": "repeated-churn",
+      "source": "commits 2026-11-18..19 vs state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "listings.rs hotspot_history.runs_seen advanced 1 → 2 this run (prev last_seen 2026-11-16); instability proxy"
+      ]
+    },
+    {
+      "id": "code-review-reality-web-branding-query-unhandled-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (reality-web, 2026-11-19)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:24 — useAgencyBranding destructures only data/isLoading; 5xx/network failure silently renders form with default colors, Save clobbers real branding"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-alt-text",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (reality-web, 2026-11-19)",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:290+304 — alt=\"Preview\"/alt=\"Logo\" hardcoded English; rest of file uses t('logoAlt')/t('coverAlt'); breaks a11y for sk/cs/de"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-price",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (reality-web, 2026-11-19)",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/reality-web/src/components/agency/AgencyBranding.tsx:312 — '€450,000' literal; not Intl.NumberFormat with locale; on de/sk/cs readers see €450.00"
+      ],
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/$today.md && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev cursors/signals/hotspots/quiet_days",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids in backlog",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score_delta != 0",
+      "observed": "all re-emits are churn-hotspot (allowlisted) with score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap 0..8 + decay enforced",
+      "observed": "no items >8; no open items older than 14d this run",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "all new plans have adversarial pass noted",
+      "observed": "0 new plans",
+      "expected": "trivial"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "≤2 new plans; each meets gates",
+      "observed": "0 new plans",
+      "expected": "≤2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no files outside .research/ staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets in staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed section honest",
+      "observed": "no failed phases",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "all prior plans present (active or archive)",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count ≥ HEAD",
+      "observed": "24 ≥ 24",
+      "expected": "≥"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length ≤3 by type",
+      "observed": "empty — no candidate",
+      "expected": "≤ caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + cursors in range + advanced",
+      "observed": "pm_cursor 7→0 (phase ran), coverage_cursor 5→6 (13 epics), both advanced",
+      "expected": "pass"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram tokens in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

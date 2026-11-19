@@ -115,11 +115,11 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
       if (!supported) throw new Error('Cannot open URL');
       await Linking.openURL(presigned.url);
     } catch {
-      Alert.alert('Could not open document', 'The file viewer is unavailable on this device.');
+      Alert.alert(t('documents.openErrorTitle'), t('documents.openErrorMessage'));
     } finally {
       setOpening(false);
     }
-  }, [documentId]);
+  }, [documentId, t]);
 
   const title = document?.title ?? '';
 

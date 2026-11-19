@@ -208,15 +208,21 @@ pub async fn list_import_history(
     .await
     .map_err(|e| crate::util::errors::db_error("list import history", e))?;
 
-    // `total` is the full count over the same filter (ignoring limit/offset)
-    // so clients can paginate — not the length of the current page.
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM portal_import_jobs WHERE agency_id = $1")
-            .bind(agency_id)
-            .fetch_one(&mut *conn)
-            .await
-            .map_err(|e| crate::util::errors::db_error("count import history", e))?;
-
+    // `total` must be the full count of matching rows (same `agency_id` filter,
+    // ignoring the page `LIMIT`) so clients can paginate — not the length of the
+    // capped page. Mirrors the sibling user-scoped
+    // `routes::imports::list_import_jobs`, which counts separately.
+    let total = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*)
+        FROM portal_import_jobs
+        WHERE agency_id = $1
+        "#,
+    )
+    .bind(agency_id)
+    .fetch_one(&mut *conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("count import history", e))?;
     let jobs: Vec<ImportJobSummary> = rows
         .into_iter()
         .map(|r| ImportJobSummary {

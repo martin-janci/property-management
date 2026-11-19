@@ -1490,6 +1490,47 @@ impl VoteRepository {
         Ok(result.rows_affected())
     }
 
+    /// Active votes ending within the reminder window (`days_before` days out)
+    /// that have NOT been reminded within the last ~5 minutes.
+    ///
+    /// Backs `send_vote_reminders`. The scheduler ticks ~every 60s, so without
+    /// the `last_reminder_at` guard every eligible vote would re-notify all
+    /// non-voters on every tick for the entire reminder window (vote-reminder
+    /// spam). Mirrors the payment-reminder dedup (#1790):
+    /// `invoices.last_payment_reminder_at`.
+    pub async fn find_votes_due_for_reminder(
+        &self,
+        days_before: i64,
+    ) -> Result<Vec<Vote>, SqlxError> {
+        sqlx::query_as::<_, Vote>(
+            r#"
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes
+            WHERE status = 'active'
+              AND end_at > NOW()
+              AND end_at <= NOW() + make_interval(days => $1)
+              -- Persistent dedup: skip votes reminded within the last 5 minutes
+              -- so a ~60s scheduler tick can't re-spam the whole window.
+              AND (last_reminder_at IS NULL
+                   OR last_reminder_at < NOW() - INTERVAL '5 minutes')
+            "#,
+        )
+        .bind(days_before as i32)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Stamp `last_reminder_at = NOW()` after a vote reminder has been
+    /// dispatched, so subsequent scheduler ticks skip the vote for the
+    /// ~5-minute dedup window. Mirrors `FinancialRepository::
+    /// mark_payment_reminder_sent` and the signature-reminder stamp.
+    pub async fn mark_vote_reminder_sent(&self, id: Uuid) -> Result<(), SqlxError> {
+        sqlx::query("UPDATE votes SET last_reminder_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     // ========================================================================
     // Questions (Story 5.1)
     // ========================================================================

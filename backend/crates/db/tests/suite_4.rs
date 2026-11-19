@@ -56,6 +56,8 @@ mod vote_cast_regression_tests;
 mod vote_delegation_eligibility_tests;
 #[path = "suites/vote_eligible_snapshot_tests.rs"]
 mod vote_eligible_snapshot_tests;
+#[path = "suites/vote_reminder_dedup_tests.rs"]
+mod vote_reminder_dedup_tests;
 #[path = "suites/vote_sub_resource_org_scope_tests.rs"]
 mod vote_sub_resource_org_scope_tests;
 #[path = "suites/webhook_repo_dedup_tests.rs"]

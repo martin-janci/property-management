@@ -13,7 +13,15 @@
  */
 
 import type React from 'react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { describeError } from '../lib/describeError';
 import './Toast.css';
@@ -195,8 +203,12 @@ export function ToastProvider({ children }: ToastProviderProps) {
   // leaking.
   const visibleToasts = toasts.slice(-MAX_VISIBLE_TOASTS);
 
+  // Memoize the context value so consumers don't re-render on every provider
+  // render. Both members are useCallback-stable, so the value is stable too.
+  const contextValue = useMemo(() => ({ showToast, removeToast }), [showToast, removeToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast, removeToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div className="toast-container" role="region" aria-label={t('common.notifications')}>
         {visibleToasts.map((toast) => (

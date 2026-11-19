@@ -1157,6 +1157,69 @@ async fn get_audit_logs_super_admin_gets_paginated_response(pool: PgPool) {
     assert!(body["total"].is_number(), "expected total");
 }
 
+/// Regression: the audit-log list must echo the CLAMPED effective limit in its
+/// pagination metadata, not the RAW client-supplied `?limit`. The repository
+/// caps the page at 1000 (`MAX_AUDIT_LOG_LIMIT`), so a caller asking for
+/// `?limit=5000` gets at most 1000 rows — but the handler previously echoed
+/// `limit: 5000`, telling the client a page size that was never applied.
+/// Request an over-max limit and assert the reported `limit` is the clamped
+/// value (<= 1000), never 5000.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_audit_logs_echoes_clamped_limit_not_raw(pool: PgPool) {
+    let Caller { app, token, .. } = authorized_app(&pool, "audit-clamp", "super_admin").await;
+
+    let resp = app
+        .get("/api/v1/compliance/audit-logs?limit=5000")
+        .bearer(&token)
+        .build();
+    let r = app.execute(resp).await;
+    assert_eq!(r.status, StatusCode::OK);
+    let body = r.json_value();
+
+    let reported = body["limit"].as_i64().expect("limit must be a number");
+    assert!(
+        reported <= 1000,
+        "response must echo the clamped limit (<= 1000), got {reported}"
+    );
+    assert_ne!(
+        reported, 5000,
+        "response must not echo the raw over-max limit (5000)"
+    );
+    assert_eq!(
+        reported, 1000,
+        "an over-max limit must be reported as the 1000 cap actually applied"
+    );
+}
+
+/// Same clamp contract for the per-user audit-log list
+/// (`GET /compliance/audit-logs/user/{id}`), which previously echoed the raw
+/// `?limit` too.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_user_audit_logs_echoes_clamped_limit_not_raw(pool: PgPool) {
+    let Caller { app, token, .. } = authorized_app(&pool, "user-clamp", "super_admin").await;
+
+    let target_user = Uuid::new_v4();
+    let resp = app
+        .get(&format!(
+            "/api/v1/compliance/audit-logs/user/{target_user}?limit=5000"
+        ))
+        .bearer(&token)
+        .build();
+    let r = app.execute(resp).await;
+    assert_eq!(r.status, StatusCode::OK);
+    let body = r.json_value();
+
+    let reported = body["limit"].as_i64().expect("limit must be a number");
+    assert!(
+        reported <= 1000,
+        "response must echo the clamped limit (<= 1000), got {reported}"
+    );
+    assert_ne!(
+        reported, 5000,
+        "must not echo the raw over-max limit (5000)"
+    );
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_audit_log_summary_requires_super_admin(pool: PgPool) {
     let (app, token) = unprivileged_app(&pool, "unpriv-summary").await;

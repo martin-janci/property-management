@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-17T03:17:29Z",
+  "generated": "2026-11-19T03:14:39Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -481,6 +481,76 @@
       "impact": "low",
       "mitigation": "Make events part of the story definition of done",
       "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-slug-client-drift",
+      "risk": "Additive `slug` field on reality-server /listings response may not propagate to generated TS/Kotlin/iOS clients. Clients could keep building links from UUID or fail strict decoding if non-optional.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Run spec/client regen in CI; keep field additive; clients tolerant of unknown fields",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-compliance-limit-echo-mismatch",
+      "risk": "Compliance list responses may report a `limit` different from rows returned when request exceeds repo clamp. Paging clients that use limit to detect last page could mis-paginate or loop.",
+      "probability": "medium",
+      "impact": "low",
+      "mitigation": "Echo effective limit; document offset/limit semantics in spec",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-voice-oauth-sanitized-shape-drift",
+      "risk": "Error sanitization on voice OAuth account linking (#3621) could break voice platform linking if sanitized message/status deviates from Alexa/Google expectations.",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Contract test on error shape; alert on `voice OAuth upstream call failed` log line",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-cargo-deny-recurring-advisories",
+      "risk": "cargo-deny advisory gate (#3604) can block all backend merges; recurring pattern; cargo-deny is non-required so regressions could go unnoticed.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Bounded exception window with owner + deadline; surface triage owner in CI gate description",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-integration-listings-compliance-spec-drift",
+      "risk": "Churn hotspots (listings.rs, compliance.rs) receive contract-adjacent edits without evidence that OpenAPI/TypeSpec is updated in the same PRs — spec drift likely.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Require `no contract delta` or spec-update line in PR descriptions touching these files",
+      "owner_role": "pm-integration",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-listings-rs-merge-conflict-2026-11-19",
+      "risk": "Three recent/open PRs (#3617, #3628 + merged #3609/#3616) touch reality-server listings.rs (churn hotspot); merge conflicts and duplicated slug/region logic are likely.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Sequence merges; rebase #3617 and #3628 on current dev; one reviewer pass over listings.rs",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-mobile-i18n-lint-flip-2026-12-01",
+      "risk": "Mobile no-hardcoded-strings lint gate flips from warn to error on 2026-12-01 — could turn CI red for mobile PRs.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Burn down i18n backlog before the date, or extend the window",
+      "owner_role": "pm-scrum-master",
       "trigger": null,
       "status": "open"
     }

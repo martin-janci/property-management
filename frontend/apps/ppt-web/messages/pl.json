@@ -4793,6 +4793,7 @@
     "searchDocuments": "Szukaj dokumentów",
     "selectFilesToUpload": "Wybierz pliki do przesłania",
     "selectLanguage": "Wybierz język",
+    "sentimentSpike": "Spadek nastroju dnia {{date}}",
     "sentimentTrend": "Trend nastrojów",
     "settingsPreview": "Podgląd ustawień",
     "tabs": "Karty",

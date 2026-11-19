@@ -263,16 +263,35 @@ gate the PR on remote checks.
 
 ## Step 5 — Open draft PR
 
-```
-gh pr create \
-  --base dev --head <branch> --draft \
-  --title "<task_id>: <one-line>" \
-  --body "$(cat <<'EOF'
+**Never write the PR body to a bare, shared scratchpad path.** Parallel
+implementer subagents in the same dispatcher run each materialise their body
+before handing it to `gh pr create --body-file` or to the MCP
+`create_pull_request` tool (the cloud-runner primary path — `gh` WRITE and
+`git push` are proxy-403'd, so the branch goes up via
+`mcp__github__push_files` and the PR via `mcp__github__create_pull_request`,
+both of which take the body as text you stage in a file first). On 2026-11-17
+two siblings both wrote `pr-body.md` and clobbered each other's file. Always
+derive a **task-unique** body path with the helper — never hardcode
+`pr-body.md`:
+
+```bash
+# Task-unique scratchpad path — folds $TASK_ID (or the PID) into the filename
+# so concurrent siblings can never resolve to the same file.
+BODY_FILE="$(bash .claude/skills/ppt-implement/scripts/pr-body-path.sh \
+  --task-id "$TASK_ID")"      # e.g. /tmp/pr-body.<task_id>.md
+
+cat > "$BODY_FILE" <<'EOF'
 ## Task
 <action verbatim>
 
 ## Owner
 <owner_role>
+
+## Scope drift
+<paste the drifting paths from Step 2.5 if scope_drift=true, else "none">
+
+## Code-reuse review
+<paste reuse-grep.sh warnings if any, else "none">
 
 ## Verification
 <paste the VERIFY-PLAN base=<sha> files=<n> block verbatim>
@@ -287,7 +306,18 @@ gh pr create \
 ## Notes
 <anything the reviewer must know>
 EOF
-)"
+```
+
+Then open the draft PR with that file:
+
+```bash
+# Local / interactive path:
+gh pr create --base dev --head "$BRANCH" --draft \
+  --title "$TASK_ID: <one-line>" --body-file "$BODY_FILE"
+
+# Cloud-runner path (gh/push 403'd): push via mcp__github__push_files, then
+# mcp__github__create_pull_request with draft:true and body = contents of
+# "$BODY_FILE".
 ```
 
 ## Return contract (ONE LINE — dispatcher parses this)

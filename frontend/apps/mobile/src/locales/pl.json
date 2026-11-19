@@ -330,6 +330,8 @@
       "errorTitle": "Nie udalo sie przeniesc folderu"
     },
     "detailLoadError": "Nie można załadować dokumentu",
+    "openErrorTitle": "Nie można otworzyć dokumentu",
+    "openErrorMessage": "Przeglądarka plików jest niedostępna na tym urządzeniu.",
     "notFound": "Nie znaleziono dokumentu"
   },
   "settings": {
@@ -440,10 +442,23 @@
   },
   "widgets": {
     "addedTitle": "Widget dodany",
-    "addedMessage": "Widget zostal skonfigurowany.",
+    "addedMessage": "Widget {{name}} został skonfigurowany.",
     "updatedTitle": "Widgety zaktualizowane",
     "updatedMessage": "Wszystkie widgety zostały odświeżone.",
-    "emptyText": "Nie skonfigurowano jeszcze żadnych widżetów."
+    "emptyText": "Nie skonfigurowano jeszcze żadnych widżetów.",
+    "settingsTitle": "Ustawienia widżetów",
+    "notAvailableTitle": "Widżety są niedostępne",
+    "notAvailableIos": "Widżety na ekranie głównym wymagają systemu iOS 14 lub nowszego.",
+    "notAvailableAndroid": "Widżety nie są obsługiwane na tym urządzeniu.",
+    "availableTitle": "Dostępne widżety",
+    "availableDescription": "Wybierz, które widżety mają pojawić się na ekranie głównym.",
+    "activeTitle": "Aktywne widżety",
+    "metaInfo": "Rozmiar: {{size}} • Odświeżanie: {{interval}} min",
+    "remove": "Usuń",
+    "refreshAll": "🔄 Odśwież wszystkie widżety",
+    "instructionsTitle": "Jak dodać widżety",
+    "instructionsIos": "1. Przytrzymaj ekran główny\n2. Dotknij przycisku + w lewym górnym rogu\n3. Wyszukaj „PPT”\n4. Wybierz rozmiar widżetu i dotknij „Dodaj widżet”",
+    "instructionsAndroid": "1. Przytrzymaj ekran główny\n2. Dotknij „Widżety”\n3. Znajdź „PPT Property Management”\n4. Przeciągnij widżet na ekran główny"
   },
   "permissions": {
     "denied": "Odmowa uprawnien",
