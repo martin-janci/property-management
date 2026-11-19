@@ -1504,7 +1504,7 @@ impl VoteRepository {
     ) -> Result<Vec<Vote>, SqlxError> {
         sqlx::query_as::<_, Vote>(
             r#"
-            SELECT * FROM votes
+            SELECT id, organization_id, building_id, title, description, start_at, end_at, status::text AS status, quorum_type::text AS quorum_type, quorum_percentage, allow_delegation, anonymous_voting, participation_count, eligible_count, quorum_met, results, results_calculated_at, created_by, published_by, published_at, cancelled_by, cancelled_at, cancellation_reason, created_at, updated_at FROM votes
             WHERE status = 'active'
               AND end_at > NOW()
               AND end_at <= NOW() + make_interval(days => $1)
