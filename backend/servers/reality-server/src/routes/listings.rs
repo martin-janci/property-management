@@ -468,7 +468,8 @@ pub async fn get_listing(
     path = "/api/v1/listings/suggestions",
     tag = "Listings",
     params(
-        ("city" = Option<String>, Query, description = "Current city for nearby suggestions")
+        ("city" = Option<String>, Query, description = "Current city for nearby suggestions"),
+        ("region" = Option<String>, Query, description = "Deployment region (sk, cz, de, eu) selecting the default seed city when `city` is omitted; falls back to the REGION env var, then sk")
     ),
     responses(
         (status = 200, description = "Search suggestions", body = SuggestionsResponse)
@@ -480,10 +481,14 @@ pub async fn get_suggestions(
     headers: HeaderMap,
 ) -> Result<Json<SuggestionsResponse>, (axum::http::StatusCode, String)> {
     let locale = resolve_locale(params.get("locale").map(|s| s.as_str()), &headers);
+    // Derive the seed region from the request (or deployment) instead of
+    // hardcoding Slovakia. The default city for nearby-city suggestions then
+    // follows the region rather than always being Bratislava.
+    let region = resolve_region(params.get("region").map(|s| s.as_str()));
     let city = params
         .get("city")
         .map(|s| s.as_str())
-        .unwrap_or("Bratislava");
+        .unwrap_or_else(|| default_city_for_region(&region));
 
     let cities = state
         .portal_repo
@@ -917,6 +922,42 @@ fn first_language_tag(header: &str) -> Option<&str> {
         .next()
         .map(|tag| tag.split(';').next().unwrap_or(tag).trim())
         .filter(|tag| !tag.is_empty())
+}
+
+/// Deployment region assumed when neither a `region` query param nor the
+/// `REGION` env var is set. The Slovak portal is the origin deployment, so
+/// `sk` is the default — this keeps the historical seed city (Bratislava) for
+/// callers that don't pass a region, preserving existing behavior.
+const DEFAULT_REGION: &str = "sk";
+
+/// Resolve the deployment region used for region-dependent defaults (e.g. the
+/// seed city for nearby-city suggestions when the request carries no `city`).
+///
+/// Precedence: explicit `region` query param, then the `REGION` env var (set
+/// per deployment — see reality-server `CLAUDE.md` "Multi-Region": sk, cz, eu,
+/// local), then [`DEFAULT_REGION`] (`sk`). The value is trimmed and lowercased
+/// so `SK`/`sk` and a padded env var resolve the same.
+fn resolve_region(query_region: Option<&str>) -> String {
+    if let Some(r) = query_region.map(str::trim).filter(|s| !s.is_empty()) {
+        return r.to_lowercase();
+    }
+    std::env::var("REGION")
+        .ok()
+        .map(|r| r.trim().to_lowercase())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| DEFAULT_REGION.to_string())
+}
+
+/// Seed city for "nearby cities" suggestions when the request doesn't carry an
+/// explicit `city`. Chosen per region so a Czech or German visitor isn't shown
+/// Slovak cities by default. Unknown / EU / local regions fall back to the
+/// Slovak capital, preserving the endpoint's historical default.
+fn default_city_for_region(region: &str) -> &'static str {
+    match region {
+        "cz" => "Praha",
+        "de" | "at" => "Wien",
+        _ => "Bratislava",
+    }
 }
 
 /// Column order for a [`PROPERTY_TYPE_LABELS`] row: `[Slovak, Czech, German,
@@ -1363,5 +1404,37 @@ mod tests {
         assert_eq!(first_language_tag("de-DE,de;q=0.9"), Some("de-DE"));
         assert_eq!(first_language_tag("sk"), Some("sk"));
         assert_eq!(first_language_tag(""), None);
+    }
+
+    // --- region resolution for suggestions seed city (derive, don't hardcode sk) ---
+
+    #[test]
+    fn region_query_param_takes_precedence_and_is_normalized() {
+        // Explicit region wins over the env fallback and is lower-cased/trimmed.
+        assert_eq!(resolve_region(Some("CZ")), "cz");
+        assert_eq!(resolve_region(Some("  de ")), "de");
+    }
+
+    #[test]
+    fn region_defaults_to_sk_when_param_blank_and_env_unset() {
+        // Blank/whitespace param is ignored; with REGION unset the default is
+        // the Slovak origin deployment, preserving historical behavior.
+        // (Run in a process where REGION is not exported.)
+        if std::env::var_os("REGION").is_none() {
+            assert_eq!(resolve_region(None), DEFAULT_REGION);
+            assert_eq!(resolve_region(Some("   ")), DEFAULT_REGION);
+        }
+    }
+
+    #[test]
+    fn default_city_follows_region_and_falls_back_to_bratislava() {
+        // The previously hardcoded seed city is now region-derived; sk and any
+        // unknown/EU/local region still map to Bratislava (existing default).
+        assert_eq!(default_city_for_region("sk"), "Bratislava");
+        assert_eq!(default_city_for_region("cz"), "Praha");
+        assert_eq!(default_city_for_region("de"), "Wien");
+        assert_eq!(default_city_for_region("eu"), "Bratislava");
+        assert_eq!(default_city_for_region("local"), "Bratislava");
+        assert_eq!(default_city_for_region("zz-unknown"), "Bratislava");
     }
 }
