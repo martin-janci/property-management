@@ -1,5 +1,5 @@
 //! Cross-tenant isolation regression tests for the org-scoped rental booking /
-//! guest repository methods.
+//! guest / connection repository methods.
 //!
 //! Background: alongside the hardened `*_for_org` methods (#804), the
 //! `RentalRepository` carried a parallel family of UNSCOPED helpers
@@ -28,10 +28,12 @@ struct Fixture {
     org: Uuid,
     booking: Uuid,
     guest: Uuid,
+    connection: Uuid,
 }
 
-/// Seed `org -> building -> unit -> booking -> primary guest` under the
-/// super-admin context and return the ids. `tag` keeps slugs/emails unique.
+/// Seed `org -> building -> unit -> booking -> primary guest` plus one
+/// token-bearing `rental_platform_connections` row, under the super-admin
+/// context, and return the ids. `tag` keeps slugs/emails unique.
 async fn seed(pool: &PgPool, tag: &str) -> Fixture {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
         .bind(Option::<Uuid>::None)
@@ -103,10 +105,28 @@ async fn seed(pool: &PgPool, tag: &str) -> Fixture {
     .await
     .expect("seed guest");
 
+    // A platform connection carrying OAuth credentials. This is the highest
+    // value IDOR target in the rental domain: a leaked row exposes the
+    // `access_token` / `refresh_token` for the org's Airbnb account.
+    let connection = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO rental_platform_connections
+            (organization_id, unit_id, platform, access_token, refresh_token)
+        VALUES ($1, $2, 'airbnb', 'secret-access-token', 'secret-refresh-token')
+        RETURNING id
+        "#,
+    )
+    .bind(org)
+    .bind(unit)
+    .fetch_one(pool)
+    .await
+    .expect("seed connection");
+
     Fixture {
         org,
         booking,
         guest,
+        connection,
     }
 }
 
@@ -209,6 +229,33 @@ async fn update_booking_for_org_rejects_foreign_org(pool: PgPool) {
         .await
         .unwrap();
     assert_eq!(name, "Iso Guest", "foreign update must not mutate the row");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn find_connection_for_org_rejects_foreign_org(pool: PgPool) {
+    // `find_connection_for_org` is the ONLY surviving by-id connection lookup
+    // (the unkeyed `find_connection_by_id` was removed with the legacy OAuth
+    // callbacks). It backs `GET /api/v1/rentals/connections/{id}`, so this test
+    // locks in that a caller from org B cannot read org A's connection — and,
+    // critically, its `access_token` / `refresh_token` — by guessing the UUID.
+    let a = seed(&pool, "fc-a").await;
+    let b = seed(&pool, "fc-b").await;
+    let repo = RentalRepository::new(pool.clone());
+
+    // Org B must not read org A's connection by UUID (no OAuth-token leak).
+    assert!(
+        repo.find_connection_for_org(b.org, a.connection)
+            .await
+            .expect("query ok")
+            .is_none(),
+        "cross-tenant find_connection_for_org must return None (no OAuth-token leak)"
+    );
+    // Sanity: the owning org still reads its own connection.
+    assert!(repo
+        .find_connection_for_org(a.org, a.connection)
+        .await
+        .expect("query ok")
+        .is_some());
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
