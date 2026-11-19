@@ -157,28 +157,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-mobile-rn-voting-quorum-divzero-retry1",
-      "branch": "auto-impl/code-review-mobile-rn-voting-quorum-divz-d19b80bc",
-      "status": "in-progress",
-      "claimed_at": "2026-11-19T10:41:05Z",
-      "last_updated": "2026-11-19T10:41:05Z",
-      "status_changed_at": "2026-11-19T10:41:05Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     }
   ],
   "generated": "2026-11-19T10:41:05Z"
