@@ -4,6 +4,7 @@
 
 #![allow(clippy::type_complexity)]
 
+use crate::routes::pagination::clamp_limit_capped;
 use crate::state::AppState;
 use api_core::extractors::{AuthUser, RlsConnection, TenantAuthUser};
 use axum::{
@@ -130,6 +131,16 @@ pub struct ReportQueryParams {
 // AUDIT LOG ENDPOINTS
 // ============================================================================
 
+/// Default audit-log page size when the caller omits `?limit`.
+const DEFAULT_AUDIT_LOG_LIMIT: i64 = 100;
+
+/// Maximum audit-log page size. A caller may request a larger page than the
+/// generic `MAX_PAGE_LIMIT` (100) because audit-log exports are a documented
+/// bulk-read, but the value is capped here so an unbounded `?limit` cannot
+/// become a full-table-scan `LIMIT`. Mirrors the downstream repository clamp
+/// (`AuditLogRepository::{query,get_user_logs}` apply `.min(1000)`).
+const MAX_AUDIT_LOG_LIMIT: i64 = 1000;
+
 /// Audit log entry response.
 #[derive(Debug, Serialize)]
 pub struct AuditLogResponse {
@@ -168,6 +179,15 @@ async fn get_audit_logs(
     // it and returning an unfiltered all-actions superset.
     let action = parse_action_filter(params.action.as_deref())?;
 
+    // Clamp the client-supplied limit to the documented max (1000) at the
+    // handler boundary so the value we apply to the query is the same value we
+    // echo back in the pagination metadata below. Previously the response
+    // echoed the RAW `params.limit`, so a caller asking for `?limit=5000` was
+    // told `limit: 5000` even though the repository had already capped the page
+    // at 1000 — misleading pagination metadata.
+    let effective_limit =
+        clamp_limit_capped(params.limit, DEFAULT_AUDIT_LOG_LIMIT, MAX_AUDIT_LOG_LIMIT);
+
     let query = AuditLogQuery {
         user_id: params.user_id,
         action,
@@ -176,7 +196,7 @@ async fn get_audit_logs(
         org_id: params.org_id,
         from_date: params.from_date,
         to_date: params.to_date,
-        limit: params.limit,
+        limit: Some(effective_limit),
         offset: params.offset,
     };
 
@@ -208,7 +228,9 @@ async fn get_audit_logs(
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
         total,
-        limit: params.limit.unwrap_or(100),
+        // Echo the CLAMPED limit actually applied to the query, not the raw
+        // `params.limit` — so the pagination metadata reflects reality.
+        limit: effective_limit,
         offset: params.offset.unwrap_or(0),
     }))
 }
@@ -289,13 +311,13 @@ async fn get_user_audit_logs(
     // here, but an unrecognised one must still be rejected (400) rather than
     // silently accepted — same compliance foot-gun as get_audit_logs.
     parse_action_filter(params.action.as_deref())?;
+    // Clamp to the documented max (1000) at the handler boundary so the applied
+    // limit matches the one echoed in the response metadata below.
+    let effective_limit =
+        clamp_limit_capped(params.limit, DEFAULT_AUDIT_LOG_LIMIT, MAX_AUDIT_LOG_LIMIT);
     let logs = state
         .audit_log_repo
-        .get_user_logs(
-            user_id,
-            params.limit.unwrap_or(100),
-            params.offset.unwrap_or(0),
-        )
+        .get_user_logs(user_id, effective_limit, params.offset.unwrap_or(0))
         .await
         .map_err(db_error)?;
 
@@ -338,7 +360,8 @@ async fn get_user_audit_logs(
     Ok(Json(AuditLogListResponse {
         logs: log_responses,
         total,
-        limit: params.limit.unwrap_or(100),
+        // Echo the CLAMPED limit actually applied, not the raw `params.limit`.
+        limit: effective_limit,
         offset: params.offset.unwrap_or(0),
     }))
 }
@@ -841,8 +864,11 @@ async fn get_failed_logins_report(
 /// bad input instead of letting it reach the query.
 ///
 /// Only the lower bound is enforced here: the upper bound on `limit` is clamped
-/// downstream (`AuditLogRepository::{query,get_user_logs}` apply `.min(1000)`),
-/// so an over-large `limit` is a safe no-op rather than a client error.
+/// by the handlers to [`MAX_AUDIT_LOG_LIMIT`] (1000) via [`clamp_limit_capped`]
+/// before the query runs (and again downstream by
+/// `AuditLogRepository::{query,get_user_logs}` via `.min(1000)`), so an
+/// over-large `limit` is a safe no-op rather than a client error — and the
+/// clamped value is what the response echoes back.
 fn validate_pagination(
     limit: Option<i64>,
     offset: Option<i64>,

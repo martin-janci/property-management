@@ -1214,7 +1214,10 @@ async fn get_user_audit_logs_echoes_clamped_limit_not_raw(pool: PgPool) {
         reported <= 1000,
         "response must echo the clamped limit (<= 1000), got {reported}"
     );
-    assert_ne!(reported, 5000, "must not echo the raw over-max limit (5000)");
+    assert_ne!(
+        reported, 5000,
+        "must not echo the raw over-max limit (5000)"
+    );
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
