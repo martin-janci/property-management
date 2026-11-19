@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-19T12:41:38Z",
+  "archived_at": "2026-11-19T14:31:38Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -14070,6 +14070,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-10T14:27:10Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-limit-unclamped-retry1",
+      "action": "reality server import jobs limit unclamped [retry 1/2 of failed code-review-reality-server-import-jobs-limit-unclamped]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-reality-server-import-jobs-limit-unclamped reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T12:47:00Z) | gc1-reconcile 2026-11-19T14:26:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T20:34:55Z",
+      "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-19T14:26:46Z"
       }
     },
     {
@@ -28739,6 +28760,24 @@
         "merged_pr": 3592,
         "merged_at": "2026-11-17T10:38:44Z",
         "at": "2026-11-17T10:40:29Z"
+      }
+    },
+    {
+      "id": "pm-data-backfill-kpi-definitions-stories-2026-11-17",
+      "action": "Backfill KPI definitions for shipped stories in sprint-status.yaml or the epic docs, and add an events/KPI column to the story template",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-17 | gc1-reconcile 2026-11-19T14:26:46Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3638,
+        "merged_at": "2026-11-19T12:40:14Z",
+        "at": "2026-11-19T14:26:46Z"
       }
     },
     {

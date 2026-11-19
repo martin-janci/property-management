@@ -279,17 +279,6 @@
       "source": "pm-analysis 2026-11-17"
     },
     {
-      "id": "pm-data-backfill-kpi-definitions-stories-2026-11-17",
-      "action": "Backfill KPI definitions for shipped stories in sprint-status.yaml or the epic docs, and add an events/KPI column to the story template",
-      "owner_role": "pm-data",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
       "id": "code-review-reality-web-inquiry-type-raw-enum-retry1",
       "action": "[stale-resolved @ 2026-11-10T09:10:40Z: finding already fixed on dev (inquiry-type.ts helper + all locales present, landed c5d7ca5); implementer confirmed no diff needed, no PR] reality web inquiry type raw enum [retry 1/2 of failed code-review-reality-web-inquiry-type-raw-enum]",
       "owner_role": "pm-backend",
@@ -301,20 +290,6 @@
       "depends_on": [],
       "first_open_at": "2026-11-17T20:34:55Z",
       "retry_of": "code-review-reality-web-inquiry-type-raw-enum",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-reality-server-import-jobs-limit-unclamped-retry1",
-      "action": "reality server import jobs limit unclamped [retry 1/2 of failed code-review-reality-server-import-jobs-limit-unclamped]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-17T20:34:55Z (retry_of=code-review-reality-server-import-jobs-limit-unclamped reason=failed-no-pr cooldown_ok newest_failure=2026-11-10T12:47:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T20:34:55Z",
-      "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
       "retry_round": 1
     },
     {
