@@ -65,8 +65,9 @@ impl reqwest::dns::Resolve for SsrfGuardResolver {
 /// aborting. `reqwest`'s default is also 10, but we set it explicitly because
 /// the client below installs a *custom* redirect policy (which otherwise has no
 /// hop limit of its own) and the bound is a security-relevant part of the SSRF
-/// posture, not an incidental default.
-const MAX_REDIRECTS: usize = 10;
+/// posture, not an incidental default. Sourced from the shared SSRF guard so
+/// every outbound client bounds its redirect chain identically.
+const MAX_REDIRECTS: usize = common::url_validation::MAX_REDIRECT_HOPS;
 
 /// Decide whether a single redirect hop may be followed.
 ///
@@ -107,30 +108,10 @@ const MAX_REDIRECTS: usize = 10;
 /// against it rather than the immediately-preceding hop, so no chain of
 /// individually-"small" host changes can walk the request off its origin.
 fn redirect_hop_allowed(target: &str, original: &str, previous_hops: usize) -> Result<(), String> {
-    if previous_hops >= MAX_REDIRECTS {
-        return Err("too many redirects".to_string());
-    }
-    common::url_validation::validate_external_url(target).map_err(|e| e.to_string())?;
-
-    // Same-origin enforcement (credential-leak defence — see doc comment). Parse
-    // both URLs with the same (`reqwest`-re-exported) `url` crate so their
-    // `Origin` values are directly comparable; `Origin` equality covers
-    // scheme + host + port, so an `https`→`http` downgrade or a port change also
-    // counts as cross-origin and is refused.
-    let target_origin = reqwest::Url::parse(target)
-        .map_err(|e| format!("invalid redirect target URL: {e}"))?
-        .origin();
-    let original_origin = reqwest::Url::parse(original)
-        .map_err(|e| format!("invalid original request URL: {e}"))?
-        .origin();
-    if target_origin != original_origin {
-        return Err(
-            "cross-origin redirect refused (credential-leak / SSRF hardening): the redirect \
-             target is a different origin than the configured request URL"
-                .to_string(),
-        );
-    }
-    Ok(())
+    // Delegates to the shared SSRF guard so the per-hop re-validation (hop
+    // limit + `validate_external_url` + same-origin pinning) is a single tested
+    // primitive reused by every outbound client, not duplicated here.
+    common::url_validation::validate_redirect_hop(target, original, previous_hops)
 }
 
 /// Real DNS resolver used in production: the OS resolver via Tokio's async

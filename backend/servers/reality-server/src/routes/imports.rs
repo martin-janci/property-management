@@ -168,7 +168,9 @@ pub async fn create_import_job(
     // SECURITY: reject SSRF-prone source URLs at submission time (parity with
     // `agency_imports`). A domain that passes this static check can still
     // resolve to a private IP (DNS rebinding) — the import worker must
-    // re-validate the resolved IP at fetch time.
+    // re-validate at fetch time: connect only to IPs passed by
+    // `common::url_validation::validate_resolved_addrs`, and re-check every
+    // redirect hop with `common::url_validation::validate_redirect_hop`.
     if let Some(url) = data.source_url.as_deref() {
         if let Err(err) = validate_external_url(url) {
             return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
@@ -240,7 +242,9 @@ pub async fn update_import_job(
     // SECURITY: reject SSRF-prone source URLs at submission time (parity with
     // `agency_imports` and `create_import_job`). A domain that passes this
     // static check can still resolve to a private IP (DNS rebinding) — the
-    // import worker must re-validate the resolved IP at fetch time.
+    // import worker must re-validate at fetch time: connect only to IPs passed
+    // by `common::url_validation::validate_resolved_addrs`, and re-check every
+    // redirect hop with `common::url_validation::validate_redirect_hop`.
     if let Some(url) = data.source_url.as_deref() {
         if let Err(err) = validate_external_url(url) {
             return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
