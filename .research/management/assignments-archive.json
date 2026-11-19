@@ -13660,6 +13660,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-server-import-jobs-limit-unclamped-retry1",
+      "branch": "auto-impl/code-review-reality-server-import-jobs-l-40905a34",
+      "status": "failed",
+      "claimed_at": "2026-11-19T12:40:14Z",
+      "last_updated": "2026-11-19T12:52:00Z",
+      "status_changed_at": "2026-11-19T12:52:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=STALE/DUPLICATE - finding already resolved on dev: /api/v1/imports/jobs limit already clamped (imports.rs:127 .clamp(1,100)) + 2 regression tests present; full reality-server param sweep all clamped; agency import-history is hardcoded LIMIT 100 (no param). No code to change; no branch pushed, no PR.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-import-jobs-total-page-len",
       "branch": "auto-impl/code-review-reality-server-import-jobs-t-eef812af",
       "status": "merged",
@@ -30683,5 +30705,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T12:41:26Z"
+  "archived_at": "2026-11-19T12:51:10Z"
 }
