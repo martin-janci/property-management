@@ -443,7 +443,20 @@
     "addedMessage": "A(z) {{name}} widget be lett állítva.",
     "updatedTitle": "Widgetek frissitve",
     "updatedMessage": "Minden widget frissítésre került.",
-    "emptyText": "Még nincsenek beállított widgetek."
+    "emptyText": "Még nincsenek beállított widgetek.",
+    "settingsTitle": "Widgetbeállítások",
+    "notAvailableTitle": "A widgetek nem érhetők el",
+    "notAvailableIos": "A kezdőképernyős widgetekhez iOS 14 vagy újabb szükséges.",
+    "notAvailableAndroid": "A widgeteket ez az eszköz nem támogatja.",
+    "availableTitle": "Elérhető widgetek",
+    "availableDescription": "Állítsa be, mely widgetek jelenjenek meg a kezdőképernyőn.",
+    "activeTitle": "Aktív widgetek",
+    "metaInfo": "Méret: {{size}} • Frissítés: {{interval}} perc",
+    "remove": "Eltávolítás",
+    "refreshAll": "🔄 Összes widget frissítése",
+    "instructionsTitle": "Hogyan adhat hozzá widgeteket",
+    "instructionsIos": "1. Tartsa lenyomva a kezdőképernyőt\n2. Koppintson a bal felső sarokban lévő + gombra\n3. Keressen rá a „PPT” kifejezésre\n4. Válasszon widgetméretet, és koppintson a „Widget hozzáadása” lehetőségre",
+    "instructionsAndroid": "1. Tartsa lenyomva a kezdőképernyőt\n2. Koppintson a „Widgetek” elemre\n3. Keresse meg a „PPT Property Management” alkalmazást\n4. Húzzon egy widgetet a kezdőképernyőre"
   },
   "permissions": {
     "denied": "Engedly megtagadva",

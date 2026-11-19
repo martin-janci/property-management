@@ -485,7 +485,20 @@
     "addedMessage": "Widget {{name}} bol nakonfigurovaný.",
     "updatedTitle": "Widgety aktualizovane",
     "updatedMessage": "Všetky widgety boli obnovené.",
-    "emptyText": "Zatiaľ nie sú nakonfigurované žiadne widgety."
+    "emptyText": "Zatiaľ nie sú nakonfigurované žiadne widgety.",
+    "settingsTitle": "Nastavenia widgetov",
+    "notAvailableTitle": "Widgety nie sú dostupné",
+    "notAvailableIos": "Widgety na domovskej obrazovke vyžadujú iOS 14 alebo novší.",
+    "notAvailableAndroid": "Widgety nie sú na tomto zariadení podporované.",
+    "availableTitle": "Dostupné widgety",
+    "availableDescription": "Nastavte, ktoré widgety sa zobrazia na domovskej obrazovke.",
+    "activeTitle": "Aktívne widgety",
+    "metaInfo": "Veľkosť: {{size}} • Obnovovanie: {{interval}} min",
+    "remove": "Odstrániť",
+    "refreshAll": "🔄 Obnoviť všetky widgety",
+    "instructionsTitle": "Ako pridať widgety",
+    "instructionsIos": "1. Podržte prst na domovskej obrazovke\n2. Ťuknite na tlačidlo + vľavo hore\n3. Vyhľadajte „PPT“\n4. Vyberte veľkosť widgetu a ťuknite na „Pridať widget“",
+    "instructionsAndroid": "1. Podržte prst na domovskej obrazovke\n2. Ťuknite na „Widgety“\n3. Nájdite „PPT Property Management“\n4. Presuňte widget na domovskú obrazovku"
   },
   "permissions": {
     "denied": "Povolenie zamietnutne",
