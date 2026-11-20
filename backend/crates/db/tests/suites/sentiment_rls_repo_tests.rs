@@ -74,7 +74,6 @@ async fn seed_alert(pool: &PgPool, org_id: Uuid) -> Uuid {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn sentiment_repo_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = SentimentRepository::new(pool.clone());
 
@@ -279,7 +278,6 @@ async fn sentiment_repo_force_rls_deny_all_and_fix(pool: PgPool) {
 ///   3. **Cross-tenant write** — an org-A caller cannot upsert a trend for org
 ///      B: the policy `WITH CHECK` rejects the foreign `organization_id`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn sentiment_trends_and_thresholds_force_rls_deny_all_and_fix(pool: PgPool) {
     let repo = SentimentRepository::new(pool.clone());
 

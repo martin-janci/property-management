@@ -56,7 +56,6 @@ async fn seed_group_thread(pool: &PgPool, org_id: Uuid, participants: &[Uuid]) -
 /// the other participants' unread counts (#1773 finding-2). On the old global
 /// `messages.read_at` model this test fails: B reading would also zero C.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn unread_is_per_participant_in_group_thread(pool: PgPool) {
     let repo = MessagingRepository::new(pool.clone());
     let org = seed_org(&pool, "nparty-unread").await;

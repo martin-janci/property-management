@@ -310,6 +310,21 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// Delete a feed subscription. Scoped to the owning `agency_id` (IDOR,
+    /// PAP-142). Returns `true` when a row was removed.
+    pub async fn delete_feed_subscription(
+        &self,
+        id: Uuid,
+        agency_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query("DELETE FROM feed_subscriptions WHERE id = $1 AND agency_id = $2")
+            .bind(id)
+            .bind(agency_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
     /// Trigger immediate feed sync. Scoped to the owning `agency_id` (IDOR, PAP-142).
     pub async fn trigger_feed_sync(
         &self,

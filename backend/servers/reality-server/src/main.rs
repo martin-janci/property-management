@@ -200,6 +200,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::imports::create_feed,
         routes::imports::get_feed,
         routes::imports::update_feed,
+        routes::imports::delete_feed,
         routes::imports::sync_feed,
         // Portal listing CRUD (Epic 15.1/15.2)
         routes::portal_listings::create_listing,

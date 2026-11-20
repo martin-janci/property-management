@@ -114,20 +114,21 @@ async fn seed_application(
     pool: &PgPool,
     org_id: Uuid,
     unit_id: Uuid,
-    user_id: Uuid,
+    _user_id: Uuid,
     tag: &str,
 ) -> Uuid {
+    // `tenant_applications` has no `created_by` column and its status enum has
+    // no `pending` (migration 00052); seed a `draft` application.
     let uid = Uuid::new_v4();
     sqlx::query_scalar::<_, Uuid>(
         "INSERT INTO tenant_applications \
-             (organization_id, unit_id, applicant_name, applicant_email, created_by, status) \
-         VALUES ($1,$2,$3,$4,$5,'pending') RETURNING id",
+             (organization_id, unit_id, applicant_name, applicant_email, status) \
+         VALUES ($1,$2,$3,$4,'draft') RETURNING id",
     )
     .bind(org_id)
     .bind(unit_id)
     .bind(format!("Applicant {tag}"))
     .bind(format!("{tag}-{uid}@applicant.test"))
-    .bind(user_id)
     .fetch_one(pool)
     .await
     .expect("seed_application")
@@ -169,7 +170,6 @@ async fn seed_lease(pool: &PgPool, org_id: Uuid, unit_id: Uuid, user_id: Uuid) -
 // Applications
 // ---------------------------------------------------------------------------
 
-#[ignore = "tenant_applications.created_by column does not exist; schema mismatch between test and migration"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_application_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -209,7 +209,6 @@ async fn test_create_application_returns_201(pool: PgPool) {
     assert!(json.get("id").is_some(), "response must include id");
 }
 
-#[ignore = "lease applications route returns DB_ERROR; schema mismatch (missing created_by column)"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_applications_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -240,7 +239,6 @@ async fn test_list_applications_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_application panics: tenant_applications.created_by column does not exist"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_application_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -271,7 +269,6 @@ async fn test_get_application_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_application panics: tenant_applications.created_by column does not exist"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_update_application_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -308,7 +305,6 @@ async fn test_update_application_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_application panics: tenant_applications.created_by column does not exist"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_submit_application_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -340,7 +336,6 @@ async fn test_submit_application_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_application panics: tenant_applications.created_by column does not exist"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_review_application_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -359,8 +354,8 @@ async fn test_review_application_returns_200(pool: PgPool) {
         .expect("update status to submitted");
 
     let body = json!({
-        "decision": "approved",
-        "review_notes": "Looks good"
+        "status": "approved",
+        "decision_notes": "Looks good"
     });
 
     let resp = app
@@ -521,7 +516,6 @@ async fn test_update_template_returns_200(pool: PgPool) {
 // Core Leases
 // ---------------------------------------------------------------------------
 
-#[ignore = "leases route returns DB_ERROR (Failed to create lease); schema mismatch in leases table"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_create_lease_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -567,7 +561,6 @@ async fn test_create_lease_returns_201(pool: PgPool) {
     assert!(json.get("id").is_some(), "response must include id");
 }
 
-#[ignore = "leases route returns DB_ERROR; schema mismatch in leases table"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_leases_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -596,7 +589,6 @@ async fn test_list_leases_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_lease: leases route returns DB_ERROR; schema mismatch in leases table"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_lease_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -627,7 +619,6 @@ async fn test_get_lease_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_lease: leases route returns DB_ERROR; schema mismatch in leases table"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_update_lease_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -663,7 +654,6 @@ async fn test_update_lease_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_lease: leases route returns DB_ERROR; schema mismatch in leases table"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_terminate_lease_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -699,7 +689,6 @@ async fn test_terminate_lease_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_lease: leases route returns DB_ERROR; schema mismatch in leases table"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_renew_lease_returns_201(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -777,7 +766,6 @@ async fn test_create_amendment_returns_201(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_lease fails (DB_ERROR); depends on broken leases schema"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_amendments_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -812,7 +800,6 @@ async fn test_list_amendments_returns_200(pool: PgPool) {
 // Payments
 // ---------------------------------------------------------------------------
 
-#[ignore = "seed_lease fails (DB_ERROR); depends on broken leases schema"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_record_payment_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -858,7 +845,6 @@ async fn test_record_payment_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_lease fails (DB_ERROR); depends on broken leases schema"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_payments_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -964,7 +950,6 @@ async fn test_create_reminder_returns_201(pool: PgPool) {
     );
 }
 
-#[ignore = "seed_lease fails (DB_ERROR); depends on broken leases schema"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_list_reminders_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -999,7 +984,6 @@ async fn test_list_reminders_returns_200(pool: PgPool) {
 // Dashboard
 // ---------------------------------------------------------------------------
 
-#[ignore = "leases route returns DB_ERROR (Failed to get expiring leases); schema mismatch"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_expiring_leases_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
@@ -1028,7 +1012,6 @@ async fn test_get_expiring_leases_returns_200(pool: PgPool) {
     );
 }
 
-#[ignore = "leases route returns DB_ERROR (Failed to get statistics); schema mismatch"]
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_get_lease_statistics_returns_200(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;

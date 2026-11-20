@@ -107,7 +107,7 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &st
 ///   C. Stats view: regression guard for migration 00203
 ///   D. Upsert identity + provenance persisted into metadata (Story 84.5 / #2201)
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
+#[ignore = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3-dim vectors against vector(1536). Passes only on a DB without pgvector."]
 async fn rag_retrieval_correctness(pool: PgPool) {
     set_super_ctx(&pool).await;
     let repo = LlmDocumentRepository::new(pool.clone());
@@ -419,7 +419,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
 ///     backward-compat behaviour of `filter_by_embedding_model`),
 ///   * `limit` is honoured after over-fetch (×4, cap 200) + post-filter.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
+#[ignore = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3-dim vectors against vector(1536). Passes only on a DB without pgvector."]
 async fn search_documents_pgvector_model_filter_provenance(pool: PgPool) {
     set_super_ctx(&pool).await;
     let repo = LlmDocumentRepository::new(pool.clone());

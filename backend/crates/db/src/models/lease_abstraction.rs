@@ -322,7 +322,10 @@ pub struct ImportResult {
 /// Request to process a document with AI
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ProcessDocumentRequest {
-    pub document_id: Uuid,
+    /// Ignored: the document is the `{id}` path segment. Kept optional so
+    /// existing clients that still send it keep working; an empty body is valid.
+    #[serde(default)]
+    pub document_id: Option<Uuid>,
     /// Force reprocessing even if already processed
     #[serde(default)]
     pub force: bool,

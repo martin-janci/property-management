@@ -171,7 +171,6 @@ async fn seed_usage_log(pool: &PgPool, api_key_id: Uuid) -> Uuid {
 /// `api_key_usage_logs`) were forced in `00181` — `developer_oauth_apps` holds
 /// `client_secret_hash` (credential-class), making it the highest-value target.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn api_ecosystem_catalog_and_developer_tables_are_force_rls(pool: PgPool) {
     let tables = [
         "marketplace_integrations",
@@ -215,7 +214,6 @@ async fn api_ecosystem_catalog_and_developer_tables_are_force_rls(pool: PgPool) 
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn developer_portal_force_rls_cross_user_isolation(pool: PgPool) {
     let repo = ApiEcosystemRepository::new(pool.clone());
 

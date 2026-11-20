@@ -79,6 +79,8 @@ impl FormRepository {
                 -- which the model reads into a `String` (ColumnDecode). Re-expose
                 -- it as text under a distinct name and read that below.
                 s.status::text AS submission_status,
+                -- Same for `ip_address` (`INET`), read into `Option<String>`.
+                s.ip_address::text AS ip_address_text,
                 f.title as form_title,
                 u.name as submitted_by_name,
                 r.name as reviewed_by_name,
@@ -114,7 +116,7 @@ impl FormRepository {
                 reviewed_by: r.get("reviewed_by"),
                 reviewed_at: r.get("reviewed_at"),
                 review_notes: r.get("review_notes"),
-                ip_address: r.get("ip_address"),
+                ip_address: r.get("ip_address_text"),
                 user_agent: r.get("user_agent"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),

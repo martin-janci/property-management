@@ -76,7 +76,6 @@ where
 /// keeps the catalog readable with no RLS context, so the public-connection
 /// routing does not silently blank the marketplace.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn catalog_public_read_resolves_on_acquire_public_connection(pool: PgPool) {
     let id = seed_integration(&pool, "pap167-public-read", "PAP-167 Public Read").await;
 
@@ -141,7 +140,6 @@ async fn catalog_public_read_resolves_on_acquire_public_connection(pool: PgPool)
 /// through the production `acquire_public()` path and assert all three GUCs are
 /// cleared. Mirrors the connection-reuse discipline in `rls_context_bleed_tests.rs`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn acquire_public_clears_stale_context_from_prior_request(pool: PgPool) {
     let foreign_org = Uuid::new_v4();
     let foreign_user = Uuid::new_v4();
