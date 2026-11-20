@@ -21,7 +21,8 @@
 //!    a platform principal).
 
 use crate::extractors::auth::{
-    verify_access_token, AccessTokenClaims, AccessTokenError, TokenTypePolicy,
+    verify_access_token, AccessTokenClaims, AccessTokenError, TokenTypePolicy, JWT_AUDIENCE,
+    JWT_ISSUER,
 };
 use crate::extractors::tenant::TenantMembershipProvider;
 use crate::middleware::host_tenant::{ResolvedTenant, TenantSource};
@@ -78,18 +79,20 @@ impl AccessTokenClaims for PrincipalClaims {
 /// same way: pull the bearer token, decode it with the default HS256 validation
 /// (so `exp`/`nbf` are enforced), reject any non-`access` `token_type`, and
 /// trust ONLY the `sub` claim. Keeping that security-critical sequence in a
-/// single place means a future change (enforcing `aud`/`iss`, a new token
-/// discriminator, a key rotation) cannot be applied to one extractor and
-/// silently missed on the other.
+/// single place means a change like the iss/aud binding below (a new token
+/// discriminator, a key rotation) is applied to both extractors at once and
+/// cannot silently diverge.
 ///
 /// The decode + `token_type` gate themselves now live in the workspace-shared
 /// [`verify_access_token`] (GH #1675), which `auth.rs`'s `validate_access_token*`
 /// family also delegates to. This function keeps its historical, legacy-tolerant
-/// behavior **exactly**: a fresh `Validation::default()` (leeway 0, unlike
-/// `auth.rs`'s cached `leeway = 30` verifier), the `JWT_SECRET` read on every
-/// call, and the `TokenTypePolicy::LegacyTolerant` policy (a missing
-/// `token_type` is treated as access). Only the bearer-header parse and the
-/// observability `warn!` are kept here.
+/// behavior: a fresh `Validation::default()` (leeway 0, unlike `auth.rs`'s
+/// cached `leeway = 30` verifier) now additionally bound to the first-party
+/// [`JWT_ISSUER`]/[`JWT_AUDIENCE`] *leniently* (present-must-match,
+/// absent-accepted — GH #3427), the `JWT_SECRET` read on every call, and the
+/// `TokenTypePolicy::LegacyTolerant` policy (a missing `token_type` is treated
+/// as access). Only the bearer-header parse and the observability `warn!` are
+/// kept here.
 fn decode_bearer_subject(parts: &Parts) -> Result<Uuid, (StatusCode, &'static str)> {
     let auth_header = parts
         .headers
@@ -110,18 +113,28 @@ fn decode_bearer_subject(parts: &Parts) -> Result<Uuid, (StatusCode, &'static st
         )
     })?;
 
-    // We deliberately use the default `Validation` (HS256, exp+nbf checked).
-    // We do NOT enforce any audience/issuer here — those are issuance concerns
-    // that a future hardening pass can layer on (in `verify_access_token`).
+    // We deliberately use the default `Validation` (HS256, exp+nbf checked,
+    // leeway 0) and then bind the first-party iss/aud claims leniently
+    // (GH #3427). jsonwebtoken v10's `set_issuer`/`set_audience` are
+    // present-must-match / absent-accepted and do NOT add the claim to
+    // `required_spec_claims`, so this path keeps consuming tokens that omit
+    // iss/aud — reality-server portal/session JWTs (which emit only
+    // sub/kind/exp/iat) and any legacy token — while rejecting a token stamped
+    // for a different context. This is the cross-server SSO path, so the
+    // leniency on *absent* claims is load-bearing: it must not break reality-
+    // server consumption.
     //
     // `LegacyTolerant`: a token that omits `token_type` is treated as access
     // for backward-compat; an explicit non-access value is denied so a refresh
     // token cannot be replayed against an access-only route (mirrors `auth.rs`
     // RUST-002). The decode + gate run inside the shared verifier.
+    let mut validation = Validation::default();
+    validation.set_issuer(&[JWT_ISSUER]);
+    validation.set_audience(&[JWT_AUDIENCE]);
     let claims: PrincipalClaims = verify_access_token(
         token,
         &DecodingKey::from_secret(secret.as_bytes()),
-        &Validation::default(),
+        &validation,
         TokenTypePolicy::LegacyTolerant,
     )
     .map_err(|e| {
