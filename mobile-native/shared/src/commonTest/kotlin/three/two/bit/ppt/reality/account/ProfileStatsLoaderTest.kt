@@ -44,7 +44,7 @@ class ProfileStatsLoaderTest {
         favoritesStatus: HttpStatusCode = HttpStatusCode.OK,
         favoritesBody: String = """{"favorites":[],"total":0}""",
         savedSearchesStatus: HttpStatusCode = HttpStatusCode.OK,
-        savedSearchesBody: String = """{"searches":[],"total":0}""",
+        savedSearchesBody: String = """{"searches":[]}""",
         inquiriesStatus: HttpStatusCode = HttpStatusCode.OK,
         inquiriesBody: String = """{"inquiries":[],"total":0,"page":1,"page_size":20}""",
     ): ProfileStatsLoader {
@@ -96,7 +96,8 @@ class ProfileStatsLoaderTest {
         val loader =
             loaderWith(
                 favoritesBody = """{"favorites":[],"total":7}""",
-                savedSearchesBody = """{"searches":[],"total":3}""",
+                savedSearchesBody =
+                    """{"searches":[{"id":"s-0","name":"S0","criteria":{},"alerts_enabled":true,"created_at":"2026-04-26T10:00:00Z"},{"id":"s-1","name":"S1","criteria":{},"alerts_enabled":true,"created_at":"2026-04-26T10:00:00Z"},{"id":"s-2","name":"S2","criteria":{},"alerts_enabled":true,"created_at":"2026-04-26T10:00:00Z"}]}""",
                 inquiriesBody = """{"inquiries":[],"total":5,"page":1,"page_size":20}""",
             )
         val stats = loader.load()
@@ -110,7 +111,8 @@ class ProfileStatsLoaderTest {
         val loader =
             loaderWith(
                 favoritesStatus = HttpStatusCode.InternalServerError,
-                savedSearchesBody = """{"searches":[],"total":2}""",
+                savedSearchesBody =
+                    """{"searches":[{"id":"s-0","name":"S0","criteria":{},"alerts_enabled":true,"created_at":"2026-04-26T10:00:00Z"},{"id":"s-1","name":"S1","criteria":{},"alerts_enabled":true,"created_at":"2026-04-26T10:00:00Z"}]}""",
                 inquiriesStatus = HttpStatusCode.Unauthorized,
             )
         val stats = loader.load()

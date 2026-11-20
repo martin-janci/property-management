@@ -8,7 +8,7 @@ import shared
 /// messages to an open inquiry.
 ///
 /// Endpoint: GET /api/v1/inquiries/{id}
-/// Reply:    POST /api/v1/inquiries/{id}/replies
+/// Reply:    POST /api/v1/inquiries/{id}/respond (realtor only)
 ///
 /// Epic 82 - Story 82.5: Inquiries and Account
 struct InquiryDetailView: View {

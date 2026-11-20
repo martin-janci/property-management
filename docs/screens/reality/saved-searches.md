@@ -111,6 +111,7 @@ UC-45 saved searches & alerts. Each saved search is a serialized filter state fr
 - **Full i18n externalization (PR #2894, 2026-08-31):** the shipped `SavedSearchCard` + page shell (`SavedSearchesPage`) previously rendered hardcoded English literals in a 4-language app. All of them now resolve through `useTranslations('pages.savedSearches')`: page `title`/`subtitle`, `forSale`/`forRent`, `allListings`, `view`, `alertsOn`/`alertsOff`, the alert-frequency badge (now `frequency.{daily,weekly,instant}` instead of the raw API enum value), `newCount` (`{count} new`), `deleteConfirm`/`confirmYes`/`confirmNo`, and the delete `deleteAriaLabel`. Message keys were added to **all six** locale catalogs (en/sk/cs/de/pl/hu) with real copy, alphabetically sorted. `SavedSearchesContent` already used the same namespace. No behavior change for English; no endpoint change.
 
 ## Agent Log
+- 2026-11-20 — agent: mobile-native saved searches mapped to server `criteria`/`alerts_enabled`; update uses PUT.
 
 <!-- newest entries on top -->
 

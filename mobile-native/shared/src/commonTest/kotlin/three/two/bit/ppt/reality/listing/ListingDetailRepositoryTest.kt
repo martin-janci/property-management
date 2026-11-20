@@ -61,47 +61,31 @@ class ListingDetailRepositoryTest {
         )
     }
 
+    /** Server wire shape: `ListingDetail` in reality-server `routes/listings.rs`. */
     private val fullDetailBody =
         """
         {
           "id": "lst-99",
           "title": "Bright 3br with terrace",
           "description": "A lovely flat in Old Town.",
-          "type": "sale",
-          "category": "apartment",
-          "status": "active",
           "price": 285000,
           "currency": "EUR",
-          "price_per_sqm": 3800,
-          "area_sqm": 75.0,
+          "area": 75,
           "rooms": 3,
-          "bedrooms": 2,
           "bathrooms": 1,
-          "year_built": 2008,
-          "address": {
-            "street": "Hlavna 1",
-            "city": "Bratislava",
-            "postal_code": "81101",
-            "country": "SK",
-            "coordinates": { "latitude": 48.15, "longitude": 17.10 }
-          },
-          "images": [
-            { "id": "img-1", "url": "https://cdn.example.com/a.jpg", "is_primary": true },
-            { "id": "img-2", "url": "https://cdn.example.com/b.jpg",
-              "thumbnail_url": "https://cdn.example.com/b-thumb.jpg" }
-          ],
+          "floor": 2,
+          "total_floors": 5,
+          "address": "Hlavna 1, 81101 Bratislava",
+          "city": "Bratislava",
+          "country": "SK",
+          "latitude": 48.15,
+          "longitude": 17.10,
+          "property_type": "apartment",
+          "transaction_type": "sale",
+          "photos": ["https://cdn.example.com/a.jpg", "https://cdn.example.com/b.jpg"],
           "features": ["balcony", "elevator", "parking"],
-          "energy_rating": "B",
-          "realtor": {
-            "id": "rlt-1",
-            "name": "Jana Realitka",
-            "phone": "+421900000000",
-            "agency": { "id": "ag-1", "name": "TopReality" }
-          },
-          "view_count": 120,
-          "inquiry_count": 4,
-          "created_at": "2026-04-26T10:00:00Z",
-          "updated_at": "2026-04-27T09:00:00Z"
+          "published_at": "2026-04-26T10:00:00Z",
+          "view_count": 120
         }
         """
             .trimIndent()
@@ -120,7 +104,7 @@ class ListingDetailRepositoryTest {
         assertEquals(HttpMethod.Get, cap.method)
         assertEquals("/api/v1/listings/lst-99", cap.path)
 
-        // Render-contract: the fields the detail screen binds must all decode.
+        // Render-contract: the server's flat payload maps onto the fields the screen binds.
         assertEquals("Bright 3br with terrace", detail.title)
         assertEquals(ListingType.SALE, detail.type)
         assertEquals(PropertyCategory.APARTMENT, detail.category)
@@ -129,15 +113,30 @@ class ListingDetailRepositoryTest {
         assertEquals(3_800L, detail.pricePerSqm)
         assertEquals(75.0, detail.areaSqm)
         assertEquals(3, detail.rooms)
+        assertEquals(2, detail.floor)
         assertEquals(listOf("balcony", "elevator", "parking"), detail.features)
         assertEquals(2, detail.images.size)
         assertTrue(detail.images.first().isPrimary)
+        assertEquals("https://cdn.example.com/a.jpg", detail.images.first().url)
         assertEquals("Bratislava", detail.address.city)
+        assertEquals("Hlavna 1, 81101 Bratislava", detail.address.street)
         assertNotNull(detail.address.coordinates)
-        val realtor = assertNotNull(detail.realtor)
-        assertEquals("Jana Realitka", realtor.name)
-        assertEquals("TopReality", realtor.agency?.name)
         assertEquals(120, detail.viewCount)
+        assertEquals("2026-04-26T10:00:00Z", detail.createdAt)
+    }
+
+    @Test
+    fun getListingDetail_maps_server_property_types() = runTest {
+        val body =
+            fullDetailBody
+                .replace("\"apartment\"", "\"parking\"")
+                .replace("\"transaction_type\": \"sale\"", "\"transaction_type\": \"rent\"")
+        val repo = repoCapturing(Captured(), HttpStatusCode.OK, body)
+
+        val detail = assertNotNull(repo.getListingDetail("lst-99").getOrNull())
+
+        assertEquals(PropertyCategory.GARAGE, detail.category)
+        assertEquals(ListingType.RENT, detail.type)
     }
 
     @Test

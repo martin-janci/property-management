@@ -120,6 +120,7 @@ Search results page — the workhorse of UC-31. Bridges discovery (map browsing,
 - "Hľadať v tejto oblasti" pill is shown only after a manual pan (debounce 400ms) — not on initial render.
 
 ## Agent Log
+- 2026-11-20 — agent: mobile-native search now uses `GET /api/v1/listings` with server query params (was `POST /listings/search`, which does not exist); server DTOs mapped onto app models.
 
 <!-- newest entries on top -->
 

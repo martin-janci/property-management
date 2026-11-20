@@ -6,6 +6,9 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import three.two.bit.ppt.reality.api.HttpClientProvider
 import three.two.bit.ppt.reality.api.asPathSegment
+import three.two.bit.ppt.reality.favorites.FavoriteAlert
+import three.two.bit.ppt.reality.favorites.FavoriteAlertsResponse
+import three.two.bit.ppt.reality.inquiry.UnsupportedFeatureException
 
 /**
  * Repository for notifications and alerts.
@@ -23,8 +26,14 @@ class NotificationRepository(
     }
 
     // --- Notifications ---
+    //
+    // reality-server has no generic `/notifications` inbox. The in-app notification feed it does
+    // have is the favorite-alerts feed (`/api/v1/favorites/alerts`: price changes and status
+    // changes on saved listings), so the inbox calls are served from there. Push tokens,
+    // notification preferences and deleting a notification have no server counterpart yet; those
+    // calls fail with [UnsupportedFeatureException] without touching the network.
 
-    /** Get user's notifications. */
+    /** Get the user's notifications (favorite alerts, newest first). */
     suspend fun getNotifications(
         page: Int = 1,
         pageSize: Int = 20,
@@ -32,15 +41,24 @@ class NotificationRepository(
     ): Result<NotificationsResponse> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/notifications") {
+                client.get("$baseUrl/api/v1/favorites/alerts") {
                     configureRequest()
-                    parameter("page", page)
-                    parameter("page_size", pageSize)
-                    if (unreadOnly) parameter("unread_only", true)
+                    parameter("limit", pageSize)
+                    parameter("offset", (page.coerceAtLeast(1) - 1) * pageSize)
                 }
 
             if (response.status.isSuccess()) {
-                Result.success(response.body())
+                val wire = response.body<FavoriteAlertsResponse>()
+                // The server has no unread filter; apply it to the fetched page.
+                val entries =
+                    wire.alerts.map { it.toNotification() }.filter { !unreadOnly || !it.isRead }
+                Result.success(
+                    NotificationsResponse(
+                        notifications = entries,
+                        total = entries.size,
+                        unreadCount = wire.unreadCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                    ),
+                )
             } else if (response.status == HttpStatusCode.Unauthorized) {
                 Result.failure(NotificationException("Please sign in to view notifications"))
             } else {
@@ -53,20 +71,26 @@ class NotificationRepository(
         }
     }
 
-    /** Get unread notification count. */
+    /**
+     * Get unread notification count (`unread_count` of the favorite-alerts feed). A signed-out
+     * caller (401) gets 0 so a badge never errors.
+     */
     suspend fun getUnreadCount(): Result<Int> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/notifications/unread-count") { configureRequest() }
+                client.get("$baseUrl/api/v1/favorites/alerts") {
+                    configureRequest()
+                    parameter("limit", 1)
+                }
 
             if (response.status.isSuccess()) {
-                val data: Map<String, Int> = response.body()
-                Result.success(data["count"] ?: 0)
+                val unread = response.body<FavoriteAlertsResponse>().unreadCount
+                Result.success(unread.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
             } else if (response.status == HttpStatusCode.Unauthorized) {
                 Result.success(0)
             } else {
                 Result.failure(
-                    NotificationException("Failed to get unread count: ${response.status}"),
+                    NotificationException("Failed to load unread count: ${response.status}"),
                 )
             }
         } catch (e: Exception) {
@@ -74,12 +98,12 @@ class NotificationRepository(
         }
     }
 
-    /** Mark a notification as read. */
+    /** Mark notification as read. */
     suspend fun markAsRead(notificationId: String): Result<Unit> {
         return try {
             val response =
                 client.post(
-                    "$baseUrl/api/v1/notifications/${notificationId.asPathSegment()}/read",
+                    "$baseUrl/api/v1/favorites/alerts/${notificationId.asPathSegment()}/read",
                 ) {
                     configureRequest()
                 }
@@ -98,7 +122,7 @@ class NotificationRepository(
     suspend fun markAllAsRead(): Result<Unit> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/notifications/read-all") { configureRequest() }
+                client.post("$baseUrl/api/v1/favorites/alerts/read-all") { configureRequest() }
 
             if (response.status.isSuccess()) {
                 Result.success(Unit)
@@ -112,119 +136,66 @@ class NotificationRepository(
         }
     }
 
-    /** Delete a notification. */
-    suspend fun deleteNotification(notificationId: String): Result<Unit> {
-        return try {
-            val response =
-                client.delete("$baseUrl/api/v1/notifications/${notificationId.asPathSegment()}") {
-                    configureRequest()
-                }
+    /** Delete a notification. Not offered by the server yet. */
+    @Suppress("UNUSED_PARAMETER")
+    suspend fun deleteNotification(notificationId: String): Result<Unit> =
+        unsupported("Deleting notifications is not available yet")
 
-            if (response.status.isSuccess()) {
-                Result.success(Unit)
-            } else {
-                Result.failure(
-                    NotificationException("Failed to delete notification: ${response.status}"),
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    // --- Push Notifications ---
 
-    // --- Push Token ---
-
-    /** Register push notification token. */
+    /** Register a device push token. Not offered by the server yet. */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun registerPushToken(
         token: String,
         platform: String,
         deviceId: String? = null,
-    ): Result<RegisterPushTokenResponse> {
-        return try {
-            val response =
-                client.post("$baseUrl/api/v1/notifications/push-token") {
-                    configureRequest()
-                    setBody(RegisterPushTokenRequest(token, platform, deviceId))
-                }
+    ): Result<RegisterPushTokenResponse> = unsupported("Push notifications are not available yet")
 
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                Result.failure(
-                    NotificationException("Failed to register push token: ${response.status}"),
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /** Unregister push notification token. */
-    suspend fun unregisterPushToken(token: String): Result<Unit> {
-        return try {
-            val response =
-                client.delete("$baseUrl/api/v1/notifications/push-token") {
-                    configureRequest()
-                    parameter("token", token)
-                }
-
-            if (response.status.isSuccess()) {
-                Result.success(Unit)
-            } else {
-                Result.failure(
-                    NotificationException("Failed to unregister push token: ${response.status}"),
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    /** Unregister a device push token. Not offered by the server yet. */
+    @Suppress("UNUSED_PARAMETER")
+    suspend fun unregisterPushToken(token: String): Result<Unit> =
+        unsupported("Push notifications are not available yet")
 
     // --- Preferences ---
 
-    /** Get notification preferences. */
-    suspend fun getPreferences(): Result<NotificationPreferences> {
-        return try {
-            val response =
-                client.get("$baseUrl/api/v1/notifications/preferences") { configureRequest() }
+    /**
+     * Notification preferences. Not offered by the server yet; the account screen hides the card.
+     */
+    suspend fun getPreferences(): Result<NotificationPreferences> =
+        unsupported("Notification preferences are not available yet")
 
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else if (response.status == HttpStatusCode.Unauthorized) {
-                Result.failure(NotificationException("Please sign in to view preferences"))
-            } else {
-                Result.failure(
-                    NotificationException("Failed to load preferences: ${response.status}"),
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /** Update notification preferences. */
+    /** Update notification preferences. Not offered by the server yet. */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun updatePreferences(
         preferences: NotificationPreferences,
-    ): Result<NotificationPreferences> {
-        return try {
-            val response =
-                client.put("$baseUrl/api/v1/notifications/preferences") {
-                    configureRequest()
-                    setBody(UpdateNotificationPreferencesRequest(preferences))
-                }
+    ): Result<NotificationPreferences> =
+        unsupported("Notification preferences are not available yet")
 
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                Result.failure(
-                    NotificationException("Failed to update preferences: ${response.status}"),
-                )
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    private fun <T> unsupported(message: String): Result<T> =
+        Result.failure(UnsupportedFeatureException(message))
 }
+
+private fun FavoriteAlert.toNotification(): NotificationEntry =
+    NotificationEntry(
+        id = id,
+        type =
+            when {
+                isPriceDrop -> NotificationType.PRICE_DROP
+                newStatus == "sold" || newStatus == "rented" -> NotificationType.FAVORITE_SOLD
+                else -> NotificationType.LISTING_UPDATE
+            },
+        title = title,
+        body =
+            when {
+                isPriceChange && oldPrice != null && newPrice != null ->
+                    "$oldPrice → $newPrice ${currency.orEmpty()}".trim()
+                newStatus != null -> "${previousStatus.orEmpty()} → $newStatus".trim()
+                else -> ""
+            },
+        listingId = listingId,
+        isRead = !isUnread,
+        createdAt = createdAt,
+    )
 
 /** Notification-specific exception. */
 class NotificationException(message: String) : Exception(message)

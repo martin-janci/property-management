@@ -26,6 +26,8 @@ enum class PropertyCategory {
     @SerialName("garage") GARAGE,
     @SerialName("office") OFFICE,
     @SerialName("warehouse") WAREHOUSE,
+    /** Server `property_type = 'other'`; also the fallback for unknown types. */
+    @SerialName("other") OTHER,
 }
 
 /** Listing status. */

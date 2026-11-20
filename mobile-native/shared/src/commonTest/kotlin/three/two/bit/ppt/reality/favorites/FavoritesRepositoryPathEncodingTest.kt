@@ -101,7 +101,7 @@ class FavoritesRepositoryPathEncodingTest {
     fun updateSavedSearch_encodes_search_id_path_segment() = runTest {
         val cap = Captured()
         repoCapturing(cap).updateSavedSearch(hostileId, UpdateSavedSearchRequest(name = "x"))
-        assertEquals(HttpMethod.Patch, cap.method)
+        assertEquals(HttpMethod.Put, cap.method)
         assertEquals("/api/v1/saved-searches/$encodedId", cap.path)
     }
 
