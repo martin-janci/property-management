@@ -552,6 +552,10 @@ impl AccountingRepository {
     }
 
     /// Update invoice paid amount and status based on a match confirmation.
+    ///
+    /// Cancelled documents are excluded by the WHERE guard: a payment applied
+    /// to a cancelled invoice must not resurrect it as paid — callers get
+    /// `None` (same as an unknown id) and surface the mismatch (UC-ACC-05.17).
     pub async fn update_invoice_payment_status_rls<'e, E>(
         &self,
         executor: E,
@@ -575,7 +579,7 @@ impl AccountingRepository {
                     ELSE 'issued'
                 END,
                 updated_at = NOW()
-            WHERE id = $2
+            WHERE id = $2 AND status <> 'cancelled'
             RETURNING *
             "#,
         )

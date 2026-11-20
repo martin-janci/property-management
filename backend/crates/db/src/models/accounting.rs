@@ -24,15 +24,21 @@ pub struct Contact {
 }
 
 /// Status of an issued invoice.
+///
+/// Full lifecycle (UC-ACC-05.17): draft → issued → sent → paid/partially_paid/
+/// overdue, with cancelled reachable from issued/sent/overdue while nothing is
+/// paid. The DB CHECK (migration 00202) allows the same set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "TEXT", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum InvoiceStatus {
     Draft,
     Issued,
+    Sent,
     Paid,
     PartiallyPaid,
     Overdue,
+    Cancelled,
 }
 
 /// VAT rate types for CZ/SK.
