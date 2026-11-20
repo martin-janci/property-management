@@ -100,7 +100,12 @@
     "description": "Description",
     "location": "Location",
     "priority": "Priority",
-    "status": "Status",
+    "status": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
     "photo": "Photo",
     "addPhoto": "Add Photo",
     "submitFault": "Submit Fault",
@@ -241,7 +246,12 @@
     "noQuestions": "No questions yet",
     "youHaveVoted": "You have already voted on this ballot.",
     "notActive": "This vote is not currently active.",
-    "votingAs": "Voting as"
+    "votingAs": "Voting as",
+    "status": {
+      "active": "Active",
+      "closed": "Closed",
+      "pending": "Pending"
+    }
   },
   "documents": {
     "title": "Documents",
@@ -476,7 +486,12 @@
       "ackError": "Failed to acknowledge: {{message}}",
       "publishedAt": "Published: {{date}}"
     },
-    "loadError": "Couldn't load announcements"
+    "loadError": "Couldn't load announcements",
+    "status": {
+      "published": "Published",
+      "draft": "Draft",
+      "scheduled": "Scheduled"
+    }
   },
   "widgets": {
     "addedTitle": "Widget Added",
@@ -621,7 +636,13 @@
   "buildings": {
     "loadError": "Couldn't load buildings",
     "emptyTitle": "No buildings",
-    "emptyText": "No properties are linked to your account yet."
+    "emptyText": "No properties are linked to your account yet.",
+    "status": {
+      "active": "Active",
+      "under_construction": "Under construction",
+      "renovation": "Renovation",
+      "inactive": "Inactive"
+    }
   },
   "messages": {
     "unreadCount_one": "{{count}} unread message",
@@ -647,7 +668,13 @@
     "emptyText": "You haven't been added to any rental agreement yet.",
     "detailLoadError": "Couldn't load lease",
     "noPayments": "No upcoming payments scheduled.",
-    "notFound": "Lease not found."
+    "notFound": "Lease not found.",
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "expired": "Expired",
+      "terminated": "Terminated"
+    }
   },
   "personMonths": {
     "title": "Person-months",

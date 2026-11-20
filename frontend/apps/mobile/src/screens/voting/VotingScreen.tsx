@@ -334,7 +334,7 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
                 <View
                   style={[styles.statusBadge, { backgroundColor: getStatusColor(vote.status) }]}
                 >
-                  <Text style={styles.statusText}>{vote.status}</Text>
+                  <Text style={styles.statusText}>{t(`voting.status.${vote.status}`)}</Text>
                 </View>
                 {vote.status === 'active' && (
                   <Text style={styles.timeRemaining}>{getTimeRemaining(vote.endsAt)}</Text>

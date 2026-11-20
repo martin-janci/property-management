@@ -215,7 +215,7 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
                   style={[styles.statusBadge, { backgroundColor: statusBgColor[fault.status] }]}
                 >
                   <Text style={[styles.statusText, { color: statusInkColor[fault.status] }]}>
-                    {fault.status.replace('_', ' ')}
+                    {t(`faults.status.${fault.status}`)}
                   </Text>
                 </View>
               </View>

@@ -135,7 +135,7 @@ describe('category keys resolve to real, locale-distinct translations', () => {
   it('every locale defines all 7 category keys as non-empty strings', () => {
     for (const locale of [en, sk, cs, de, pl, hu]) {
       for (const key of CATEGORY_KEYS) {
-        const value = (locale.faults as Record<string, string>)[key];
+        const value = (locale.faults as unknown as Record<string, string>)[key];
         expect(typeof value).toBe('string');
         expect(value.length).toBeGreaterThan(0);
       }
@@ -146,7 +146,7 @@ describe('category keys resolve to real, locale-distinct translations', () => {
     // Plumbing and Other both translate in every supported locale — proving the
     // chips actually localise rather than echoing the English source.
     for (const locale of [sk, cs, de, pl, hu]) {
-      const f = locale.faults as Record<string, string>;
+      const f = locale.faults as unknown as Record<string, string>;
       expect(f.categoryPlumbing).not.toBe(en.faults.categoryPlumbing);
       expect(f.categoryOther).not.toBe(en.faults.categoryOther);
     }

@@ -173,7 +173,7 @@ export function AnnouncementDetailScreen({
             ) : null}
             <View style={[styles.statusPill, statusPillStyle(announcement.status)]}>
               <Text style={[styles.statusPillText, statusPillTextStyle(announcement.status)]}>
-                {announcement.status.charAt(0).toUpperCase() + announcement.status.slice(1)}
+                {t(`announcements.status.${announcement.status}`)}
               </Text>
             </View>
           </View>
