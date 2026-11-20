@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) \u2014 pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-security",
@@ -105,7 +105,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
-      "action": "KMP realtor SSO error-body parsing is unguarded \u2014 crashes on non-JSON response",
+      "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -190,42 +190,6 @@
       "source": "pm-analysis 2026-11-17"
     },
     {
-      "id": "code-review-reality-server-import-fetch-ssrf-revalidation",
-      "action": "reality server import fetch ssrf revalidation",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-29T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-core-no-runtime-token-refresh",
-      "action": "ppt web core no runtime token refresh",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-retry-ignores-retry-after",
       "action": "ppt web core retry ignores retry after",
       "owner_role": "pm-backend",
@@ -241,41 +205,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-authcallback-decodeuri-throw",
-      "action": "ppt web ui authcallback decodeuri throw",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
-      "id": "stalled-review-pr-3380",
-      "action": "Stalled review: PR #3380 (reality-web analytics i18n) \u2014 8d, no reviewDecision",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=1 conf=medium vector=dx)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T22:26:56Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "dx"
       }
     },
     {
@@ -451,7 +380,7 @@
     },
     {
       "id": "pm-integration-voice-oauth-rfc6749-shape",
-      "action": "Verify sanitized voice_oauth_error_response bodies follow RFC 6749 \u00a75.2 (error+error_description, correct status codes) on Alexa/Google account-linking path; contract test required",
+      "action": "Verify sanitized voice_oauth_error_response bodies follow RFC 6749 §5.2 (error+error_description, correct status codes) on Alexa/Google account-linking path; contract test required",
       "owner_role": "pm-integration",
       "priority": "medium",
       "dependency": "pm-security",
@@ -559,7 +488,7 @@
     },
     {
       "id": "code-review-reality-web-preview-hardcoded-price",
-      "action": "reality-web agency branding preview shows hardcoded `\u20ac450,000` \u2014 breaks for de/sk/cs locales",
+      "action": "reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -713,24 +642,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-26T18:36:06Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-hellosign-unbound-envelope",
-      "action": "api handlers hellosign unbound envelope",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d api-handlers score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T22:25:12Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-26T00:00:00Z"
       }
     },
     {

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-20T02:27:43Z",
+  "archived_at": "2026-11-20T04:29:58Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5781,6 +5781,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "action": "api handlers hellosign unbound envelope",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d api-handlers score=3 vector=bug) | gc1-reconcile 2026-11-20T04:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T22:25:12Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-26T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3648,
+        "merged_at": "2026-11-20T02:41:19Z",
+        "at": "2026-11-20T04:25:12Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-impersonation-active-raw-xff-audit",
       "action": "admin /impersonation/active audit skips `audit_ip_from_headers` → raw XFF overflows VARCHAR(45), audit INSERT fails silently",
       "owner_role": "pm-backend",
@@ -10583,6 +10608,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-no-runtime-token-refresh",
+      "action": "ppt web core no runtime token refresh",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-20T04:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-28T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3646,
+        "merged_at": "2026-11-20T02:41:45Z",
+        "at": "2026-11-20T04:25:12Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-notfound-i18n-gap",
       "action": "ppt-web route wrappers render 8 hardcoded English 'X not found' fallbacks — sk/cs/de users see untranslated text",
       "owner_role": "pm-backend",
@@ -11590,6 +11640,31 @@
         "merged_pr": 3465,
         "merged_at": "2026-11-12T20:37:00Z",
         "at": "2026-11-12T22:24:28Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-authcallback-decodeuri-throw",
+      "action": "ppt web ui authcallback decodeuri throw",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-20T04:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-28T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3645,
+        "merged_at": "2026-11-20T02:38:56Z",
+        "at": "2026-11-20T04:25:12Z"
       }
     },
     {
@@ -14261,6 +14336,31 @@
         "merged_pr": 3424,
         "merged_at": "2026-11-11T20:30:20Z",
         "at": "2026-11-11T20:30:30Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-import-fetch-ssrf-revalidation",
+      "action": "reality server import fetch ssrf revalidation",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-20T04:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3647,
+        "merged_at": "2026-11-20T02:44:31Z",
+        "at": "2026-11-20T04:25:12Z"
       }
     },
     {
@@ -33100,6 +33200,30 @@
       "retry_of": "stalled-review-pr-3024",
       "retry_round": 1,
       "last_updated": "2026-10-25T18:32:57Z"
+    },
+    {
+      "id": "stalled-review-pr-3380",
+      "action": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-backlog-refill 2026-11-18T22:26:56Z (score=1 conf=medium vector=dx) | gc1-reconcile 2026-11-20T04:25:12Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T22:26:56Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "dx"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T04:25:12Z"
+      }
     },
     {
       "id": "test-gap-81-2-report-exec-history-download-e2e",
