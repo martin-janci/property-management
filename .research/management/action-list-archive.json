@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-20T04:29:58Z",
+  "archived_at": "2026-11-20T06:28:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10971,6 +10971,31 @@
         "merged_pr": 3483,
         "merged_at": "2026-11-13T10:43:29Z",
         "at": "2026-11-13T12:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-retry-ignores-retry-after",
+      "action": "ppt web core retry ignores retry after",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-20T06:23:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-28T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3650,
+        "merged_at": "2026-11-20T04:40:20Z",
+        "at": "2026-11-20T06:23:32Z"
       }
     },
     {
@@ -29105,6 +29130,33 @@
       }
     },
     {
+      "id": "gh-issue-3649",
+      "action": "Follow-up: suggestions seed-city for region `de` resolves to Wien (Austria) (PR #3628) (Closes #3649)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-20T02:24:10Z (#3649) | gc1-reconcile 2026-11-20T06:23:32Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T02:24:10Z",
+      "issue_ref": {
+        "number": 3649,
+        "url": "https://github.com/martin-janci/property-management/issues/3649",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3651,
+        "merged_at": "2026-11-20T04:42:46Z",
+        "at": "2026-11-20T06:23:32Z"
+      }
+    },
+    {
       "id": "hotfix-no-test-pr-3497",
       "action": "PR #3497 fix(api-server) voice book-facility false-success — shipped without regression test",
       "owner_role": "pm-qa",
@@ -30305,6 +30357,25 @@
       "resolved_by": "resolved by dispatcher burst: 58 PRs merged in 4-day window"
     },
     {
+      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20",
+      "action": "Resolve dispatcher stall #3357: rebase or manually resolve the 3 approved conflicting PRs, merging security-flavored ones first",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-20 | gc1-reconcile 2026-11-20T06:23:32Z",
+      "first_open_at": "2026-11-20T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T06:23:32Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-resolve-mobile-biome-gate-3584-2026-11-17",
       "action": "Resolve #3584 (mobile biome gate downgrade) by deciding the warn-to-error promotion date for the #3566 lint rules",
       "owner_role": "pm-scrum-master",
@@ -30423,6 +30494,25 @@
       "depends_on": [
         "pm-tech-lead"
       ]
+    },
+    {
+      "id": "pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20",
+      "action": "Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and merge before #3628 follow-up; fix #3649 so region de does not seed Wien",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-20 | gc1-reconcile 2026-11-20T06:23:32Z",
+      "first_open_at": "2026-11-20T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T06:23:32Z"
+      }
     },
     {
       "id": "pm-scrum-master-shepherd-84-1-84-2-frontend-finish",
@@ -30585,6 +30675,25 @@
       "retry_of": "pm-scrum-master-stalled-invoice-lifecycle-2555",
       "retry_round": 1,
       "last_updated": "2026-10-25T18:32:57Z"
+    },
+    {
+      "id": "pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20",
+      "action": "Sweep violations mutation handlers (moderation.rs/aml_dsa.rs) for the 403-vs-404 cross-tenant contract (assign still returns 403 per #3187)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-20 | gc1-reconcile 2026-11-20T06:23:32Z",
+      "first_open_at": "2026-11-20T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T06:23:32Z"
+      }
     },
     {
       "id": "pm-scrum-master-triage-3357-dispatcher-stall-2026-11-09",
@@ -30852,6 +30961,25 @@
       "deadline": null,
       "source": "pm-analysis 2026-05-23",
       "depends_on": []
+    },
+    {
+      "id": "pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20",
+      "action": "Resolve issue #3357 (stalled dispatcher): decide which approved PRs to rebase manually, and define an escalation path for non-mechanical conflicts that replaces the dead-end Tier-1d signal.",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-20 | gc1-reconcile 2026-11-20T06:23:32Z",
+      "first_open_at": "2026-11-20T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T06:23:32Z"
+      }
     },
     {
       "id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
