@@ -1485,6 +1485,79 @@ mod tests {
         );
     }
 
+    // ------------------------------------------------------------------
+    // In/NotIn with a non-array `value` must FAIL CLOSED (issue #2768
+    // philosophy). A mis-typed list operand (object/string/number/bool
+    // instead of a JSON array) is a malformed condition: it must surface a
+    // ConditionError — which the batch seam isolates as a fail-closed skip —
+    // rather than silently matching. The `NotIn` arm previously returned
+    // Ok(true) for a non-array operand, firing the workflow's downstream
+    // actions unguarded (fail-open); `In` returned Ok(false), masking the
+    // misconfiguration. Both now reject the malformed operand, consistent
+    // with `Matches` rejecting a non-string pattern.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_notin_non_array_value_fails_closed() {
+        let ctx = eval_ctx(serde_json::json!({ "status": "open" }));
+        for bad_value in [
+            serde_json::json!("open"),     // string
+            serde_json::json!(42),         // number
+            serde_json::json!({ "a": 1 }), // object
+            serde_json::json!(true),       // bool
+        ] {
+            let cond = serde_json::json!({
+                "field": "trigger.status", "operator": "not_in", "value": bad_value
+            });
+            let result = evaluate_conditions_list(&[cond], &ctx);
+            assert!(
+                matches!(result, Err(WorkflowError::ConditionError(_))),
+                "not_in with non-array value {bad_value:?} must fail closed, got {result:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_in_non_array_value_fails_closed() {
+        let ctx = eval_ctx(serde_json::json!({ "status": "open" }));
+        for bad_value in [
+            serde_json::json!("open"),
+            serde_json::json!(42),
+            serde_json::json!({ "a": 1 }),
+            serde_json::json!(true),
+        ] {
+            let cond = serde_json::json!({
+                "field": "trigger.status", "operator": "in", "value": bad_value
+            });
+            let result = evaluate_conditions_list(&[cond], &ctx);
+            assert!(
+                matches!(result, Err(WorkflowError::ConditionError(_))),
+                "in with non-array value {bad_value:?} must fail closed, got {result:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_notin_array_value_still_evaluates() {
+        // Sanity: a well-formed array operand keeps working after the
+        // fail-closed change — present ⇒ not_in false, absent ⇒ not_in true.
+        let ctx = eval_ctx(serde_json::json!({ "status": "open" }));
+        let present = serde_json::json!({
+            "field": "trigger.status", "operator": "not_in", "value": ["open", "closed"]
+        });
+        assert!(
+            !evaluate_conditions_list(&[present], &ctx).unwrap(),
+            "not_in must be false when the value is present in the array"
+        );
+        let absent = serde_json::json!({
+            "field": "trigger.status", "operator": "not_in", "value": ["closed", "pending"]
+        });
+        assert!(
+            evaluate_conditions_list(&[absent], &ctx).unwrap(),
+            "not_in must be true when the value is absent from the array"
+        );
+    }
+
     #[test]
     fn test_values_equivalent_unit() {
         // Numeric/string coercion both directions.
