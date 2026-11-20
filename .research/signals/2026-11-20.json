@@ -1,0 +1,255 @@
+{
+  "date": "2026-11-20",
+  "run_start_iso": "2026-11-20T03:06:10Z",
+  "run_lag_hours": 24,
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-19..20",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs \u2014 3427 LoC churn this run (top-1 hotspot). hotspot_history.runs_seen 1 \u2192 2 (prev last_seen 2026-08-22)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+      "type": "repeated-churn",
+      "source": "commits 2026-11-19..20 vs state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "oauth_integration_tests.rs (tests/suites) runs_seen 1 \u2192 2; instability proxy. Separate ID from the older tests/oauth_integration_tests.rs row (moved into suites/ subdir)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-19..20",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs \u2014 3066 LoC churn this run (top-3 hotspot). hotspot_history.runs_seen 4 \u2192 5 (prev last_seen 2026-09-20)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "repeated-churn",
+      "source": "commits 2026-11-19..20 vs state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "voice_webhooks.rs runs_seen 4 \u2192 5; 5-time repeated-churn hotspot. 3066 LoC file \u2014 decomposition overdue per pm-tech-lead 2026-11-20."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-push-fanout-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-19..20",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs \u2014 3038 LoC churn this run (top-3 hotspot). hotspot_history.runs_seen 3 \u2192 4 (prev last_seen 2026-10-25)."
+      ]
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-services-push-fanout-rs",
+      "type": "repeated-churn",
+      "source": "commits 2026-11-19..20 vs state.hotspot_history",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "push_fanout.rs runs_seen 3 \u2192 4; 3038 LoC file needs FCM/APNs split per pm-tech-lead 2026-11-20."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3634",
+      "type": "dep-update-noise",
+      "source": "PR #3634",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(deps): bump org.jetbrains.kotlinx:kotlinx-serialization-json from 1.12.0 to 1.13.0 in /mobile-native in the kotlin group"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3635",
+      "type": "dep-update-noise",
+      "source": "PR #3635",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(deps): bump gradle-wrapper from 9.9.0 to 9.9.1 in /mobile-native in the gradle-minor-patch group"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3636",
+      "type": "dep-update-noise",
+      "source": "PR #3636",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(deps): bump the cargo-minor-patch group across 1 directory with 5 updates"
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3637",
+      "type": "dep-update-noise",
+      "source": "PR #3637",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "chore(deps): bump the npm-minor-patch group across 1 directory with 25 updates"
+      ]
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-auth-extractor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (api-handlers, 2026-11-20, churn-aligned)",
+      "segment": "api-handlers",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:228-233 \u2014 alexa_webhook declares `mut rls: RlsConnection` which runs before `verify_alexa_signature` at :235.",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:369-374 \u2014 google_actions_webhook has the same pattern before verify_google_request.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:229-269 + auth.rs:266-278 \u2014 RlsConnection unconditionally requires ``Authorization` header with `Bearer` scheme <JWT>` (401 otherwise); live Alexa/Google webhooks do NOT send a PM JWT.",
+        "lib.rs:384-387 mounts the router with no JWT-injection middleware; feature unreachable in prod without an undocumented reverse-proxy JWT step."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-11-20.md && head -1",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative re-emit with score",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap <=8; no decay candidates (none > 14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "all have adversarial pass annotation"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "no files outside .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/private hosts",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md backlog.md.new",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists phases that failed",
+      "observed": "none",
+      "expected": "none"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present",
+      "observed": "all prior plans intact",
+      "expected": "intact"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "24>=24",
+      "expected": ">= HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md IDEAS_TRIAGE.md.new",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "no auto-fix actions",
+      "observed": "auto_fix_actions=[]",
+      "expected": "within bounds"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "all valid; cursors advanced",
+      "expected": "valid"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no literal telegram token",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

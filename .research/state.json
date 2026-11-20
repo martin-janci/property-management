@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-19T03:18:31Z",
+  "last_run_iso": "2026-11-20T03:06:10Z",
   "last_run_ms": 0,
-  "last_pr_seen": 3627,
-  "last_issue_seen": 3629,
-  "last_commit_sha": "5d14630969bdfb41b6b52a7b4bdbf332d2befea7",
+  "last_pr_seen": 3648,
+  "last_issue_seen": 3649,
+  "last_commit_sha": "4768a1c459733b54c9a33f091dae95c3a2141d6e",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -63,9 +63,9 @@
       "recent_churn": 869
     },
     "backend/servers/api-server/src/services/push_fanout.rs": {
-      "runs_seen": 3,
-      "last_seen": "2026-10-25",
-      "recent_churn": 135
+      "runs_seen": 4,
+      "last_seen": "2026-11-20",
+      "recent_churn": 3038
     },
     "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx": {
       "runs_seen": 1,
@@ -468,9 +468,9 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 4,
-      "last_seen": "2026-09-20",
-      "recent_churn": 2999
+      "runs_seen": 5,
+      "last_seen": "2026-11-20",
+      "recent_churn": 3066
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
       "runs_seen": 2,
@@ -478,8 +478,8 @@
       "recent_churn": 352
     },
     "backend/servers/api-server/tests/suites/oauth_integration_tests.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-08-22",
+      "runs_seen": 2,
+      "last_seen": "2026-11-20",
       "recent_churn": 3427
     },
     "backend/servers/api-server/src/services/quiet_hours_drain.rs": {
@@ -790,11 +790,14 @@
     "churn-hotspot-backend-servers-api-server-src-routes-reports-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-reserve-funds-rs",
     "churn-hotspot-backend-servers-api-server-src-routes-vendors-rs",
+    "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
     "churn-hotspot-backend-servers-api-server-src-services-oauth-rs",
+    "churn-hotspot-backend-servers-api-server-src-services-push-fanout-rs",
     "churn-hotspot-backend-servers-api-server-src-services-scheduler-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-csrf-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-booking-oauth-routes-tests-rs",
     "churn-hotspot-backend-servers-api-server-tests-reserve-funds-cross-org-idor-tests-rs",
+    "churn-hotspot-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
     "churn-hotspot-backend-servers-reality-server-src-routes-listings-rs",
     "churn-hotspot-backend/Cargo.toml",
     "churn-hotspot-backend/crates/db/src/repositories/granular_notification.rs",
@@ -1008,6 +1011,7 @@
     "code-review-api-handlers-voice-alexa-cert-fetch-no-timeout",
     "code-review-api-handlers-voice-google-verify-fail-open",
     "code-review-api-handlers-voice-oauth-refresh-unauthenticated",
+    "code-review-api-handlers-voice-webhook-auth-extractor",
     "code-review-finding-cross-cutting-schema-drift-1008",
     "code-review-issue-1137-pkce-test-tautology",
     "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
@@ -1270,6 +1274,10 @@
     "dep-update-noise-pr-3447",
     "dep-update-noise-pr-3448",
     "dep-update-noise-pr-3449",
+    "dep-update-noise-pr-3634",
+    "dep-update-noise-pr-3635",
+    "dep-update-noise-pr-3636",
+    "dep-update-noise-pr-3637",
     "dep-update-noise-pr-665",
     "dep-update-noise-pr-666",
     "dep-update-noise-pr-672",
@@ -1344,7 +1352,10 @@
     "repeated-churn-backend-servers-api-server-src-routes-auth-rs",
     "repeated-churn-backend-servers-api-server-src-routes-forms-rs",
     "repeated-churn-backend-servers-api-server-src-routes-reports-rs",
+    "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
+    "repeated-churn-backend-servers-api-server-src-services-push-fanout-rs",
     "repeated-churn-backend-servers-api-server-tests-oauth-integration-tests-rs",
+    "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
     "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
     "repeated-churn-backend/crates/db/src/repositories/granular_notification.rs",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
@@ -1505,7 +1516,7 @@
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": "2026-11-09",
+    "api-handlers": "2026-11-20",
     "api-core": "2026-11-17",
     "reality-server": "2026-11-16",
     "ppt-web-ui": "2026-11-08",
@@ -1515,8 +1526,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 123,
-    "vectors_created": 560,
+    "runs": 124,
+    "vectors_created": 564,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1532,9 +1543,9 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 0,
+    "next_index": 1,
     "role_last_run": {
-      "pm-tech-lead": "2026-10-22",
+      "pm-tech-lead": "2026-11-20",
       "pm-backend": "2026-10-26",
       "pm-frontend": "2026-10-28",
       "pm-qa": "2026-11-09",
@@ -1542,10 +1553,10 @@
       "pm-security": "2026-11-16",
       "pm-data": "2026-11-17",
       "pm-integration": "2026-11-19",
-      "pm-scrum-master": "2026-11-19"
+      "pm-scrum-master": "2026-11-20"
     }
   },
   "coverage_cursor": {
-    "next_index": 6
+    "next_index": 7
   }
 }

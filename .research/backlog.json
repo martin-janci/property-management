@@ -16495,18 +16495,20 @@
       "vector": "dx",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3380"
+        "PR #3380",
+        "PR #3380 (closed unmerged)"
       ],
       "evidence": [
-        "PR #3380 open since 2026-11-10; last update 2026-11-17; only COMMENTED reviews (author + copilot-pull-request-reviewer bot), no APPROVED/CHANGES_REQUESTED"
+        "PR #3380 open since 2026-11-10; last update 2026-11-17; only COMMENTED reviews (author + copilot-pull-request-reviewer bot), no APPROVED/CHANGES_REQUESTED",
+        "resolved: PR #3380 closed unmerged 2026-11-19T20:36:42Z — stalled-review condition no longer applies"
       ],
       "files": [
         "frontend/apps/reality-web/src/app/[locale]/dashboard/analytics/page.tsx"
       ],
       "created_at": "2026-11-18",
-      "updated_at": "2026-11-18",
+      "updated_at": "2026-11-20",
       "plan": null
     },
     {
@@ -16592,6 +16594,96 @@
       ],
       "created_at": "2026-11-19",
       "updated_at": "2026-11-19",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "title": "voice_webhooks.rs is a 5-run repeated-churn hotspot (3066 LoC, 5 runs_seen) — module boundaries needed",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-19..20 (16 merged PRs window)",
+        "state.hotspot_history"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs — 3066 LoC churn this run (top-3 hotspot), hotspot_history.runs_seen 4 → 5 (prev last_seen 2026-09-20)",
+        "pm-tech-lead 2026-11-20: 'Split routes/voice_webhooks.rs (3066 LoC, churned in 5 runs) into signature verification, an idempotent event handler and provider-specific parsers. Move business logic into services/.' — architectural pressure confirmed",
+        "Security-adjacent surface (webhook signature verification, replay) makes large-file edits high-review-cost"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-11-20",
+      "updated_at": "2026-11-20",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-src-services-push-fanout-rs",
+      "title": "push_fanout.rs is a 4-run repeated-churn hotspot (3038 LoC, 4 runs_seen) — split FCM/APNs adapters",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-19..20 (16 merged PRs window)",
+        "state.hotspot_history"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs — 3038 LoC churn this run (top-3 hotspot), hotspot_history.runs_seen 3 → 4 (prev last_seen 2026-10-25)",
+        "pm-tech-lead 2026-11-20: 'Split services/push_fanout.rs (3038 LoC) into a push/ module: fcm.rs, apns.rs, combined adapter, worker, config. Keep the PushTransport trait as the seam.'"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-11-20",
+      "updated_at": "2026-11-20",
+      "plan": null
+    },
+    {
+      "id": "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+      "title": "oauth_integration_tests.rs is a repeated-churn hotspot (3427 LoC, runs_seen→2) — split by flow",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "commits 2026-11-19..20 (16 merged PRs window)",
+        "state.hotspot_history"
+      ],
+      "evidence": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs — 3427 LoC churn this run (top-1 hotspot), hotspot_history.runs_seen 1 → 2 (prev last_seen 2026-08-22). Separate from the older `tests/oauth_integration_tests.rs` row (moved into `tests/suites/` subdir)",
+        "pm-tech-lead 2026-11-20: 'Split oauth_integration_tests.rs (3427 LoC) by flow: authorize, token, introspect/revoke, grants. Extract shared fixtures into a common module.' — heavier OAuth hardening work (#3639, #3640, #3641, #3642) keeps touching this single suite"
+      ],
+      "files": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs"
+      ],
+      "created_at": "2026-11-20",
+      "updated_at": "2026-11-20",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-auth-extractor",
+      "title": "voice_webhooks.rs alexa/google handlers run RlsConnection extractor BEFORE signature verification — 401 before any webhook body is read",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-20 (api-handlers, churn-aligned)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:228-233 — alexa_webhook declares `mut rls: RlsConnection` as an extractor, which runs before `verify_alexa_signature` at :235.",
+        "backend/servers/api-server/src/routes/voice_webhooks.rs:369-374 — google_actions_webhook has the same pattern; RlsConnection extractor precedes verify_google_request.",
+        "backend/crates/api-core/src/extractors/rls_connection.rs:229-269 → auth.rs:266-278 — RlsConnection unconditionally requires ``Authorization` header with `Bearer` scheme <JWT>` (returns 401 otherwise). Live Alexa Skills Kit / Google Actions webhooks authenticate via SignatureCertChainUrl/Signature headers + session.user.accessToken in body — they do NOT send a PM JWT. Every live webhook is rejected 401 before the Alexa/Google signature or OAuth-access-token logic ever runs.",
+        "lib.rs:384-387 mounts the router with no JWT-injection middleware — feature appears unreachable in production absent an undocumented reverse-proxy JWT inject step."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs"
+      ],
+      "created_at": "2026-11-20",
+      "updated_at": "2026-11-20",
       "plan": null
     }
   ]
