@@ -43,7 +43,7 @@ import { type ApiError, configureApiClient, getApiClient, isApiError, resetApiCl
 type ScriptedStep =
   | { kind: 'ok'; status?: number; data?: unknown }
   | { kind: 'network' }
-  | { kind: 'status'; status: number; data?: unknown };
+  | { kind: 'status'; status: number; data?: unknown; headers?: Record<string, string> };
 
 /**
  * Build a deterministic adapter that plays back `script` step-by-step (one step
@@ -87,7 +87,7 @@ function scriptedAdapter(script: ScriptedStep[]): {
       data: step.data ?? { error: 'ERR', message: `status ${step.status}` },
       status: step.status,
       statusText: 'ERR',
-      headers: {},
+      headers: step.headers ?? {},
       config,
     };
     const err = new AxiosError(
@@ -665,6 +665,102 @@ describe('api client — non-idempotent requests are never auto-retried', () => 
     expect((outcome as { reason: ApiError }).reason.status).toBe(503);
     // Opt-in restores the retry budget: 1 initial + 3 retries.
     expect(attempts()).toBe(4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. Retry-After header is honored over exponential backoff
+//
+//    A 429/503 commonly carries a `Retry-After` header telling the client how
+//    long to wait. The retry loop must honor it (both the delta-seconds and the
+//    HTTP-date form) instead of backing off on its own schedule — capped so a
+//    hostile/huge value can't stall the UI. These assert on *when* the retry
+//    fires relative to the server-requested delay, which the exponential
+//    backoff (<=1.5s on the first retry) cannot satisfy.
+// ---------------------------------------------------------------------------
+
+describe('api client — honors Retry-After header', () => {
+  it('waits the delta-seconds Retry-After delay instead of the shorter backoff', async () => {
+    const instance = configureApiClient({});
+    // 503 asks for a 5s wait — far longer than the first backoff (<=1.5s).
+    const { adapter, attempts } = scriptedAdapter([
+      {
+        kind: 'status',
+        status: 503,
+        data: { error: 'SERVICE_UNAVAILABLE', message: 'down' },
+        headers: { 'retry-after': '5' },
+      },
+      { kind: 'ok', data: { recovered: true } },
+    ]);
+    installAdapter(instance, adapter);
+
+    const promise = getApiClient().get('/widgets');
+
+    // Advance past the exponential backoff window but short of the 5s the
+    // server asked for: with Retry-After honored, no retry has fired yet.
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(attempts()).toBe(1);
+
+    // Past the 5s mark the retry fires and the second attempt succeeds.
+    await vi.advanceTimersByTimeAsync(4000);
+    const res = await promise;
+    expect(res.data).toEqual({ recovered: true });
+    expect(attempts()).toBe(2);
+  });
+
+  it('waits until the HTTP-date Retry-After instant', async () => {
+    const instance = configureApiClient({});
+    // IMF-fixdate ~4s in the future (relative to the frozen fake clock).
+    const retryAt = new Date(Date.now() + 4000).toUTCString();
+    const { adapter, attempts } = scriptedAdapter([
+      {
+        kind: 'status',
+        status: 429,
+        data: { error: 'RATE_LIMITED', message: 'slow down' },
+        headers: { 'retry-after': retryAt },
+      },
+      { kind: 'ok', data: { ok: true } },
+    ]);
+    installAdapter(instance, adapter);
+
+    const promise = getApiClient().get('/widgets');
+
+    // Still before the requested instant → no retry despite backoff elapsing.
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(attempts()).toBe(1);
+
+    // Past the date → retry fires.
+    await vi.advanceTimersByTimeAsync(3000);
+    await promise;
+    expect(attempts()).toBe(2);
+  });
+
+  it('caps an oversized Retry-After at the maximum (does not wait the raw value)', async () => {
+    const instance = configureApiClient({});
+    // 600s requested; the client caps the honored wait at 60s.
+    const { adapter, attempts } = scriptedAdapter([
+      {
+        kind: 'status',
+        status: 503,
+        data: { error: 'SERVICE_UNAVAILABLE', message: 'down' },
+        headers: { 'retry-after': '600' },
+      },
+      { kind: 'ok', data: { recovered: true } },
+    ]);
+    installAdapter(instance, adapter);
+
+    const promise = getApiClient().get('/widgets');
+
+    // Before the 60s cap, no retry yet.
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(attempts()).toBe(1);
+
+    // Just past the 60s cap the retry fires — well before the raw 600s, proving
+    // the value was clamped rather than honored verbatim.
+    await vi.advanceTimersByTimeAsync(58_001);
+    const res = await promise;
+    expect(res.data).toEqual({ recovered: true });
+    expect(attempts()).toBe(2);
   });
 });
 

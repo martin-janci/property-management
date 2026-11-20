@@ -90,6 +90,17 @@ const MAX_RETRIES = 3;
 /** Initial delay between retries in milliseconds */
 const INITIAL_RETRY_DELAY = 1000;
 
+/**
+ * Upper bound (ms) on a delay taken from a server `Retry-After` header.
+ *
+ * A server (or a hostile proxy) can send a very large `Retry-After` — a big
+ * delta-seconds value or a far-future HTTP-date. We honor the header but clamp
+ * it so a single transient 429/503 can't park a retry for minutes/hours and
+ * leave the UI hanging. Past the cap we wait the cap, not the raw value. 60s is
+ * comfortably longer than the exponential-backoff budget yet still bounded.
+ */
+const MAX_RETRY_AFTER_DELAY = 60_000;
+
 /** HTTP status codes that should trigger a retry */
 const RETRYABLE_STATUS_CODES = [408, 429, 500, 502, 503, 504];
 
@@ -163,6 +174,61 @@ function calculateRetryDelay(retryCount: number): number {
   // Add random jitter (0-50% of delay) to prevent thundering herd
   const jitter = Math.random() * 0.5 * exponentialDelay;
   return exponentialDelay + jitter;
+}
+
+/**
+ * Parse an HTTP `Retry-After` header into a delay in milliseconds.
+ *
+ * Supports both RFC 9110 forms:
+ *   - delta-seconds: a non-negative integer number of seconds (e.g. `"120"`).
+ *   - HTTP-date: an absolute instant (e.g. `"Wed, 21 Oct 2026 07:28:00 GMT"`);
+ *     the delay is that instant minus `nowMs`.
+ *
+ * Returns the delay in milliseconds (never negative), or `null` when the header
+ * is absent, blank, or unparsable — in which case the caller falls back to its
+ * own exponential backoff. An HTTP-date already in the past yields `0` (retry
+ * immediately) rather than `null`. The returned value is NOT capped here; the
+ * caller clamps it to {@link MAX_RETRY_AFTER_DELAY}.
+ */
+function parseRetryAfter(headerValue: unknown, nowMs: number): number | null {
+  // Axios normalises response header values to strings, but be defensive: a
+  // bare non-negative number is treated as delta-seconds.
+  if (typeof headerValue === 'number') {
+    return Number.isFinite(headerValue) && headerValue >= 0 ? headerValue * 1000 : null;
+  }
+  if (typeof headerValue !== 'string') {
+    return null;
+  }
+  const trimmed = headerValue.trim();
+  if (trimmed === '') {
+    return null;
+  }
+  // delta-seconds: a bare non-negative integer.
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed) * 1000;
+  }
+  // HTTP-date: RFC 9110 mandates an IMF-fixdate, which Date.parse understands.
+  const parsed = Date.parse(trimmed);
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+  return Math.max(0, parsed - nowMs);
+}
+
+/**
+ * Resolve the wait before the next retry.
+ *
+ * When the failed response carries a `Retry-After` header (429 and 503 commonly
+ * set it), honor the server's requested delay — clamped to
+ * {@link MAX_RETRY_AFTER_DELAY} — instead of backing off on our own schedule.
+ * When the header is absent or unparsable, fall back to exponential backoff.
+ */
+function resolveRetryDelay(error: AxiosError, retryCount: number): number {
+  const retryAfter = parseRetryAfter(error.response?.headers?.['retry-after'], Date.now());
+  if (retryAfter !== null) {
+    return Math.min(retryAfter, MAX_RETRY_AFTER_DELAY);
+  }
+  return calculateRetryDelay(retryCount);
 }
 
 /**
@@ -286,8 +352,9 @@ function createAxiosInstance(config: ApiClientConfig = {}): AxiosInstance {
           // Update retry count
           (config as RetryableRequestConfig).__retryCount = retryCount + 1;
 
-          // Calculate delay with exponential backoff
-          const delay = calculateRetryDelay(retryCount);
+          // Honor the server's Retry-After header when present (capped),
+          // otherwise fall back to exponential backoff.
+          const delay = resolveRetryDelay(error, retryCount);
 
           // Log retry attempt (in development)
           if (import.meta.env.DEV) {
