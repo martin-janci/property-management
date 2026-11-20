@@ -277,8 +277,8 @@ impl PortalRepository {
             Some("price_asc") => "l.price ASC",
             Some("price_desc") => "l.price DESC",
             Some("area_asc") => "l.size_sqm ASC",
-            Some("date_desc") => "l.published_at DESC",
-            _ => "l.published_at DESC",
+            Some("date_desc") => "COALESCE(l.published_at, l.created_at) DESC",
+            _ => "COALESCE(l.published_at, l.created_at) DESC",
         };
 
         let sql = format!(
@@ -287,7 +287,10 @@ impl PortalRepository {
                 l.id, l.title, l.description, l.price, l.currency,
                 l.size_sqm, l.rooms, l.city, l.property_type, l.transaction_type,
                 (SELECT url FROM listing_photos WHERE listing_id = l.id ORDER BY display_order LIMIT 1) as photo_url,
-                l.published_at
+                -- `published_at` is nullable on `listings` (an active row that was
+                -- never stamped); fall back to `created_at` so the non-null
+                -- `PublicListingRow::published_at` decodes instead of 500ing.
+                COALESCE(l.published_at, l.created_at) AS published_at
             FROM listings l
             WHERE l.status = 'active'
                 AND ($1::text IS NULL OR l.title ILIKE '%' || $1 || '%' OR l.description ILIKE '%' || $1 || '%' OR l.city ILIKE '%' || $1 || '%')
@@ -393,7 +396,10 @@ impl PortalRepository {
                 l.id, l.title, l.description, l.price, l.currency,
                 l.size_sqm, l.rooms, l.city, l.property_type, l.transaction_type,
                 (SELECT url FROM listing_photos WHERE listing_id = l.id ORDER BY display_order LIMIT 1) as photo_url,
-                l.published_at
+                -- `published_at` is nullable on `listings` (an active row that was
+                -- never stamped); fall back to `created_at` so the non-null
+                -- `PublicListingRow::published_at` decodes instead of 500ing.
+                COALESCE(l.published_at, l.created_at) AS published_at
             FROM listings l
             WHERE l.id = $1 AND l.status = 'active'
             "#,
@@ -645,10 +651,13 @@ impl PortalRepository {
                 l.id, l.title, l.description, l.price, l.currency,
                 l.size_sqm, l.rooms, l.city, l.property_type, l.transaction_type,
                 (SELECT url FROM listing_photos WHERE listing_id = l.id ORDER BY display_order LIMIT 1) as photo_url,
-                l.published_at
+                -- `published_at` is nullable on `listings` (an active row that was
+                -- never stamped); fall back to `created_at` so the non-null
+                -- `PublicListingRow::published_at` decodes instead of 500ing.
+                COALESCE(l.published_at, l.created_at) AS published_at
             FROM listings l
             WHERE l.status = 'active'
-                AND l.published_at > $12
+                AND COALESCE(l.published_at, l.created_at) > $12
                 AND ($1::text IS NULL OR l.title ILIKE '%' || $1 || '%' OR l.description ILIKE '%' || $1 || '%')
                 AND ($2::text IS NULL OR l.property_type = $2)
                 AND ($3::text IS NULL OR l.transaction_type = $3)
@@ -660,7 +669,7 @@ impl PortalRepository {
                 AND ($9::int IS NULL OR l.rooms <= $9)
                 AND ($10::text IS NULL OR l.city ILIKE '%' || $10 || '%')
                 AND ($11::text IS NULL OR l.country = $11)
-            ORDER BY l.published_at DESC
+            ORDER BY COALESCE(l.published_at, l.created_at) DESC
             LIMIT 50
             "#,
         )

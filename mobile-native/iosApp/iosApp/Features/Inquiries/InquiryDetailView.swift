@@ -7,8 +7,8 @@ import shared
 /// reply-compose area at the bottom so the user can add follow-up
 /// messages to an open inquiry.
 ///
-/// Endpoint: GET /api/v1/inquiries/{id}
-/// Reply:    POST /api/v1/inquiries/{id}/respond (realtor only)
+/// Endpoint: GET /api/v1/inquiries/mine/{id}
+/// Reply:    POST /api/v1/inquiries/mine/{id}/messages (buyer follow-up)
 ///
 /// Epic 82 - Story 82.5: Inquiries and Account
 struct InquiryDetailView: View {

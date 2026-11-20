@@ -1,11 +1,12 @@
 //! Inquiries routes - contact and viewing requests.
 //!
 //! Handles listing inquiries, contact forms, and viewing scheduling.
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::handlers::inquiries::{InquiriesHandler, InquiryResult};
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::{OptionalPortalPrincipal, PortalPrincipal};
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
@@ -209,6 +210,11 @@ pub fn router() -> Router<AppState> {
         // Buyer-axis listing: inquiries the authenticated buyer submitted.
         // Must be registered before `/{id}` so `mine` is not captured as an id.
         .route("/mine", get(list_buyer_inquiries))
+        // Buyer side of a single inquiry: detail, follow-up reply, cancel a
+        // viewing request. Scoped on the submitting buyer's `user_id`.
+        .route("/mine/{id}", get(get_buyer_inquiry))
+        .route("/mine/{id}/messages", post(buyer_reply))
+        .route("/mine/{id}/cancel", post(cancel_buyer_viewing))
         .route("/{id}", get(get_inquiry))
         .route("/{id}/read", put(mark_as_read))
         .route("/{id}/respond", post(respond_to_inquiry))
@@ -323,6 +329,7 @@ pub struct InquiryMessageResponse {
 )]
 pub async fn send_contact_message(
     State(state): State<AppState>,
+    OptionalPortalPrincipal(principal): OptionalPortalPrincipal,
     Path(listing_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ContactMessageRequest>,
@@ -392,6 +399,10 @@ pub async fn send_contact_message(
         }
     };
 
+    // A signed-in buyer's inquiry is linked to their account so it shows up
+    // in `GET /inquiries/mine`; anonymous submissions stay unlinked.
+    let buyer_id = principal.map(|p| p.user_id);
+
     let inquiry_data = CreateListingInquiry {
         name: req.name,
         email: req.email,
@@ -408,7 +419,7 @@ pub async fn send_contact_message(
         "send contact message",
         state
             .inquiries_handler
-            .create_inquiry(listing_id, realtor_id, None, inquiry_data)
+            .create_inquiry(listing_id, realtor_id, buyer_id, inquiry_data)
             .await,
     )?;
 
@@ -442,6 +453,7 @@ pub async fn send_contact_message(
 )]
 pub async fn request_viewing(
     State(state): State<AppState>,
+    OptionalPortalPrincipal(principal): OptionalPortalPrincipal,
     Path(listing_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ViewingRequest>,
@@ -498,6 +510,15 @@ pub async fn request_viewing(
             }
         }
     }
+
+    // The first requested slot goes into the structured `preferred_time`
+    // column (VARCHAR(50)) so clients can show it without parsing the
+    // message; the full list stays in the message body.
+    let preferred_time = req
+        .preferred_times
+        .as_ref()
+        .and_then(|times| times.iter().map(|t| t.trim()).find(|t| !t.is_empty()))
+        .map(|t| t.chars().take(50).collect::<String>());
 
     // Build message with preferred times
     let message = if let Some(times) = &req.preferred_times {
@@ -564,6 +585,10 @@ pub async fn request_viewing(
         }
     };
 
+    // A signed-in buyer's inquiry is linked to their account so it shows up
+    // in `GET /inquiries/mine`; anonymous submissions stay unlinked.
+    let buyer_id = principal.map(|p| p.user_id);
+
     let inquiry_data = CreateListingInquiry {
         name: req.name,
         email: req.email,
@@ -571,7 +596,7 @@ pub async fn request_viewing(
         message,
         inquiry_type: Some("viewing".to_string()),
         preferred_contact: Some("phone".to_string()),
-        preferred_time: None,
+        preferred_time,
     };
 
     // Create through the shared handler (not the repo directly) so the
@@ -580,7 +605,7 @@ pub async fn request_viewing(
         "send viewing request",
         state
             .inquiries_handler
-            .create_inquiry(listing_id, realtor_id, None, inquiry_data)
+            .create_inquiry(listing_id, realtor_id, buyer_id, inquiry_data)
             .await,
     )?;
 
@@ -614,7 +639,7 @@ pub async fn request_viewing(
 )]
 pub async fn list_my_inquiries(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Query(query): Query<InquiryListQuery>,
 ) -> Result<Json<InquiryListResponse>, (axum::http::StatusCode, String)> {
     let page = query.page.unwrap_or(1).max(1);
@@ -666,7 +691,7 @@ pub async fn list_my_inquiries(
 )]
 pub async fn list_buyer_inquiries(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Query(query): Query<InquiryListQuery>,
 ) -> Result<Json<InquiryListResponse>, (axum::http::StatusCode, String)> {
     let page = query.page.unwrap_or(1).max(1);
@@ -711,7 +736,7 @@ pub async fn list_buyer_inquiries(
 )]
 pub async fn get_inquiry(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<InquiryDetailResponse>, (axum::http::StatusCode, String)> {
     // Single-row lookup scoped to the calling realtor. The previous code
@@ -769,7 +794,7 @@ pub async fn get_inquiry(
 )]
 pub async fn mark_as_read(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     let owned = state
@@ -803,7 +828,7 @@ pub async fn mark_as_read(
 )]
 pub async fn respond_to_inquiry(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<SendInquiryMessage>,
 ) -> Result<Json<InquiryMessageResponse>, (axum::http::StatusCode, String)> {
@@ -828,6 +853,124 @@ pub async fn respond_to_inquiry(
         message: message.message,
         created_at: message.created_at.to_rfc3339(),
     }))
+}
+
+fn message_response(m: db::models::InquiryMessage) -> InquiryMessageResponse {
+    InquiryMessageResponse {
+        id: m.id,
+        sender_type: m.sender_type,
+        message: m.message,
+        created_at: m.created_at.to_rfc3339(),
+    }
+}
+
+fn inquiry_not_found() -> (axum::http::StatusCode, String) {
+    (
+        axum::http::StatusCode::NOT_FOUND,
+        "Inquiry not found".to_string(),
+    )
+}
+
+/// Get one of the caller's own submitted inquiries with its message thread.
+#[utoipa::path(
+    get,
+    path = "/api/v1/inquiries/mine/{id}",
+    tag = "Inquiries",
+    params(("id" = Uuid, Path, description = "Inquiry ID")),
+    responses(
+        (status = 200, description = "Inquiry details", body = InquiryDetailResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Inquiry not found")
+    )
+)]
+pub async fn get_buyer_inquiry(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Path(id): Path<Uuid>,
+) -> Result<Json<InquiryDetailResponse>, (axum::http::StatusCode, String)> {
+    let inquiry = state
+        .reality_portal_repo
+        .get_inquiry_for_buyer(id, principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("get buyer inquiry", e))?
+        .ok_or_else(inquiry_not_found)?;
+
+    // Ownership verified above, so scoping the thread by inquiry id is safe.
+    let messages = state
+        .reality_portal_repo
+        .list_inquiry_messages(id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("list inquiry messages", e))?
+        .into_iter()
+        .map(message_response)
+        .collect();
+
+    Ok(Json(InquiryDetailResponse { inquiry, messages }))
+}
+
+/// Send a follow-up message on one of the caller's own inquiries.
+#[utoipa::path(
+    post,
+    path = "/api/v1/inquiries/mine/{id}/messages",
+    tag = "Inquiries",
+    params(("id" = Uuid, Path, description = "Inquiry ID")),
+    request_body = SendInquiryMessage,
+    responses(
+        (status = 201, description = "Message sent", body = InquiryMessageResponse),
+        (status = 400, description = "Invalid message"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Inquiry not found or closed")
+    )
+)]
+pub async fn buyer_reply(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Path(id): Path<Uuid>,
+    Json(req): Json<SendInquiryMessage>,
+) -> Result<(axum::http::StatusCode, Json<InquiryMessageResponse>), (axum::http::StatusCode, String)>
+{
+    validate_inquiry_message(&req.message)?;
+
+    let message = state
+        .reality_portal_repo
+        .buyer_reply_to_inquiry(id, principal.user_id, &req.message)
+        .await
+        .map_err(|e| crate::util::errors::db_error("buyer reply to inquiry", e))?
+        .ok_or_else(inquiry_not_found)?;
+
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(message_response(message)),
+    ))
+}
+
+/// Cancel one of the caller's own viewing requests.
+#[utoipa::path(
+    post,
+    path = "/api/v1/inquiries/mine/{id}/cancel",
+    tag = "Inquiries",
+    params(("id" = Uuid, Path, description = "Inquiry ID")),
+    responses(
+        (status = 204, description = "Viewing cancelled"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Viewing request not found")
+    )
+)]
+pub async fn cancel_buyer_viewing(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Path(id): Path<Uuid>,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    let cancelled = state
+        .reality_portal_repo
+        .cancel_viewing_for_buyer(id, principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("cancel viewing", e))?;
+    if cancelled {
+        Ok(axum::http::StatusCode::NO_CONTENT)
+    } else {
+        Err(inquiry_not_found())
+    }
 }
 
 #[cfg(test)]

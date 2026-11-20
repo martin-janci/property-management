@@ -1,10 +1,10 @@
 //! Journal/News article routes (UC-13: Reality Portal News).
 //!
 //! Public article list + detail, comment list and (auth-required) comment creation.
-//! D1.2: comment creation now uses the unified `RequestPrincipal` extractor.
+//! GH #1300: comment creation uses `PortalPrincipal` (no org membership needed).
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -443,7 +443,7 @@ pub async fn list_comments(
 )]
 pub async fn create_comment(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(slug): Path<String>,
     Json(data): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<ArticleComment>), (axum::http::StatusCode, String)> {

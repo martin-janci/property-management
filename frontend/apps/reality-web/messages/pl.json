@@ -965,7 +965,8 @@
       "cancelInquiry": "Anuluj zapytanie",
       "previous": "Poprzednia",
       "next": "Następna",
-      "pageInfo": "Strona {page} z {total}"
+      "pageInfo": "Strona {page} z {total}",
+      "viewListing": "Zobacz ogłoszenie"
     },
     "savedSearches": {
       "alertsOff": "Powiadomienia wyłączone",
@@ -1301,7 +1302,8 @@
       "scheduled": "Zaplanowane",
       "completed": "Zakończone",
       "cancelled": "Anulowane"
-    }
+    },
+    "viewListing": "Zobacz ogłoszenie"
   },
   "import": {
     "page": {

@@ -428,3 +428,33 @@ where
         Ok(PortalPrincipal { user_id, kind })
     }
 }
+
+/// Optional variant of [`PortalPrincipal`] for reality-portal endpoints that
+/// accept both anonymous and authenticated callers (e.g. submitting a contact
+/// inquiry, which links the inquiry to the buyer when they are signed in).
+///
+/// Same branching contract as [`OptionalRequestPrincipal`]: no
+/// `Authorization` header means anonymous (`None`); a present header is a
+/// commitment to be authenticated, so an invalid token is rejected rather
+/// than silently demoted to anonymous.
+#[derive(Debug, Clone, Copy)]
+pub struct OptionalPortalPrincipal(pub Option<PortalPrincipal>);
+
+impl<S> FromRequestParts<S> for OptionalPortalPrincipal
+where
+    S: TenantMembershipProvider,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        if parts
+            .headers
+            .get(axum::http::header::AUTHORIZATION)
+            .is_none()
+        {
+            return Ok(Self(None));
+        }
+        let principal = PortalPrincipal::from_request_parts(parts, state).await?;
+        Ok(Self(Some(principal)))
+    }
+}

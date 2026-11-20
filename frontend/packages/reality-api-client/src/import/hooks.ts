@@ -6,7 +6,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notAvailable } from '../agency/hooks';
-import { getApiBase } from '../config';
+import { getApiBase, portalFetch } from '../config';
 import type {
   ColumnMapping,
   CreateCrmConnectionRequest,
@@ -31,7 +31,7 @@ import type {
 const API_PREFIX = '/api/v1';
 
 async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${getApiBase()}${API_PREFIX}${path}`, {
+  const response = await portalFetch(`${getApiBase()}${API_PREFIX}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

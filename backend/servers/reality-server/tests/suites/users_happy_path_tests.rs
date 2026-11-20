@@ -3,10 +3,10 @@
 //!
 //! - `register` and `request_password_reset` are public and 2xx on an empty DB
 //!   given a valid body (password policy: ≥8 chars, 1 uppercase, 1 number).
-//! - `get_me` / `update_me` / `logout` use `RequestPrincipal`; the caller is
-//!   seeded `principal_kind = 'platform'` so the extractor admits it on the
-//!   tenant-less test router (after migration 00148 a single `users` row is the
-//!   unified portal identity).
+//! - `get_me` / `update_me` / `logout` use `PortalPrincipal` (GH #1300); the
+//!   caller is seeded `principal_kind = 'public'` — a real portal user — since
+//!   the portal-user projection only reads public rows (after migration 00148 a
+//!   single `users` row is the unified portal identity).
 //!
 //! `login` (needs a verified credential) and `confirm_password_reset` (needs a
 //! hashed reset-token row) are intentionally deferred — see the BIT-344 report.
@@ -29,7 +29,7 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
-        VALUES ($1, 'hash', $2, 'active', NOW(), 'platform')
+        VALUES ($1, 'hash', $2, 'active', NOW(), 'public')
         RETURNING id
         "#,
     )
@@ -43,7 +43,6 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
 // ── register (POST /register) ────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn register_returns_2xx(pool: PgPool) {
     let app = users_router(pool);
     let status = send_json(
@@ -64,7 +63,6 @@ async fn register_returns_2xx(pool: PgPool) {
 // ── request_password_reset (POST /password-reset) ────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn request_password_reset_returns_2xx(pool: PgPool) {
     let app = users_router(pool);
     let status = send_json(
@@ -81,7 +79,6 @@ async fn request_password_reset_returns_2xx(pool: PgPool) {
 // ── get_me (GET /me) ─────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_me_returns_2xx(pool: PgPool) {
     let user = seed_user(&pool, "get-me").await;
     let token = mint_token(user);
@@ -93,7 +90,6 @@ async fn get_me_returns_2xx(pool: PgPool) {
 // ── update_me (PUT /me) ──────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn update_me_returns_2xx(pool: PgPool) {
     let user = seed_user(&pool, "update-me").await;
     let token = mint_token(user);
@@ -112,7 +108,6 @@ async fn update_me_returns_2xx(pool: PgPool) {
 // ── logout (POST /logout) ────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn logout_returns_2xx(pool: PgPool) {
     let user = seed_user(&pool, "logout").await;
     let token = mint_token(user);

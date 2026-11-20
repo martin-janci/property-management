@@ -46,7 +46,10 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const status = statusConfig[inquiry.status];
-  const canCancel = inquiry.status === 'pending' || inquiry.status === 'responded';
+  // Only viewing requests can be cancelled server-side.
+  const canCancel =
+    inquiry.type === 'viewing_request' &&
+    (inquiry.status === 'pending' || inquiry.status === 'responded');
 
   const handleCancel = () => {
     cancelInquiry.mutate(inquiry.id);
@@ -64,7 +67,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
           )}
           <div>
             <Link href={`/listings/${inquiry.listingId}`} className="listing-title">
-              {inquiry.listingTitle}
+              {inquiry.listingTitle || t('viewListing')}
             </Link>
             <p className="inquiry-date">
               {formatDate(inquiry.createdAt, locale)} • {inquiryTypeLabel(t, inquiry.type)}

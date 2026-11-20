@@ -41,7 +41,6 @@ async fn seed_user(pool: &PgPool, tag: &str) -> Uuid {
 // ── list_favorites ──────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_favorites_unauthenticated_returns_401(pool: PgPool) {
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites", None).await;
@@ -52,7 +51,6 @@ async fn list_favorites_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_favorites_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "list-fav").await;
     let token = mint_token(user);
@@ -67,7 +65,6 @@ async fn list_favorites_authenticated_returns_non_401(pool: PgPool) {
 // ── list_favorite_alerts ────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_favorite_alerts_unauthenticated_returns_401(pool: PgPool) {
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites/alerts", None).await;
@@ -78,7 +75,6 @@ async fn list_favorite_alerts_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_favorite_alerts_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "list-fav-alerts").await;
     let token = mint_token(user);
@@ -93,7 +89,6 @@ async fn list_favorite_alerts_authenticated_returns_non_401(pool: PgPool) {
 // ── mark_all_favorite_alerts_read ──────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_all_favorite_alerts_read_unauthenticated_returns_401(pool: PgPool) {
     let app = favorites_router(pool);
     let status = send(
@@ -110,7 +105,6 @@ async fn mark_all_favorite_alerts_read_unauthenticated_returns_401(pool: PgPool)
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_all_favorite_alerts_read_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "mark-all-fav-alerts").await;
     let token = mint_token(user);
@@ -131,7 +125,6 @@ async fn mark_all_favorite_alerts_read_authenticated_returns_non_401(pool: PgPoo
 // ── mark_favorite_alert_read ────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_favorite_alert_read_unauthenticated_returns_401(pool: PgPool) {
     let alert_id = Uuid::new_v4();
     let app = favorites_router(pool);
@@ -149,7 +142,6 @@ async fn mark_favorite_alert_read_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_favorite_alert_read_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "mark-fav-alert").await;
     let token = mint_token(user);
@@ -171,7 +163,6 @@ async fn mark_favorite_alert_read_authenticated_unknown_returns_non_401(pool: Pg
 // ── list_favorite_ids (SSR-anonymous) ──────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_favorite_ids_unauthenticated_returns_200(pool: PgPool) {
     let app = favorites_router(pool);
     let status = send(&app, Method::GET, "/api/v1/favorites/ids", None).await;
@@ -182,7 +173,6 @@ async fn list_favorite_ids_unauthenticated_returns_200(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn list_favorite_ids_authenticated_returns_200(pool: PgPool) {
     let user = seed_user(&pool, "list-fav-ids").await;
     let token = mint_token(user);
@@ -197,7 +187,6 @@ async fn list_favorite_ids_authenticated_returns_200(pool: PgPool) {
 // ── add_favorite ────────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn add_favorite_unauthenticated_returns_401(pool: PgPool) {
     let listing_id = Uuid::new_v4();
     let app = favorites_router(pool);
@@ -212,7 +201,6 @@ async fn add_favorite_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn add_favorite_authenticated_unknown_listing_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "add-fav").await;
     let token = mint_token(user);
@@ -234,7 +222,6 @@ async fn add_favorite_authenticated_unknown_listing_returns_non_401(pool: PgPool
 // ── update_favorite (AC-5 price-alert toggle) ───────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_favorite_unauthenticated_returns_401(pool: PgPool) {
     let listing_id = Uuid::new_v4();
     let app = favorites_router(pool);
@@ -252,7 +239,6 @@ async fn update_favorite_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn update_favorite_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "update-fav").await;
     let token = mint_token(user);
@@ -276,7 +262,6 @@ async fn update_favorite_authenticated_unknown_returns_non_401(pool: PgPool) {
 // ── remove_favorite ─────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn remove_favorite_unauthenticated_returns_401(pool: PgPool) {
     let listing_id = Uuid::new_v4();
     let app = favorites_router(pool);
@@ -294,7 +279,6 @@ async fn remove_favorite_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn remove_favorite_authenticated_unknown_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "remove-fav").await;
     let token = mint_token(user);
@@ -316,7 +300,6 @@ async fn remove_favorite_authenticated_unknown_returns_non_401(pool: PgPool) {
 // ── check_favorite ──────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn check_favorite_unauthenticated_returns_401(pool: PgPool) {
     let listing_id = Uuid::new_v4();
     let app = favorites_router(pool);
@@ -334,7 +317,6 @@ async fn check_favorite_unauthenticated_returns_401(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn check_favorite_authenticated_returns_non_401(pool: PgPool) {
     let user = seed_user(&pool, "check-fav").await;
     let token = mint_token(user);

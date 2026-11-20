@@ -1,10 +1,11 @@
 //! Compare routes (UC-48: Compare Listings).
 //!
 //! Allows authenticated portal users to maintain a compare list of up to 4 listings.
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, State},
     routing::{delete, get, post},
@@ -73,7 +74,7 @@ pub struct AddCompareResponse {
 )]
 pub async fn get_compare_list(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<CompareListResponse>, (axum::http::StatusCode, String)> {
     let mut conn = state
         .acquire_public_conn()
@@ -154,7 +155,7 @@ pub async fn get_compare_list(
 )]
 pub async fn add_to_compare(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<(axum::http::StatusCode, Json<AddCompareResponse>), (axum::http::StatusCode, String)> {
     use sqlx::Acquire;
@@ -287,7 +288,7 @@ pub async fn add_to_compare(
 )]
 pub async fn remove_from_compare(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     let mut conn = state

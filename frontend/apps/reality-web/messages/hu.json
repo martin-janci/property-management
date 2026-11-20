@@ -965,7 +965,8 @@
       "cancelInquiry": "Érdeklődés törlése",
       "previous": "Előző",
       "next": "Következő",
-      "pageInfo": "Oldal: {page} / {total}"
+      "pageInfo": "Oldal: {page} / {total}",
+      "viewListing": "Hirdetés megtekintése"
     },
     "savedSearches": {
       "alertsOff": "Értesítések kikapcsolva",
@@ -1301,7 +1302,8 @@
       "scheduled": "Ütemezett",
       "completed": "Befejezett",
       "cancelled": "Törölve"
-    }
+    },
+    "viewListing": "Hirdetés megtekintése"
   },
   "import": {
     "page": {

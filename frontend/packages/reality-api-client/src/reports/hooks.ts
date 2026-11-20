@@ -11,7 +11,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 
-import { getApiBase } from '../config';
+import { getApiBase, portalFetch } from '../config';
 import type { SubmitReportRequest, SubmitReportResponse } from './types';
 
 /**
@@ -34,7 +34,7 @@ export class SubmitReportError extends Error {
 export function useSubmitReport() {
   return useMutation<SubmitReportResponse, SubmitReportError, SubmitReportRequest>({
     mutationFn: async (data: SubmitReportRequest): Promise<SubmitReportResponse> => {
-      const response = await fetch(`${getApiBase()}/api/v1/reports`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

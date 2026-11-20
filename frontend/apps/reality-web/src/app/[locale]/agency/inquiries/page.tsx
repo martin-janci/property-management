@@ -3,13 +3,12 @@
 /**
  * Agency Inquiries page (UC-49.5).
  *
- * Lists inquiries received for the signed-in user's listings/agency. Reuses
- * `useMyInquiries` since the API filters by the requesting principal; a
- * dedicated `/agencies/{id}/inquiries` hook can replace it later.
+ * Lists inquiries received for the signed-in user's listings/agency via
+ * `useReceivedInquiries` (`GET /api/v1/inquiries`, scoped to the realtor).
  */
 
 import type { Inquiry, InquiryStatus } from '@ppt/reality-api-client';
-import { useMyInquiries } from '@ppt/reality-api-client';
+import { useReceivedInquiries } from '@ppt/reality-api-client';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -48,7 +47,7 @@ function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
     <li className="row">
       <div className="row-main">
         <Link href={`/listings/${inquiry.listingId}`} className="title">
-          {inquiry.listingTitle}
+          {inquiry.listingTitle || t('viewListing')}
         </Link>
         <p className="meta">
           {inquiry.name} · {inquiry.email}
@@ -86,7 +85,7 @@ function InquiryRow({ inquiry }: { inquiry: Inquiry }) {
 function AgencyInquiriesContent() {
   const t = useTranslations('agencyInquiries');
   const [statusFilter, setStatusFilter] = useState<InquiryStatus | 'all'>('all');
-  const { data, isLoading, error } = useMyInquiries(
+  const { data, isLoading, error } = useReceivedInquiries(
     statusFilter === 'all' ? undefined : statusFilter
   );
 

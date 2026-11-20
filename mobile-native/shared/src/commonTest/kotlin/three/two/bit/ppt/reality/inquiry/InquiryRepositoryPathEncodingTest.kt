@@ -15,8 +15,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 
@@ -68,11 +66,11 @@ class InquiryRepositoryPathEncodingTest {
     fun inquiry_and_viewing_id_path_segments_are_percent_encoded() = runTest {
         val getInquiry = Captured()
         repoCapturing(getInquiry).getInquiry("../admin/secret")
-        assertEquals("/api/v1/inquiries/..%2Fadmin%2Fsecret", getInquiry.path)
+        assertEquals("/api/v1/inquiries/mine/..%2Fadmin%2Fsecret", getInquiry.path)
 
         val reply = Captured()
         repoCapturing(reply).replyToInquiry("../admin/secret", "hello")
-        assertEquals("/api/v1/inquiries/..%2Fadmin%2Fsecret/respond", reply.path)
+        assertEquals("/api/v1/inquiries/mine/..%2Fadmin%2Fsecret/messages", reply.path)
 
         val contact = Captured()
         repoCapturing(contact)
@@ -86,9 +84,8 @@ class InquiryRepositoryPathEncodingTest {
             )
         assertEquals("/api/v1/inquiries/contact/..%2Fadmin%2Fsecret", contact.path)
 
-        // Cancel has no server route: it must fail without issuing a request.
         val cancel = Captured()
-        assertTrue(repoCapturing(cancel).cancelViewing("../admin/secret").isFailure)
-        assertNull(cancel.path)
+        repoCapturing(cancel).cancelViewing("../admin/secret")
+        assertEquals("/api/v1/inquiries/mine/..%2Fadmin%2Fsecret/cancel", cancel.path)
     }
 }

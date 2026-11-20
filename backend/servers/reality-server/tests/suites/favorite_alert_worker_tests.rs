@@ -65,7 +65,6 @@ async fn seed_listing(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &str
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn worker_queues_price_and_back_on_market_alerts(pool: PgPool) {
     let repo = RealityPortalRepository::new(pool.clone());
     let worker = FavoriteAlertWorker::new(
@@ -151,15 +150,12 @@ async fn worker_queues_price_and_back_on_market_alerts(pool: PgPool) {
 /// route maps both to 204, not a surprising 404); a non-existent alert id
 /// returns NotFound.
 ///
-/// NOTE (#2050): this test remains under the BIT-351 quarantine (never green on
-/// the PR gate). The running guard for the AlreadyRead-vs-NotFound idempotency
-/// branch now lives in a non-ignored repository round-trip,
+/// NOTE (#2050): released from the BIT-351 quarantine once the reality routes
+/// moved to `PortalPrincipal` (GH #1300). The repository round-trip
 /// `mark_favorite_alert_read_repo_round_trip_is_idempotent`
-/// (`crates/db/tests/favorite_alert_read_idempotent_tests.rs`), so the CTE has a
-/// failing-on-regression guard that actually runs. Repair + un-`#[ignore]` of
-/// this worker-driven test is still tracked under BIT-352.
+/// (`crates/db/tests/favorite_alert_read_idempotent_tests.rs`) still guards the
+/// same CTE at the repo layer.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn mark_favorite_alert_read_is_idempotent(pool: PgPool) {
     use db::repositories::FavoriteAlertReadOutcome;
 

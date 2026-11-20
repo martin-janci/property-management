@@ -112,13 +112,13 @@ class InquiryRepository(
     }
 
     /**
-     * Get an inquiry with its message thread (`GET /api/v1/inquiries/{id}`). The server only serves
-     * this to the realtor the inquiry is addressed to; anyone else gets 404.
+     * Get one of the signed-in buyer's inquiries with its message thread (`GET
+     * /api/v1/inquiries/mine/{id}`). Another buyer's inquiry is a 404.
      */
     suspend fun getInquiry(inquiryId: String): Result<Inquiry> {
         return try {
             val response =
-                client.get("$baseUrl/api/v1/inquiries/${inquiryId.asPathSegment()}") {
+                client.get("$baseUrl/api/v1/inquiries/mine/${inquiryId.asPathSegment()}") {
                     configureRequest()
                 }
 
@@ -185,13 +185,15 @@ class InquiryRepository(
     }
 
     /**
-     * Reply to an inquiry (`POST /api/v1/inquiries/{id}/respond`). Only the realtor the inquiry is
-     * addressed to may reply; the server has no buyer-side reply.
+     * Send a buyer follow-up on one of the signed-in buyer's inquiries (`POST
+     * /api/v1/inquiries/mine/{id}/messages`). A closed inquiry no longer accepts replies (404).
      */
     suspend fun replyToInquiry(inquiryId: String, message: String): Result<InquiryResponse> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/inquiries/${inquiryId.asPathSegment()}/respond") {
+                client.post(
+                    "$baseUrl/api/v1/inquiries/mine/${inquiryId.asPathSegment()}/messages",
+                ) {
                     configureRequest()
                     contentType(ContentType.Application.Json)
                     setBody(WireSendInquiryMessage(message))
@@ -211,7 +213,7 @@ class InquiryRepository(
             } else if (response.status == HttpStatusCode.Unauthorized) {
                 Result.failure(InquiryException("Please sign in to reply"))
             } else if (response.status == HttpStatusCode.NotFound) {
-                Result.failure(InquiryException("Only the listing's realtor can reply"))
+                Result.failure(InquiryException("This inquiry is closed or no longer available"))
             } else {
                 Result.failure(InquiryException("Failed to send reply: ${response.status}"))
             }
@@ -315,13 +317,27 @@ class InquiryRepository(
         }
     }
 
-    /**
-     * Cancel a viewing request. reality-server has no cancel endpoint yet, so this fails without a
-     * network call instead of hitting a route that does not exist.
-     */
-    @Suppress("UNUSED_PARAMETER")
-    suspend fun cancelViewing(viewingId: String): Result<Unit> =
-        Result.failure(UnsupportedFeatureException("Cancelling a viewing is not available yet"))
+    /** Cancel one of the buyer's viewing requests (`POST /api/v1/inquiries/mine/{id}/cancel`). */
+    suspend fun cancelViewing(viewingId: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/inquiries/mine/${viewingId.asPathSegment()}/cancel") {
+                    configureRequest()
+                }
+
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else if (response.status == HttpStatusCode.Unauthorized) {
+                Result.failure(InquiryException("Please sign in to manage viewings"))
+            } else if (response.status == HttpStatusCode.NotFound) {
+                Result.failure(InquiryException("Viewing request not found"))
+            } else {
+                Result.failure(InquiryException("Failed to cancel viewing: ${response.status}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     private fun InquiryStatus.serverFilter(): String? =
         when (this) {

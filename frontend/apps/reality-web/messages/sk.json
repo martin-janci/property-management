@@ -972,7 +972,8 @@
       "cancelInquiry": "Zrušiť dopyt",
       "previous": "Predchádzajúca",
       "next": "Ďalšia",
-      "pageInfo": "Strana {page} z {total}"
+      "pageInfo": "Strana {page} z {total}",
+      "viewListing": "Zobraziť inzerát"
     },
     "savedSearches": {
       "alertsOff": "Upozornenia vypnuté",
@@ -1308,7 +1309,8 @@
       "scheduled": "Naplánované",
       "completed": "Dokončené",
       "cancelled": "Zrušené"
-    }
+    },
+    "viewListing": "Zobraziť inzerát"
   },
   "import": {
     "page": {

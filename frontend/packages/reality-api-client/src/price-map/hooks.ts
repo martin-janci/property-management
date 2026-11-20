@@ -10,7 +10,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { getApiBase } from '../config';
+import { getApiBase, portalFetch } from '../config';
 import type { PriceMapParams, PriceMapResponse } from './types';
 
 /**
@@ -32,7 +32,7 @@ export function usePriceMap(params: PriceMapParams = {}) {
       if (timeWindow) search.set('time_window', timeWindow);
       if (city) search.set('city', city);
 
-      const response = await fetch(`${getApiBase()}/api/v1/price-map?${search}`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/price-map?${search}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch price map');

@@ -4,11 +4,11 @@
 //! Complements `favorites_authz_tests.rs` (which only asserts 401/403) by
 //! driving every endpoint to a successful 2xx outcome.
 //!
-//! Auth model: the favorites endpoints use `RequestPrincipal`. In a bare test
-//! router there is no `ResolvedTenant`, so a `public`/`staff` principal would
-//! be rejected with 403 ("tenant not resolved"). We therefore seed the
-//! authenticated user with `principal_kind = 'platform'`, which the extractor
-//! admits with `effective_org = None` on a tenant-less host. After migration
+//! Auth model: the favorites endpoints use `PortalPrincipal` (GH #1300), which
+//! admits any authenticated principal kind without a tenant or org membership.
+//! Most tests seed a `platform` user; `public_portal_user_*` below pins that a
+//! plain `public` portal user (no `organization_members` row) is admitted too —
+//! under the old `RequestPrincipal` it got 403 "tenant not resolved". After migration
 //! 00148 (`portal_users` dropped, FKs retargeted to `users`), that same
 //! `users` row also owns the `portal_favorites` data.
 
@@ -214,4 +214,27 @@ async fn remove_favorite_returns_2xx(pool: PgPool) {
     )
     .await;
     assert!(status.is_success(), "expected 2xx, got {status}");
+}
+
+// ── GH #1300 regression: public portal user without org membership ──────────
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn public_portal_user_without_membership_can_list_favorites(pool: PgPool) {
+    let user = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+        VALUES ('buyer@favorites-hp.test', 'hash', 'Buyer', 'active', NOW(), 'public')
+        RETURNING id
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("seed public user");
+    let token = mint_token(user);
+    let app = favorites_router(pool);
+    let status = send(&app, Method::GET, "/api/v1/favorites", Some(&token)).await;
+    assert!(
+        status.is_success(),
+        "a public portal user must reach their own favorites, got {status}"
+    );
 }

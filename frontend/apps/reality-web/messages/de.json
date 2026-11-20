@@ -972,7 +972,8 @@
       "cancelInquiry": "Anfrage stornieren",
       "previous": "Zurück",
       "next": "Weiter",
-      "pageInfo": "Seite {page} von {total}"
+      "pageInfo": "Seite {page} von {total}",
+      "viewListing": "Inserat ansehen"
     },
     "savedSearches": {
       "alertsOff": "Benachrichtigungen aus",
@@ -1308,7 +1309,8 @@
       "scheduled": "Geplant",
       "completed": "Abgeschlossen",
       "cancelled": "Storniert"
-    }
+    },
+    "viewListing": "Inserat ansehen"
   },
   "import": {
     "page": {
