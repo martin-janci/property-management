@@ -48,3 +48,12 @@ export type {
   TenantRole,
   UpdateProfileRequest,
 } from './types';
+// Unauthorized (401) handler registry — drives the generated client's silent
+// refresh-and-replay on access-token expiry (runtime token refresh).
+export {
+  clearUnauthorizedHandler,
+  getUnauthorizedHandler,
+  hasUnauthorizedHandler,
+  setUnauthorizedHandler,
+  type UnauthorizedHandler,
+} from './unauthorized-handler';

@@ -17,10 +17,12 @@ import {
   type AuthUser,
   clearOrgProvider,
   clearTokenProvider,
+  clearUnauthorizedHandler,
   createAuthApi,
   type SsoCallbackRequest,
   setOrgProvider,
   setTokenProvider,
+  setUnauthorizedHandler,
   type TenantMembership,
   type TenantRole,
 } from '@ppt/api-client';
@@ -466,9 +468,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       onUnauthorized: () => onUnauthorizedRef.current(),
     });
 
+    // Wire the SAME single-flight 401 handler into the generated @ppt/api-client
+    // client. Feature hooks that call the generated SDK directly (via the
+    // request interceptor registered in main.tsx) previously had no runtime
+    // refresh: an access token that expired mid-session surfaced a hard 401 and
+    // forced a re-login. Registering the handler here gives that path the same
+    // silent refresh-and-replay the axios client already had. Routed through
+    // `onUnauthorizedRef` (kept current by the effect below) so this effect
+    // stays single-run and always invokes the latest refresh/logout closures.
+    setUnauthorizedHandler(() => onUnauthorizedRef.current());
+
     // Clean up on unmount
     return () => {
       clearTokenProvider();
+      clearUnauthorizedHandler();
       resetApiClient();
     };
   }, [getAccessToken]);
