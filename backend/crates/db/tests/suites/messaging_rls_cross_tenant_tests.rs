@@ -50,7 +50,6 @@ const MESSAGING_TABLES: [&str; 3] = ["message_threads", "messages", "user_blocks
 /// table, with `relrowsecurity = true` (ENABLE, from 00017) still in place.
 /// Pre-migration these would be `(true, false)`, so this fails on origin/dev.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn messaging_tables_have_force_rls_enabled(pool: PgPool) {
     let rows: Vec<(String, bool, bool)> = sqlx::query_as(
         r#"
@@ -90,7 +89,6 @@ async fn messaging_tables_have_force_rls_enabled(pool: PgPool) {
 /// policy, so 00171's FORCE is enforcing the participant/tenant policies rather
 /// than locking the tables out entirely.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn messaging_tables_have_rls_policies(pool: PgPool) {
     for table in MESSAGING_TABLES {
         let policy_count: i64 = sqlx::query_scalar(

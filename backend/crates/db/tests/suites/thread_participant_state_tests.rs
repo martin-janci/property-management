@@ -63,7 +63,6 @@ async fn seed_thread(pool: &PgPool, org_id: Uuid, a: Uuid, b: Uuid) -> Uuid {
 /// Per-user delete hides the thread from that user's list only; the other
 /// participant's view is untouched.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn per_user_delete_hides_only_for_deleting_user(pool: PgPool) {
     let repo = MessagingRepository::new(pool.clone());
     let org = seed_org(&pool, "tps-del").await;
@@ -139,7 +138,6 @@ async fn per_user_delete_hides_only_for_deleting_user(pool: PgPool) {
 /// Archiving moves the thread to the archived tab for that user only; it leaves
 /// the default inbox (and the other participant) unchanged.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn archive_moves_thread_to_archived_tab_per_user(pool: PgPool) {
     let repo = MessagingRepository::new(pool.clone());
     let org = seed_org(&pool, "tps-arch").await;
@@ -202,7 +200,6 @@ async fn archive_moves_thread_to_archived_tab_per_user(pool: PgPool) {
 /// security with at least one policy (so FORCE enforces a real policy rather
 /// than an implicit deny-all). Mirrors `messaging_rls_cross_tenant_tests.rs`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn thread_participant_state_has_force_rls_and_policy(pool: PgPool) {
     let (relrowsecurity, relforcerowsecurity): (bool, bool) = sqlx::query_as(
         r#"

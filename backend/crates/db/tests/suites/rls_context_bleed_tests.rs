@@ -74,7 +74,6 @@ async fn read_super_admin(pool: &PgPool) -> Option<String> {
 /// `RlsGuard::drop` spawns a Tokio cleanup task. We yield with a short sleep
 /// so that task executes before we re-acquire.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn normal_drop_clears_org_id_guc(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 
@@ -127,7 +126,6 @@ async fn normal_drop_clears_org_id_guc(pool: PgPool) {
 /// This is the "mid-request panic" scenario — the most dangerous path for
 /// context bleeding.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn panic_drop_clears_org_id_guc(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 
@@ -173,7 +171,6 @@ async fn panic_drop_clears_org_id_guc(pool: PgPool) {
 /// Acquire a guard with super-admin context. Confirm all three GUCs are set.
 /// Drop normally. Confirm all three GUCs are cleared.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn normal_drop_clears_all_gucs(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 
@@ -243,7 +240,6 @@ async fn normal_drop_clears_all_gucs(pool: PgPool) {
 
 /// Same as `normal_drop_clears_all_gucs` but with a panic in the middle.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn panic_drop_clears_all_gucs(pool: PgPool) {
     let rls_pool = RlsPool::new(pool.clone());
 
@@ -303,7 +299,6 @@ async fn panic_drop_clears_all_gucs(pool: PgPool) {
 /// not recycled) and (b) a freshly opened connection carries no super-admin
 /// context and is usable.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: shares the blind-CI #[sqlx::test] harness gap (schema/seed never migrated); runs once BIT-352 repairs it. Fix is enforced offline by fmt/clippy."]
 async fn failed_clear_discards_connection(pool: PgPool) {
     // Build a single-connection pool against the same (isolated) test DB so we
     // can observe whether a specific physical connection is recycled or not.
@@ -384,7 +379,6 @@ async fn failed_clear_discards_connection(pool: PgPool) {
 /// tainted one was discarded, not recycled), and (c) a freshly opened
 /// connection carries no super-admin context and is usable.
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: shares the blind-CI #[sqlx::test] harness gap (schema/seed never migrated); runs once BIT-352 repairs it. Fix is enforced offline by fmt/clippy."]
 async fn acquire_public_discards_connection_on_failed_clear(pool: PgPool) {
     // Plain single-connection pool (no `after_release` hook) so we can observe
     // whether the specific poisoned physical connection is reused or discarded,

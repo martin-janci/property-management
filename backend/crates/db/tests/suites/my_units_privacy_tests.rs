@@ -108,7 +108,6 @@ async fn insert_ended_resident(conn: &mut PgConnection, unit: Uuid, user: Uuid) 
 /// Alice's own association — Bob's residency is never surfaced, proving other
 /// residents' PII is filtered server-side.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_my_units_returns_only_callers_association(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("acquire");
     let org = insert_org(&mut conn, "shared").await;
@@ -149,7 +148,6 @@ async fn find_my_units_returns_only_callers_association(pool: PgPool) {
 
 /// A user with no residency (and other tenants' units in the DB) sees nothing.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_my_units_is_scoped_strictly_by_user(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("acquire");
     let org = insert_org(&mut conn, "scope").await;
@@ -175,7 +173,6 @@ async fn find_my_units_is_scoped_strictly_by_user(pool: PgPool) {
 
 /// Ended residencies (moved-out) are excluded; only active associations show.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn find_my_units_excludes_ended_residencies(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("acquire");
     let org = insert_org(&mut conn, "ended").await;

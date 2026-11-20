@@ -192,7 +192,6 @@ async fn happy_path_consumes_code_and_opens_window(pool: PgPool) {
 /// 422 `invalid_recovery_code`, leaves all codes unused, and emits a
 /// Denied audit row tagged `mfa_recovery_invalid`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn invalid_code_is_rejected_and_audited(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -266,7 +265,6 @@ async fn invalid_code_is_rejected_and_audited(pool: PgPool) {
 /// behaves identically to "invalid code", returning 422
 /// `invalid_recovery_code`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn replay_of_used_code_is_rejected(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -325,7 +323,6 @@ async fn replay_of_used_code_is_rejected(pool: PgPool) {
 /// requires an active enrollment (recovery codes are only meaningful
 /// once MFA is on).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn not_enrolled_user_is_rejected(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -361,7 +358,6 @@ async fn not_enrolled_user_is_rejected(pool: PgPool) {
 /// authenticated user could request to consume codes belonging to
 /// platform admins.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn non_platform_principal_is_rejected(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -411,7 +407,6 @@ async fn non_platform_principal_is_rejected(pool: PgPool) {
 /// 410 Gone `no_recovery_codes`, denied audit row tagged
 /// `mfa_recovery_no_codes`. Documents the documented branch in the handler.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn all_codes_exhausted_returns_gone(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;

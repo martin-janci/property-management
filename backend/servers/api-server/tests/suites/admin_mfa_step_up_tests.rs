@@ -128,7 +128,6 @@ async fn verification_count(pool: &PgPool, user_id: Uuid) -> i64 {
 /// (1) Happy path: a valid current TOTP opens the recency window via a
 /// `method = 'totp'` verification row and audits an allowed `mfa_step_up`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn happy_path_totp_opens_window(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -178,7 +177,6 @@ async fn happy_path_totp_opens_window(pool: PgPool) {
 /// (2) Invalid code: a non-matching code yields 422 `invalid_code`, opens no
 /// window, and audits a Denied `mfa_step_up_invalid` row.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn invalid_code_is_rejected_and_audited(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -218,7 +216,6 @@ async fn invalid_code_is_rejected_and_audited(pool: PgPool) {
 /// (3) Not enrolled: an un-enrolled platform principal gets 412
 /// `mfa_not_enrolled` and no window is opened.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn not_enrolled_is_rejected(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;

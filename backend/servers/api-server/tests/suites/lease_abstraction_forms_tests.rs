@@ -119,7 +119,6 @@ async fn upload_lease_document_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn list_lease_documents_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -144,7 +143,6 @@ async fn list_lease_documents_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn get_lease_document_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -216,7 +214,6 @@ async fn process_lease_document_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn list_lease_extractions_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -244,7 +241,6 @@ async fn list_lease_extractions_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn get_lease_extraction_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -267,7 +263,6 @@ async fn get_lease_extraction_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn get_extraction_fields_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -292,7 +287,6 @@ async fn get_extraction_fields_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn approve_lease_extraction_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -316,7 +310,6 @@ async fn approve_lease_extraction_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn reject_lease_extraction_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -340,7 +333,6 @@ async fn reject_lease_extraction_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn list_extraction_corrections_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();
@@ -394,7 +386,6 @@ async fn add_extraction_correction_succeeds(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "schema mismatch: lease abstraction tables not seeded"]
 async fn list_lease_imports_succeeds(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::default();

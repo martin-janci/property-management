@@ -58,7 +58,6 @@ async fn seed_agency(pool: &PgPool, slug: &str) -> Uuid {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn import_job_by_id_is_scoped_to_owning_user(pool: PgPool) {
     let user_a = seed_user(&pool, "import-a@idor.test").await;
     let user_b = seed_user(&pool, "import-b@idor.test").await;
@@ -143,7 +142,6 @@ async fn import_job_by_id_is_scoped_to_owning_user(pool: PgPool) {
 }
 
 #[sqlx::test]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn feed_subscription_by_id_is_scoped_to_owning_agency(pool: PgPool) {
     let agency_a = seed_agency(&pool, "feed-idor-a").await;
     let agency_b = seed_agency(&pool, "feed-idor-b").await;

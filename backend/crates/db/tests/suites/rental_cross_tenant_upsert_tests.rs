@@ -23,7 +23,6 @@ use sqlx::PgPool;
 /// After both calls org A's row must still have organization_id = org_a,
 /// org B's row must have organization_id = org_b, and tokens must not bleed.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn airbnb_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
     let org_a = seed_org(&pool, "airbnb-a").await;
     let org_b = seed_org(&pool, "airbnb-b").await;
@@ -81,7 +80,6 @@ async fn airbnb_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
 /// When org B refreshes its token after both orgs are connected, org A's row
 /// must remain untouched.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn airbnb_upsert_refresh_does_not_rebind_other_org(pool: PgPool) {
     let org_a = seed_org(&pool, "airbnb-ra").await;
     let org_b = seed_org(&pool, "airbnb-rb").await;
@@ -118,7 +116,6 @@ async fn airbnb_upsert_refresh_does_not_rebind_other_org(pool: PgPool) {
 
 /// Mirrors the Airbnb tests for upsert_booking_oauth_connection.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn booking_oauth_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
     let org_a = seed_org(&pool, "booking-a").await;
     let org_b = seed_org(&pool, "booking-b").await;
@@ -159,7 +156,6 @@ async fn booking_oauth_upsert_nil_unit_id_is_org_scoped(pool: PgPool) {
 
 /// organization_id must be stable after an idempotent re-upsert by the same org.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn booking_oauth_upsert_idempotent_same_org(pool: PgPool) {
     let org_a = seed_org(&pool, "booking-idem").await;
     let repo = RentalRepository::new(pool.clone());

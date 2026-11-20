@@ -146,7 +146,6 @@ fn set_env_once() {
 ///   * An `audit_logs` row exists for the user with `details.outcome =
 ///     'allowed'` and `resource_type = 'mfa_disabled'`.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn happy_path_disables_mfa_and_audits(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -220,7 +219,6 @@ async fn happy_path_disables_mfa_and_audits(pool: PgPool) {
 /// without it, any authenticated user could clear another's MFA. This is
 /// THE key auth-bypass test for this route.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn non_platform_principal_is_rejected(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -286,7 +284,6 @@ async fn non_platform_principal_is_rejected(pool: PgPool) {
 /// code), so the lockable-but-not-bypassable pre-condition is the
 /// enrollment state.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn not_enrolled_user_is_rejected(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -322,7 +319,6 @@ async fn not_enrolled_user_is_rejected(pool: PgPool) {
 /// (mid-enrollment state). The handler must still 404 `not_enrolled`
 /// because there is no active MFA to disable.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn pending_enrollment_user_is_rejected(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -385,7 +381,6 @@ async fn pending_enrollment_user_is_rejected(pool: PgPool) {
 /// test-only handler shim in a follow-up. For now the sequential test
 /// exercises the SAME `used_at IS NULL` filter the TOCTOU guard relies on.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn used_recovery_code_cannot_disable_again(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
@@ -463,7 +458,6 @@ async fn used_recovery_code_cannot_disable_again(pool: PgPool) {
 /// refactor that silently swallows verification failures (e.g. by
 /// returning 200 with a "no-op" message) is caught.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "requires postgres + migrations"]
 async fn invalid_code_is_rejected_and_audited(pool: PgPool) {
     set_env_once();
     let app = TestApp::new(pool.clone()).await;
