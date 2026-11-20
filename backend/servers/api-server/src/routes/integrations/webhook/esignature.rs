@@ -240,6 +240,30 @@ pub async fn esignature_webhook(
             };
 
             if let Some(wf) = workflow {
+                // Bind the envelope to the signature-verified provider before
+                // mutating anything. HelloSign's `event_hash` covers only
+                // `event_time + event_type`, so the `envelope_id` in the body
+                // is unsigned — a captured HelloSign notification could
+                // otherwise be replayed with a substituted envelope id to drive
+                // an arbitrary (cross-provider / cross-tenant) workflow into a
+                // terminal state. Refuse any envelope that does not belong to
+                // the provider whose signature we verified.
+                if !webhook_envelope_is_bound(provider, envelope_id, &wf.provider) {
+                    tracing::warn!(
+                        envelope_id = %envelope_id,
+                        verified_provider = %provider,
+                        workflow_provider = %wf.provider,
+                        "E-signature webhook: envelope not bound to verified provider — rejecting"
+                    );
+                    return Err((
+                        StatusCode::UNAUTHORIZED,
+                        Json(ErrorResponse::new(
+                            "ENVELOPE_NOT_BOUND",
+                            "Webhook envelope is not bound to the verified provider",
+                        )),
+                    ));
+                }
+
                 match rls_pool
                     .acquire_with_rls(wf.organization_id, wf.created_by, false)
                     .await
@@ -279,4 +303,75 @@ pub async fn esignature_webhook(
     }
 
     Ok(StatusCode::OK)
+}
+
+/// Decide whether a signature-verified webhook is allowed to act on the
+/// workflow that its `envelope_id` resolved to.
+///
+/// HelloSign's `event_hash` MACs only `event_time + event_type` — the
+/// `envelope_id` is NOT part of the signed data (DocuSign and Adobe Sign sign
+/// the full raw request body, so they bind it). A captured HelloSign
+/// notification can therefore be replayed with an arbitrary substituted
+/// `envelope_id` in the JSON body; the `event_hash` still verifies, so the
+/// owning org is resolved FROM the attacker-chosen envelope id and an
+/// unrelated (cross-provider / cross-tenant) workflow is forced into a terminal
+/// signed/voided/declined state.
+///
+/// Bind the envelope to the verified provider: only act when the resolved
+/// workflow was actually created for the provider whose signature we verified,
+/// and never when the envelope id is empty (an unbound envelope).
+fn webhook_envelope_is_bound(
+    verified_provider: &str,
+    envelope_id: &str,
+    workflow_provider: &str,
+) -> bool {
+    !envelope_id.is_empty()
+        && !verified_provider.is_empty()
+        && workflow_provider.eq_ignore_ascii_case(verified_provider)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::webhook_envelope_is_bound;
+    use db::models::esignature_provider;
+
+    #[test]
+    fn verified_provider_may_act_on_its_own_workflow() {
+        assert!(webhook_envelope_is_bound(
+            esignature_provider::HELLOSIGN,
+            "env-123",
+            esignature_provider::HELLOSIGN,
+        ));
+    }
+
+    #[test]
+    fn hellosign_webhook_rejected_for_foreign_provider_workflow() {
+        // Core finding: a verified HelloSign webhook must NOT be able to drive
+        // a DocuSign / Adobe / internal workflow to a terminal state, because
+        // HelloSign's signature does not cover the envelope id.
+        assert!(!webhook_envelope_is_bound(
+            esignature_provider::HELLOSIGN,
+            "env-belonging-to-docusign",
+            esignature_provider::DOCUSIGN,
+        ));
+        assert!(!webhook_envelope_is_bound(
+            esignature_provider::HELLOSIGN,
+            "env-x",
+            esignature_provider::INTERNAL,
+        ));
+    }
+
+    #[test]
+    fn empty_envelope_id_is_unbound() {
+        assert!(!webhook_envelope_is_bound(
+            esignature_provider::HELLOSIGN,
+            "",
+            esignature_provider::HELLOSIGN,
+        ));
+    }
+
+    #[test]
+    fn provider_match_is_case_insensitive() {
+        assert!(webhook_envelope_is_bound("HelloSign", "env-1", "hellosign"));
+    }
 }
