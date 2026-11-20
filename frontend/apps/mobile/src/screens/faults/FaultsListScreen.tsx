@@ -121,6 +121,32 @@ const categoryIcon: Record<FaultCategory, string> = {
   other: '🔧',
 };
 
+// Map runtime enum values to their i18n catalog keys so the badges render a
+// localized label instead of the raw enum / English literal.
+const statusLabelKey: Record<FaultStatus, string> = {
+  open: 'faults.statusOpen',
+  in_progress: 'faults.statusInProgress',
+  resolved: 'faults.statusResolved',
+  closed: 'faults.statusClosed',
+};
+
+const priorityLabelKey: Record<FaultPriority, string> = {
+  low: 'faults.priorityLow',
+  medium: 'faults.priorityMedium',
+  high: 'faults.priorityHigh',
+  urgent: 'faults.priorityUrgent',
+};
+
+type FaultFilter = 'all' | 'open' | 'resolved';
+
+const FAULT_FILTERS: readonly FaultFilter[] = ['all', 'open', 'resolved'];
+
+const filterLabelKey: Record<FaultFilter, string> = {
+  all: 'faults.filterAll',
+  open: 'faults.filterOpen',
+  resolved: 'faults.filterResolved',
+};
+
 const formatDate = (dateString: string): string =>
   formatLocaleDate(dateString, {
     month: 'short',
@@ -131,7 +157,7 @@ const formatDate = (dateString: string): string =>
 
 export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('all');
+  const [filter, setFilter] = useState<FaultFilter>('all');
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiFaultListResponse>(
     ['faults', 'list'],
@@ -155,21 +181,21 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Faults</Text>
+        <Text style={styles.headerTitle}>{t('tabs.faults')}</Text>
         <Pressable style={styles.addButton} onPress={() => onNavigate?.('ReportFault')}>
-          <Text style={styles.addButtonText}>+ Report</Text>
+          <Text style={styles.addButtonText}>{t('faults.addButton')}</Text>
         </Pressable>
       </View>
 
       <View style={styles.filters}>
-        {(['all', 'open', 'resolved'] as const).map((option) => (
+        {FAULT_FILTERS.map((option) => (
           <Pressable
             key={option}
             style={[styles.filterButton, filter === option && styles.filterButtonActive]}
             onPress={() => setFilter(option)}
           >
             <Text style={[styles.filterText, filter === option && styles.filterTextActive]}>
-              {option.charAt(0).toUpperCase() + option.slice(1)}
+              {t(filterLabelKey[option])}
             </Text>
           </Pressable>
         ))}
@@ -215,7 +241,7 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
                   style={[styles.statusBadge, { backgroundColor: statusBgColor[fault.status] }]}
                 >
                   <Text style={[styles.statusText, { color: statusInkColor[fault.status] }]}>
-                    {fault.status.replace('_', ' ')}
+                    {t(statusLabelKey[fault.status])}
                   </Text>
                 </View>
               </View>
@@ -229,7 +255,7 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
                   style={[styles.priorityBadge, { borderColor: priorityInkColor[fault.priority] }]}
                 >
                   <Text style={[styles.priorityText, { color: priorityInkColor[fault.priority] }]}>
-                    {fault.priority}
+                    {t(priorityLabelKey[fault.priority])}
                   </Text>
                 </View>
                 <Text style={styles.faultDate}>{formatDate(fault.updatedAt)}</Text>
@@ -237,7 +263,7 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
 
               {fault.assignedTo && (
                 <View style={styles.assignedRow}>
-                  <Text style={styles.assignedLabel}>Assigned to:</Text>
+                  <Text style={styles.assignedLabel}>{t('faults.assignedTo')}</Text>
                   <Text style={styles.assignedValue}>{fault.assignedTo}</Text>
                 </View>
               )}

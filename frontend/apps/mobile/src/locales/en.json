@@ -169,7 +169,12 @@
     "submitButtonOffline": "Save & sync later",
     "loadError": "Couldn't load faults",
     "emptyTitle": "No faults found",
-    "emptyText": "All issues have been addressed"
+    "emptyText": "All issues have been addressed",
+    "addButton": "+ Report",
+    "filterAll": "All",
+    "filterOpen": "Open",
+    "filterResolved": "Resolved",
+    "assignedTo": "Assigned to:"
   },
   "news": {
     "backToList": "‹ News",

@@ -169,7 +169,12 @@
     "submitButtonOffline": "Uložit a synchronizovat později",
     "loadError": "Nepodařilo se načíst závady",
     "emptyTitle": "Nebyly nalezeny žádné závady",
-    "emptyText": "Všechny problémy byly vyřešeny"
+    "emptyText": "Všechny problémy byly vyřešeny",
+    "addButton": "+ Nahlasit",
+    "filterAll": "Vsechny",
+    "filterOpen": "Otevreno",
+    "filterResolved": "Vyreseno",
+    "assignedTo": "Prirazeno:"
   },
   "news": {
     "backToList": "‹ Zpravy",
