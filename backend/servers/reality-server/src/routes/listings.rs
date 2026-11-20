@@ -949,13 +949,16 @@ fn resolve_region(query_region: Option<&str>) -> String {
 }
 
 /// Seed city for "nearby cities" suggestions when the request doesn't carry an
-/// explicit `city`. Chosen per region so a Czech or German visitor isn't shown
-/// Slovak cities by default. Unknown / EU / local regions fall back to the
-/// Slovak capital, preserving the endpoint's historical default.
+/// explicit `city`. Chosen per region so a Czech, German or Austrian visitor
+/// isn't shown Slovak cities by default — each region seeds from its own
+/// capital (`cz` → Praha, `de` → Berlin, `at` → Wien). Unknown / EU / local
+/// regions fall back to the Slovak capital, preserving the endpoint's
+/// historical default.
 fn default_city_for_region(region: &str) -> &'static str {
     match region {
         "cz" => "Praha",
-        "de" | "at" => "Wien",
+        "de" => "Berlin",
+        "at" => "Wien",
         _ => "Bratislava",
     }
 }
@@ -1510,7 +1513,9 @@ mod tests {
         // unknown/EU/local region still map to Bratislava (existing default).
         assert_eq!(default_city_for_region("sk"), "Bratislava");
         assert_eq!(default_city_for_region("cz"), "Praha");
-        assert_eq!(default_city_for_region("de"), "Wien");
+        // `de` (Germany) seeds from a German capital, not the Austrian `at`/Wien.
+        assert_eq!(default_city_for_region("de"), "Berlin");
+        assert_eq!(default_city_for_region("at"), "Wien");
         assert_eq!(default_city_for_region("eu"), "Bratislava");
         assert_eq!(default_city_for_region("local"), "Bratislava");
         assert_eq!(default_city_for_region("zz-unknown"), "Bratislava");
