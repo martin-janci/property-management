@@ -13,13 +13,22 @@
 //! independently of `status` — which belongs to the in-app read channel — so the
 //! drainer never re-sends on every poll and never clobbers the unread badge.
 //!
-//! **First cut (this change):** the transports are pluggable behind the
-//! [`AlertEmailTransport`] / [`AlertPushTransport`] traits, defaulting to
-//! logging stubs ([`LogEmailTransport`] / [`LogPushTransport`]). reality-server
-//! has no real email service wired yet, so the stubs let the full drain →
-//! device-token fan-out → mark-delivered pipeline land and be exercised by tests
-//! now; a real SMTP/FCM/APNs adapter can be injected later via
+//! **Transports:** pluggable behind the [`AlertEmailTransport`] /
+//! [`AlertPushTransport`] traits, defaulting to logging stubs
+//! ([`LogEmailTransport`] / [`LogPushTransport`]). reality-server has no real
+//! email service wired yet, so the stubs let the full drain → device-token
+//! fan-out pipeline land and be exercised by tests now; a real SMTP/FCM/APNs
+//! adapter can be injected later via
 //! [`SearchAlertDrainerWorker::with_transports`] without touching the loop.
+//!
+//! Crucially, a stub is **not** a delivery: every transport returns an
+//! [`AlertDelivery`], and the stubs return [`AlertDelivery::Skipped`] (nothing
+//! was sent) rather than a success. The drainer marks a row `notified_at` only
+//! when some transport returns [`AlertDelivery::Sent`]; a transport `Err`
+//! records a retryable failure; a stub-only pass (nothing sent, nothing failed)
+//! leaves the row pending so a real adapter injected later still delivers it.
+//! This keeps the queue from silently draining to `/dev/null` while the stubs
+//! are in place.
 //!
 //! **Cross-tenant note:** the drainer runs service-role (no `app.current_user_id`
 //! on its connections). `search_alert_queue` / `portal_saved_searches` / `users`
@@ -150,34 +159,56 @@ fn compose_alert_copy(locale: &Locale, count: usize, name: &str) -> (String, Str
     }
 }
 
+/// Outcome of handing a notification to a transport.
+///
+/// A transport can succeed in two distinct ways, and the drainer must tell them
+/// apart: a real adapter that actually dispatched the message returns
+/// [`Sent`](AlertDelivery::Sent), whereas a no-op stub that only logged returns
+/// [`Skipped`](AlertDelivery::Skipped). Only `Sent` is a delivery — `Skipped`
+/// must never cause the alert to be marked `notified_at`, or a deployment
+/// without a real transport would silently drop every alert.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AlertDelivery {
+    /// The notification was actually handed to a real email/push service.
+    Sent,
+    /// The transport is a no-op stub (no real service wired); nothing was
+    /// delivered, so the alert must stay pending for a later real transport.
+    Skipped,
+}
+
 /// Email side of the drainer's transport. The default is a logging stub; a real
 /// SMTP-backed adapter can be injected via
 /// [`SearchAlertDrainerWorker::with_transports`].
 #[async_trait]
 pub trait AlertEmailTransport: Send + Sync {
-    /// Deliver `notification` to `to_email`. `Err` is a transient failure: the
-    /// drainer records an attempt and retries on a later poll.
+    /// Deliver `notification` to `to_email`. Return [`AlertDelivery::Sent`] when
+    /// the message was actually dispatched and [`AlertDelivery::Skipped`] when
+    /// the transport is a no-op stub. `Err` is a transient failure: the drainer
+    /// records an attempt and retries on a later poll.
     async fn send_email(
         &self,
         to_email: &str,
         to_name: &str,
         notification: &AlertNotification,
-    ) -> Result<(), String>;
+    ) -> Result<AlertDelivery, String>;
 }
 
 /// Push side of the drainer's transport (one call per device token).
 #[async_trait]
 pub trait AlertPushTransport: Send + Sync {
+    /// Deliver `notification` to one device `token`. Return value semantics
+    /// mirror [`AlertEmailTransport::send_email`].
     async fn send_push(
         &self,
         token: &str,
         platform: &str,
         notification: &AlertNotification,
-    ) -> Result<(), String>;
+    ) -> Result<AlertDelivery, String>;
 }
 
-/// Logging email stub — records what *would* be sent. Used until a real email
-/// service is wired into reality-server.
+/// Logging email stub — records what *would* be sent, but delivers nothing.
+/// Used until a real email service is wired into reality-server; returns
+/// [`AlertDelivery::Skipped`] so the drainer never marks the alert delivered.
 pub struct LogEmailTransport;
 
 #[async_trait]
@@ -187,18 +218,19 @@ impl AlertEmailTransport for LogEmailTransport {
         to_email: &str,
         _to_name: &str,
         notification: &AlertNotification,
-    ) -> Result<(), String> {
+    ) -> Result<AlertDelivery, String> {
         tracing::info!(
             target: "bg.search_alert_drainer",
             to = %to_email,
             subject = %notification.subject,
-            "[BIT-139] (stub) email alert dispatched"
+            "[BIT-139] (stub) email alert NOT delivered — no real email transport wired"
         );
-        Ok(())
+        Ok(AlertDelivery::Skipped)
     }
 }
 
-/// Logging push stub — records what *would* be sent per device token.
+/// Logging push stub — records what *would* be sent per device token, but
+/// delivers nothing. Returns [`AlertDelivery::Skipped`].
 pub struct LogPushTransport;
 
 #[async_trait]
@@ -208,7 +240,7 @@ impl AlertPushTransport for LogPushTransport {
         token: &str,
         platform: &str,
         notification: &AlertNotification,
-    ) -> Result<(), String> {
+    ) -> Result<AlertDelivery, String> {
         // Never log the full token (a credential): a short prefix is enough to
         // correlate without leaking it into logs.
         let token_prefix: String = token.chars().take(8).collect();
@@ -217,9 +249,9 @@ impl AlertPushTransport for LogPushTransport {
             platform = %platform,
             token_prefix = %token_prefix,
             subject = %notification.subject,
-            "[BIT-139] (stub) push alert dispatched"
+            "[BIT-139] (stub) push alert NOT delivered — no real push transport wired"
         );
-        Ok(())
+        Ok(AlertDelivery::Skipped)
     }
 }
 
@@ -369,6 +401,7 @@ impl SearchAlertDrainerWorker {
         };
 
         let mut delivered = 0usize;
+        let mut pending = 0usize;
         for alert in alerts {
             let count = alert.matching_listing_ids.len();
             let notification = AlertNotification::localized(
@@ -377,20 +410,28 @@ impl SearchAlertDrainerWorker {
                 &alert.saved_search_name,
             );
 
-            // An alert counts as delivered if *any* channel succeeds. Email is
-            // the primary channel; push is best-effort fan-out across devices.
-            let mut any_ok = false;
+            // Track the two outcomes that decide the row's fate separately:
+            //  - `any_sent`  — a real transport actually delivered the alert.
+            //  - `any_error` — a real transport was tried and failed (retryable).
+            // A no-op stub returns `Skipped`, which is neither: it must not mark
+            // the row delivered and must not burn the retry budget.
+            let mut any_sent = false;
+            let mut any_error = false;
 
             match self
                 .email
                 .send_email(&alert.recipient_email, &alert.recipient_name, &notification)
                 .await
             {
-                Ok(()) => any_ok = true,
-                Err(e) => tracing::warn!(
-                    alert_id = %alert.id, error = %e,
-                    "[BIT-139] email transport failed"
-                ),
+                Ok(AlertDelivery::Sent) => any_sent = true,
+                Ok(AlertDelivery::Skipped) => {}
+                Err(e) => {
+                    any_error = true;
+                    tracing::warn!(
+                        alert_id = %alert.id, error = %e,
+                        "[BIT-139] email transport failed"
+                    );
+                }
             }
 
             // Push fan-out: strictly this row's owner's tokens (service-role read).
@@ -402,41 +443,119 @@ impl SearchAlertDrainerWorker {
                             .send_push(&tok.token, &tok.platform, &notification)
                             .await
                         {
-                            Ok(()) => any_ok = true,
-                            Err(e) => tracing::warn!(
-                                alert_id = %alert.id, error = %e,
-                                "[BIT-139] push transport failed for a device"
-                            ),
+                            Ok(AlertDelivery::Sent) => any_sent = true,
+                            Ok(AlertDelivery::Skipped) => {}
+                            Err(e) => {
+                                any_error = true;
+                                tracing::warn!(
+                                    alert_id = %alert.id, error = %e,
+                                    "[BIT-139] push transport failed for a device"
+                                );
+                            }
                         }
                     }
                 }
-                Err(e) => tracing::warn!(
-                    alert_id = %alert.id, error = %e,
-                    "[BIT-139] failed to load device tokens"
-                ),
+                Err(e) => {
+                    any_error = true;
+                    tracing::warn!(
+                        alert_id = %alert.id, error = %e,
+                        "[BIT-139] failed to load device tokens"
+                    );
+                }
             }
 
-            if any_ok {
-                if let Err(e) = self.repo.mark_search_alert_notified(alert.id).await {
-                    tracing::error!(alert_id = %alert.id, error = %e, "[BIT-139] mark-notified failed");
-                } else {
-                    delivered += 1;
+            match drain_outcome(any_sent, any_error) {
+                DrainOutcome::MarkDelivered => {
+                    if let Err(e) = self.repo.mark_search_alert_notified(alert.id).await {
+                        tracing::error!(alert_id = %alert.id, error = %e, "[BIT-139] mark-notified failed");
+                    } else {
+                        delivered += 1;
+                    }
                 }
-            } else if let Err(e) = self.repo.record_search_alert_notify_failure(alert.id).await {
-                tracing::error!(alert_id = %alert.id, error = %e, "[BIT-139] record-failure failed");
+                DrainOutcome::RecordFailure => {
+                    if let Err(e) = self.repo.record_search_alert_notify_failure(alert.id).await {
+                        tracing::error!(alert_id = %alert.id, error = %e, "[BIT-139] record-failure failed");
+                    }
+                }
+                // Nothing was sent and nothing failed — only no-op stubs ran.
+                // Leave the row untouched (still pending, attempts unchanged) so
+                // a real transport injected later still delivers it.
+                DrainOutcome::LeavePending => pending += 1,
             }
         }
 
         if delivered > 0 {
             tracing::info!(delivered, "[BIT-139] saved-search alerts delivered");
         }
+        if pending > 0 {
+            tracing::warn!(
+                pending,
+                "[BIT-139] saved-search alerts left pending — no real transport delivered them \
+                 (stub transports configured); they will be retried on the next poll"
+            );
+        }
         delivered
+    }
+}
+
+/// What to do with one alert row after all its transports have been tried.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DrainOutcome {
+    /// At least one real transport delivered — mark the row `notified_at`.
+    MarkDelivered,
+    /// A real transport was tried and failed — record a retryable attempt.
+    RecordFailure,
+    /// Only no-op stubs ran (nothing sent, nothing failed) — leave the row
+    /// pending so a real transport can deliver it on a later pass.
+    LeavePending,
+}
+
+/// Decide a row's fate from the two transport signals. A real delivery wins
+/// outright; otherwise a genuine error is retried; otherwise (stub-only) the
+/// row is preserved untouched. Kept pure so it is unit-testable without a DB.
+fn drain_outcome(any_sent: bool, any_error: bool) -> DrainOutcome {
+    if any_sent {
+        DrainOutcome::MarkDelivered
+    } else if any_error {
+        DrainOutcome::RecordFailure
+    } else {
+        DrainOutcome::LeavePending
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn drain_outcome_marks_delivered_only_on_a_real_send() {
+        // A real delivery wins, even alongside an error on another channel.
+        assert_eq!(drain_outcome(true, false), DrainOutcome::MarkDelivered);
+        assert_eq!(drain_outcome(true, true), DrainOutcome::MarkDelivered);
+        // A genuine error with no delivery is retried.
+        assert_eq!(drain_outcome(false, true), DrainOutcome::RecordFailure);
+        // Nothing sent, nothing failed (stub-only) must NOT mark delivered — the
+        // row is left pending for a real transport later. This is the fix.
+        assert_eq!(drain_outcome(false, false), DrainOutcome::LeavePending);
+    }
+
+    #[tokio::test]
+    async fn logging_stubs_report_skipped_not_sent() {
+        // The default stubs log but deliver nothing, so they must report
+        // `Skipped` — never a success the drainer would mistake for delivery.
+        let n = AlertNotification::localized(Some("en"), 1, "S");
+        assert_eq!(
+            LogEmailTransport
+                .send_email("to@test.sk", "To", &n)
+                .await
+                .unwrap(),
+            AlertDelivery::Skipped
+        );
+        assert_eq!(
+            LogPushTransport.send_push("tok", "fcm", &n).await.unwrap(),
+            AlertDelivery::Skipped
+        );
+    }
 
     #[test]
     fn poll_interval_is_floored_to_avoid_zero_period_panic() {

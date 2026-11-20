@@ -31,7 +31,7 @@ use async_trait::async_trait;
 use db::models::CreatePortalSavedSearch;
 use db::repositories::RealityPortalRepository;
 use reality_server::services::search_alert_drainer::{
-    AlertEmailTransport, AlertNotification, AlertPushTransport,
+    AlertDelivery, AlertEmailTransport, AlertNotification, AlertPushTransport,
 };
 use reality_server::services::{SearchAlertDrainerConfig, SearchAlertDrainerWorker};
 use sqlx::PgPool;
@@ -55,12 +55,12 @@ impl AlertEmailTransport for RecordingEmail {
         to_email: &str,
         _to_name: &str,
         _notification: &AlertNotification,
-    ) -> Result<(), String> {
+    ) -> Result<AlertDelivery, String> {
         if self.fail {
             return Err("forced email failure".into());
         }
         self.recipients.lock().unwrap().push(to_email.to_string());
-        Ok(())
+        Ok(AlertDelivery::Sent)
     }
 }
 
@@ -78,12 +78,12 @@ impl AlertPushTransport for RecordingPush {
         token: &str,
         _platform: &str,
         _notification: &AlertNotification,
-    ) -> Result<(), String> {
+    ) -> Result<AlertDelivery, String> {
         if self.fail {
             return Err("forced push failure".into());
         }
         self.tokens.lock().unwrap().push(token.to_string());
-        Ok(())
+        Ok(AlertDelivery::Sent)
     }
 }
 
