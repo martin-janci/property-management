@@ -1287,6 +1287,8 @@
     "accentColor": "Akzentfarbe",
     "previewTitle": "Vorschau",
     "previewDesc": "Sehen Sie, wie Ihr Branding auf Inseraten erscheint.",
+    "previewCoverAlt": "Titelbild-Vorschau",
+    "previewLogoAlt": "Logo-Vorschau",
     "featured": "Empfohlen",
     "yourAgency": "Ihre Agentur",
     "sampleTitle": "Beispiel-Inseratstitel",

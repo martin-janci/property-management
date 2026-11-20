@@ -1280,6 +1280,8 @@
     "accentColor": "Kolor akcentu",
     "previewTitle": "Podgląd",
     "previewDesc": "Zobacz, jak Twoja marka będzie wyglądać na ofertach.",
+    "previewCoverAlt": "Podgląd zdjęcia w tle",
+    "previewLogoAlt": "Podgląd logo",
     "featured": "Wyróżnione",
     "yourAgency": "Twoja agencja",
     "sampleTitle": "Przykładowy tytuł oferty",
