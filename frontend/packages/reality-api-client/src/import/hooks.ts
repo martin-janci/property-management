@@ -53,6 +53,9 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(errorMessage);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
   return response.json();
 }
 
@@ -296,13 +299,16 @@ export function useUpdateFeedSource(agencyId: string, feedId: string) {
   });
 }
 
-/**
- * The server has no delete for feed subscriptions; pausing (`is_active: false`)
- * via {@link useUpdateFeedSource} is the supported way to stop a feed.
- */
-export function useDeleteFeedSource(_agencyId: string) {
+export function useDeleteFeedSource(agencyId: string) {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: (_feedId: string) => notAvailable<void>('Deleting a feed'),
+    mutationFn: (feedId: string) =>
+      fetchApi<void>(`/imports/feeds/${encodeURIComponent(feedId)}`, { method: 'DELETE' }),
+    onSuccess: (_data, feedId) => {
+      queryClient.invalidateQueries({ queryKey: ['feed-sources', agencyId] });
+      queryClient.removeQueries({ queryKey: ['feed-source', agencyId, feedId] });
+    },
   });
 }
 

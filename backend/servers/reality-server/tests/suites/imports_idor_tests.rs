@@ -387,3 +387,72 @@ async fn feed_caller_without_agency_returns_403(pool: PgPool) {
         "a user in no agency must get 403 listing feeds, got {status}"
     );
 }
+
+/// `DELETE /feeds/{id}`: another agency's member gets 404 and the feed survives;
+/// a member of the owning agency gets 204 and a follow-up GET is 404.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn feed_delete_is_agency_scoped(pool: PgPool) {
+    let agency_a = seed_agency(&pool, "feed-del-a").await;
+    let agency_b = seed_agency(&pool, "feed-del-b").await;
+    let owner = seed_portal_user(&pool, "feed-del-owner").await;
+    let attacker = seed_portal_user(&pool, "feed-del-attacker").await;
+    seed_membership(&pool, agency_a, owner).await;
+    seed_membership(&pool, agency_b, attacker).await;
+    let feed_id = seed_feed(&pool, agency_a).await;
+
+    let app = imports_router(pool);
+    let call = |method: Method, user: Uuid| {
+        Request::builder()
+            .method(method)
+            .uri(format!("/api/v1/imports/feeds/{feed_id}"))
+            .header(
+                header::AUTHORIZATION,
+                format!("Bearer {}", mint_token(user)),
+            )
+            .body(Body::empty())
+            .unwrap()
+    };
+
+    let status = app
+        .clone()
+        .oneshot(call(Method::DELETE, attacker))
+        .await
+        .unwrap()
+        .status();
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "cross-agency delete must 404"
+    );
+
+    let status = app
+        .clone()
+        .oneshot(call(Method::GET, owner))
+        .await
+        .unwrap()
+        .status();
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "feed must survive a cross-agency delete"
+    );
+
+    let status = app
+        .clone()
+        .oneshot(call(Method::DELETE, owner))
+        .await
+        .unwrap()
+        .status();
+    assert_eq!(
+        status,
+        StatusCode::NO_CONTENT,
+        "owning agency deletes its feed"
+    );
+
+    let status = app
+        .oneshot(call(Method::GET, owner))
+        .await
+        .unwrap()
+        .status();
+    assert_eq!(status, StatusCode::NOT_FOUND, "deleted feed is gone");
+}

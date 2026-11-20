@@ -39,7 +39,7 @@ pub fn router() -> Router<AppState> {
         .route("/feeds", get(list_feeds))
         .route("/feeds", post(create_feed))
         .route("/feeds/{id}", get(get_feed))
-        .route("/feeds/{id}", put(update_feed))
+        .route("/feeds/{id}", put(update_feed).delete(delete_feed))
         .route("/feeds/{id}/sync", post(sync_feed))
 }
 
@@ -461,6 +461,39 @@ pub async fn update_feed(
         })?;
 
     Ok(Json(FeedResponse { feed }))
+}
+
+/// Delete a feed subscription.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/imports/feeds/{id}",
+    tag = "Imports",
+    params(("id" = Uuid, Path, description = "Feed ID")),
+    responses(
+        (status = 204, description = "Feed deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Caller is not a member of any agency"),
+        (status = 404, description = "Feed not found")
+    )
+)]
+pub async fn delete_feed(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Path(id): Path<Uuid>,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    let agency_id = resolve_agency(&state, principal.user_id).await?;
+    let deleted = state
+        .reality_portal_repo
+        .delete_feed_subscription(id, agency_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("delete feed subscription", e))?;
+    if !deleted {
+        return Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Feed not found".to_string(),
+        ));
+    }
+    Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
 /// Trigger immediate sync for a feed.
