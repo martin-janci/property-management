@@ -47,7 +47,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 use wiremock::{matchers, Mock, MockServer, ResponseTemplate};
 
-use api_server::services::push_fanout::{FcmConfig, FcmHttpAdapter};
+use api_server::services::push::{FcmConfig, FcmHttpAdapter};
 use common::notifications::{Notification, NotificationCategory, PushTransport};
 
 // ---------------------------------------------------------------------------
