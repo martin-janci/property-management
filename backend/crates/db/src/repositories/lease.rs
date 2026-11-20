@@ -62,6 +62,29 @@ const LEASE_COLUMNS: &str = "id, organization_id, unit_id, application_id, templ
      renewal_offered_at, renewal_offer_expires_at, \
      notes, created_by, created_at, updated_at";
 
+/// Explicit `tenant_applications` column list for `query_as::<_, TenantApplication>`.
+///
+/// `tenant_applications.status` is the `tenant_application_status` Postgres
+/// ENUM but `TenantApplication.status` is a `String`; a bare `SELECT *` /
+/// `RETURNING *` fails to decode ("mismatched types") and every application
+/// endpoint returned 500 `DB_ERROR`. Same fix as [`LEASE_COLUMNS`] (#2169).
+const APPLICATION_COLUMNS: &str = "id, organization_id, unit_id, \
+     applicant_name, applicant_email, applicant_phone, date_of_birth, national_id, \
+     current_address, current_landlord_name, current_landlord_phone, current_rent_amount, \
+     current_tenancy_start, employer_name, employer_phone, job_title, employment_start, \
+     monthly_income, desired_move_in, desired_lease_term_months, proposed_rent, \
+     co_applicants, documents, status::text AS status, submitted_at, reviewed_by, \
+     reviewed_at, decision_notes, source, referral_code, created_at, updated_at";
+
+/// Explicit `tenant_screenings` column list for `query_as::<_, TenantScreening>`:
+/// `screening_type` and `status` are Postgres ENUMs decoded as `String`, and
+/// `raw_response_encrypted` must never be projected into the API model.
+const SCREENING_COLUMNS: &str = "id, application_id, organization_id, \
+     screening_type::text AS screening_type, provider, consent_requested_at, \
+     consent_received_at, consent_document_url, status::text AS status, started_at, \
+     completed_at, result_summary, risk_score, passed, flags, expires_at, \
+     created_at, updated_at";
+
 /// Canonical single-lease `SELECT` (`WHERE id = $1`) projecting
 /// [`LEASE_COLUMNS`] so the `status` / `termination_reason` Postgres enums are
 /// cast to `text`. Shared by `find_lease_by_id_rls` and
@@ -136,7 +159,8 @@ impl LeaseRepository {
         E: Executor<'e, Database = Postgres>,
     {
         let app = sqlx::query_as::<_, TenantApplication>(
-            r#"
+            sqlx::AssertSqlSafe(format!(
+                r#"
             INSERT INTO tenant_applications (
                 organization_id, unit_id, applicant_name, applicant_email, applicant_phone,
                 date_of_birth, national_id, current_address, current_landlord_name,
@@ -146,8 +170,10 @@ impl LeaseRepository {
                 source, referral_code, status
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, 'draft')
-            RETURNING *
+            RETURNING {cols}
             "#,
+                cols = APPLICATION_COLUMNS
+            )),
         )
         .bind(org_id)
         .bind(data.unit_id)
@@ -187,9 +213,10 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let app = sqlx::query_as::<_, TenantApplication>(
-            r#"SELECT * FROM tenant_applications WHERE id = $1"#,
-        )
+        let app = sqlx::query_as::<_, TenantApplication>(sqlx::AssertSqlSafe(format!(
+            r#"SELECT {cols} FROM tenant_applications WHERE id = $1"#,
+            cols = APPLICATION_COLUMNS
+        )))
         .bind(id)
         .fetch_optional(executor)
         .await?;
@@ -207,7 +234,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let app = sqlx::query_as::<_, TenantApplication>(
+        let app = sqlx::query_as::<_, TenantApplication>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE tenant_applications SET
                 applicant_name = COALESCE($2, applicant_name),
@@ -231,9 +258,10 @@ impl LeaseRepository {
                 co_applicants = COALESCE($20, co_applicants),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {cols}
             "#,
-        )
+            cols = APPLICATION_COLUMNS
+        )))
         .bind(id)
         .bind(&data.applicant_name)
         .bind(&data.applicant_email)
@@ -270,7 +298,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let app = sqlx::query_as::<_, TenantApplication>(
+        let app = sqlx::query_as::<_, TenantApplication>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE tenant_applications SET
                 status = 'submitted',
@@ -278,9 +306,10 @@ impl LeaseRepository {
                 submitted_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1 AND status = 'draft'
-            RETURNING *
+            RETURNING {cols}
             "#,
-        )
+            cols = APPLICATION_COLUMNS
+        )))
         .bind(id)
         .bind(&data.documents)
         .fetch_one(executor)
@@ -300,7 +329,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let app = sqlx::query_as::<_, TenantApplication>(
+        let app = sqlx::query_as::<_, TenantApplication>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE tenant_applications SET
                 status = $2::tenant_application_status,
@@ -309,9 +338,10 @@ impl LeaseRepository {
                 decision_notes = $4,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {cols}
             "#,
-        )
+            cols = APPLICATION_COLUMNS
+        )))
         .bind(id)
         .bind(&data.status)
         .bind(reviewer_id)
@@ -471,7 +501,8 @@ impl LeaseRepository {
         let provider = data.provider.as_deref();
 
         let screenings = sqlx::query_as::<_, TenantScreening>(
-            r#"
+            sqlx::AssertSqlSafe(format!(
+                r#"
             WITH inserted AS (
                 INSERT INTO tenant_screenings (
                     application_id, organization_id, screening_type, provider, status, consent_requested_at
@@ -483,8 +514,10 @@ impl LeaseRepository {
             app_update AS (
                 UPDATE tenant_applications SET status = 'screening_pending' WHERE id = $1
             )
-            SELECT * FROM inserted
+            SELECT {cols} FROM inserted
             "#,
+                cols = SCREENING_COLUMNS
+            )),
         )
         .bind(application_id)
         .bind(org_id)
@@ -506,7 +539,7 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let screening = sqlx::query_as::<_, TenantScreening>(
+        let screening = sqlx::query_as::<_, TenantScreening>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE tenant_screenings SET
                 status = 'consent_received',
@@ -514,9 +547,10 @@ impl LeaseRepository {
                 consent_document_url = $2,
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {cols}
             "#,
-        )
+            cols = SCREENING_COLUMNS
+        )))
         .bind(id)
         .bind(&data.consent_document_url)
         .fetch_one(executor)
@@ -534,16 +568,17 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        let screening = sqlx::query_as::<_, TenantScreening>(
+        let screening = sqlx::query_as::<_, TenantScreening>(sqlx::AssertSqlSafe(format!(
             r#"
             UPDATE tenant_screenings SET
                 status = 'in_progress',
                 started_at = NOW(),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING {cols}
             "#,
-        )
+            cols = SCREENING_COLUMNS
+        )))
         .bind(id)
         .fetch_one(executor)
         .await?;
@@ -570,7 +605,7 @@ impl LeaseRepository {
         };
 
         // Update screening and application status in a single query using CTE
-        let screening = sqlx::query_as::<_, TenantScreening>(
+        let screening = sqlx::query_as::<_, TenantScreening>(sqlx::AssertSqlSafe(format!(
             r#"
             WITH updated_screening AS (
                 UPDATE tenant_screenings SET
@@ -595,9 +630,10 @@ impl LeaseRepository {
                     AND status NOT IN ('completed', 'failed', 'expired')
                 )
             )
-            SELECT * FROM updated_screening
+            SELECT {cols} FROM updated_screening
             "#,
-        )
+            cols = SCREENING_COLUMNS
+        )))
         .bind(id)
         .bind(status)
         .bind(&data.result_summary)

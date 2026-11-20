@@ -138,6 +138,21 @@ pub(super) async fn add_field(
         ));
     }
 
+    if !db::models::form::field_type::is_valid(&req.field_type) {
+        rls.release().await;
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FIELD_TYPE",
+                format!(
+                    "Unknown field_type '{}'; expected one of: {}",
+                    req.field_type,
+                    db::models::form::field_type::ALL.join(", ")
+                ),
+            )),
+        ));
+    }
+
     let field_data = CreateFormField {
         field_key: req.field_key,
         label: req.label,
@@ -257,6 +272,23 @@ pub(super) async fn update_field(
                 "Can only update fields in draft forms",
             )),
         ));
+    }
+
+    if let Some(ft) = req.field_type.as_deref() {
+        if !db::models::form::field_type::is_valid(ft) {
+            rls.release().await;
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_FIELD_TYPE",
+                    format!(
+                        "Unknown field_type '{}'; expected one of: {}",
+                        ft,
+                        db::models::form::field_type::ALL.join(", ")
+                    ),
+                )),
+            ));
+        }
     }
 
     let update_data = UpdateFormField {

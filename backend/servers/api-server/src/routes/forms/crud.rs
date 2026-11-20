@@ -112,6 +112,19 @@ pub(super) async fn create_form(
     let mut fields = Vec::new();
     for f in req.fields {
         // Validate validation_rules JSON if present
+        if !db::models::form::field_type::is_valid(&f.field_type) {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_FIELD_TYPE",
+                    format!(
+                        "Unknown field_type '{}'; expected one of: {}",
+                        f.field_type,
+                        db::models::form::field_type::ALL.join(", ")
+                    ),
+                )),
+            ));
+        }
         let validation_rules = match f.validation_rules {
             Some(v) => Some(serde_json::from_value(v).map_err(|e| {
                 (

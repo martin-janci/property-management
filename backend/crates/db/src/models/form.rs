@@ -34,6 +34,29 @@ pub mod field_type {
     pub const MULTISELECT: &str = "multiselect";
     pub const FILE: &str = "file";
     pub const SIGNATURE: &str = "signature";
+
+    /// Every value of the `form_field_type` Postgres enum (migration 00066).
+    pub const ALL: &[&str] = &[
+        TEXT,
+        TEXTAREA,
+        NUMBER,
+        EMAIL,
+        PHONE,
+        DATE,
+        DATETIME,
+        CHECKBOX,
+        RADIO,
+        SELECT,
+        MULTISELECT,
+        FILE,
+        SIGNATURE,
+    ];
+
+    /// Whether `value` is a valid `form_field_type`. Handlers check this so an
+    /// unknown type is a 400, not a 500 from the enum cast.
+    pub fn is_valid(value: &str) -> bool {
+        ALL.contains(&value)
+    }
 }
 
 /// Form submission status values.
