@@ -17,6 +17,8 @@ mod esignature_nonce_replay_tests;
 mod esignature_sign_consumer_tests;
 #[path = "suites/esignature_webhook_idempotency_tests.rs"]
 mod esignature_webhook_idempotency_tests;
+#[path = "suites/esignature_webhook_replay_tests.rs"]
+mod esignature_webhook_replay_tests;
 #[path = "suites/fault_notification_recipient_tests.rs"]
 mod fault_notification_recipient_tests;
 #[path = "suites/faults_authz_gap_tests.rs"]
