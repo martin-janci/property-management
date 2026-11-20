@@ -100,7 +100,12 @@
     "description": "Opis",
     "location": "Lokalizacja",
     "priority": "Priorytet",
-    "status": "Status",
+    "status": {
+      "open": "Otwarte",
+      "in_progress": "W trakcie",
+      "resolved": "Rozwiazane",
+      "closed": "Zamkniete"
+    },
     "photo": "Zdjecie",
     "addPhoto": "Dodaj zdjecie",
     "submitFault": "Zglos usterke",
@@ -243,6 +248,11 @@
       "voteNotAcceptingBallots": "Głosowanie obecnie nie przyjmuje głosów.",
       "notEligibleInBuilding": "Nie masz uprawnień do głosowania w tym budynku.",
       "allUnitsVoted": "Wszystkie Twoje uprawnione lokale już zagłosowały."
+    },
+    "status": {
+      "active": "Aktywne",
+      "closed": "Zakończone",
+      "pending": "Oczekujące"
     }
   },
   "documents": {
@@ -438,7 +448,12 @@
       "ackError": "Blad potwierdzenia: {{message}}",
       "publishedAt": "Opublikowano: {{date}}"
     },
-    "loadError": "Nie można załadować ogłoszeń"
+    "loadError": "Nie można załadować ogłoszeń",
+    "status": {
+      "published": "Opublikowane",
+      "draft": "Szkic",
+      "scheduled": "Zaplanowane"
+    }
   },
   "widgets": {
     "addedTitle": "Widget dodany",
@@ -583,7 +598,13 @@
   "buildings": {
     "loadError": "Nie można załadować budynków",
     "emptyTitle": "Brak budynków",
-    "emptyText": "Do Twojego konta nie przypisano jeszcze żadnych nieruchomości."
+    "emptyText": "Do Twojego konta nie przypisano jeszcze żadnych nieruchomości.",
+    "status": {
+      "active": "Aktywny",
+      "under_construction": "W budowie",
+      "renovation": "Remont",
+      "inactive": "Nieaktywny"
+    }
   },
   "messages": {
     "unreadCount_one": "{{count}} nieprzeczytana wiadomość",
@@ -611,7 +632,13 @@
     "emptyText": "Nie zostałeś jeszcze dodany do żadnej umowy najmu.",
     "detailLoadError": "Nie można załadować umowy najmu",
     "noPayments": "Brak zaplanowanych nadchodzących płatności.",
-    "notFound": "Nie znaleziono umowy najmu."
+    "notFound": "Nie znaleziono umowy najmu.",
+    "status": {
+      "active": "Aktywna",
+      "pending": "Oczekująca",
+      "expired": "Wygasła",
+      "terminated": "Zakończona"
+    }
   },
   "personMonths": {
     "title": "Osobomiesiące",

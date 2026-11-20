@@ -100,7 +100,12 @@
     "description": "Popis",
     "location": "Miesto",
     "priority": "Priorita",
-    "status": "Stav",
+    "status": {
+      "open": "Otvorene",
+      "in_progress": "Prebieha",
+      "resolved": "Vyriesene",
+      "closed": "Uzavrete"
+    },
     "photo": "Fotografia",
     "addPhoto": "Pridat fotografiu",
     "submitFault": "Odoslat poruchu",
@@ -243,6 +248,11 @@
       "voteNotAcceptingBallots": "Hlasovanie momentálne neprijíma hlasy.",
       "notEligibleInBuilding": "V tejto budove nemáte oprávnenie hlasovať.",
       "allUnitsVoted": "Všetky vaše oprávnené jednotky už hlasovali."
+    },
+    "status": {
+      "active": "Aktívne",
+      "closed": "Ukončené",
+      "pending": "Čakajúce"
     }
   },
   "documents": {
@@ -478,7 +488,12 @@
       "ackError": "Nepodarilo sa potvrdit: {{message}}",
       "publishedAt": "Zverejnene: {{date}}"
     },
-    "loadError": "Nepodarilo sa načítať oznamy"
+    "loadError": "Nepodarilo sa načítať oznamy",
+    "status": {
+      "published": "Zverejnené",
+      "draft": "Koncept",
+      "scheduled": "Plánované"
+    }
   },
   "widgets": {
     "addedTitle": "Widget pridany",
@@ -623,7 +638,13 @@
   "buildings": {
     "loadError": "Nepodarilo sa načítať budovy",
     "emptyTitle": "Žiadne budovy",
-    "emptyText": "K vášmu účtu zatiaľ nie sú priradené žiadne nehnuteľnosti."
+    "emptyText": "K vášmu účtu zatiaľ nie sú priradené žiadne nehnuteľnosti.",
+    "status": {
+      "active": "Aktívna",
+      "under_construction": "Vo výstavbe",
+      "renovation": "Rekonštrukcia",
+      "inactive": "Neaktívna"
+    }
   },
   "messages": {
     "unreadCount_one": "{{count}} neprečítaná správa",
@@ -651,7 +672,13 @@
     "emptyText": "Zatiaľ ste neboli pridaní k žiadnej nájomnej zmluve.",
     "detailLoadError": "Nepodarilo sa načítať nájomnú zmluvu",
     "noPayments": "Nie sú naplánované žiadne nadchádzajúce platby.",
-    "notFound": "Nájomná zmluva sa nenašla."
+    "notFound": "Nájomná zmluva sa nenašla.",
+    "status": {
+      "active": "Aktívna",
+      "pending": "Čakajúca",
+      "expired": "Vypršaná",
+      "terminated": "Ukončená"
+    }
   },
   "personMonths": {
     "title": "Osobomesiace",

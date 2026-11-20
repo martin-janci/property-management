@@ -148,7 +148,7 @@ export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
               <View style={s.cardHeader}>
                 <Text style={s.cardTitle}>{building.name}</Text>
                 <View style={s.badge}>
-                  <Text style={s.badgeText}>{building.status}</Text>
+                  <Text style={s.badgeText}>{t(`buildings.status.${building.status}`)}</Text>
                 </View>
               </View>
               <Text style={styles.address}>📍 {building.address}</Text>

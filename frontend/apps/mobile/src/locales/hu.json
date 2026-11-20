@@ -100,7 +100,12 @@
     "description": "Leiras",
     "location": "Helyszin",
     "priority": "Prioritas",
-    "status": "Allapot",
+    "status": {
+      "open": "Nyitott",
+      "in_progress": "Folyamatban",
+      "resolved": "Megoldva",
+      "closed": "Lezarva"
+    },
     "photo": "Foto",
     "addPhoto": "Foto hozzaadasa",
     "submitFault": "Hiba bekuldese",
@@ -241,6 +246,11 @@
       "voteNotAcceptingBallots": "A szavazás jelenleg nem fogad szavazatokat.",
       "notEligibleInBuilding": "Ebben az épületben nincs szavazati jogosultsága.",
       "allUnitsVoted": "Minden jogosult egysége már szavazott."
+    },
+    "status": {
+      "active": "Aktív",
+      "closed": "Lezárt",
+      "pending": "Függőben"
     }
   },
   "documents": {
@@ -436,7 +446,12 @@
       "ackError": "A visszaigazolas sikertelen: {{message}}",
       "publishedAt": "Kozzeteve: {{date}}"
     },
-    "loadError": "A közlemények nem tölthetők be"
+    "loadError": "A közlemények nem tölthetők be",
+    "status": {
+      "published": "Közzétéve",
+      "draft": "Piszkozat",
+      "scheduled": "Ütemezett"
+    }
   },
   "widgets": {
     "addedTitle": "Widget hozzaadva",
@@ -581,7 +596,13 @@
   "buildings": {
     "loadError": "Az épületek nem tölthetők be",
     "emptyTitle": "Nincsenek épületek",
-    "emptyText": "Fiókjához még nincs ingatlan társítva."
+    "emptyText": "Fiókjához még nincs ingatlan társítva.",
+    "status": {
+      "active": "Aktív",
+      "under_construction": "Építés alatt",
+      "renovation": "Felújítás",
+      "inactive": "Inaktív"
+    }
   },
   "messages": {
     "unreadCount_one": "{{count}} olvasatlan üzenet",
@@ -607,7 +628,13 @@
     "emptyText": "Még egyetlen bérleti szerződéshez sem adták hozzá.",
     "detailLoadError": "A bérleti szerződés nem tölthető be",
     "noPayments": "Nincsenek ütemezett közelgő fizetések.",
-    "notFound": "A bérleti szerződés nem található."
+    "notFound": "A bérleti szerződés nem található.",
+    "status": {
+      "active": "Aktív",
+      "pending": "Függőben",
+      "expired": "Lejárt",
+      "terminated": "Megszüntetett"
+    }
   },
   "personMonths": {
     "title": "Személyhónapok",
