@@ -12616,6 +12616,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes-retry1",
+      "branch": "auto-impl/code-review-ppt-web-ui-marketplace-epic6-4e7186b3",
+      "status": "merged",
+      "claimed_at": "2026-11-20T16:28:14Z",
+      "last_updated": "2026-11-20T20:27:30Z",
+      "status_changed_at": "2026-11-20T20:27:30Z",
+      "pr_number": 3667,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3667",
+      "merged_at": "2026-11-20T20:26:15Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3667 status=done specialist=react-web scope_drift=true [Epic68 marketplace intentionally-unwired per PAP-55 (unwired-features.ts registry+CI guard); added in-file pointers from barrels to registry/guard so static-review stops re-flagging; comment-only, verify GREEN c03e460]",
+      "reviewer_summary": "verdict=approve head_oid=4f323c9bfd08dc1dd8e65c5351b5538c056972b7 note=comment-only-annotation-verified-ci-green-self-approve-blocked-posted-as-COMMENT",
+      "last_reviewed_oid": "4f323c9bfd08dc1dd8e65c5351b5538c056972b7",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-marketplace-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-marketplace-no-i1-048b48f0",
       "status": "merged",
@@ -31816,5 +31838,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-20T18:38:48Z"
+  "archived_at": "2026-11-20T20:35:36Z"
 }

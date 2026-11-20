@@ -211,24 +211,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-realtor-account-pages-no-i18n",
-      "action": "reality web realtor account pages no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-26T18:36:06Z"
-      }
-    },
-    {
       "id": "pm-integration-slug-client-propagation",
       "action": "Confirm #3616 ListingSummary slug reaches OpenAPI/TypeSpec and @ppt/reality-api-client + KMP/iOS clients; document slug as always-populated and state detail-lookup identifier",
       "owner_role": "pm-integration",
@@ -355,38 +337,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes-retry1",
-      "action": "ppt web ui marketplace epic68 orphaned routes [retry 1/2 of failed code-review-ppt-web-ui-marketplace-epic68-orphaned-routes]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-19T16:32:00Z (retry_of=code-review-ppt-web-ui-marketplace-epic68-orphaned-routes reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T10:46:14Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T16:32:00Z",
-      "retry_of": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-ppt-web-core-init-no-exp-check",
-      "action": "ppt web core init no exp check",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T22:25:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-28T00:00:00Z"
       }
     },
     {

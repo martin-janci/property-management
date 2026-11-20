@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-20T18:30:43Z",
+  "archived_at": "2026-11-20T20:36:43Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12999,6 +12999,26 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes-retry1",
+      "action": "ppt web ui marketplace epic68 orphaned routes [retry 1/2 of failed code-review-ppt-web-ui-marketplace-epic68-orphaned-routes]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-19T16:32:00Z (retry_of=code-review-ppt-web-ui-marketplace-epic68-orphaned-routes reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T10:46:14Z) | dev-reconcile 2026-11-20T20:27:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T16:32:00Z",
+      "retry_of": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes",
+      "retry_round": 1,
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "3030c727b5d96b2422aaf8896e2f85321b946c49",
+        "subject": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes-retry1: annotate Epic 68 marketplace as intentionally unwired (PAP-55)",
+        "at": "2026-11-20T20:27:59Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-marketplace-no-i18n",
       "action": "ppt-web marketplace feature ships hardcoded English (placeholders, 16 service-category labels) in a 4-locale app — 0 useTranslation across 8 of 9 files",
       "owner_role": "pm-tech-lead",
@@ -17342,6 +17362,31 @@
         "merged_pr": 3496,
         "merged_at": "2026-11-13T18:33:35Z",
         "at": "2026-11-13T20:27:07Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "action": "reality web realtor account pages no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-20T20:27:59Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-26T18:36:06Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T20:27:59Z"
       }
     },
     {
