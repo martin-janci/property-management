@@ -1559,5 +1559,11 @@
     "errorCreateListing": "Inzerát sa nepodarilo vytvoriť. Skúste to znova.",
     "errorMissingListingId": "Chýba ID inzerátu.",
     "errorLoadAnalytics": "Analytiku sa nepodarilo načítať."
+  },
+  "states": {
+    "loading": "Načítava sa…",
+    "errorTitle": "Niečo sa pokazilo",
+    "errorDescription": "Skúste to znova. Ak problém pretrváva, kontaktujte podporu.",
+    "retry": "Skúsiť znova"
   }
 }

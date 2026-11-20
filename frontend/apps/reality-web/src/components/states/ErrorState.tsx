@@ -4,6 +4,7 @@
  * ErrorState — inline error placeholder with optional retry callback.
  */
 
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 export interface ErrorStateProps {
@@ -17,24 +18,33 @@ export interface ErrorStateProps {
 
 export function ErrorState({
   icon = '⚠️',
-  title = 'Something went wrong',
-  description = 'Please try again. If the issue persists, contact support.',
+  title,
+  description,
   onRetry,
-  retryLabel = 'Try again',
+  retryLabel,
   children,
 }: ErrorStateProps) {
+  // Defaults come from the shared `states.*` catalog so this primitive renders
+  // in the viewer's locale instead of hardcoded English when a caller doesn't
+  // pass copy of its own. Explicit props still win (nullish-coalescing), and an
+  // empty-string description keeps hiding the paragraph.
+  const t = useTranslations('states');
+  const resolvedTitle = title ?? t('errorTitle');
+  const resolvedDescription = description ?? t('errorDescription');
+  const resolvedRetryLabel = retryLabel ?? t('retry');
+
   return (
     <div className="state-inline" role="alert">
       <span className="state-icon" aria-hidden="true">
         {icon}
       </span>
-      <h2 className="state-title">{title}</h2>
-      {description && <p className="state-text">{description}</p>}
+      <h2 className="state-title">{resolvedTitle}</h2>
+      {resolvedDescription && <p className="state-text">{resolvedDescription}</p>}
       {(onRetry || children) && (
         <div className="state-actions">
           {onRetry && (
             <button type="button" className="state-action" onClick={onRetry}>
-              {retryLabel}
+              {resolvedRetryLabel}
             </button>
           )}
           {children}

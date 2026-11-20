@@ -4,6 +4,8 @@
  * LoadingSkeleton — accessible shimmer placeholder.
  */
 
+import { useTranslations } from 'next-intl';
+
 export interface LoadingSkeletonProps {
   lines?: number;
   cards?: number;
@@ -29,15 +31,20 @@ export function LoadingSkeleton({
   cards,
   width = '100%',
   height = '1rem',
-  label = 'Loading…',
+  label,
 }: LoadingSkeletonProps) {
+  // The accessible label falls back to the shared `states.*` catalog so screen
+  // readers announce it in the viewer's locale; an explicit `label` prop wins.
+  const t = useTranslations('states');
+  const resolvedLabel = label ?? t('loading');
+
   if (cards != null) {
     return (
-      <div role="status" aria-live="polite" aria-label={label} style={{ width: '100%' }}>
+      <div role="status" aria-live="polite" aria-label={resolvedLabel} style={{ width: '100%' }}>
         {Array.from({ length: cards }).map((_, i) => (
           <div key={`skeleton-card-${i}`} className="skeleton card" />
         ))}
-        <span style={visuallyHidden}>{label}</span>
+        <span style={visuallyHidden}>{resolvedLabel}</span>
         <style jsx>{`
           .skeleton {
             background: linear-gradient(90deg, var(--ppt-bg-subtle) 0%, var(--ppt-border-default) 50%, var(--ppt-bg-subtle) 100%);
@@ -60,7 +67,7 @@ export function LoadingSkeleton({
 
   if (lines != null) {
     return (
-      <div role="status" aria-live="polite" aria-label={label} style={{ width: '100%' }}>
+      <div role="status" aria-live="polite" aria-label={resolvedLabel} style={{ width: '100%' }}>
         {Array.from({ length: lines }).map((_, i) => (
           <div
             key={`skeleton-line-${i}`}
@@ -71,7 +78,7 @@ export function LoadingSkeleton({
             }}
           />
         ))}
-        <span style={visuallyHidden}>{label}</span>
+        <span style={visuallyHidden}>{resolvedLabel}</span>
         <style jsx>{`
           .skeleton {
             background: linear-gradient(90deg, var(--ppt-bg-subtle) 0%, var(--ppt-border-default) 50%, var(--ppt-bg-subtle) 100%);
@@ -93,9 +100,9 @@ export function LoadingSkeleton({
   }
 
   return (
-    <div role="status" aria-live="polite" aria-label={label} style={{ width }}>
+    <div role="status" aria-live="polite" aria-label={resolvedLabel} style={{ width }}>
       <div className="skeleton" style={{ width, height }} />
-      <span style={visuallyHidden}>{label}</span>
+      <span style={visuallyHidden}>{resolvedLabel}</span>
       <style jsx>{`
         .skeleton {
           background: linear-gradient(90deg, var(--ppt-bg-subtle) 0%, var(--ppt-border-default) 50%, var(--ppt-bg-subtle) 100%);
