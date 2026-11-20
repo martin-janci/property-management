@@ -4070,6 +4070,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-jwt-no-aud-iss-retry1",
+      "branch": "auto-impl/code-review-api-core-jwt-no-aud-iss-retr-2a1ca6a5",
+      "status": "merged",
+      "claimed_at": "2026-11-20T02:27:16Z",
+      "last_updated": "2026-11-20T08:34:13Z",
+      "status_changed_at": "2026-11-20T08:34:13Z",
+      "pr_number": 3652,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3652",
+      "merged_at": "2026-11-20T08:28:20Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve note=jwt-iss/aud-binding-correct-all-3-decode-sites-bound-security-tests-green-review-posted-as-COMMENT-self-approve-blocked",
+      "last_reviewed_oid": "7a5eaa30a2d36bbd5912c5a9f8fe9d2699f15b7b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-20T08:34:13Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-api-core-llm-unscoped-idor-footguns",
       "branch": "auto-impl/code-review-api-core-llm-unscoped-idor-f-963e3beb",
       "status": "merged",
@@ -28195,6 +28219,28 @@
       "merge_attempted_at": "2026-11-16T14:29:03Z"
     },
     {
+      "task_id": "pm-tech-lead-create-a-new-sprint-in-sprint-status-yaml-the-current-sprint-2026-11-20",
+      "branch": "auto-impl/pm-tech-lead-create-a-new-sprint-in-spri-70c8b15b",
+      "status": "merged",
+      "claimed_at": "2026-11-20T06:23:18Z",
+      "last_updated": "2026-11-20T08:36:31Z",
+      "status_changed_at": "2026-11-20T08:36:31Z",
+      "pr_number": 3654,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3654",
+      "merged_at": "2026-11-20T08:34:50Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=3654 status=done specialist=generic scope_drift=false code_reuse_warn=none note=added next_sprint block to sprint-status.yaml; YAML validated verify OK 7bfbbcaa",
+      "reviewer_summary": "verdict=approve note=yaml-valid-schema-mirrored-scope-ok-ci-green",
+      "last_reviewed_oid": "559abe147f1909c5dc3f48102f10faa8fd74a737",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-20T08:34:13Z"
+    },
+    {
       "task_id": "pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20",
       "branch": "auto-impl/pm-tech-lead-resolve-issue-3357-stalled-b611bc61",
       "status": "failed",
@@ -31296,5 +31342,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-20T04:44:09Z"
+  "archived_at": "2026-11-20T08:36:31Z"
 }
