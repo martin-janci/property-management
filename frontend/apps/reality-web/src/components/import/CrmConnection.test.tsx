@@ -9,23 +9,30 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock @ppt/reality-api-client before importing the component.
 vi.mock('@ppt/reality-api-client', () => ({
   useCreateCrmConnection: vi.fn(),
   useTestCrmConnection: vi.fn(),
   useCrmConnections: vi.fn(() => ({ data: [], isLoading: false })),
-  useDeleteCrmConnection: vi.fn(() => ({ mutateAsync: vi.fn() })),
+  useDeleteCrmConnection: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useMyAgency: vi.fn(() => ({ data: { id: 'agency-1' } })),
-  useSyncCrmConnection: vi.fn(() => ({ mutate: vi.fn() })),
+  useSyncCrmConnection: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
 }));
 
-import { useCreateCrmConnection, useTestCrmConnection } from '@ppt/reality-api-client';
-import { AddConnectionModal } from './CrmConnection';
+import {
+  useCreateCrmConnection,
+  useCrmConnections,
+  useDeleteCrmConnection,
+  useTestCrmConnection,
+} from '@ppt/reality-api-client';
+import { AddConnectionModal, CrmConnection } from './CrmConnection';
 
 const mockUseCreateCrmConnection = vi.mocked(useCreateCrmConnection);
 const mockUseTestCrmConnection = vi.mocked(useTestCrmConnection);
+const mockUseCrmConnections = vi.mocked(useCrmConnections);
+const mockUseDeleteCrmConnection = vi.mocked(useDeleteCrmConnection);
 
 // Drive the wizard from the provider grid through to the mapping step, where
 // the "Create Connection" button lives.
@@ -157,5 +164,69 @@ describe('AddConnectionModal — create error handling', () => {
     } finally {
       consoleErrorSpy.mockRestore();
     }
+  });
+});
+
+// Regression: ConnectionCard's "Remove" button called deleteMutation.mutateAsync
+// without a try/catch, so a failed delete produced an unhandled promise
+// rejection and left the user with no feedback (code-review finding
+// "reality web import delete toggle unhandled"). The handler must now catch the
+// rejection and surface it inline via role="alert".
+describe('ConnectionCard — delete error handling', () => {
+  const connection = {
+    id: 'conn-1',
+    provider: 'hubspot',
+    name: 'My HubSpot',
+    status: 'connected',
+    syncFrequency: 'daily',
+    lastSyncAt: null,
+    nextSyncAt: null,
+  };
+
+  let confirmSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    mockUseCrmConnections.mockReturnValue({
+      data: [connection],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useCrmConnections>);
+  });
+
+  afterEach(() => {
+    confirmSpy.mockRestore();
+  });
+
+  it('surfaces an inline error when the delete mutation fails', async () => {
+    mockUseDeleteCrmConnection.mockReturnValue({
+      mutateAsync: vi.fn().mockRejectedValue(new Error('Network error')),
+      isPending: false,
+    } as unknown as ReturnType<typeof useDeleteCrmConnection>);
+
+    render(<CrmConnection />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^remove$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('removeError');
+  });
+
+  it('shows no error when the delete mutation succeeds', async () => {
+    mockUseDeleteCrmConnection.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      isPending: false,
+    } as unknown as ReturnType<typeof useDeleteCrmConnection>);
+
+    render(<CrmConnection />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^remove$/i }));
+
+    await waitFor(() => {
+      expect(mockUseDeleteCrmConnection).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
