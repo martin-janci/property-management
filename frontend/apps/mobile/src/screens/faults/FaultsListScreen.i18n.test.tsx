@@ -81,6 +81,94 @@ describe('FaultsListScreen empty/error/loading i18n', () => {
   });
 });
 
+describe('FaultsListScreen chrome + card labels i18n', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // The header title, "+ Report" button, filter chips, status/priority badges
+  // and the "Assigned to:" label were all hardcoded English (or raw enum
+  // values). They are now sourced from i18n keys via `t()`.
+  const CHROME_HARDCODED = ['Faults', '+ Report', 'All', 'Open', 'Resolved', 'Assigned to:'];
+
+  it('renders header, add-button and filter chips from i18n keys, not literals', async () => {
+    mockQuery({ data: { faults: [] } });
+    await render(<FaultsListScreen />);
+
+    expect(screen.getByText('tabs.faults')).toBeTruthy();
+    expect(screen.getByText('faults.addButton')).toBeTruthy();
+    expect(screen.getByText('faults.filterAll')).toBeTruthy();
+    expect(screen.getByText('faults.filterOpen')).toBeTruthy();
+    expect(screen.getByText('faults.filterResolved')).toBeTruthy();
+
+    for (const literal of CHROME_HARDCODED) {
+      expect(screen.queryByText(literal)).toBeNull();
+    }
+  });
+
+  it('renders a fault card status/priority/assignee via i18n keys, not raw enums', async () => {
+    mockQuery({
+      data: {
+        faults: [
+          {
+            id: 'f1',
+            title: 'Leaky faucet',
+            description: 'Water everywhere',
+            status: 'in_progress',
+            priority: 'high',
+            category: 'plumbing',
+            location_description: 'Unit 301',
+            created_at: '2026-01-01T10:00:00Z',
+            updated_at: '2026-01-02T10:00:00Z',
+            reporter_name: 'Jane',
+            assignee_name: 'Bob the plumber',
+          },
+        ],
+        count: 1,
+      },
+    });
+    await render(<FaultsListScreen />);
+
+    // Status + priority badges come from the enum→key maps.
+    expect(screen.getByText('faults.statusInProgress')).toBeTruthy();
+    expect(screen.getByText('faults.priorityHigh')).toBeTruthy();
+    // "Assigned to:" label is localized; the assignee value stays verbatim.
+    expect(screen.getByText('faults.assignedTo')).toBeTruthy();
+    expect(screen.getByText('Bob the plumber')).toBeTruthy();
+
+    // Raw enum / hardcoded forms must be gone.
+    expect(screen.queryByText('in progress')).toBeNull();
+    expect(screen.queryByText('high')).toBeNull();
+    expect(screen.queryByText('Assigned to:')).toBeNull();
+  });
+});
+
+describe('fault chrome keys resolve to real, locale-distinct translations', () => {
+  it('en carries the expected English copy for the new keys', () => {
+    expect(en.faults.addButton).toBe('+ Report');
+    expect(en.faults.filterAll).toBe('All');
+    expect(en.faults.filterOpen).toBe('Open');
+    expect(en.faults.filterResolved).toBe('Resolved');
+    expect(en.faults.assignedTo).toBe('Assigned to:');
+  });
+
+  it('every locale defines the new keys and localizes the "Assigned to" label', () => {
+    for (const locale of [sk, cs, de]) {
+      for (const key of [
+        'addButton',
+        'filterAll',
+        'filterOpen',
+        'filterResolved',
+        'assignedTo',
+      ] as const) {
+        expect(typeof locale.faults[key]).toBe('string');
+        expect(locale.faults[key].length).toBeGreaterThan(0);
+      }
+      expect(locale.faults.assignedTo).not.toBe(en.faults.assignedTo);
+    }
+  });
+});
+
 describe('faults state keys resolve to real, locale-distinct translations', () => {
   it('en carries the expected English copy', () => {
     expect(en.common.loading).toBe('Loading...');
