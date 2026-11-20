@@ -16802,6 +16802,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "branch": "auto-impl/code-review-reality-web-realtor-account-b0ba3c21",
+      "status": "failed",
+      "claimed_at": "2026-11-20T12:21:00Z",
+      "last_updated": "2026-11-20T18:22:00Z",
+      "status_changed_at": "2026-11-20T18:22:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "sandbox-failure-after-reclaim",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-web-realtor-agency-i18n-gap",
       "branch": "auto-impl/code-review-reality-web-realtor-agency-i-c35127f6",
       "status": "merged",
@@ -31772,5 +31794,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-20T16:40:06Z"
+  "archived_at": "2026-11-20T18:30:09Z"
 }

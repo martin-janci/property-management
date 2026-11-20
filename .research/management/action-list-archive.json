@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-20T16:28:24Z",
+  "archived_at": "2026-11-20T18:30:43Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9716,6 +9716,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash-retry1",
+      "action": "ppt web core disputes uidispute nonnull crash [retry 1/2 of failed code-review-ppt-web-core-disputes-uidispute-nonnull-crash]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-ppt-web-core-disputes-uidispute-nonnull-crash reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T06:40:59Z) | gc1-reconcile 2026-11-20T18:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T14:24:50Z",
+      "retry_of": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T18:25:08Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-doc-download-hardcoded-i18n",
       "action": "ppt web core doc download hardcoded i18n",
       "owner_role": "pm-backend",
@@ -11836,6 +11857,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n-retry1",
+      "action": "ppt web ui ballotquestion yesno i18n [retry 1/2 of failed code-review-ppt-web-ui-ballotquestion-yesno-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-19T16:32:00Z (retry_of=code-review-ppt-web-ui-ballotquestion-yesno-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T12:37:46Z) | gc1-reconcile 2026-11-20T18:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T16:32:00Z",
+      "retry_of": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T18:25:08Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-buildings-err-raw-i18n",
       "action": "ppt web ui buildings err raw i18n",
       "owner_role": "pm-tech-lead",
@@ -12713,6 +12755,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-12T16:24:32Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-filedisputedialog-i18n-retry1",
+      "action": "ppt web ui filedisputedialog i18n [retry 1/2 of failed code-review-ppt-web-ui-filedisputedialog-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-19T16:32:00Z (retry_of=code-review-ppt-web-ui-filedisputedialog-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T14:33:52Z) | gc1-reconcile 2026-11-20T18:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T16:32:00Z",
+      "retry_of": "code-review-ppt-web-ui-filedisputedialog-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T18:25:08Z"
       }
     },
     {
@@ -13695,6 +13758,27 @@
         "score": 1,
         "vector": "i18n",
         "generated": "2026-10-10T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-rfqform-i18n-retry1",
+      "action": "[already-resolved-on-dev, no change needed] ppt web ui rfqform i18n [retry 1/2 of failed code-review-ppt-web-ui-rfqform-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-19T22:24:58Z (retry_of=code-review-ppt-web-ui-rfqform-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T16:33:44Z) | gc1-reconcile 2026-11-20T18:25:08Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T22:24:58Z",
+      "retry_of": "code-review-ppt-web-ui-rfqform-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T18:25:08Z"
       }
     },
     {
