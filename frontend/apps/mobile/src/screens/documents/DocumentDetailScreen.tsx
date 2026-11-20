@@ -193,11 +193,17 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
               onPress={() => void handleOpen()}
               disabled={opening}
             >
-              <Text style={s.primaryButtonText}>{opening ? 'Opening…' : 'Open document'}</Text>
+              <Text style={s.primaryButtonText}>
+                {opening
+                  ? t('documents.opening', { defaultValue: 'Opening…' })
+                  : t('documents.open', { defaultValue: 'Open document' })}
+              </Text>
             </Pressable>
 
             <Pressable style={styles.shareButton} onPress={() => setShareSheetVisible(true)}>
-              <Text style={styles.shareButtonText}>🔗 Share</Text>
+              <Text style={styles.shareButtonText}>
+                🔗 {t('documents.share', { defaultValue: 'Share' })}
+              </Text>
             </Pressable>
 
             <DocumentShareSheet

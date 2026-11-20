@@ -157,7 +157,9 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Faults</Text>
         <Pressable style={styles.addButton} onPress={() => onNavigate?.('ReportFault')}>
-          <Text style={styles.addButtonText}>+ Report</Text>
+          <Text style={styles.addButtonText}>
+            + {t('faults.report', { defaultValue: 'Report' })}
+          </Text>
         </Pressable>
       </View>
 
