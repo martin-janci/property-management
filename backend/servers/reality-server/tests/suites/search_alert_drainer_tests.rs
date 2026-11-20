@@ -241,6 +241,73 @@ async fn drains_alert_to_email_and_owner_push_tokens(pool: PgPool) {
     assert!(push2.tokens.lock().unwrap().is_empty());
 }
 
+/// Regression (code-review finding): the default worker is built from the
+/// *logging stub* transports ([`LogEmailTransport`] / [`LogPushTransport`] via
+/// [`SearchAlertDrainerWorker::new`]), which do not actually deliver anything —
+/// they only log. A stub-only drain must therefore NOT mark the alert
+/// delivered: `notified_at` has to stay NULL so a real email/push adapter,
+/// injected later, still picks the row up. It must also not burn the retry
+/// budget (nothing failed; nothing was sent), so `notify_attempts` stays 0.
+///
+/// Before the fix the stub's `Ok(())` was indistinguishable from a real
+/// success, so `run_once` set `notified_at` and reported the alert delivered —
+/// silently dropping every alert in any deployment without a real transport.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn stub_transport_does_not_mark_delivered(pool: PgPool) {
+    let repo = RealityPortalRepository::new(pool.clone());
+    let owner = seed_portal_user(&pool, "stub-drain@test.sk").await;
+    let search = seed_saved_search(&repo, owner).await;
+    seed_push_token(&pool, owner, "stub-owner-token").await;
+    repo.enqueue_search_alert(&pool, search, owner, &[Uuid::new_v4()], "new_listing")
+        .await
+        .expect("enqueue alert");
+    let alert_id =
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM search_alert_queue WHERE user_id = $1")
+            .bind(owner)
+            .fetch_one(&pool)
+            .await
+            .expect("alert id");
+
+    // Default worker = logging stubs only (no real email/push service wired).
+    let drained = SearchAlertDrainerWorker::new(
+        pool.clone(),
+        SearchAlertDrainerConfig {
+            enabled: true,
+            poll_interval_secs: 60,
+            batch_size: 100,
+            max_attempts: 3,
+        },
+    )
+    .run_once()
+    .await;
+
+    assert_eq!(
+        drained, 0,
+        "a stub-only drain delivers nothing and must report 0 delivered"
+    );
+    let (status, notified_at, attempts) = alert_state(&pool, alert_id).await;
+    assert_eq!(status, "pending", "in-app read state is untouched");
+    assert!(
+        notified_at.is_none(),
+        "a stub that did not actually deliver must NOT set notified_at"
+    );
+    assert_eq!(
+        attempts, 0,
+        "a stub skip is not a failure — the retry budget must be untouched"
+    );
+
+    // The row is still drainable on a later pass (e.g. once a real transport
+    // is injected), proving it was preserved rather than dropped.
+    let still_pending = repo
+        .list_undelivered_search_alerts(100, 3)
+        .await
+        .expect("list undelivered");
+    assert!(
+        still_pending.iter().any(|a| a.id == alert_id),
+        "the undelivered alert must remain in the drain queue"
+    );
+}
+
 /// Failure path: when every channel fails, the row is not marked notified, its
 /// attempt counter climbs, and it drops out once it exhausts the budget.
 #[sqlx::test(migrator = "db::MIGRATOR")]
