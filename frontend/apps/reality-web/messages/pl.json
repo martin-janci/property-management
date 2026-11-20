@@ -1388,6 +1388,8 @@
       "creating": "Tworzenie...",
       "createConnection": "Utwórz połączenie",
       "createError": "Nie udało się utworzyć połączenia. Spróbuj ponownie.",
+      "removeError": "Nie udało się usunąć połączenia. Spróbuj ponownie.",
+      "syncError": "Nie udało się uruchomić synchronizacji. Spróbuj ponownie.",
       "connectionFailed": "Połączenie nie powiodło się",
       "connectionSuffix": "Połączenie",
       "status": {

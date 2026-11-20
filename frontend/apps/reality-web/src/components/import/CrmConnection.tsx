@@ -162,6 +162,7 @@ function ConnectionCard({
   const t = useTranslations('import.crm');
   const tFreq = useTranslations('import.feed.frequency');
   const locale = useLocale();
+  const [actionError, setActionError] = useState<string | null>(null);
   const deleteMutation = useDeleteCrmConnection(agencyId);
   const syncMutation = useSyncCrmConnection(agencyId, connection.id);
 
@@ -170,7 +171,23 @@ function ConnectionCard({
 
   const handleDelete = async () => {
     if (confirm(t('confirmRemove'))) {
-      await deleteMutation.mutateAsync(connection.id);
+      setActionError(null);
+      try {
+        await deleteMutation.mutateAsync(connection.id);
+      } catch {
+        // mutateAsync rejects on a failed delete; surface it inline instead of
+        // leaving an unhandled rejection with no user-facing feedback.
+        setActionError(t('removeError'));
+      }
+    }
+  };
+
+  const handleSync = async () => {
+    setActionError(null);
+    try {
+      await syncMutation.mutateAsync();
+    } catch {
+      setActionError(t('syncError'));
     }
   };
 
@@ -215,7 +232,7 @@ function ConnectionCard({
         <button
           type="button"
           className="action-button sync"
-          onClick={() => syncMutation.mutate()}
+          onClick={handleSync}
           disabled={syncMutation.isPending || connection.status === 'syncing'}
         >
           {syncMutation.isPending ? t('syncing') : t('syncNow')}
@@ -232,6 +249,12 @@ function ConnectionCard({
           {t('remove')}
         </button>
       </div>
+
+      {actionError && (
+        <div className="connection-error" role="alert" aria-live="assertive">
+          {actionError}
+        </div>
+      )}
 
       <style jsx>{`
         .connection-card {
@@ -341,6 +364,15 @@ function ConnectionCard({
 
         .action-button.delete:hover {
           background: var(--ppt-color-danger-light);
+        }
+
+        .connection-error {
+          margin: 0 20px 16px;
+          padding: 12px 16px;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
+          border-radius: 8px;
+          font-size: 14px;
         }
       `}</style>
     </div>

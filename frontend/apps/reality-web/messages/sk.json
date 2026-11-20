@@ -1395,6 +1395,8 @@
       "creating": "Vytváram...",
       "createConnection": "Vytvoriť pripojenie",
       "createError": "Nepodarilo sa vytvoriť pripojenie. Skúste to znova.",
+      "removeError": "Nepodarilo sa odstrániť pripojenie. Skúste to znova.",
+      "syncError": "Nepodarilo sa spustiť synchronizáciu. Skúste to znova.",
       "connectionFailed": "Pripojenie zlyhalo",
       "connectionSuffix": "pripojenie",
       "status": {

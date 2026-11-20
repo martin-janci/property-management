@@ -1388,6 +1388,8 @@
       "creating": "Létrehozás...",
       "createConnection": "Kapcsolat létrehozása",
       "createError": "A kapcsolat létrehozása nem sikerült. Kérjük, próbálja újra.",
+      "removeError": "A kapcsolat eltávolítása nem sikerült. Kérjük, próbálja újra.",
+      "syncError": "A szinkronizálás indítása nem sikerült. Kérjük, próbálja újra.",
       "connectionFailed": "A kapcsolat sikertelen",
       "connectionSuffix": "kapcsolat",
       "status": {
