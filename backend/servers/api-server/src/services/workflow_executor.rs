@@ -641,6 +641,18 @@ fn evaluate_conjunction(
     Ok(true)
 }
 
+/// Human-readable JSON type name, used in condition error messages.
+fn value_type_name(value: &serde_json::Value) -> &'static str {
+    match value {
+        serde_json::Value::Null => "null",
+        serde_json::Value::Bool(_) => "boolean",
+        serde_json::Value::Number(_) => "number",
+        serde_json::Value::String(_) => "string",
+        serde_json::Value::Array(_) => "array",
+        serde_json::Value::Object(_) => "object",
+    }
+}
+
 /// Evaluate a single condition.
 fn evaluate_single_condition(
     condition: &Condition,
@@ -689,18 +701,29 @@ fn evaluate_single_condition(
                     Ok(field_str.ends_with(compare_str))
                 }
                 ComparisonOperator::In => {
-                    if let Some(arr) = compare_value.as_array() {
-                        Ok(arr.iter().any(|item| values_equivalent(&field_value, item)))
-                    } else {
-                        Ok(false)
-                    }
+                    let arr = compare_value.as_array().ok_or_else(|| {
+                        WorkflowError::ConditionError(format!(
+                            "`in` operator requires an array value for field '{}', got {}",
+                            condition.field,
+                            value_type_name(compare_value)
+                        ))
+                    })?;
+                    Ok(arr.iter().any(|item| values_equivalent(&field_value, item)))
                 }
                 ComparisonOperator::NotIn => {
-                    if let Some(arr) = compare_value.as_array() {
-                        Ok(!arr.iter().any(|item| values_equivalent(&field_value, item)))
-                    } else {
-                        Ok(true)
-                    }
+                    // Fail closed: a non-array operand is a malformed condition.
+                    // Returning Ok(true) here would fire the workflow's actions
+                    // unguarded on a mis-typed rule (fail-open); surface a
+                    // ConditionError instead so the batch seam skips the
+                    // workflow (issue #2768).
+                    let arr = compare_value.as_array().ok_or_else(|| {
+                        WorkflowError::ConditionError(format!(
+                            "`not_in` operator requires an array value for field '{}', got {}",
+                            condition.field,
+                            value_type_name(compare_value)
+                        ))
+                    })?;
+                    Ok(!arr.iter().any(|item| values_equivalent(&field_value, item)))
                 }
                 ComparisonOperator::Matches => {
                     let field_string = field_value.to_string();
