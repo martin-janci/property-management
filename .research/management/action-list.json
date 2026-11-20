@@ -193,42 +193,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "code-review-reality-web-feedimport-create-no-error",
-      "action": "reality web feedimport create no error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listings-url-nan-query",
-      "action": "reality web listings url nan query",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-orgprovider-unmemoized-value",
       "action": "ppt web core orgprovider unmemoized value",
       "owner_role": "pm-backend",
@@ -768,54 +732,6 @@
       }
     },
     {
-      "id": "pm-tech-lead-split-services-push-fanout-rs-3038-loc-into-a-push-module-fc-2026-11-20",
-      "action": "Split services/push_fanout.rs (3038 LoC) into a push/ module: fcm.rs, apns.rs, combined adapter, worker, config. Keep the PushTransport trait as the seam.",
-      "owner_role": "pm-tech-lead",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-20",
-      "first_open_at": "2026-11-20T03:06:10Z"
-    },
-    {
-      "id": "pm-tech-lead-split-routes-voice-webhooks-rs-3066-loc-churned-in-5-runs-in-2026-11-20",
-      "action": "Split routes/voice_webhooks.rs (3066 LoC, churned in 5 runs) into signature verification, an idempotent event handler and provider-specific parsers. Move business logic into services/.",
-      "owner_role": "pm-tech-lead",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-20",
-      "first_open_at": "2026-11-20T03:06:10Z"
-    },
-    {
-      "id": "pm-tech-lead-split-oauth-integration-tests-rs-3427-loc-by-flow-authorize-2026-11-20",
-      "action": "Split oauth_integration_tests.rs (3427 LoC) by flow: authorize, token, introspect/revoke, grants. Extract shared fixtures into a common module.",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-20",
-      "first_open_at": "2026-11-20T03:06:10Z"
-    },
-    {
-      "id": "pm-tech-lead-define-an-nfr-baseline-for-push-and-voice-webhooks-metrics-r-2026-11-20",
-      "action": "Define an NFR baseline for push and voice webhooks: metrics, retry/dead-letter policy, and FCM/APNs token-refresh failure alerting. Check the observability stack for these.",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-20",
-      "first_open_at": "2026-11-20T03:06:10Z"
-    },
-    {
       "id": "pm-scrum-master-unblock-kmp-and-swagger-ui-egress-in-the-cloud-runner-2652-2-2026-11-20",
       "action": "Unblock KMP and swagger-ui egress in the cloud runner (#2652, #2966)",
       "owner_role": "pm-scrum-master",
@@ -828,28 +744,21 @@
       "first_open_at": "2026-11-20T03:06:10Z"
     },
     {
-      "id": "pm-scrum-master-reconcile-sprint-status-test-hardening-batch-items-480-487-s-2026-11-20",
-      "action": "Reconcile sprint-status test_hardening_batch (items #480-#487 still marked open, batch in-progress) against GitHub issue state and close or defer",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
+      "id": "code-review-api-handlers-voice-webhook-auth-extractor",
+      "action": "voice_webhooks.rs alexa/google handlers run RlsConnection extractor BEFORE signature verification — 401 before any webhook body is read",
+      "owner_role": "pm-backend",
+      "priority": "low",
       "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-20T10:37:58Z (score=2 conf=medium vector=bug)",
       "deadline": null,
-      "source": "pm-analysis 2026-11-20",
-      "first_open_at": "2026-11-20T03:06:10Z"
-    },
-    {
-      "id": "pm-scrum-master-triage-churn-hotspots-oauth-integration-tests-rs-voice-webho-2026-11-20",
-      "action": "Triage churn hotspots (oauth_integration_tests.rs, voice_webhooks.rs runs_seen=5, push_fanout.rs runs_seen=4) into refactor or characterization backlog items; carry on #3650 (retry-after draft) and reality-web preview i18n items",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
+      "dependency": null,
       "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-20",
-      "first_open_at": "2026-11-20T03:06:10Z"
+      "first_open_at": "2026-11-20T10:37:58Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-11-20T03:06:10Z"
