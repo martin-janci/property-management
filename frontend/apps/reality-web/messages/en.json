@@ -1395,6 +1395,8 @@
       "creating": "Creating...",
       "createConnection": "Create Connection",
       "createError": "Failed to create connection. Please try again.",
+      "removeError": "Failed to remove the connection. Please try again.",
+      "syncError": "Failed to start the sync. Please try again.",
       "connectionFailed": "Connection failed",
       "connectionSuffix": "Connection",
       "status": {

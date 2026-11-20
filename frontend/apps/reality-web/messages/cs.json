@@ -1395,6 +1395,8 @@
       "creating": "Vytvářím...",
       "createConnection": "Vytvořit připojení",
       "createError": "Nepodařilo se vytvořit připojení. Zkuste to znovu.",
+      "removeError": "Nepodařilo se odstranit připojení. Zkuste to znovu.",
+      "syncError": "Nepodařilo se spustit synchronizaci. Zkuste to znovu.",
       "connectionFailed": "Připojení selhalo",
       "connectionSuffix": "připojení",
       "status": {
