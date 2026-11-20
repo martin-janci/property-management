@@ -485,10 +485,7 @@ pub async fn get_suggestions(
     // hardcoding Slovakia. The default city for nearby-city suggestions then
     // follows the region rather than always being Bratislava.
     let region = resolve_region(params.get("region").map(|s| s.as_str()));
-    let city = params
-        .get("city")
-        .map(|s| s.as_str())
-        .unwrap_or_else(|| default_city_for_region(&region));
+    let city = resolve_suggestions_city(params.get("city").map(|s| s.as_str()), &region);
 
     let cities = state
         .portal_repo
@@ -961,6 +958,21 @@ fn default_city_for_region(region: &str) -> &'static str {
         "at" => "Wien",
         _ => "Bratislava",
     }
+}
+
+/// Resolve the seed city for nearby-city suggestions.
+///
+/// An explicit, non-blank `city` query param wins (trimmed); a missing or
+/// blank/whitespace value falls back to the region's default city. Treating
+/// blank as absent matches how [`resolve_region`] and [`resolve_locale`] handle
+/// empty params — without it a bare `?city=` would reach
+/// `get_nearby_cities("")`, whose `WHERE city != $1` guard then matches every
+/// active-listing city instead of the intended region-seeded shortlist.
+fn resolve_suggestions_city<'a>(query_city: Option<&'a str>, region: &str) -> &'a str {
+    query_city
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| default_city_for_region(region))
 }
 
 /// Column order for a [`PROPERTY_TYPE_LABELS`] row: `[Slovak, Czech, German,
@@ -1519,5 +1531,23 @@ mod tests {
         assert_eq!(default_city_for_region("eu"), "Bratislava");
         assert_eq!(default_city_for_region("local"), "Bratislava");
         assert_eq!(default_city_for_region("zz-unknown"), "Bratislava");
+    }
+
+    #[test]
+    fn suggestions_city_uses_explicit_value_trimmed() {
+        // A real city wins and is trimmed, mirroring resolve_region/resolve_locale.
+        assert_eq!(resolve_suggestions_city(Some("Košice"), "sk"), "Košice");
+        assert_eq!(resolve_suggestions_city(Some("  Nitra  "), "sk"), "Nitra");
+    }
+
+    #[test]
+    fn suggestions_city_blank_or_missing_falls_back_to_region_default() {
+        // Regression: a bare `?city=` (or whitespace) must NOT reach
+        // get_nearby_cities with an empty string — its `WHERE city != $1` guard
+        // would then match every active-listing city instead of the intended
+        // region-seeded shortlist. Blank is treated as absent, like region/locale.
+        assert_eq!(resolve_suggestions_city(None, "cz"), "Praha");
+        assert_eq!(resolve_suggestions_city(Some(""), "sk"), "Bratislava");
+        assert_eq!(resolve_suggestions_city(Some("   "), "de"), "Berlin");
     }
 }
