@@ -747,6 +747,40 @@ pub async fn handle_webhook(
         }));
     }
 
+    // Replay/idempotency dedupe (code-review finding: e-sign webhook replayable).
+    //
+    // The receiver authenticates with a STATIC shared secret
+    // (`ESIGN_WEBHOOK_SECRET`), which proves authenticity but not freshness — a
+    // captured valid delivery can be replayed indefinitely. The terminal-state
+    // guard above only absorbs replays once the request is finalized; a delivery
+    // replayed while the request is still `pending` / `in_progress` would
+    // otherwise re-run its side effects (re-store the signed document, re-fire
+    // completion/decline email) on every duplicate. Dedupe on an event
+    // fingerprint closes that residual window: the first delivery claims a
+    // short-TTL key (Redis `SET NX`) and is processed; any replay carrying the
+    // same fingerprint within the window is acknowledged 200 without side
+    // effects. When no dedupe store is available (no Redis) the guard degrades
+    // and the terminal-state guard remains the backstop.
+    match crate::routes::signatures_webhook_dedupe::check_and_record(&state, &provider, &event)
+        .await
+    {
+        crate::routes::signatures_webhook_dedupe::DedupeOutcome::Duplicate => {
+            info!(
+                provider = %provider,
+                provider_request_id = %event.provider_request_id,
+                signature_request_id = %signature_request.id,
+                event_type = %event.event_type,
+                "Ignoring duplicate (replayed) e-signature webhook delivery"
+            );
+            return Ok(Json(WebhookResponse {
+                success: true,
+                message: "Duplicate webhook delivery ignored".into(),
+            }));
+        }
+        crate::routes::signatures_webhook_dedupe::DedupeOutcome::FirstDelivery
+        | crate::routes::signatures_webhook_dedupe::DedupeOutcome::StoreUnavailable => {}
+    }
+
     // Process signer-specific events and send appropriate email notifications (Story 84.2).
     let updated_request = if let (Some(signer_email), Some(signer_status)) =
         (&event.signer_email, &event.signer_status)

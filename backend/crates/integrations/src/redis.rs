@@ -316,6 +316,42 @@ impl RedisClient {
         Ok(exists)
     }
 
+    /// Atomically set a key only if it does not already exist, with a TTL, in a
+    /// single `SET key value NX EX ttl` round-trip.
+    ///
+    /// Returns `Ok(true)` when the key was newly created (the caller is the
+    /// *first* to claim it) and `Ok(false)` when the key already existed (a
+    /// duplicate/replay). Unlike a non-atomic `exists()` + `set()`, the NX test
+    /// and the write happen in one command, so under concurrency exactly one
+    /// caller observes `true` and every other racing caller observes `false`.
+    ///
+    /// This is the correct primitive for "process-once within a window" guards —
+    /// e.g. inbound-webhook replay/idempotency dedupe keyed on an event
+    /// fingerprint: the first delivery claims the key and is processed, and every
+    /// replay within the TTL observes `false` and is acknowledged without re-running
+    /// side effects. The stored value is a fixed marker (`"1"`); callers that need
+    /// to read it back should use [`set`](Self::set) + [`get`](Self::get) instead.
+    pub async fn set_nx(&self, key: &str, ttl_secs: u64) -> Result<bool, CacheError> {
+        let full_key = self.build_key(key);
+        let mut conn = self.connection_manager.clone();
+
+        // `SET key "1" NX EX ttl` replies with the bulk string "OK" when the key
+        // was set and a nil reply (decoded here as `None`) when NX suppressed the
+        // write because the key already existed.
+        let outcome: Option<String> = redis::cmd("SET")
+            .arg(&full_key)
+            .arg("1")
+            .arg("NX")
+            .arg("EX")
+            .arg(ttl_secs)
+            .query_async(&mut conn)
+            .await?;
+
+        let created = outcome.is_some();
+        tracing::trace!(key = %full_key, ttl = ttl_secs, created, "Cache SET NX");
+        Ok(created)
+    }
+
     /// Set TTL on an existing key.
     pub async fn expire(&self, key: &str, ttl_secs: u64) -> Result<bool, CacheError> {
         let full_key = self.build_key(key);
