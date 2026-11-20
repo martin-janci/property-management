@@ -4,6 +4,7 @@
  * Epic 50 - Story 50.2: Contextual Help
  */
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { helpCenter, tourManager } from '../../onboarding';
@@ -24,6 +25,7 @@ export function ContextualHelp({
   onNavigateToFAQ,
   onNavigateToTutorial,
 }: ContextualHelpProps) {
+  const { t } = useTranslation();
   const [showFullContent, setShowFullContent] = useState(false);
 
   const helpContent = useMemo(() => helpCenter.getHelpForScreen(screenId), [screenId]);
@@ -71,12 +73,16 @@ export function ContextualHelp({
               <View style={styles.fullContent}>
                 <Text style={styles.fullContentText}>{helpContent.fullContent}</Text>
                 <Pressable onPress={() => setShowFullContent(false)}>
-                  <Text style={styles.showLessText}>Show less</Text>
+                  <Text style={styles.showLessText}>
+                    {t('help.showLess', { defaultValue: 'Show less' })}
+                  </Text>
                 </Pressable>
               </View>
             ) : (
               <Pressable onPress={() => setShowFullContent(true)}>
-                <Text style={styles.showMoreText}>Learn more →</Text>
+                <Text style={styles.showMoreText}>
+                  {t('help.learnMore', { defaultValue: 'Learn more' })} →
+                </Text>
               </Pressable>
             )}
 
@@ -128,10 +134,14 @@ export function ContextualHelp({
 
           <View style={styles.footer}>
             <Pressable style={styles.dismissButton} onPress={handleDismiss}>
-              <Text style={styles.dismissText}>Don't show again</Text>
+              <Text style={styles.dismissText}>
+                {t('help.dontShowAgain', { defaultValue: "Don't show again" })}
+              </Text>
             </Pressable>
             <Pressable style={styles.helpCenterButton} onPress={onClose}>
-              <Text style={styles.helpCenterText}>Help Center</Text>
+              <Text style={styles.helpCenterText}>
+                {t('help.title', { defaultValue: 'Help Center' })}
+              </Text>
             </Pressable>
           </View>
         </Animated.View>

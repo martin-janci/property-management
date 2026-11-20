@@ -19,7 +19,8 @@
     "submit": "Wyślij",
     "tryAgain": "Spróbuj ponownie",
     "errorTitle": "Coś poszło nie tak",
-    "errorDescription": "Spróbuj ponownie. Jeśli problem będzie się powtarzał, skontaktuj się z pomocą techniczną."
+    "errorDescription": "Spróbuj ponownie. Jeśli problem będzie się powtarzał, skontaktuj się z pomocą techniczną.",
+    "previous": "Poprzednie"
   },
   "tabs": {
     "home": "Glowna",
@@ -175,7 +176,8 @@
     "filterAll": "Wszystkie",
     "filterOpen": "Otwarte",
     "filterResolved": "Rozwiazane",
-    "assignedTo": "Przypisane do:"
+    "assignedTo": "Przypisane do:",
+    "report": "Zgłoś"
   },
   "news": {
     "backToList": "‹ Aktualnosci",
@@ -338,7 +340,9 @@
     "detailLoadError": "Nie można załadować dokumentu",
     "openErrorTitle": "Nie można otworzyć dokumentu",
     "openErrorMessage": "Przeglądarka plików jest niedostępna na tym urządzeniu.",
-    "notFound": "Nie znaleziono dokumentu"
+    "notFound": "Nie znaleziono dokumentu",
+    "open": "Otwórz dokument",
+    "opening": "Otwieranie…"
   },
   "settings": {
     "title": "Ustawienia",

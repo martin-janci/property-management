@@ -19,7 +19,8 @@
     "submit": "Odoslať",
     "tryAgain": "Skúsiť znova",
     "errorTitle": "Niečo sa pokazilo",
-    "errorDescription": "Skúste to znova. Ak problém pretrváva, kontaktujte podporu."
+    "errorDescription": "Skúste to znova. Ak problém pretrváva, kontaktujte podporu.",
+    "previous": "Predchádzajúce"
   },
   "tabs": {
     "home": "Domov",
@@ -175,7 +176,8 @@
     "filterAll": "Vsetky",
     "filterOpen": "Otvorene",
     "filterResolved": "Vyriesene",
-    "assignedTo": "Priradene:"
+    "assignedTo": "Priradene:",
+    "report": "Nahlásiť"
   },
   "news": {
     "backToList": "‹ Spravy",
@@ -378,7 +380,9 @@
     "detailLoadError": "Nepodarilo sa načítať dokument",
     "openErrorTitle": "Dokument sa nepodarilo otvoriť",
     "openErrorMessage": "Prehliadač súborov nie je na tomto zariadení dostupný.",
-    "notFound": "Dokument sa nenašiel"
+    "notFound": "Dokument sa nenašiel",
+    "open": "Otvoriť dokument",
+    "opening": "Otvára sa…"
   },
   "settings": {
     "title": "Nastavenia",

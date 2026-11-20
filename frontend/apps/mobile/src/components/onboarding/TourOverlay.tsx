@@ -4,6 +4,7 @@
  * Epic 50 - Story 50.1: Interactive Onboarding Tour
  */
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { tourManager } from '../../onboarding';
@@ -18,6 +19,7 @@ interface TourOverlayProps {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export function TourOverlay({ visible, onClose }: TourOverlayProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<TourStep | null>(null);
   const [tourConfig, setTourConfig] = useState<TourConfig | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number }>({
@@ -159,7 +161,9 @@ export function TourOverlay({ visible, onClose }: TourOverlayProps) {
           <View style={styles.navigation}>
             {progress.current > 1 ? (
               <Pressable style={styles.navButton} onPress={handlePrevious}>
-                <Text style={styles.navButtonText}>← Previous</Text>
+                <Text style={styles.navButtonText}>
+                  ← {t('common.previous', { defaultValue: 'Previous' })}
+                </Text>
               </Pressable>
             ) : (
               <View style={styles.navButton} />
@@ -167,7 +171,9 @@ export function TourOverlay({ visible, onClose }: TourOverlayProps) {
 
             <Pressable style={styles.nextButton} onPress={handleNext}>
               <Text style={styles.nextButtonText}>
-                {progress.current === progress.total ? 'Done' : 'Next →'}
+                {progress.current === progress.total
+                  ? t('common.done', { defaultValue: 'Done' })
+                  : `${t('common.next', { defaultValue: 'Next' })} →`}
               </Text>
             </Pressable>
           </View>
