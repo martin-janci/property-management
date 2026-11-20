@@ -103,6 +103,7 @@ UC-49 agency management hub. Overview is the daily-use surface (KPIs + activity)
 - Verify-pill (Overená agentúra) uses success-soft-bg — must remain legible in dark mode (paired token, never inverted per project rules).
 
 ## Agent Log
+- 2026-11-20 — agent: reality-server now serves `GET /agencies/{id}/stats` and `/performance` (member-gated); `useAgencyStats`/`useAgencyPerformance` read them instead of returning 501.
 - 2026-11-20 — agent: reality-api-client: agency stats/performance have no server route; hooks reject with NotAvailableError (501) without a request.
 
 <!-- newest entries on top -->

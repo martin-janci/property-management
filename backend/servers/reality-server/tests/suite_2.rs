@@ -11,6 +11,8 @@ mod listings_happy_path_tests;
 mod listings_pagination_clamp_tests;
 #[path = "suites/listings_tests.rs"]
 mod listings_tests;
+#[path = "suites/notification_settings_tests.rs"]
+mod notification_settings_tests;
 #[path = "suites/portal_listings_create_tests.rs"]
 mod portal_listings_create_tests;
 #[path = "suites/portal_listings_idor_tests.rs"]

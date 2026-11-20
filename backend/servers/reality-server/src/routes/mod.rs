@@ -5,6 +5,7 @@
 pub mod agencies;
 pub mod agency_branding;
 pub mod agency_imports;
+pub mod agency_insights;
 pub mod agent_reviews;
 pub mod articles;
 pub mod compare;
@@ -14,6 +15,7 @@ pub mod imports;
 pub mod inquiries;
 pub mod layout;
 pub mod listings;
+pub mod notification_settings;
 pub mod portal_listings;
 pub mod price_map;
 pub mod realtors;

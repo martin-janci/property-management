@@ -494,13 +494,14 @@ pub use reality_portal::{
     CreateRealityAgency, CreateRealtorProfile, CrmConnection, FavoriteAlert, FeedSubscription,
     ImportJobProgress, InquiryMessage, InquiryWithListing, ListingAnalytics,
     ListingAnalyticsSummary, ListingInquiry, ListingPriceHistory, PortalFavorite,
-    PortalFavoriteWithListing, PortalImportJob, PortalImportJobWithStats, PortalSavedSearch,
-    PriceChangeAlert, PublicRealtorProfile, RealityAgency, RealityAgencyInvitation,
-    RealityAgencyMember, RealityFeedSubscription, RealtorListing, RealtorProfile, SavedSearchAlert,
-    ScheduleViewing, SearchAlertQueueEntry, SendInquiryMessage, UndeliveredSearchAlert,
-    UpdateAgencyBranding, UpdateCrmConnection, UpdateFeedSubscription,
-    UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite, UpdatePortalSavedSearch,
-    UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing, ViewingSchedule,
+    PortalFavoriteWithListing, PortalImportJob, PortalImportJobWithStats,
+    PortalNotificationPreferences, PortalSavedSearch, PriceChangeAlert, PublicRealtorProfile,
+    RealityAgency, RealityAgencyInvitation, RealityAgencyMember, RealityFeedSubscription,
+    RealtorListing, RealtorProfile, SavedSearchAlert, ScheduleViewing, SearchAlertQueueEntry,
+    SendInquiryMessage, UndeliveredSearchAlert, UpdateAgencyBranding, UpdateCrmConnection,
+    UpdateFeedSubscription, UpdateImportJob as UpdatePortalImportJob, UpdatePortalFavorite,
+    UpdatePortalSavedSearch, UpdateRealityAgency, UpdateRealtorProfile, UpdateViewing,
+    ViewingSchedule,
 };
 
 // Epic 37: Community & Social Features

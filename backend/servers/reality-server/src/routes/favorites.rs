@@ -1,7 +1,7 @@
 //! Favorites routes - save and manage favorite listings (Story 16.2).
 //!
-//! D1.2: all endpoints in this file now adopt the unified `RequestPrincipal`
-//! / `OptionalRequestPrincipal` extractors (Phase 2 identity stack). The
+//! D1.2 / GH #1300: all endpoints in this file adopt the unified `PortalPrincipal`
+//! / `OptionalPortalPrincipal` extractors (Phase 2 identity stack). The
 //! `list_favorite_ids` SSR-anonymous path uses the optional wrapper so a
 //! missing Authorization header yields an empty list, while a malformed or
 //! revoked token still surfaces as 401/403 (do NOT silently demote — see
@@ -10,17 +10,14 @@
 //! Behavior contract for the auth-required endpoints (list/add/remove/check):
 //!
 //! * No bearer token / invalid token / unknown user → 401.
-//! * Token for a non-platform principal arriving at a tenant-scoped host
-//!   without an active membership → 403 (leak #11 cross-tenant rejection).
 //! * Otherwise → 2xx with the response payload.
 //!
-//! We deliberately do NOT consult `principal.effective_org` here: favorites
-//! are user-scoped, not org-scoped, and the listing rows are read via the
+//! Favorites are user-scoped, not org-scoped, and the listing rows are read via the
 //! public listings index. The principal is used purely as the
 //! authenticated-user identifier.
 
 use crate::state::AppState;
-use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
+use api_core::extractors::{OptionalPortalPrincipal, PortalPrincipal};
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, patch, post},
@@ -40,6 +37,7 @@ pub fn router() -> Router<AppState> {
         .route("/alerts", get(list_favorite_alerts))
         .route("/alerts/read-all", post(mark_all_favorite_alerts_read))
         .route("/alerts/{alert_id}/read", post(mark_favorite_alert_read))
+        .route("/alerts/{alert_id}", delete(delete_favorite_alert))
         // Static `/ids` declared before `/{listing_id}` so axum's matcher
         // prefers the literal segment over the UUID capture.
         .route("/ids", get(list_favorite_ids))
@@ -87,10 +85,9 @@ pub struct MarkAllFavoriteAlertsReadResponse {
 
 /// List user's favorites.
 ///
-/// Uses the unified [`RequestPrincipal`] extractor (see file-level docs for
+/// Uses the unified [`PortalPrincipal`] extractor (see file-level docs for
 /// the full auth/membership contract). Favorites are user-scoped — the
-/// principal is consulted purely as the authenticated-user identifier; we
-/// do NOT branch on `principal.effective_org` here.
+/// principal is consulted purely as the authenticated-user identifier.
 #[utoipa::path(
     get,
     path = "/api/v1/favorites",
@@ -103,7 +100,7 @@ pub struct MarkAllFavoriteAlertsReadResponse {
 )]
 pub async fn list_favorites(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<FavoritesResponse>, (axum::http::StatusCode, String)> {
     let favorites = state
         .reality_portal_repo
@@ -130,7 +127,7 @@ pub async fn list_favorites(
 )]
 pub async fn add_favorite(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(listing_id): Path<Uuid>,
     Json(data): Json<AddFavorite>,
 ) -> Result<(axum::http::StatusCode, Json<PortalFavorite>), (axum::http::StatusCode, String)> {
@@ -185,7 +182,7 @@ pub async fn add_favorite(
 )]
 pub async fn update_favorite(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(listing_id): Path<Uuid>,
     Json(data): Json<UpdatePortalFavorite>,
 ) -> Result<Json<PortalFavorite>, (axum::http::StatusCode, String)> {
@@ -223,7 +220,7 @@ pub async fn update_favorite(
 )]
 pub async fn remove_favorite(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     state
@@ -248,7 +245,7 @@ pub async fn remove_favorite(
 )]
 pub async fn check_favorite(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<Json<CheckFavoriteResponse>, (axum::http::StatusCode, String)> {
     // Single-row existence query (was previously a full list-then-filter which
@@ -274,7 +271,7 @@ pub async fn check_favorite(
 )]
 pub async fn list_favorite_alerts(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Query(query): Query<FavoriteAlertsQuery>,
 ) -> Result<Json<FavoriteAlertsResponse>, (axum::http::StatusCode, String)> {
     let limit = query
@@ -301,6 +298,38 @@ pub async fn list_favorite_alerts(
     }))
 }
 
+/// Dismiss (delete) one of the caller's favorite alerts.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/favorites/alerts/{alert_id}",
+    tag = "Favorites",
+    params(("alert_id" = Uuid, Path, description = "Favorite alert queue ID")),
+    responses(
+        (status = 204, description = "Favorite alert deleted"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Alert not found")
+    )
+)]
+pub async fn delete_favorite_alert(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Path(alert_id): Path<Uuid>,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    let deleted = state
+        .reality_portal_repo
+        .delete_favorite_alert(alert_id, principal.user_id)
+        .await
+        .map_err(|e| crate::util::errors::db_error("delete favorite alert", e))?;
+    if deleted {
+        Ok(axum::http::StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Alert not found".to_string(),
+        ))
+    }
+}
+
 /// Mark a single favorite alert as read.
 #[utoipa::path(
     post,
@@ -315,7 +344,7 @@ pub async fn list_favorite_alerts(
 )]
 pub async fn mark_favorite_alert_read(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     let outcome = state
@@ -367,7 +396,7 @@ fn mark_read_outcome_status(
 )]
 pub async fn mark_all_favorite_alerts_read(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<MarkAllFavoriteAlertsReadResponse>, (axum::http::StatusCode, String)> {
     let marked_read = state
         .reality_portal_repo
@@ -393,7 +422,7 @@ pub async fn mark_all_favorite_alerts_read(
         (status = 200, description = "List of favorited listing IDs", body = [Uuid])
     )
 )]
-// D1.1/D1.2: now uses `OptionalRequestPrincipal`. Behavior:
+// D1.1/D1.2: now uses `OptionalPortalPrincipal`. Behavior:
 //   * No Authorization header → empty list (anonymous SSR path stays quiet).
 //   * Authorization present but invalid/forbidden → propagated 401/403 by
 //     the wrapper. Do NOT silently demote to "anonymous + empty list" — a
@@ -401,7 +430,7 @@ pub async fn mark_all_favorite_alerts_read(
 //     able response from a real anonymous request (leak #10/#11 defense).
 pub async fn list_favorite_ids(
     State(state): State<AppState>,
-    OptionalRequestPrincipal(principal): OptionalRequestPrincipal,
+    OptionalPortalPrincipal(principal): OptionalPortalPrincipal,
 ) -> Result<Json<Vec<Uuid>>, (axum::http::StatusCode, String)> {
     let Some(principal) = principal else {
         return Ok(Json(Vec::new()));

@@ -794,3 +794,31 @@ pub struct SearchAlertQueueEntry {
     pub processed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
+
+/// Portal user's per-topic notification preferences
+/// (`portal_notification_preferences`; defaults when no row exists).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct PortalNotificationPreferences {
+    /// New listings matching saved searches.
+    pub new_listings: bool,
+    /// Price drops on favorited listings.
+    pub price_drops: bool,
+    /// Realtor replies to the user's inquiries.
+    pub inquiry_responses: bool,
+    /// Status changes on favorited listings.
+    pub listing_updates: bool,
+    /// Product news and offers.
+    pub marketing: bool,
+}
+
+impl Default for PortalNotificationPreferences {
+    fn default() -> Self {
+        Self {
+            new_listings: true,
+            price_drops: true,
+            inquiry_responses: true,
+            listing_updates: true,
+            marketing: false,
+        }
+    }
+}

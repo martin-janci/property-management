@@ -11,6 +11,8 @@ mod agencies_authz_tests;
 mod agencies_happy_path_tests;
 #[path = "suites/agency_imports_pagination_tests.rs"]
 mod agency_imports_pagination_tests;
+#[path = "suites/agency_insights_tests.rs"]
+mod agency_insights_tests;
 #[path = "suites/agent_reviews_tests.rs"]
 mod agent_reviews_tests;
 #[path = "suites/articles_tests.rs"]

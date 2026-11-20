@@ -1,9 +1,10 @@
 //! Agency routes (Epic 32: Agency Management).
 //!
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post, put},
@@ -35,6 +36,25 @@ pub fn router() -> Router<AppState> {
         // /api/v1/agencies/{id}/branding) — registering it here too caused
         // axum's "Overlapping method route" panic at boot.
         .route("/{id}/members", get(list_members))
+        // Dashboard data + member management (routes::agency_insights).
+        .route("/{id}/stats", get(super::agency_insights::get_agency_stats))
+        .route(
+            "/{id}/performance",
+            get(super::agency_insights::get_agency_performance),
+        )
+        .route(
+            "/{id}/listings",
+            get(super::agency_insights::list_agency_listings),
+        )
+        .route(
+            "/{id}/members/{member_id}",
+            put(super::agency_insights::update_member)
+                .delete(super::agency_insights::remove_member),
+        )
+        .route(
+            "/{id}/members/{member_id}/stats",
+            get(super::agency_insights::get_member_stats),
+        )
         .route("/{id}/invitations", post(create_invitation))
         .route("/by-slug/{slug}", get(get_agency_by_slug))
         .route("/invitations/{token}/accept", post(accept_invitation))
@@ -85,7 +105,7 @@ pub struct MembersResponse {
 )]
 pub async fn create_agency(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Json(data): Json<CreateRealityAgency>,
 ) -> Result<(axum::http::StatusCode, Json<AgencyResponse>), (axum::http::StatusCode, String)> {
     let agency = state
@@ -187,7 +207,7 @@ pub async fn get_agency(
 )]
 pub async fn get_my_agency(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<RealityAgency>, (axum::http::StatusCode, String)> {
     let agency = state
         .reality_portal_repo
@@ -256,7 +276,7 @@ pub async fn get_agency_by_slug(
 )]
 pub async fn update_agency(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateRealityAgency>,
 ) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
@@ -311,7 +331,7 @@ pub async fn update_agency(
 )]
 pub async fn update_branding(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateAgencyBranding>,
 ) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
@@ -358,7 +378,7 @@ pub async fn update_branding(
 )]
 pub async fn list_members(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MembersResponse>, (axum::http::StatusCode, String)> {
     // SECURITY (members-idor): gate on active membership of the target agency
@@ -410,7 +430,7 @@ pub async fn list_members(
 )]
 pub async fn create_invitation(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<CreateAgencyInvitation>,
 ) -> Result<(axum::http::StatusCode, Json<RealityAgencyInvitation>), (axum::http::StatusCode, String)>
@@ -481,7 +501,7 @@ pub struct AcceptInvitationRequest {
 )]
 pub async fn accept_invitation(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(token): Path<String>,
 ) -> Result<Json<RealityAgencyMember>, (axum::http::StatusCode, String)> {
     // SECURITY (invite-email-match): gate on recipient identity before adding

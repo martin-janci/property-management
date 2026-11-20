@@ -32,5 +32,6 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/reality-web/src/app/[locale]/agency/listings/page.tsx`.
 
 ## Agent Log
+- 2026-11-20 — agent: `GET /agencies/{id}/listings` (active members' listings + `realtor_listings` assignments, status/realtor filter, paging) backs `useAgencyListings`.
 - 2026-11-20 — agent: reality-api-client: agency-wide listings have no server route; hook rejects with NotAvailableError.
 - 2026-05-18 — agent: created stub for unmapped route.

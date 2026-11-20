@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getApiBase } from '../config';
+import { getApiBase, portalFetch } from '../config';
 import type {
   Agency,
   AgencyBranding,
@@ -73,19 +73,20 @@ export function isApiError(error: unknown, status?: number): error is ApiError {
 }
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${getApiBase()}${endpoint}`, {
+  const response = await portalFetch(`${getApiBase()}${endpoint}`, {
+    credentials: 'include',
+    ...options,
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
     },
-    credentials: 'include',
-    ...options,
   });
 
   if (!response.ok) {
     throw new ApiError(response.status);
   }
 
+  if (response.status === 204) return undefined as T;
   return response.json();
 }
 
@@ -142,17 +143,19 @@ export function useMyAgency() {
   });
 }
 
-/** reality-server has no agency stats endpoint yet; rejects with {@link NotAvailableError}. */
+/**
+ * Agency dashboard totals (`GET /api/v1/agencies/{id}/stats`). The server
+ * reports lifetime totals; `period` only partitions the cache key.
+ */
 export function useAgencyStats(agencyId: string, period?: string) {
   return useQuery({
     queryKey: ['agency-stats', agencyId, period],
-    queryFn: () => notAvailable<AgencyStats>('Agency statistics'),
+    queryFn: () => fetchApi<AgencyStats>(`/api/v1/agencies/${encodeURIComponent(agencyId)}/stats`),
     enabled: !!agencyId,
-    retry: false,
   });
 }
 
-/** reality-server has no agency performance endpoint yet; rejects with {@link NotAvailableError}. */
+/** Agency activity bucketed over time (`GET /api/v1/agencies/{id}/performance`). */
 export function useAgencyPerformance(
   agencyId: string,
   startDate?: string,
@@ -161,9 +164,17 @@ export function useAgencyPerformance(
 ) {
   return useQuery({
     queryKey: ['agency-performance', agencyId, startDate, endDate, interval],
-    queryFn: () => notAvailable<AgencyPerformance[]>('Agency performance'),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (startDate) params.set('startDate', startDate.slice(0, 10));
+      if (endDate) params.set('endDate', endDate.slice(0, 10));
+      if (interval) params.set('interval', interval);
+      const qs = params.toString();
+      return fetchApi<AgencyPerformance[]>(
+        `/api/v1/agencies/${encodeURIComponent(agencyId)}/performance${qs ? `?${qs}` : ''}`
+      );
+    },
     enabled: !!agencyId,
-    retry: false,
   });
 }
 
@@ -242,28 +253,47 @@ export function useRealtor(agencyId: string, realtorId: string) {
   });
 }
 
-/** reality-server has no per-realtor stats endpoint yet; rejects with {@link NotAvailableError}. */
+/** Stats of one agency member (`realtorId` is the membership id from {@link useRealtors}). */
 export function useRealtorStats(agencyId: string, realtorId: string, period?: string) {
   return useQuery({
     queryKey: ['realtor-stats', agencyId, realtorId, period],
-    queryFn: () => notAvailable<RealtorStats>('Realtor statistics'),
+    queryFn: () =>
+      fetchApi<RealtorStats>(
+        `/api/v1/agencies/${encodeURIComponent(agencyId)}/members/${encodeURIComponent(realtorId)}/stats`
+      ),
     enabled: !!agencyId && !!realtorId,
-    retry: false,
   });
 }
 
 // Listing Queries
 
-/** reality-server has no agency-wide listings endpoint yet; rejects with {@link NotAvailableError}. */
+/**
+ * Listings of the agency's active members (`GET /api/v1/agencies/{id}/listings`).
+ * `realtorId` filters by the realtor's user id.
+ */
 export function useAgencyListings(
   agencyId: string,
   options?: { status?: string; realtorId?: string; page?: number; limit?: number }
 ) {
   return useQuery({
     queryKey: ['agency-listings', agencyId, options],
-    queryFn: () => notAvailable<{ listings: AgencyListing[]; total: number }>('Agency listings'),
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (options?.status) params.set('status', options.status);
+      if (options?.realtorId) params.set('realtorId', options.realtorId);
+      if (options?.page) params.set('page', String(options.page));
+      if (options?.limit) params.set('limit', String(options.limit));
+      const qs = params.toString();
+      const wire = await fetchApi<{ listings: Omit<AgencyListing, 'slug'>[]; total: number }>(
+        `/api/v1/agencies/${encodeURIComponent(agencyId)}/listings${qs ? `?${qs}` : ''}`
+      );
+      return {
+        total: wire.total,
+        // Listings are addressed by id on the portal; there is no slug column.
+        listings: wire.listings.map((l) => ({ ...l, slug: l.id })),
+      };
+    },
     enabled: !!agencyId,
-    retry: false,
   });
 }
 
@@ -370,7 +400,7 @@ export function useUpdateBranding() {
       if (data.accentColor) formData.append('accentColor', data.accentColor);
       if (data.fontFamily) formData.append('fontFamily', data.fontFamily);
 
-      const response = await fetch(`${getApiBase()}/api/v1/agencies/${agencyId}/branding`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/agencies/${agencyId}/branding`, {
         method: 'PUT',
         body: formData,
         credentials: 'include',
@@ -409,19 +439,52 @@ export function useInviteRealtor() {
   });
 }
 
-/** reality-server cannot update an agency member yet; rejects with {@link NotAvailableError}. */
+/**
+ * Update an agency member (`PUT /api/v1/agencies/{id}/members/{memberId}`).
+ * The server stores membership data only: `title` maps to the member role
+ * (`owner`/`manager`/`realtor`) and `status` to the active flag.
+ */
 export function useUpdateRealtor() {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (_vars: { agencyId: string; realtorId: string; data: UpdateRealtorRequest }) =>
-      notAvailable<Realtor>('Editing realtors'),
+    mutationFn: async ({
+      agencyId,
+      realtorId,
+      data,
+    }: {
+      agencyId: string;
+      realtorId: string;
+      data: UpdateRealtorRequest;
+    }): Promise<Realtor> => {
+      const body: { role?: string; isActive?: boolean } = {};
+      if (data.title === 'owner' || data.title === 'manager' || data.title === 'realtor') {
+        body.role = data.title;
+      }
+      if (data.status) body.isActive = data.status === 'active';
+      const member = await fetchApi<WireAgencyMember>(
+        `/api/v1/agencies/${encodeURIComponent(agencyId)}/members/${encodeURIComponent(realtorId)}`,
+        { method: 'PUT', body: JSON.stringify(body) }
+      );
+      return memberToRealtor(member);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['realtors', variables.agencyId] });
+    },
   });
 }
 
-/** reality-server cannot remove an agency member yet; rejects with {@link NotAvailableError}. */
+/** Remove an agency member (`DELETE /api/v1/agencies/{id}/members/{memberId}`). */
 export function useRemoveRealtor() {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (_vars: { agencyId: string; realtorId: string }) =>
-      notAvailable<void>('Removing realtors'),
+    mutationFn: ({ agencyId, realtorId }: { agencyId: string; realtorId: string }) =>
+      fetchApi<void>(
+        `/api/v1/agencies/${encodeURIComponent(agencyId)}/members/${encodeURIComponent(realtorId)}`,
+        { method: 'DELETE' }
+      ),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['realtors', variables.agencyId] });
+    },
   });
 }
 

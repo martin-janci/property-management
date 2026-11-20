@@ -12,8 +12,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 
@@ -60,10 +58,12 @@ class NotificationRepositoryPathEncodingTest {
         repoCapturing(read).markAsRead("../admin/secret")
         assertEquals("/api/v1/favorites/alerts/..%2Fadmin%2Fsecret/read", read.path)
 
-        // Delete has no server route: it must fail without issuing a request.
         val delete = Captured()
-        val result = repoCapturing(delete).deleteNotification("../admin/secret")
-        assertTrue(result.isFailure)
-        assertNull(delete.path)
+        repoCapturing(delete).deleteNotification("../admin/secret")
+        assertEquals("/api/v1/favorites/alerts/..%2Fadmin%2Fsecret", delete.path)
+
+        val unregister = Captured()
+        repoCapturing(unregister).unregisterPushToken("a/b:c")
+        assertEquals("/api/v1/users/me/push-tokens/a%2Fb:c", unregister.path)
     }
 }
