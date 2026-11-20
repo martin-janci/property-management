@@ -21,6 +21,7 @@ pub mod stripe;
 pub mod syndication;
 pub mod totp;
 pub mod voice_commands;
+pub mod voice_oauth;
 pub mod workflow_executor;
 
 pub use accounting::AccountingService;
