@@ -19,7 +19,8 @@
     "submit": "Absenden",
     "tryAgain": "Erneut versuchen",
     "errorTitle": "Etwas ist schiefgelaufen",
-    "errorDescription": "Bitte versuchen Sie es erneut. Besteht das Problem weiterhin, wenden Sie sich an den Support."
+    "errorDescription": "Bitte versuchen Sie es erneut. Besteht das Problem weiterhin, wenden Sie sich an den Support.",
+    "previous": "Zurück"
   },
   "tabs": {
     "home": "Startseite",
@@ -169,7 +170,8 @@
     "submitButtonOffline": "Speichern und später synchronisieren",
     "loadError": "Störungsmeldungen konnten nicht geladen werden",
     "emptyTitle": "Keine Störungsmeldungen gefunden",
-    "emptyText": "Alle Probleme wurden behoben"
+    "emptyText": "Alle Probleme wurden behoben",
+    "report": "Melden"
   },
   "news": {
     "backToList": "‹ Nachrichten",
@@ -330,7 +332,9 @@
     "detailLoadError": "Dokument konnte nicht geladen werden",
     "openErrorTitle": "Dokument konnte nicht geöffnet werden",
     "openErrorMessage": "Der Dateibetrachter ist auf diesem Gerät nicht verfügbar.",
-    "notFound": "Dokument nicht gefunden"
+    "notFound": "Dokument nicht gefunden",
+    "open": "Dokument öffnen",
+    "opening": "Wird geöffnet…"
   },
   "settings": {
     "title": "Einstellungen",

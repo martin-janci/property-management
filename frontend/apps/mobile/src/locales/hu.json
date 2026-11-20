@@ -19,7 +19,8 @@
     "submit": "Küldés",
     "tryAgain": "Próbáld újra",
     "errorTitle": "Valami hiba történt",
-    "errorDescription": "Kérjük, próbálja újra. Ha a probléma továbbra is fennáll, forduljon az ügyfélszolgálathoz."
+    "errorDescription": "Kérjük, próbálja újra. Ha a probléma továbbra is fennáll, forduljon az ügyfélszolgálathoz.",
+    "previous": "Előző"
   },
   "tabs": {
     "home": "Fooldal",
@@ -169,7 +170,8 @@
     "submitButtonOffline": "Mentés és szinkronizálás később",
     "loadError": "A hibabejelentések nem tölthetők be",
     "emptyTitle": "Nem található hibabejelentés",
-    "emptyText": "Minden probléma megoldva"
+    "emptyText": "Minden probléma megoldva",
+    "report": "Jelentés"
   },
   "news": {
     "backToList": "‹ Hirek",
@@ -330,7 +332,9 @@
     "detailLoadError": "A dokumentum nem tölthető be",
     "openErrorTitle": "A dokumentum nem nyitható meg",
     "openErrorMessage": "A fájlnézegető nem érhető el ezen az eszközön.",
-    "notFound": "A dokumentum nem található"
+    "notFound": "A dokumentum nem található",
+    "open": "Dokumentum megnyitása",
+    "opening": "Megnyitás…"
   },
   "settings": {
     "title": "Beallitasok",
