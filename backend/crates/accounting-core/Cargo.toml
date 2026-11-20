@@ -29,3 +29,10 @@ rand = { workspace = true }
 hex = { workspace = true }
 data-encoding = { workspace = true }
 subtle = { workspace = true }
+
+# PAY by square payment-QR container (UC-ACC-05.8).
+crc32fast = { workspace = true }
+lzma-rs = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros = { workspace = true }

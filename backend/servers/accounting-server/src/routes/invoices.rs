@@ -769,7 +769,9 @@ pub async fn create_credit_note(
             StatusCode::INTERNAL_SERVER_ERROR
         })?
         .ok_or(StatusCode::NOT_FOUND)?;
-    if original.status == "draft" {
+    if original.status == "draft" || original.status == "cancelled" {
+        // Drafts have no legal number to correct; cancelled documents carry no
+        // receivable to reverse (UC-ACC-05.17).
         return Err(StatusCode::BAD_REQUEST);
     }
 
@@ -1190,6 +1192,307 @@ pub async fn get_invoice_pdf(
         bytes,
     )
         .into_response())
+}
+
+/// Mark an issued invoice as sent (UC-ACC-05.10 / .17).
+///
+/// Records the delivery step of the lifecycle: only `issued` advances to
+/// `sent`. The guard lives in the UPDATE (`mark_sent_rls`), so a concurrent
+/// transition cannot double-fire. Email transport is the
+/// [`hooks::DocumentMailer`] seam — both that flow and out-of-band delivery
+/// ("I sent it myself") record the transition through this endpoint.
+#[utoipa::path(
+    post,
+    path = "/api/v1/invoices/{id}/send",
+    params(("id" = Uuid, Path, description = "Invoice id")),
+    responses(
+        (status = 200, description = "Marked sent", body = AccInvoiceExt),
+        (status = 400, description = "Not in issued state"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "Invoices"
+)]
+pub async fn mark_sent(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    auth: AuthUser,
+) -> Result<Json<AccInvoiceExt>, StatusCode> {
+    authz::require_role(rls.role(), authz::MUTATE_MIN_ROLE).map_err(|_| StatusCode::FORBIDDEN)?;
+
+    let tenant_id = rls.tenant_id();
+
+    let mut tx = rls.begin().await.map_err(|e| {
+        tracing::error!("Failed to start transaction: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    // Load first to distinguish 404 (unknown/foreign id) from 400 (wrong state).
+    let existing = state
+        .invoicing_repo
+        .find_invoice_ext_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    if existing.status != "issued" {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let sent = state
+        .invoicing_repo
+        .mark_sent_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to mark invoice {id} sent: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        // None: the issued guard in the UPDATE stopped a concurrent transition.
+        .ok_or(StatusCode::BAD_REQUEST)?;
+
+    let entry = audit::record(
+        tenant_id,
+        Some(auth.user_id),
+        "send",
+        "invoice",
+        Some(id),
+        serde_json::json!({ "number": sent.number, "status": "sent" }),
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    state
+        .platform_repo
+        .record_audit_rls(&mut *tx, entry)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to record audit: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    rls.release().await;
+    Ok(Json(sent))
+}
+
+/// Cancel an unpaid document (UC-ACC-05.17).
+///
+/// Lifecycle rules: drafts are deleted (not cancelled), and once any payment
+/// has landed the correction path is a credit note (UC-ACC-05.7) — so only
+/// `issued`/`sent`/`overdue` documents with `paid_amount = 0` cancel. The
+/// same guard is repeated inside the UPDATE (`cancel_invoice_rls`), so a
+/// payment confirmation committing concurrently can never be swallowed by a
+/// cancellation. The number allocated at issue stays consumed — the document
+/// is retained (gapless numbering, UC-ACC-02.3), only its status changes.
+#[utoipa::path(
+    post,
+    path = "/api/v1/invoices/{id}/cancel",
+    params(("id" = Uuid, Path, description = "Invoice id")),
+    responses(
+        (status = 200, description = "Cancelled", body = AccInvoiceExt),
+        (status = 400, description = "Not cancellable (draft, paid, or already cancelled)"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "Invoices"
+)]
+pub async fn cancel_invoice(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    auth: AuthUser,
+) -> Result<Json<AccInvoiceExt>, StatusCode> {
+    authz::require_role(rls.role(), authz::MUTATE_MIN_ROLE).map_err(|_| StatusCode::FORBIDDEN)?;
+
+    let tenant_id = rls.tenant_id();
+
+    let mut tx = rls.begin().await.map_err(|e| {
+        tracing::error!("Failed to start transaction: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let existing = state
+        .invoicing_repo
+        .find_invoice_ext_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    if !matches!(existing.status.as_str(), "issued" | "sent" | "overdue")
+        || existing.paid_amount != Decimal::ZERO
+    {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let cancelled = state
+        .invoicing_repo
+        .cancel_invoice_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to cancel invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        // None: the UPDATE guard stopped a concurrent payment/transition race.
+        .ok_or(StatusCode::BAD_REQUEST)?;
+
+    let entry = audit::record(
+        tenant_id,
+        Some(auth.user_id),
+        "cancel",
+        "invoice",
+        Some(id),
+        serde_json::json!({ "number": cancelled.number, "status": "cancelled" }),
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    state
+        .platform_repo
+        .record_audit_rls(&mut *tx, entry)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to record audit: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    rls.release().await;
+    Ok(Json(cancelled))
+}
+
+/// Payment-QR payloads for a document (UC-ACC-05.8).
+///
+/// Both fields are the STRING a QR generator encodes (the frontend renders the
+/// image). `None` when nothing is owed — a settled document carries no QR.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PaymentQrResponse {
+    /// PAY by square (SK banking-app standard, by square PAY v1.2.0).
+    pub pay_by_square: Option<String>,
+    /// SPAYD (CZ "QR platba" convention).
+    pub spayd: Option<String>,
+}
+
+/// Payment QR payloads — PAY by square (SK) + SPAYD (CZ) (UC-ACC-05.8).
+///
+/// Amount due = `total_amount - paid_amount`; when nothing is owed both
+/// payloads are `None` ("omitted when paid"). The IBAN comes from the
+/// document's pinned bank account, falling back to the default/first one
+/// (UC-ACC-02.10); without any bank account there is nothing to encode — 400.
+#[utoipa::path(
+    get,
+    path = "/api/v1/invoices/{id}/qr",
+    params(("id" = Uuid, Path, description = "Invoice id")),
+    responses(
+        (status = 200, description = "QR payload strings", body = PaymentQrResponse),
+        (status = 400, description = "No bank account configured"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "Invoices"
+)]
+pub async fn get_invoice_qr(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+) -> Result<Json<PaymentQrResponse>, StatusCode> {
+    authz::require_role(rls.role(), authz::READ_MIN_ROLE).map_err(|_| StatusCode::FORBIDDEN)?;
+
+    let mut tx = rls.begin().await.map_err(|e| {
+        tracing::error!("Failed to start transaction: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let invoice = state
+        .invoicing_repo
+        .find_invoice_ext_rls(&mut *tx, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load invoice {id}: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    let company = state
+        .config_repo
+        .get_company_settings_rls(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load company settings: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    let banks = state
+        .config_repo
+        .list_bank_accounts_rls(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load bank accounts: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    rls.release().await;
+
+    let bank = match invoice.bank_account_id {
+        Some(bid) => banks.iter().find(|b| b.id == bid),
+        None => banks.iter().find(|b| b.is_default).or(banks.first()),
+    }
+    .ok_or(StatusCode::BAD_REQUEST)?;
+
+    let amount_due = invoice.total_amount - invoice.paid_amount;
+
+    // SPAYD (CZ) — existing deterministic hook; None when settled.
+    let spayd = hooks::payment_spayd(
+        &bank.iban,
+        amount_due,
+        &invoice.currency,
+        invoice.variable_symbol.as_deref(),
+    );
+
+    // PAY by square (SK) — beneficiary name is required by spec v1.2.0; the
+    // company's legal name is the payee.
+    let pay_by_square = company
+        .as_ref()
+        .filter(|c| !c.legal_name.trim().is_empty())
+        .and_then(|c| {
+            let data = accounting_core::bysquare::PayBySquare {
+                invoice_id: Some(invoice.number.clone()),
+                amount: amount_due,
+                currency: invoice.currency.clone(),
+                due_date: Some(invoice.due_date),
+                variable_symbol: invoice.variable_symbol.clone(),
+                note: Some(invoice.number.clone()),
+                iban: bank.iban.clone(),
+                bic: bank.swift.clone(),
+                beneficiary_name: c.legal_name.clone(),
+                ..Default::default()
+            };
+            match accounting_core::bysquare::encode(&data) {
+                Ok(qr) => Some(qr),
+                // Settled documents legitimately produce NothingOwed → omit.
+                Err(accounting_core::bysquare::BySquareError::NothingOwed) => None,
+                Err(e) => {
+                    tracing::error!("PAY by square encode for {id} failed: {e}");
+                    None
+                }
+            }
+        });
+
+    Ok(Json(PaymentQrResponse {
+        pay_by_square,
+        spayd,
+    }))
 }
 
 // ---------------------------------------------------------------------------
