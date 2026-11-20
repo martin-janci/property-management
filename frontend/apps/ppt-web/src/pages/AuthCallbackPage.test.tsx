@@ -332,6 +332,23 @@ describe('AuthCallbackPage — SSO /auth/callback flow (Story 79.2)', () => {
     expect(exchangeSsoCodeSpy).not.toHaveBeenCalled();
   });
 
+  it('falls back to the generic provider error when error_description is malformed (no URIError)', async () => {
+    setSsoState(STATE_NONCE);
+
+    // `%ZZ` is an invalid percent-escape. URLSearchParams leaves it literal, so
+    // the raw `decodeURIComponent` call would throw an uncaught URIError inside
+    // the callback effect and wedge the page on the spinner
+    // (code-review-ppt-web-ui-authcallback-decodeuri-throw). The guard must
+    // swallow it and render the translated generic provider error instead.
+    renderCallback('?error=server_error&error_description=%ZZ');
+
+    await waitFor(() => {
+      expect(screen.getByText('The identity provider returned an error.')).toBeInTheDocument();
+    });
+    // Still a pure client-side provider-error branch — no network exchange.
+    expect(exchangeSsoCodeSpy).not.toHaveBeenCalled();
+  });
+
   it('rolls back token storage and stays anonymous when the exchange fails', async () => {
     setSsoState(STATE_NONCE);
     // A plain Error carrying a raw developer/network detail string. Its

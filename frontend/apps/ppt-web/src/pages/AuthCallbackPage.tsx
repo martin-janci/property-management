@@ -40,6 +40,24 @@ function getRedirectUri(): string {
 }
 
 /**
+ * `decodeURIComponent` that never throws.
+ *
+ * `useSearchParams` (URLSearchParams) leaves a malformed percent-escape — a
+ * lone `%` or an invalid hex pair like `%ZZ` — literal in the returned value.
+ * Calling `decodeURIComponent` on that raises an uncaught `URIError` inside the
+ * callback effect, which wedges the page on the "Completing sign-in…" spinner.
+ * On a decode failure we return `null` so the caller can fall back to a safe,
+ * translated message instead of crashing.
+ */
+function safeDecodeURIComponent(value: string): string | null {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Map an SSO code-exchange failure to a user-facing, translated message.
  *
  * SECURITY / i18n: never surface a raw `Error.message` to the user. On the
@@ -146,10 +164,12 @@ export function AuthCallbackPage() {
     // The SSO provider itself may return an error in the redirect.
     if (errorParam) {
       setStatus('error');
+      const decodedDescription = errorDescription ? safeDecodeURIComponent(errorDescription) : null;
       setErrorMessage(
-        errorDescription
-          ? decodeURIComponent(errorDescription)
-          : t('auth.ssoProviderError', { defaultValue: 'The identity provider returned an error.' })
+        decodedDescription ??
+          t('auth.ssoProviderError', {
+            defaultValue: 'The identity provider returned an error.',
+          })
       );
       return;
     }
