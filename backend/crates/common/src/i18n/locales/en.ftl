@@ -137,3 +137,14 @@ visitor-updated-success = Visitor updated successfully.
 visitor-checked-in-success = Visitor checked in successfully.
 visitor-checked-out-success = Visitor checked out successfully.
 visitor-registration-cancelled = Visitor registration cancelled.
+
+# Saved-search alerts (reality-server drainer — BIT-139)
+# $count = number of new matching listings (>= 1), $name = saved-search name.
+search-alert-subject = { $count ->
+    [one] { $count } new listing matches your saved search "{ $name }"
+   *[other] { $count } new listings match your saved search "{ $name }"
+}
+search-alert-body = { $count ->
+    [one] Your saved search "{ $name }" has { $count } new matching listing. Open the app to view it.
+   *[other] Your saved search "{ $name }" has { $count } new matching listings. Open the app to view them.
+}

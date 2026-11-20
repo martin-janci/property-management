@@ -137,3 +137,14 @@ visitor-updated-success = Besucher erfolgreich aktualisiert.
 visitor-checked-in-success = Besucher erfolgreich eingecheckt.
 visitor-checked-out-success = Besucher erfolgreich ausgecheckt.
 visitor-registration-cancelled = Besucherregistrierung storniert.
+
+# Saved-search alerts (reality-server drainer — BIT-139)
+# $count = number of new matching listings (>= 1), $name = saved-search name.
+search-alert-subject = { $count ->
+    [one] { $count } neues Inserat passt zu Ihrer gespeicherten Suche „{ $name }“
+   *[other] { $count } neue Inserate passen zu Ihrer gespeicherten Suche „{ $name }“
+}
+search-alert-body = { $count ->
+    [one] Ihre gespeicherte Suche „{ $name }“ hat { $count } neue passende Inserat. Öffnen Sie die App, um es anzusehen.
+   *[other] Ihre gespeicherte Suche „{ $name }“ hat { $count } neue passende Inserate. Öffnen Sie die App, um sie anzusehen.
+}
