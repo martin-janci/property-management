@@ -43,9 +43,17 @@ import {
  */
 export const eventToQueryKeys: Record<string, string[]> = {
   // Direct message sent to the user (`messaging.rs::dispatch_new_message_event`).
+  // `['messages']` === `messagingKeys.all` (`@ppt/api-client`) — the live root
+  // the thread list / unread queries are keyed under.
   'message.created': ['messages'],
-  // Notification-preference toggled (`notification_preferences.rs`).
-  'preference.updated': ['notifications'],
+  // Notification-preference toggled (`notification_preferences.rs`). The live
+  // preference queries are keyed under `['notification-triggers']`
+  // (`notificationTriggerKeys.all` in `@ppt/api-client`, consumed by
+  // NotificationTriggersPage), NOT the legacy local `queryKeys.notifications`
+  // factory root (`notifications`) — no live query uses that root, so keying
+  // this on `['notifications']` invalidated a dead root and the preference view
+  // stayed stale on push.
+  'preference.updated': ['notification-triggers'],
 };
 
 /**
@@ -60,9 +68,9 @@ export const eventToQueryKeys: Record<string, string[]> = {
  *
  * This map MUST cover every `NotificationCategory` variant the server can emit
  * (`common::notifications::NotificationCategory`, serialized snake_case).
- * A missing key silently degrades to the `notifications`-only fallback, so the
- * corresponding entity feed goes stale on push — that was the community + system
- * gap this map originally shipped with. Invalidating a root that no active query
+ * A missing key silently degrades to the `notification-inbox`-only fallback, so
+ * the corresponding entity feed goes stale on push — that was the community +
+ * system gap this map originally shipped with. Invalidating a root that no active query
  * uses is a harmless no-op, so it is safe to keep the map in lock-step with the
  * backend enum.
  */
@@ -353,13 +361,21 @@ export function WebSocketProvider({
     }
 
     // `notification.created` is polymorphic: one event type spans every domain,
-    // with `payload.category` naming the affected entity list. Refresh the
-    // `notifications` root (list + unread count) plus that entity's list.
+    // with `payload.category` naming the affected entity list. Refresh the live
+    // in-app inbox root (group list + unread badge) plus that entity's list.
+    //
+    // The inbox root is `['notification-inbox']` (`inboxKeys.all` in
+    // `@ppt/api-client`), which backs `useNotificationInbox` (NotificationInboxPage)
+    // and `useUnreadNotificationCount` (NotificationBell). It is NOT the legacy
+    // local `queryKeys.notifications` factory root (`notifications`): no live
+    // query is keyed under that root, so the previous `['notifications']` base
+    // invalidated nothing and every realtime notification left the bell + inbox
+    // stale until the 60s poll — 100% dead sync for the primary realtime event.
     const unsubscribeNotification = service.subscribe('notification.created', (message) => {
       const payload = message.payload as { category?: string } | null;
       const category = payload?.category;
       const entityKeys = category ? categoryToQueryKeys[category] : undefined;
-      const queryKeys = entityKeys ? ['notifications', ...entityKeys] : ['notifications'];
+      const queryKeys = entityKeys ? ['notification-inbox', ...entityKeys] : ['notification-inbox'];
       onEntityEvent('notification.created', queryKeys, message);
     });
     unsubscribers.push(unsubscribeNotification);
