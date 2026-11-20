@@ -47,18 +47,18 @@
     {
       "task_id": "code-review-ppt-web-ui-marketplace-epic68-orphaned-routes-retry1",
       "branch": "auto-impl/code-review-ppt-web-ui-marketplace-epic6-4e7186b3",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-20T16:28:14Z",
-      "last_updated": "2026-11-20T16:40:06Z",
-      "status_changed_at": "2026-11-20T16:28:14Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-20T16:43:11Z",
+      "status_changed_at": "2026-11-20T16:43:11Z",
+      "pr_number": 3667,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3667",
       "merged_at": null,
       "specialist": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=3667 status=done specialist=react-web scope_drift=true [Epic68 marketplace intentionally-unwired per PAP-55 (unwired-features.ts registry+CI guard); added in-file pointers from barrels to registry/guard so static-review stops re-flagging; comment-only, verify GREEN c03e460]",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -67,5 +67,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-20T16:40:06Z"
+  "generated": "2026-11-20T16:43:11Z"
 }
