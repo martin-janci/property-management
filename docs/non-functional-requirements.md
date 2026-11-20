@@ -2,6 +2,8 @@
 
 This document defines the non-functional requirements (NFRs) for the Property Management System (PPT) and Reality Portal, covering performance, scalability, security, logging, monitoring, SEO, caching, and web rendering strategies.
 
+> **Delivery-surface baselines:** per-surface NFR baselines (current state vs target) live alongside this doc. See [`integrations/push-voice-webhooks-nfr-baseline.md`](./integrations/push-voice-webhooks-nfr-baseline.md) for push fan-out (FCM/APNs) and voice webhooks — metrics catalogue, retry/dead-letter policy, and token-refresh failure alerting.
+
 ## Table of Contents
 
 1. [Performance Requirements](#performance-requirements)
