@@ -13,7 +13,7 @@ pub mod notification;
 pub mod notification_digest;
 pub mod notification_pipeline;
 pub mod oauth;
-pub mod push_fanout;
+pub mod push;
 pub mod quiet_hours;
 pub mod quiet_hours_drain;
 pub mod scheduler;
@@ -40,7 +40,7 @@ pub use notification_pipeline::{
 };
 pub use oauth::{OAuthService, OAuthServiceError};
 #[allow(unused_imports)]
-pub use push_fanout::{
+pub use push::{
     ApnsConfig, ApnsHttpAdapter, CombinedPushAdapter, FcmConfig, FcmHttpAdapter, PushFanoutConfig,
     PushFanoutWorker,
 };

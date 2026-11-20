@@ -53,7 +53,7 @@ use common::notifications::{
 };
 
 use super::email::EmailService;
-use super::push_fanout::CombinedPushAdapter;
+use super::push::CombinedPushAdapter;
 use super::quiet_hours::{self, QuietHoursState};
 
 /// Map a stored `held_notifications.event_type` string back to a category for
