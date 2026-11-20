@@ -235,3 +235,57 @@ notes:
   - "2026-07-07: Epic 10A reconciled (gap-10a-reconcile-sprint-status-gates-closed) — gates #481 (closed 2026-05-26), #482 (closed 2026-05-26), #487 (closed 2026-05-26; live MFA rate-limit e2e via PR #2157, in review) all verified CLOSED via gh; 10a-1/10a-2/10a-3 promoted ready-for-dev → done. Evidence: routes/oauth.rs endpoints + oauth_integration_tests.rs/oauth_authz_server_edge_tests.rs/token_scope_tests.rs revocation regressions, ProtectedRoute.test.tsx (ppt-web + admin-web), story mds already Status: completed. Batch thb-2026-05-25 stays in-progress (#480/#483/#484 still open)."
 
 blockers: []
+
+# ───────────────────────────────────────────────────
+# NEXT SPRINT — slotted 2026-11-20 (pm-tech-lead)
+# The Epic 6/7A/8A/10A/10B/80/79/82/84/85/9 delivery sprint above is fully
+# `done`; its sprint_goal no longer reflects the work now being merged.
+# This block re-points the goal at the active post-delivery workstreams:
+# review follow-ups (remaining test-hardening issues), churn / large-file
+# refactors, and NFR baselining. Mirrors the schema of the sprint above
+# (sprint_name / sprint_goal / started_at / rollup / development_status /
+# notes / blockers), nested under `next_sprint` to stay additive and keep
+# the YAML free of duplicate top-level keys.
+# ───────────────────────────────────────────────────
+next_sprint:
+  sprint_name: "Hardening & NFR Baseline - Review Follow-ups, Churn Refactors, NFR Baselining"
+  sprint_goal: "Close out open post-merge review follow-ups, refactor churn / large-file hotspots, and establish NFR (performance, reliability, security) baselines across the stack"
+  started_at: 2026-11-20
+
+  # Workstream rollup (mirrors the `epics:` tracking shape above)
+  workstreams:
+    review-follow-ups:
+      name: "Post-merge review follow-ups"
+      status: in-progress
+      items_total: 3
+      items_completed: 0   # test-hardening batch thb-2026-05-25 residue: #480, #483, #484 still open
+    churn-refactors:
+      name: "Churn / large-file refactors"
+      status: ready-for-dev
+      items_total: 0        # hotspots to be enumerated from the research routine's Phase 1 churn analysis
+      items_completed: 0
+    nfr-baselining:
+      name: "NFR baselining (performance / reliability / security)"
+      status: ready-for-dev
+      items_total: 0        # baseline targets + measurement harness to be defined before pickup
+      items_completed: 0
+
+  # Item-level development status (mirrors `development_status:` above)
+  development_status:
+    # Review follow-ups — carried from test-hardening batch thb-2026-05-25
+    rfu-480-websocket-auth-token-logging: open        # #480 — WS auth token in query param logged + session not re-validated after JWT expiry (gated 8a-3)
+    rfu-483-voice-device-idor-tests: open             # #483 — Voice device IDOR fix has no tests; list-commands leaks existence via empty vs 403
+    rfu-484-notification-dispatch-serial: open        # #484 — dispatch_to_users is serial + FCM stub swallows failures (gated 8a-2/8a-3)
+    # Churn / large-file refactors — to be populated from churn characterization
+    churn-large-file-refactors: ready-for-dev         # enumerate churn hotspots / oversized modules, split by domain
+    # NFR baselining
+    nfr-baseline-performance: ready-for-dev           # define perf budgets + capture baseline
+    nfr-baseline-reliability: ready-for-dev           # error-budget / availability baseline
+    nfr-baseline-security: ready-for-dev              # security posture baseline (authz / RLS / rate-limit coverage)
+
+  notes:
+    - "2026-11-20: next sprint slotted (pm-tech-lead) — prior delivery sprint is fully done; goal re-pointed at review follow-ups, churn / large-file refactors, and NFR baselining to reflect the work actually being merged."
+    - "Review follow-ups seeded from the still-open items of test-hardening batch thb-2026-05-25 (#480, #483, #484). That batch stays in-progress until all three are closed or deferred."
+    - "Churn-refactor and NFR items are intentionally un-sized (items_total: 0) — to be enumerated from the research routine's Phase 1 churn analysis and NFR targets before pickup."
+
+  blockers: []
