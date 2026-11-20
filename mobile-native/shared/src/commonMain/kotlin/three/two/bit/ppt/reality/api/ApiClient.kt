@@ -8,7 +8,9 @@ import three.two.bit.ppt.reality.favorites.AddFavoriteResponse
 import three.two.bit.ppt.reality.favorites.FavoritesResponse
 import three.two.bit.ppt.reality.inquiry.CreateInquiryRequest
 import three.two.bit.ppt.reality.inquiry.CreateInquiryResponse
+import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.listing.ListingDetail
+import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.listing.ListingSearchRequest
 import three.two.bit.ppt.reality.listing.ListingSearchResponse
 
@@ -31,6 +33,11 @@ class ApiClient(
 ) {
     private val client = HttpClientProvider.client
 
+    // Listing and inquiry calls go through the repositories so the wire mapping onto
+    // reality-server's contract lives in one place.
+    private val listings = ListingRepository(baseUrl, accessToken, client)
+    private val inquiries = InquiryRepository(baseUrl, accessToken, client)
+
     private fun HttpRequestBuilder.configureRequest() {
         accessToken?.let { header(HttpHeaders.Authorization, "Bearer $it") }
         tenantId?.let { header("X-Tenant-ID", it) }
@@ -48,22 +55,8 @@ class ApiClient(
      * @param request Search request with query, filters, and pagination
      * @return Result containing paginated listing summaries or error
      */
-    suspend fun getListings(request: ListingSearchRequest): Result<ListingSearchResponse> {
-        return try {
-            val response =
-                client.post("$baseUrl/api/v1/listings/search") {
-                    configureRequest()
-                    setBody(request)
-                }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                Result.failure(ApiException("Failed to fetch listings: ${response.status}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    suspend fun getListings(request: ListingSearchRequest): Result<ListingSearchResponse> =
+        listings.searchListings(request)
 
     /**
      * Get listing details by ID.
@@ -71,21 +64,7 @@ class ApiClient(
      * @param id Listing ID
      * @return Result containing listing details or error
      */
-    suspend fun getListing(id: String): Result<ListingDetail> {
-        return try {
-            val response =
-                client.get("$baseUrl/api/v1/listings/${id.asPathSegment()}") { configureRequest() }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else if (response.status == HttpStatusCode.NotFound) {
-                Result.failure(ApiException("Listing not found"))
-            } else {
-                Result.failure(ApiException("Failed to fetch listing: ${response.status}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    suspend fun getListing(id: String): Result<ListingDetail> = listings.getListingDetail(id)
 
     // --- Favorites API ---
 
@@ -173,22 +152,8 @@ class ApiClient(
      * @param request Inquiry request with listing ID and message
      * @return Result containing inquiry response or error
      */
-    suspend fun submitInquiry(request: CreateInquiryRequest): Result<CreateInquiryResponse> {
-        return try {
-            val response =
-                client.post("$baseUrl/api/v1/inquiries") {
-                    configureRequest()
-                    setBody(request)
-                }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                Result.failure(ApiException("Failed to submit inquiry: ${response.status}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    suspend fun submitInquiry(request: CreateInquiryRequest): Result<CreateInquiryResponse> =
+        inquiries.createInquiry(request)
 }
 
 /** API-specific exception for client operations. */

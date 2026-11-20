@@ -32,4 +32,5 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/reality-web/src/app/[locale]/realtor/listings/page.tsx`.
 
 ## Agent Log
+- 2026-11-20 — agent: reality-api-client `useMyListings` now reads `/my/listings` (was non-existent `/realtors/me/listings`).
 - 2026-05-18 — agent: created stub for unmapped route.

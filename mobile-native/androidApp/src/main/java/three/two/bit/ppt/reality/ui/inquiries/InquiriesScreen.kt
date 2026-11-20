@@ -67,11 +67,12 @@ private const val TAG = "InquiriesScreen"
  *
  * Inline thread view (`KmpInquiryThreadScreen` in the design) is not wired into this Compose screen
  * yet — only the messages/viewings list is rendered here. The underlying shared APIs it needs now
- * exist in `InquiryRepository` (`replyToInquiry` → POST /api/v1/inquiries/{id}/replies, and the
- * scheduling calendar's `scheduleViewing` → POST /api/v1/viewings, both with commonTest contract
- * coverage), so the earlier "API support not yet present" blocker is resolved; the remaining work
- * is the Android Compose thread + calendar UI itself. iOS already ships this via
- * `InquiryDetailView.swift`. Tracked as a follow-up Android-parity task.
+ * exist in `InquiryRepository` (`replyToInquiry` → POST /api/v1/inquiries/{id}/respond,
+ * realtor-only, and the scheduling calendar's `scheduleViewing` → POST
+ * /api/v1/inquiries/viewing/{listing_id}, both with commonTest contract coverage), so the earlier
+ * "API support not yet present" blocker is resolved; the remaining work is the Android Compose
+ * thread + calendar UI itself. iOS already ships this via `InquiryDetailView.swift`. Tracked as a
+ * follow-up Android-parity task.
  *
  * Epic 48 - Story 48.6: Portal Mobile Inquiries.
  */
@@ -193,23 +194,9 @@ fun InquiriesScreen(
                             ViewingsList(
                                 viewings = viewings,
                                 onViewingClick = { onListingClick(it.listingId) },
-                                onCancelViewing = { viewingId ->
-                                    scope.launch {
-                                        inquiryRepository
-                                            .cancelViewing(viewingId)
-                                            .fold(
-                                                onSuccess = {
-                                                    viewings = viewings.filter {
-                                                        it.id != viewingId
-                                                    }
-                                                },
-                                                onFailure = {
-                                                    Log.e(TAG, "Failed to cancel viewing", it)
-                                                    errorMessage = friendlyError(it)
-                                                },
-                                            )
-                                    }
-                                },
+                                // reality-server has no cancel endpoint yet
+                                // (InquiryRepository.cancelViewing), so the action is hidden.
+                                onCancelViewing = null,
                             )
                     }
                 }
@@ -483,7 +470,7 @@ private fun InquiryStatusPill(status: InquiryStatus) {
 private fun ViewingsList(
     viewings: List<ViewingRequest>,
     onViewingClick: (ViewingRequest) -> Unit,
-    onCancelViewing: (String) -> Unit,
+    onCancelViewing: ((String) -> Unit)?,
 ) {
     if (viewings.isEmpty()) {
         EmptyViewings()
@@ -497,14 +484,14 @@ private fun ViewingsList(
             ViewingCard(
                 viewing = viewing,
                 onClick = { onViewingClick(viewing) },
-                onCancel = { onCancelViewing(viewing.id) },
+                onCancel = onCancelViewing?.let { cancel -> { cancel(viewing.id) } },
             )
         }
     }
 }
 
 @Composable
-private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: () -> Unit) {
+private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: (() -> Unit)?) {
     var showCancelDialog by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -518,8 +505,9 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                 ViewingStatusPill(status = viewing.status)
                 Spacer(modifier = Modifier.weight(1f))
                 if (
-                    viewing.status == ViewingStatus.PENDING ||
-                        viewing.status == ViewingStatus.CONFIRMED
+                    onCancel != null &&
+                        (viewing.status == ViewingStatus.PENDING ||
+                            viewing.status == ViewingStatus.CONFIRMED)
                 ) {
                     IconButton(onClick = { showCancelDialog = true }) {
                         Icon(
@@ -582,7 +570,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onCancel()
+                        onCancel?.invoke()
                         showCancelDialog = false
                     },
                     colors =

@@ -11,8 +11,9 @@ import three.two.bit.ppt.reality.inquiry.InquiryRepository
  * endpoint, so the counts are derived from the `total` field returned by the three list endpoints
  * the app already calls:
  * - favorites - `GET /api/v1/favorites` -> `FavoritesResponse.total`
- * - searches - `GET /api/v1/saved-searches` -> `SavedSearchesResponse.total`
- * - inquiries - `GET /api/v1/inquiries` -> `InquiriesResponse.total`
+ * - searches - `GET /api/v1/saved-searches` -> number of searches returned (the server sends no
+ *   total)
+ * - inquiries - `GET /api/v1/inquiries/mine` -> `InquiriesResponse.total`
  *
  * Epic 48 - Story 48.5: Portal Mobile Account.
  */

@@ -125,15 +125,18 @@ class ListingDetailViewModelTest {
           "id": "lst-1",
           "title": "Bright 3br with terrace",
           "description": "A lovely flat in Old Town.",
-          "type": "sale",
-          "category": "apartment",
-          "status": "active",
           "price": 285000,
-          "area_sqm": 75.0,
-          "address": { "street": "Hlavna 1", "city": "Bratislava",
-            "postal_code": "81101", "country": "SK" },
-          "created_at": "2026-04-26T10:00:00Z",
-          "updated_at": "2026-04-27T09:00:00Z"
+          "currency": "EUR",
+          "area": 75,
+          "address": "Hlavna 1, 81101 Bratislava",
+          "city": "Bratislava",
+          "country": "SK",
+          "property_type": "apartment",
+          "transaction_type": "sale",
+          "photos": [],
+          "features": [],
+          "published_at": "2026-04-26T10:00:00Z",
+          "view_count": 0
         }
         """
             .trimIndent()
@@ -496,8 +499,7 @@ class ListingDetailViewModelTest {
                     inquiry =
                         inquiryRepo(
                             HttpStatusCode.Created,
-                            """{"id":"inq-1","listing_id":"lst-1","status":"pending",""" +
-                                """"created_at":"2026-04-26T10:00:00Z"}""",
+                            """{"message":"sent","inquiry_id":"inq-1"}""",
                         ),
                 )
             // Await the first emitted event; subscribe (via runCurrent) BEFORE the submit — a

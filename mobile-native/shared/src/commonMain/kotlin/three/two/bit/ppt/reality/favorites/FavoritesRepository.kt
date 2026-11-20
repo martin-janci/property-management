@@ -224,7 +224,9 @@ class FavoritesRepository(
             val response = client.get("$baseUrl/api/v1/saved-searches") { configureRequest() }
 
             if (response.status.isSuccess()) {
-                Result.success(response.body())
+                val searches =
+                    response.body<WireSavedSearchesResponse>().searches.map { it.toDomain() }
+                Result.success(SavedSearchesResponse(searches = searches, total = searches.size))
             } else if (response.status == HttpStatusCode.Unauthorized) {
                 Result.failure(FavoritesException("Please sign in to view saved searches"))
             } else {
@@ -243,11 +245,18 @@ class FavoritesRepository(
             val response =
                 client.post("$baseUrl/api/v1/saved-searches") {
                     configureRequest()
-                    setBody(request)
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        WireCreateSavedSearch(
+                            name = request.name,
+                            criteria = criteriaOf(request.query, request.filters),
+                            alertsEnabled = request.alertEnabled,
+                        ),
+                    )
                 }
 
             if (response.status.isSuccess()) {
-                Result.success(response.body())
+                Result.success(response.body<WirePortalSavedSearch>().toDomain())
             } else if (response.status == HttpStatusCode.Unauthorized) {
                 Result.failure(FavoritesException("Please sign in to save searches"))
             } else {
@@ -265,13 +274,19 @@ class FavoritesRepository(
     ): Result<SavedSearch> {
         return try {
             val response =
-                client.patch("$baseUrl/api/v1/saved-searches/${searchId.asPathSegment()}") {
+                client.put("$baseUrl/api/v1/saved-searches/${searchId.asPathSegment()}") {
                     configureRequest()
-                    setBody(request)
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        WireUpdateSavedSearch(
+                            name = request.name,
+                            alertsEnabled = request.alertEnabled,
+                        ),
+                    )
                 }
 
             if (response.status.isSuccess()) {
-                Result.success(response.body())
+                Result.success(response.body<WirePortalSavedSearch>().toDomain())
             } else if (response.status == HttpStatusCode.Unauthorized) {
                 Result.failure(FavoritesException("Please sign in to update saved searches"))
             } else if (response.status == HttpStatusCode.NotFound) {

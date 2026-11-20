@@ -5,6 +5,8 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { notAvailable } from '../agency/hooks';
+import { getApiBase } from '../config';
 import type {
   ColumnMapping,
   CreateCrmConnectionRequest,
@@ -14,8 +16,11 @@ import type {
   CrmCredentials,
   CsvImportPreview,
   CsvImportResult,
+  FeedFormat,
   FeedPreview,
   FeedSource,
+  FeedStatus,
+  SyncFrequency,
   SyncHistoryItem,
   SyncSchedule,
   UpdateCrmConnectionRequest,
@@ -23,10 +28,10 @@ import type {
   UpdateSyncScheduleRequest,
 } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_REALITY_API_URL || '/api/v1';
+const API_PREFIX = '/api/v1';
 
 async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(`${getApiBase()}${API_PREFIX}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -51,65 +56,31 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
+// ---------------------------------------------------------------------------
+// reality-server contract notes
+//
+// The server offers feed subscriptions under `/api/v1/imports/feeds` (agency is
+// derived from the signed-in principal) and provider imports under
+// `/api/v1/agencies/{id}/imports`. CSV upload, CRM connections, sync schedules,
+// feed preview / delete and per-feed sync history have no server routes yet, so
+// those hooks reject with `NotAvailableError` (status 501) without a request.
+// ---------------------------------------------------------------------------
+
 // CSV Import Hooks
 export function useCsvPreview(agencyId: string, file: File | null) {
   return useQuery({
     queryKey: ['csv-preview', agencyId, file?.name],
-    queryFn: async () => {
-      if (!file) throw new Error('No file provided');
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch(`${API_BASE}/agencies/${agencyId}/import/csv/preview`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to preview CSV: ${response.status}`);
-      }
-
-      return response.json() as Promise<CsvImportPreview>;
-    },
+    queryFn: () => notAvailable<CsvImportPreview>('CSV import'),
     enabled: !!agencyId && !!file,
+    retry: false,
     staleTime: 0,
   });
 }
 
-export function useCsvImport(agencyId: string) {
-  const queryClient = useQueryClient();
-
+export function useCsvImport(_agencyId: string) {
   return useMutation({
-    mutationFn: async ({
-      file,
-      mapping,
-      skipInvalid,
-    }: {
-      file: File;
-      mapping: ColumnMapping;
-      skipInvalid: boolean;
-    }) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('mapping', JSON.stringify(mapping));
-      formData.append('skipInvalid', String(skipInvalid));
-
-      const response = await fetch(`${API_BASE}/agencies/${agencyId}/import/csv`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to import CSV: ${response.status}`);
-      }
-
-      return response.json() as Promise<CsvImportResult>;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agency-listings', agencyId] });
-    },
+    mutationFn: (_args: { file: File; mapping: ColumnMapping; skipInvalid: boolean }) =>
+      notAvailable<CsvImportResult>('CSV import'),
   });
 }
 
@@ -117,93 +88,51 @@ export function useCsvImport(agencyId: string) {
 export function useCrmConnections(agencyId: string) {
   return useQuery({
     queryKey: ['crm-connections', agencyId],
-    queryFn: () => fetchApi<CrmConnection[]>(`/agencies/${agencyId}/crm-connections`),
+    queryFn: () => notAvailable<CrmConnection[]>('CRM connections'),
     enabled: !!agencyId,
+    retry: false,
   });
 }
 
 export function useCrmConnection(agencyId: string, connectionId: string) {
   return useQuery({
     queryKey: ['crm-connection', agencyId, connectionId],
-    queryFn: () => fetchApi<CrmConnection>(`/agencies/${agencyId}/crm-connections/${connectionId}`),
+    queryFn: () => notAvailable<CrmConnection>('CRM connections'),
     enabled: !!agencyId && !!connectionId,
+    retry: false,
   });
 }
 
-export function useTestCrmConnection(agencyId: string) {
+export function useTestCrmConnection(_agencyId: string) {
   return useMutation({
-    mutationFn: async (credentials: CrmCredentials & { provider: string }) => {
-      return fetchApi<CrmConnectionTestResult>(`/agencies/${agencyId}/crm-connections/test`, {
-        method: 'POST',
-        body: JSON.stringify(credentials),
-      });
-    },
+    mutationFn: (_credentials: CrmCredentials & { provider: string }) =>
+      notAvailable<CrmConnectionTestResult>('CRM connections'),
   });
 }
 
-export function useCreateCrmConnection(agencyId: string) {
-  const queryClient = useQueryClient();
-
+export function useCreateCrmConnection(_agencyId: string) {
   return useMutation({
-    mutationFn: async (request: CreateCrmConnectionRequest) => {
-      return fetchApi<CrmConnection>(`/agencies/${agencyId}/crm-connections`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-connections', agencyId] });
-    },
+    mutationFn: (_request: CreateCrmConnectionRequest) =>
+      notAvailable<CrmConnection>('CRM connections'),
   });
 }
 
-export function useUpdateCrmConnection(agencyId: string, connectionId: string) {
-  const queryClient = useQueryClient();
-
+export function useUpdateCrmConnection(_agencyId: string, _connectionId: string) {
   return useMutation({
-    mutationFn: async (request: UpdateCrmConnectionRequest) => {
-      return fetchApi<CrmConnection>(`/agencies/${agencyId}/crm-connections/${connectionId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(request),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-connections', agencyId] });
-      queryClient.invalidateQueries({ queryKey: ['crm-connection', agencyId, connectionId] });
-    },
+    mutationFn: (_request: UpdateCrmConnectionRequest) =>
+      notAvailable<CrmConnection>('CRM connections'),
   });
 }
 
-export function useDeleteCrmConnection(agencyId: string) {
-  const queryClient = useQueryClient();
-
+export function useDeleteCrmConnection(_agencyId: string) {
   return useMutation({
-    mutationFn: async (connectionId: string) => {
-      await fetchApi(`/agencies/${agencyId}/crm-connections/${connectionId}`, {
-        method: 'DELETE',
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-connections', agencyId] });
-    },
+    mutationFn: (_connectionId: string) => notAvailable<void>('CRM connections'),
   });
 }
 
-export function useSyncCrmConnection(agencyId: string, connectionId: string) {
-  const queryClient = useQueryClient();
-
+export function useSyncCrmConnection(_agencyId: string, _connectionId: string) {
   return useMutation({
-    mutationFn: async () => {
-      return fetchApi<SyncHistoryItem>(
-        `/agencies/${agencyId}/crm-connections/${connectionId}/sync`,
-        { method: 'POST' }
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-connection', agencyId, connectionId] });
-      queryClient.invalidateQueries({ queryKey: ['sync-history', agencyId, connectionId] });
-      queryClient.invalidateQueries({ queryKey: ['agency-listings', agencyId] });
-    },
+    mutationFn: () => notAvailable<SyncHistoryItem>('CRM connections'),
   });
 }
 
@@ -211,49 +140,91 @@ export function useSyncCrmConnection(agencyId: string, connectionId: string) {
 export function useSyncSchedule(agencyId: string, connectionId: string) {
   return useQuery({
     queryKey: ['sync-schedule', agencyId, connectionId],
-    queryFn: () =>
-      fetchApi<SyncSchedule>(`/agencies/${agencyId}/crm-connections/${connectionId}/schedule`),
+    queryFn: () => notAvailable<SyncSchedule>('Sync schedules'),
     enabled: !!agencyId && !!connectionId,
+    retry: false,
   });
 }
 
-export function useUpdateSyncSchedule(agencyId: string, connectionId: string) {
-  const queryClient = useQueryClient();
-
+export function useUpdateSyncSchedule(_agencyId: string, _connectionId: string) {
   return useMutation({
-    mutationFn: async (request: UpdateSyncScheduleRequest) => {
-      return fetchApi<SyncSchedule>(
-        `/agencies/${agencyId}/crm-connections/${connectionId}/schedule`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(request),
-        }
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['sync-schedule', agencyId, connectionId],
-      });
-    },
+    mutationFn: (_request: UpdateSyncScheduleRequest) =>
+      notAvailable<SyncSchedule>('Sync schedules'),
   });
 }
 
 export function useSyncHistory(agencyId: string, connectionId: string, limit = 10) {
   return useQuery({
     queryKey: ['sync-history', agencyId, connectionId, limit],
-    queryFn: () =>
-      fetchApi<SyncHistoryItem[]>(
-        `/agencies/${agencyId}/crm-connections/${connectionId}/sync-history?limit=${limit}`
-      ),
+    queryFn: () => notAvailable<SyncHistoryItem[]>('Sync history'),
     enabled: !!agencyId && !!connectionId,
+    retry: false,
   });
 }
 
-// Feed Source Hooks
+// Feed Source Hooks — `/api/v1/imports/feeds` (db `FeedSubscription`).
+
+/** Wire shape of a reality-server feed subscription (snake_case). */
+interface WireFeedSubscription {
+  id: string;
+  agency_id: string;
+  name: string;
+  feed_url: string;
+  feed_type: string;
+  sync_interval: string;
+  is_active: boolean;
+  last_sync_at?: string | null;
+  next_sync_at?: string | null;
+  last_error?: string | null;
+  consecutive_failures: number;
+  total_imported: number;
+  created_at: string;
+  updated_at: string;
+}
+
+const FEED_FORMATS: FeedFormat[] = ['xml', 'rss', 'atom', 'json'];
+const SYNC_FREQUENCIES: SyncFrequency[] = ['manual', 'hourly', 'daily', 'weekly'];
+
+/** Map a server feed subscription onto the UI's `FeedSource`. */
+export function toFeedSource(w: WireFeedSubscription): FeedSource {
+  const format = (FEED_FORMATS as string[]).includes(w.feed_type)
+    ? (w.feed_type as FeedFormat)
+    : 'xml';
+  const syncFrequency = (SYNC_FREQUENCIES as string[]).includes(w.sync_interval)
+    ? (w.sync_interval as SyncFrequency)
+    : 'daily';
+  const status: FeedStatus = !w.is_active
+    ? 'paused'
+    : w.last_error || w.consecutive_failures > 0
+      ? 'error'
+      : 'active';
+  return {
+    id: w.id,
+    agencyId: w.agency_id,
+    name: w.name,
+    url: w.feed_url,
+    format,
+    status,
+    lastFetchAt: w.last_sync_at ?? undefined,
+    nextFetchAt: w.next_sync_at ?? undefined,
+    syncFrequency,
+    // The server stores no per-feed field mapping.
+    fieldMapping: {},
+    totalListings: w.total_imported,
+    createdAt: w.created_at,
+    updatedAt: w.updated_at,
+  };
+}
+
 export function useFeedSources(agencyId: string) {
   return useQuery({
     queryKey: ['feed-sources', agencyId],
-    queryFn: () => fetchApi<FeedSource[]>(`/agencies/${agencyId}/feeds`),
+    queryFn: async () => {
+      const { feeds } = await fetchApi<{ feeds: WireFeedSubscription[]; total: number }>(
+        '/imports/feeds'
+      );
+      return feeds.map(toFeedSource);
+    },
     enabled: !!agencyId,
   });
 }
@@ -261,19 +232,19 @@ export function useFeedSources(agencyId: string) {
 export function useFeedSource(agencyId: string, feedId: string) {
   return useQuery({
     queryKey: ['feed-source', agencyId, feedId],
-    queryFn: () => fetchApi<FeedSource>(`/agencies/${agencyId}/feeds/${feedId}`),
+    queryFn: async () => {
+      const { feed } = await fetchApi<{ feed: WireFeedSubscription }>(
+        `/imports/feeds/${encodeURIComponent(feedId)}`
+      );
+      return toFeedSource(feed);
+    },
     enabled: !!agencyId && !!feedId,
   });
 }
 
-export function useFeedPreview(agencyId: string) {
+export function useFeedPreview(_agencyId: string) {
   return useMutation({
-    mutationFn: async (url: string) => {
-      return fetchApi<FeedPreview>(`/agencies/${agencyId}/feeds/preview`, {
-        method: 'POST',
-        body: JSON.stringify({ url }),
-      });
-    },
+    mutationFn: (_url: string) => notAvailable<FeedPreview>('Feed preview'),
   });
 }
 
@@ -282,10 +253,16 @@ export function useCreateFeedSource(agencyId: string) {
 
   return useMutation({
     mutationFn: async (request: CreateFeedSourceRequest) => {
-      return fetchApi<FeedSource>(`/agencies/${agencyId}/feeds`, {
+      const { feed } = await fetchApi<{ feed: WireFeedSubscription }>('/imports/feeds', {
         method: 'POST',
-        body: JSON.stringify(request),
+        body: JSON.stringify({
+          name: request.name,
+          feed_url: request.url,
+          feed_type: request.format,
+          sync_interval: request.syncFrequency,
+        }),
       });
+      return toFeedSource(feed);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feed-sources', agencyId] });
@@ -298,10 +275,19 @@ export function useUpdateFeedSource(agencyId: string, feedId: string) {
 
   return useMutation({
     mutationFn: async (request: UpdateFeedSourceRequest) => {
-      return fetchApi<FeedSource>(`/agencies/${agencyId}/feeds/${feedId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(request),
-      });
+      const { feed } = await fetchApi<{ feed: WireFeedSubscription }>(
+        `/imports/feeds/${encodeURIComponent(feedId)}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: request.name,
+            feed_url: request.url,
+            sync_interval: request.syncFrequency,
+            is_active: request.status === undefined ? undefined : request.status !== 'paused',
+          }),
+        }
+      );
+      return toFeedSource(feed);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feed-sources', agencyId] });
@@ -310,18 +296,13 @@ export function useUpdateFeedSource(agencyId: string, feedId: string) {
   });
 }
 
-export function useDeleteFeedSource(agencyId: string) {
-  const queryClient = useQueryClient();
-
+/**
+ * The server has no delete for feed subscriptions; pausing (`is_active: false`)
+ * via {@link useUpdateFeedSource} is the supported way to stop a feed.
+ */
+export function useDeleteFeedSource(_agencyId: string) {
   return useMutation({
-    mutationFn: async (feedId: string) => {
-      await fetchApi(`/agencies/${agencyId}/feeds/${feedId}`, {
-        method: 'DELETE',
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feed-sources', agencyId] });
-    },
+    mutationFn: (_feedId: string) => notAvailable<void>('Deleting a feed'),
   });
 }
 
@@ -329,15 +310,26 @@ export function useSyncFeedSource(agencyId: string, feedId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      return fetchApi<SyncHistoryItem>(`/agencies/${agencyId}/feeds/${feedId}/sync`, {
-        method: 'POST',
-      });
+    mutationFn: async (): Promise<SyncHistoryItem> => {
+      // `POST /imports/feeds/{id}/sync` schedules the sync and returns the feed.
+      const { feed } = await fetchApi<{ feed: WireFeedSubscription }>(
+        `/imports/feeds/${encodeURIComponent(feedId)}/sync`,
+        { method: 'POST' }
+      );
+      return {
+        id: feed.id,
+        connectionId: feed.id,
+        startedAt: new Date().toISOString(),
+        status: 'running',
+        recordsProcessed: 0,
+        recordsCreated: 0,
+        recordsUpdated: 0,
+        recordsFailed: 0,
+      };
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feed-sources', agencyId] });
       queryClient.invalidateQueries({ queryKey: ['feed-source', agencyId, feedId] });
-      queryClient.invalidateQueries({ queryKey: ['feed-sync-history', agencyId, feedId] });
-      queryClient.invalidateQueries({ queryKey: ['agency-listings', agencyId] });
     },
   });
 }
@@ -345,10 +337,8 @@ export function useSyncFeedSource(agencyId: string, feedId: string) {
 export function useFeedSyncHistory(agencyId: string, feedId: string, limit = 10) {
   return useQuery({
     queryKey: ['feed-sync-history', agencyId, feedId, limit],
-    queryFn: () =>
-      fetchApi<SyncHistoryItem[]>(
-        `/agencies/${agencyId}/feeds/${feedId}/sync-history?limit=${limit}`
-      ),
+    queryFn: () => notAvailable<SyncHistoryItem[]>('Feed sync history'),
     enabled: !!agencyId && !!feedId,
+    retry: false,
   });
 }

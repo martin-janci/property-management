@@ -15,6 +15,8 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteReadChannel
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 
@@ -70,10 +72,23 @@ class InquiryRepositoryPathEncodingTest {
 
         val reply = Captured()
         repoCapturing(reply).replyToInquiry("../admin/secret", "hello")
-        assertEquals("/api/v1/inquiries/..%2Fadmin%2Fsecret/replies", reply.path)
+        assertEquals("/api/v1/inquiries/..%2Fadmin%2Fsecret/respond", reply.path)
 
+        val contact = Captured()
+        repoCapturing(contact)
+            .createInquiry(
+                CreateInquiryRequest(
+                    listingId = "../admin/secret",
+                    message = "hi",
+                    name = "Jana",
+                    email = "jana@example.test",
+                ),
+            )
+        assertEquals("/api/v1/inquiries/contact/..%2Fadmin%2Fsecret", contact.path)
+
+        // Cancel has no server route: it must fail without issuing a request.
         val cancel = Captured()
-        repoCapturing(cancel).cancelViewing("../admin/secret")
-        assertEquals("/api/v1/viewings/..%2Fadmin%2Fsecret", cancel.path)
+        assertTrue(repoCapturing(cancel).cancelViewing("../admin/secret").isFailure)
+        assertNull(cancel.path)
     }
 }

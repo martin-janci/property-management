@@ -65,23 +65,28 @@ class NotificationRepositoryTest {
         )
     }
 
+    /** Server wire shape: `FavoriteAlertsResponse` of `GET /api/v1/favorites/alerts`. */
     private val notificationsBody =
         """
         {
-          "notifications": [
+          "alerts": [
             {
               "id": "n-1",
-              "type": "price_drop",
-              "title": "Price drop",
-              "body": "Your favorite has a new price",
+              "favorite_id": "fav-1",
               "listing_id": "lst-1",
-              "data": { "old_price": "300000", "new_price": "275000" },
-              "is_read": false,
+              "title": "Bright 3br with terrace",
+              "alert_type": "price_change",
+              "old_price": "300000",
+              "new_price": "275000",
+              "currency": "EUR",
+              "change_percentage": "-8.33",
+              "status": "pending",
               "created_at": "2026-04-26T10:00:00Z"
             }
           ],
-          "total": 1,
-          "unread_count": 1
+          "unread_count": 1,
+          "limit": 20,
+          "offset": 0
         }
         """
             .trimIndent()
@@ -100,20 +105,19 @@ class NotificationRepositoryTest {
         assertTrue(result.isSuccess, "expected success, got $result")
         val response = assertNotNull(result.getOrNull())
 
-        // Endpoint contract.
+        // Endpoint contract: the server's in-app feed is the favorite-alerts feed.
         assertEquals(HttpMethod.Get, cap.method)
-        assertEquals("/api/v1/notifications", cap.path)
+        assertEquals("/api/v1/favorites/alerts", cap.path)
 
-        // DTO-mapping: the fields the alerts list binds must all decode.
+        // DTO-mapping: the fields the alerts list binds must all map.
         assertEquals(1, response.total)
         assertEquals(1, response.unreadCount)
         assertEquals(1, response.notifications.size)
         val entry = response.notifications.first()
         assertEquals("n-1", entry.id)
         assertEquals(NotificationType.PRICE_DROP, entry.type)
-        assertEquals("Price drop", entry.title)
+        assertEquals("Bright 3br with terrace", entry.title)
         assertEquals("lst-1", entry.listingId)
-        assertEquals("275000", entry.data["new_price"])
         assertEquals(false, entry.isRead)
     }
 
@@ -156,14 +160,19 @@ class NotificationRepositoryTest {
     @Test
     fun getUnreadCount_reads_count_from_body() = runTest {
         val cap = Captured()
-        val repo = repoCapturing(cap, HttpStatusCode.OK, """{"count": 7}""")
+        val repo =
+            repoCapturing(
+                cap,
+                HttpStatusCode.OK,
+                """{"alerts": [], "unread_count": 7, "limit": 1, "offset": 0}""",
+            )
 
         val result = repo.getUnreadCount()
 
         assertTrue(result.isSuccess, "expected success, got $result")
         assertEquals(7, result.getOrNull())
         assertEquals(HttpMethod.Get, cap.method)
-        assertEquals("/api/v1/notifications/unread-count", cap.path)
+        assertEquals("/api/v1/favorites/alerts", cap.path)
     }
 
     @Test
@@ -195,7 +204,7 @@ class NotificationRepositoryTest {
 
         assertTrue(result.isSuccess, "expected success, got $result")
         assertEquals(HttpMethod.Post, cap.method)
-        assertEquals("/api/v1/notifications/n-1/read", cap.path)
+        assertEquals("/api/v1/favorites/alerts/n-1/read", cap.path)
     }
 
     @Test

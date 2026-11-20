@@ -7,7 +7,7 @@ import shared
 /// free-text message.  Pre-fills name and e-mail from `AuthManager.currentUser`
 /// when the user is signed in.
 ///
-/// Endpoint: POST /api/v1/inquiries
+/// Endpoint: POST /api/v1/inquiries/contact/{listing_id}
 ///
 /// Epic 82 - Story 82.5: Inquiries and Account
 struct SendInquiryView: View {

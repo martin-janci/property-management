@@ -119,6 +119,7 @@ Single-property detail view — converts portal traffic into UC-46 inquiries (Ca
 - SEO structured data: `ListingDetailContent` emits an inline `<script type="application/ld+json">` (JSON-LD) built from user-supplied listing fields. Because JSON-LD sits in an HTML script context, the payload MUST be serialized with `serializeForScript` from `frontend/apps/reality-web/src/lib/serialize-script.ts` — **not** bare `JSON.stringify` (PR #2600, `ListingDetailContent.test.tsx`). The helper escapes `<`, `>`, `&` and U+2028/U+2029 to `\uXXXX` so a `</script>` (or Unicode line/paragraph separator) inside any listing string can't break out of the script element (stored-XSS sink), while keeping the JSON-LD byte-for-byte valid for crawlers. Any future inline `<script>` payload on this screen (or the shared `[locale]/layout.tsx`) must route through the same primitive.
 
 ## Agent Log
+- 2026-11-20 — agent: mobile-native detail decodes the flat server `ListingDetail` (address string, photos[]); contact goes to `POST /inquiries/contact/{listing_id}` with name+email.
 
 <!-- newest entries on top -->
 

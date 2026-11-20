@@ -95,6 +95,7 @@ Reality Portal homepage with hero search, featured listings, neighbourhood explo
 - Shared root layout inline scripts (`frontend/apps/reality-web/src/app/[locale]/layout.tsx`, wraps this and every reality-web screen): two payloads are inlined into `<script>` — the static `ORGANIZATION_LD` JSON-LD (schema.org `Organization`, SEO) and the per-request `window.__TENANT_CONFIG__` bootstrap (`tenant_id` + `feature_flags`, host-derived). Both MUST be serialized with `serializeForScript` from `src/lib/serialize-script.ts`, **not** bare `JSON.stringify` (PR #2600). The tenant bootstrap is the security-critical one: `tenant_id` / feature-flag keys are per-request attacker-influenceable, so an unescaped `</script>` (or U+2028/U+2029) would be an HTML-injection window on every request; the helper escapes `<`/`>`/`&`/U+2028/U+2029 to `\uXXXX`. The `/env.js` runtime-env route (`src/app/env.js/route.ts`) was hardened in the same PR (previously escaped only `<`). Any new inline-`<script>` payload added to the layout must route through the same primitive.
 
 ## Agent Log
+- 2026-11-20 — agent: mobile-native home now reads `/listings/featured` (sale+rent buckets) and recent via `GET /listings?sort=date_desc`; removed calls to non-existent `/listings/recent`.
 
 <!-- newest entries on top -->
 

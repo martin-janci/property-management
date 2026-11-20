@@ -107,6 +107,7 @@ UC-50 agency property import. Connects to external CRMs / XML feeds to bulk-impo
 - Provider-specific dynamic forms — keep as JSON config not hardcoded so adding 6th provider doesn't require redeploy.
 
 ## Agent Log
+- 2026-11-20 — agent: reality-api-client: feeds use `/imports/feeds` (list/get/create/update/sync); CSV, CRM connections, schedules, feed preview/delete/history reject with NotAvailableError.
 
 <!-- newest entries on top -->
 

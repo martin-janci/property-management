@@ -661,8 +661,10 @@ private struct NewInquirySheet: View {
         let request = CreateInquiryRequest(
             listingId: listingId,
             message: message,
-            name: nil,
-            email: nil,
+            // reality-server's contact endpoint requires a name and an email;
+            // use the signed-in user's profile.
+            name: authManager.currentUser?.name,
+            email: authManager.currentUser?.email,
             phone: nil
         )
 
