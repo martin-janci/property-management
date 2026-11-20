@@ -193,78 +193,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "code-review-ppt-web-core-orgprovider-unmemoized-value",
-      "action": "ppt web core orgprovider unmemoized value",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d ppt-web-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-account-routes-i18n",
-      "action": "reality web account routes i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-import-delete-toggle-unhandled",
-      "action": "reality web import delete toggle unhandled",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listing-edit-slovak-i18n",
-      "action": "reality web listing edit slovak i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-ws-query-invalidation-dead",
       "action": "ppt web core ws query invalidation dead",
       "owner_role": "pm-backend",
@@ -411,40 +339,6 @@
       "deadline": null,
       "source": "pm-analysis 2026-11-19",
       "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
-      "id": "code-review-reality-web-preview-hardcoded-alt-text",
-      "action": "reality-web agency branding preview uses hardcoded English alt text (Preview, Logo)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T12:28:44Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-web-preview-hardcoded-price",
-      "action": "reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T12:28:44Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
     },
     {
       "id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",

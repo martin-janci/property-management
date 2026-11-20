@@ -16562,7 +16562,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-19 (reality-web)"
       ],
@@ -16574,7 +16574,12 @@
       ],
       "created_at": "2026-11-19",
       "updated_at": "2026-11-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-20T16:25:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3663
+      }
     },
     {
       "id": "code-review-reality-web-preview-hardcoded-price",
@@ -16582,7 +16587,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-19 (reality-web)"
       ],
@@ -16594,7 +16599,12 @@
       ],
       "created_at": "2026-11-19",
       "updated_at": "2026-11-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-20T16:25:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3664
+      }
     },
     {
       "id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",

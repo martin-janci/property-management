@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-20T10:38:44Z",
+  "archived_at": "2026-11-20T16:28:24Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10752,6 +10752,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized-value",
+      "action": "ppt web core orgprovider unmemoized value",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-20T16:25:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T16:25:06Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-orgprovider-unstable-value",
       "action": "ppt web core orgprovider unstable value",
       "owner_role": "pm-backend",
@@ -15622,6 +15647,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-account-routes-i18n",
+      "action": "reality web account routes i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-20T16:25:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T16:25:06Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-agency-branding-save-no-error",
       "action": "reality web agency branding save no error",
       "owner_role": "pm-backend",
@@ -16527,6 +16577,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-import-delete-toggle-unhandled",
+      "action": "reality web import delete toggle unhandled",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-20T16:25:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3662,
+        "merged_at": "2026-11-20T14:35:35Z",
+        "at": "2026-11-20T16:25:06Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-inline-tenant-json-xss",
       "action": "SECURITY: reality-web layout.tsx inlines tenant-config JSON into <script> without </script>/U+2028/U+2029 escaping — HTML injection window per request",
       "owner_role": "pm-security",
@@ -16757,6 +16832,31 @@
         "merged_pr": 3197,
         "merged_at": "2026-10-31T04:28:27Z",
         "at": "2026-10-31T06:24:39Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-i18n",
+      "action": "reality web listing edit slovak i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-20T16:25:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T16:25:06Z"
       }
     },
     {
@@ -17014,6 +17114,54 @@
         "merged_pr": 2890,
         "merged_at": "2026-08-30T16:40:38Z",
         "at": "2026-08-30T18:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-alt-text",
+      "action": "reality-web agency branding preview uses hardcoded English alt text (Preview, Logo)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-11-20T16:25:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3663,
+        "merged_at": "2026-11-20T14:39:22Z",
+        "at": "2026-11-20T16:25:06Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-preview-hardcoded-price",
+      "action": "reality-web agency branding preview shows hardcoded `€450,000` — breaks for de/sk/cs locales",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-11-20T16:25:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3664,
+        "merged_at": "2026-11-20T14:39:51Z",
+        "at": "2026-11-20T16:25:06Z"
       }
     },
     {
