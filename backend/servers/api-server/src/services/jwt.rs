@@ -1,5 +1,6 @@
 //! JWT service (Epic 1, Story 1.2).
 
+use api_core::extractors::auth::{JWT_AUDIENCE, JWT_ISSUER};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use serde::{Deserialize, Serialize};
@@ -43,6 +44,15 @@ pub struct Claims {
     pub jti: String,
     /// Token type (access or refresh)
     pub token_type: String,
+    /// Issuer (`iss`) — the service that minted this token. Stamped at issuance
+    /// and bound leniently on verification (GH #3427). `Option` so tokens minted
+    /// before this claim existed still deserialize (they decode to `None`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub iss: Option<String>,
+    /// Audience (`aud`) — the first-party API surface this token is minted for.
+    /// Stamped at issuance and bound leniently on verification (GH #3427).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aud: Option<String>,
 
     // Extension points for future org/role claims
     /// Organization ID (optional, for org context)
@@ -131,6 +141,8 @@ impl JwtService {
             iat: now.timestamp(),
             jti: Uuid::new_v4().to_string(),
             token_type: "access".to_string(),
+            iss: Some(JWT_ISSUER.to_string()),
+            aud: Some(JWT_AUDIENCE.to_string()),
             org_id: org_id.map(|id| id.to_string()),
             roles,
             kind,
@@ -159,6 +171,8 @@ impl JwtService {
             iat: now.timestamp(),
             jti: Uuid::new_v4().to_string(),
             token_type: "refresh".to_string(),
+            iss: Some(JWT_ISSUER.to_string()),
+            aud: Some(JWT_AUDIENCE.to_string()),
             org_id: None,
             roles: None,
             kind: None,
@@ -193,11 +207,20 @@ impl JwtService {
     /// (e.g. adding `aud`/`iss` validation, or tightening the `token_type`
     /// check) MUST be applied here as well as in `verify_access_token`, or this
     /// most-used path silently diverges — exactly the failure mode #1675 set out
-    /// to prevent. The `refresh_token_rejected_by_validate_access_token` test
-    /// below pins the `token_type` gate so a regression fails CI.
+    /// to prevent. GH #3427 did exactly that: the `iss`/`aud` binding below
+    /// mirrors the one in `api_core::extractors::auth`'s cached verifier and in
+    /// `principal.rs`'s `decode_bearer_subject`. The
+    /// `refresh_token_rejected_by_validate_access_token` test below pins the
+    /// `token_type` gate so a regression fails CI.
     pub fn validate_access_token(&self, token: &str) -> Result<Claims, JwtError> {
         let mut validation = Validation::default();
         validation.validate_exp = true;
+        // Bind first-party iss/aud leniently (GH #3427): a token that carries
+        // them must match, a token that omits them is still accepted (legacy
+        // tokens). jsonwebtoken v10 would otherwise reject our own aud-stamped
+        // tokens here, since an unexpected `aud` is rejected by default.
+        validation.set_issuer(&[JWT_ISSUER]);
+        validation.set_audience(&[JWT_AUDIENCE]);
 
         let token_data: TokenData<Claims> = decode(token, &self.decoding_key, &validation)
             .map_err(|e| match e.kind() {
@@ -216,6 +239,9 @@ impl JwtService {
     pub fn validate_refresh_token(&self, token: &str) -> Result<Claims, JwtError> {
         let mut validation = Validation::default();
         validation.validate_exp = true;
+        // Same lenient iss/aud binding as `validate_access_token` (GH #3427).
+        validation.set_issuer(&[JWT_ISSUER]);
+        validation.set_audience(&[JWT_AUDIENCE]);
 
         let token_data: TokenData<Claims> = decode(token, &self.decoding_key, &validation)
             .map_err(|e| match e.kind() {
@@ -322,5 +348,117 @@ mod tests {
     fn test_short_secret_rejected() {
         let result = JwtService::new("short");
         assert!(matches!(result, Err(JwtError::MissingSecret)));
+    }
+
+    // --- GH #3427: first-party `iss`/`aud` binding -------------------------
+    //
+    // These forge tokens with an ad-hoc claims struct (independent of the
+    // `Claims` type) so they compile against both the pre-fix and post-fix
+    // code. The first one is the IG3 "fails-on-dev, passes-with-fix" proof.
+
+    const TEST_SECRET: &str = "test-secret-key-that-is-at-least-32-characters-long";
+    const API_ISSUER: &str = "three.two.bit.ppt.api-server";
+    const API_AUDIENCE: &str = "three.two.bit.ppt.api";
+
+    #[derive(serde::Serialize)]
+    struct ForgedClaims {
+        sub: String,
+        email: String,
+        name: String,
+        exp: i64,
+        iat: i64,
+        jti: String,
+        token_type: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        iss: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        aud: Option<String>,
+    }
+
+    fn forge(token_type: &str, iss: Option<&str>, aud: Option<&str>) -> String {
+        let now = Utc::now();
+        let claims = ForgedClaims {
+            sub: Uuid::new_v4().to_string(),
+            email: "user@example.com".to_string(),
+            name: "User".to_string(),
+            exp: (now + Duration::minutes(5)).timestamp(),
+            iat: now.timestamp(),
+            jti: Uuid::new_v4().to_string(),
+            token_type: token_type.to_string(),
+            iss: iss.map(String::from),
+            aud: aud.map(String::from),
+        };
+        jsonwebtoken::encode(
+            &jsonwebtoken::Header::default(),
+            &claims,
+            &jsonwebtoken::EncodingKey::from_secret(TEST_SECRET.as_bytes()),
+        )
+        .unwrap()
+    }
+
+    /// IG3 (GH #3427): a token stamped with the first-party audience + issuer
+    /// MUST be accepted by `validate_access_token`. Before the fix the
+    /// validator used a bare `Validation::default()`, and jsonwebtoken v10
+    /// rejects any token carrying an `aud` the validator does not expect
+    /// (`InvalidAudience`) — so this token was rejected. After the fix the
+    /// validator binds the first-party iss/aud, so it validates. This test
+    /// therefore FAILS on `dev` and PASSES with the fix.
+    #[test]
+    fn first_party_aud_iss_access_token_is_accepted() {
+        let service = JwtService::new(TEST_SECRET).unwrap();
+        let token = forge("access", Some(API_ISSUER), Some(API_AUDIENCE));
+        let claims = service
+            .validate_access_token(&token)
+            .expect("a token carrying the first-party iss+aud must validate");
+        assert_eq!(claims.token_type, "access");
+    }
+
+    /// Backward-compat (GH #3427): a token minted before the iss/aud claims
+    /// existed (carrying neither) MUST still validate — the binding is lenient
+    /// on *absent* claims so already-issued tokens are not broken.
+    #[test]
+    fn legacy_access_token_without_iss_aud_still_validates() {
+        let service = JwtService::new(TEST_SECRET).unwrap();
+        let token = forge("access", None, None);
+        assert!(
+            service.validate_access_token(&token).is_ok(),
+            "a legacy token without iss/aud must remain valid"
+        );
+    }
+
+    /// Security property (GH #3427): a token stamped with a FOREIGN audience is
+    /// rejected — it cannot be replayed against this context.
+    #[test]
+    fn foreign_audience_access_token_is_rejected() {
+        let service = JwtService::new(TEST_SECRET).unwrap();
+        let token = forge("access", Some(API_ISSUER), Some("some-other-service"));
+        assert!(
+            service.validate_access_token(&token).is_err(),
+            "a token minted for a foreign audience must be rejected"
+        );
+    }
+
+    /// GH #3427: tokens the service mints carry the first-party iss + aud.
+    #[test]
+    fn minted_access_token_carries_first_party_iss_aud() {
+        let service = create_test_service();
+        let token = service
+            .generate_access_token(Uuid::new_v4(), "user@example.com", "User", None, None)
+            .unwrap();
+        let claims = service.validate_access_token(&token).unwrap();
+        assert_eq!(claims.iss.as_deref(), Some(API_ISSUER));
+        assert_eq!(claims.aud.as_deref(), Some(API_AUDIENCE));
+    }
+
+    /// GH #3427: refresh tokens are stamped with the first-party iss + aud too.
+    #[test]
+    fn minted_refresh_token_carries_first_party_iss_aud() {
+        let service = create_test_service();
+        let (token, _hash, _exp) = service
+            .generate_refresh_token(Uuid::new_v4(), "user@example.com", "User")
+            .unwrap();
+        let claims = service.validate_refresh_token(&token).unwrap();
+        assert_eq!(claims.iss.as_deref(), Some(API_ISSUER));
+        assert_eq!(claims.aud.as_deref(), Some(API_AUDIENCE));
     }
 }

@@ -20,6 +20,22 @@ use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 use uuid::Uuid;
 
+/// First-party JWT **issuer** (`iss`) stamped on every token minted by
+/// api-server's `JwtService`, and bound — leniently — on verification.
+///
+/// Lenient binding (GH #3427): a token that *carries* an `iss` MUST match this
+/// value, but a token that *omits* it is still accepted. That covers tokens
+/// already issued before the claim existed and sibling services that have not
+/// adopted it yet (notably reality-server's portal/session JWTs, which emit
+/// only `sub`/`kind`/`exp`/`iat`). The win is that a token stamped for a
+/// *different* context can no longer be replayed against this one.
+pub const JWT_ISSUER: &str = "three.two.bit.ppt.api-server";
+
+/// First-party JWT **audience** (`aud`) — the PPT API surface these tokens are
+/// minted for (api-server, plus reality-server SSO consumption). Bound with the
+/// same present-must-match / absent-accepted rule as [`JWT_ISSUER`]. (GH #3427)
+pub const JWT_AUDIENCE: &str = "three.two.bit.ppt.api";
+
 /// JWT claims as seen by this extractor. Matches the on-the-wire shape
 /// produced by `api_server::services::jwt::JwtService::Claims`:
 /// `sub` is encoded as a JSON string (user_id.to_string()), which the
@@ -72,8 +88,18 @@ fn jwt_verifier() -> Result<&'static JwtVerifier, &'static str> {
         // Validation::default() already requires `exp` and checks signature.
         // We accept the JwtService's default HS256 alg.
         validation.leeway = 30; // 30s clock skew tolerance
-                                // iss/aud are not currently emitted by JwtService — when they
-                                // are added, set_audience / set_issuer here to bind them.
+                                // Bind the first-party iss/aud claims (GH #3427). jsonwebtoken
+                                // v10 treats both leniently when configured this way: a token
+                                // whose `iss`/`aud` is PRESENT must match, while a token that
+                                // OMITS the claim is still accepted (`set_audience`/`set_issuer`
+                                // do not add the claim to `required_spec_claims`). So already-
+                                // issued tokens and sibling services that have not adopted the
+                                // claims keep working, and a token stamped for a different
+                                // context is rejected. NB in v10 a token carrying an `aud` that
+                                // no validator expects is rejected outright, so this binding is
+                                // what lets the aud-stamped tokens through here at all.
+        validation.set_issuer(&[JWT_ISSUER]);
+        validation.set_audience(&[JWT_AUDIENCE]);
         Ok(JwtVerifier {
             key: DecodingKey::from_secret(secret.as_bytes()),
             validation,
@@ -368,5 +394,96 @@ mod access_token_error_tests {
             AccessTokenError::WrongType(v) => assert_eq!(v, "refresh"),
             other => panic!("expected WrongType, got {other:?}"),
         }
+    }
+}
+
+#[cfg(test)]
+mod iss_aud_binding_tests {
+    //! GH #3427: proves the lenient first-party iss/aud binding at the shared
+    //! `verify_access_token` layer — present-must-match, absent-accepted. This
+    //! is the behavior the api-server `AuthUser` extractor (via `jwt_verifier`)
+    //! and the reality-server-shared `decode_bearer_subject` both rely on.
+    use super::{
+        verify_access_token, AccessTokenClaims, AccessTokenError, TokenTypePolicy, JWT_AUDIENCE,
+        JWT_ISSUER,
+    };
+    use jsonwebtoken::{encode, DecodingKey, EncodingKey, Header, Validation};
+    use serde::{Deserialize, Serialize};
+
+    const SECRET: &str = "test-secret-key-that-is-at-least-32-characters-long";
+    // Far-future exp (year ~2100) so `validate_exp` passes without a clock dep.
+    const FUTURE_EXP: i64 = 4_102_444_800;
+
+    #[derive(Serialize, Deserialize)]
+    struct TestClaims {
+        sub: uuid::Uuid,
+        exp: i64,
+        token_type: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        iss: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        aud: Option<String>,
+    }
+
+    impl AccessTokenClaims for TestClaims {
+        fn token_type(&self) -> Option<&str> {
+            Some(self.token_type.as_str())
+        }
+    }
+
+    fn bound_validation() -> Validation {
+        let mut v = Validation::default();
+        v.set_issuer(&[JWT_ISSUER]);
+        v.set_audience(&[JWT_AUDIENCE]);
+        v
+    }
+
+    fn mint(iss: Option<&str>, aud: Option<&str>) -> String {
+        let claims = TestClaims {
+            sub: uuid::Uuid::new_v4(),
+            exp: FUTURE_EXP,
+            token_type: "access".to_string(),
+            iss: iss.map(String::from),
+            aud: aud.map(String::from),
+        };
+        encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(SECRET.as_bytes()),
+        )
+        .unwrap()
+    }
+
+    fn verify(token: &str) -> Result<TestClaims, AccessTokenError> {
+        verify_access_token(
+            token,
+            &DecodingKey::from_secret(SECRET.as_bytes()),
+            &bound_validation(),
+            TokenTypePolicy::Required,
+        )
+    }
+
+    #[test]
+    fn first_party_iss_aud_accepted() {
+        assert!(verify(&mint(Some(JWT_ISSUER), Some(JWT_AUDIENCE))).is_ok());
+    }
+
+    #[test]
+    fn absent_iss_aud_accepted_for_backward_compat_and_sso() {
+        // reality-server portal/session JWTs and legacy tokens omit iss/aud.
+        assert!(
+            verify(&mint(None, None)).is_ok(),
+            "tokens that omit iss/aud must still verify (SSO + legacy)"
+        );
+    }
+
+    #[test]
+    fn foreign_audience_rejected() {
+        assert!(verify(&mint(Some(JWT_ISSUER), Some("evil-service"))).is_err());
+    }
+
+    #[test]
+    fn foreign_issuer_rejected() {
+        assert!(verify(&mint(Some("evil-issuer"), Some(JWT_AUDIENCE))).is_err());
     }
 }
