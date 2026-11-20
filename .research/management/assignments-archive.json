@@ -13815,6 +13815,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-server-import-history-limit-100-trunc",
+      "branch": "auto-impl/code-review-reality-server-import-histor-284fa1b9",
+      "status": "merged",
+      "claimed_at": "2026-11-17T22:26:54Z",
+      "last_updated": "2026-11-20T00:44:02Z",
+      "status_changed_at": "2026-11-20T00:44:02Z",
+      "pr_number": 3612,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3612",
+      "merged_at": "2026-11-20T00:37:22Z",
+      "specialist": null,
+      "implementer_summary": "[branch-updated with dev: cargo-deny advisory fix #3608] [ci-fail cargo-deny RUSTSEC-2026-0565; unblocked by #3619 merged this run - rebase+re-review next cycle] [dispatcher 2026-11-19T00:46:45Z: CORRECTION - dev already has lettre 0.11.24 (#3619 merged); red cargo-deny is STALE-BRANCH (pre-#3619) + independent real agency_imports.rs conflict vs dev; needs manual rework/fresh impl - #3357; not respawning] [5.4 autofix: real conflict routes/agency_imports.rs — dev independently landed same total-count pagination fix; work likely redundant, candidate for human review/close] [5.7 respawn fix_round=1 2026-11-19: reviewer verdict=changes — PR breaks pre-existing test list_import_history_total_is_full_count_not_page_len (changed default page size 100->20); fix the contract break]",
+      "reviewer_summary": "verdict=changes head_oid=87fba624cb98109f2d02a8d367968acd2b1e139e note=breaks-preexisting-pagination-test(default-20-vs-asserted-100);substantive-not-a-dev-duplicate;needs-test-update-to-new-contract",
+      "last_reviewed_oid": "87fba624cb98109f2d02a8d367968acd2b1e139e",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 1,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-19T10:41:05Z"
+    },
+    {
       "task_id": "code-review-reality-server-import-jobs-limit-unclamped",
       "branch": "auto-impl/code-review-reality-server-import-jobs-l-2af0bbec",
       "status": "failed",
@@ -31018,5 +31040,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-19T22:52:47Z"
+  "archived_at": "2026-11-20T00:44:02Z"
 }
