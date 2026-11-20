@@ -7,13 +7,15 @@
 'use client';
 import { useAgencyBranding, useMyAgency, useUpdateBranding } from '@ppt/reality-api-client';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
+import { formatPrice } from '@/lib/format';
 import { toSafeLogMessage } from '@/lib/safe-error';
 import { AgencyLoadError, isNotFoundError, NoAgencyMessage } from './AgencyErrorStates';
 
 export function AgencyBranding() {
   const t = useTranslations('agencyBranding');
+  const locale = useLocale();
   const {
     data: agency,
     isLoading: agencyLoading,
@@ -331,7 +333,7 @@ export function AgencyBranding() {
                 </div>
               </div>
               <div className="preview-price" style={{ color: primaryColor }}>
-                €450,000
+                {formatPrice(450000, locale)}
               </div>
               <button
                 type="button"
