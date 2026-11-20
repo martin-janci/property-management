@@ -435,6 +435,70 @@ fn check_ipv4(ip: std::net::Ipv4Addr) -> Result<(), String> {
     Ok(())
 }
 
+/// Maximum number of redirect hops an SSRF-guarded outbound HTTP client should
+/// follow before aborting. Exposed so every client that re-validates redirect
+/// hops via [`validate_redirect_hop`] bounds its chain identically — the hop
+/// limit is a security-relevant part of the SSRF posture, not an incidental
+/// client default.
+pub const MAX_REDIRECT_HOPS: usize = 10;
+
+/// Re-validate a single redirect hop against the SSRF guard before an outbound
+/// HTTP client follows it.
+///
+/// [`validate_external_url`] guards only the **initial** request URL, and
+/// [`validate_resolved_addrs`] guards the IPs a hop connects to. Neither sees a
+/// redirect's *target URL*: a server that follows redirects (feed/import
+/// fetchers, webhook callers, the workflow API-call action) must re-run this
+/// check on **every** hop, or an initially-valid request can be bounced onto a
+/// blocked/internal host — or a cross-origin host that would receive forwarded
+/// credentials — after the initial check has already passed. A caller wires it
+/// into its HTTP client's custom redirect policy and aborts on `Err` (fail
+/// closed).
+///
+/// `Ok(())` means the hop is safe to follow. A hop is refused when:
+///   * the chain has already reached [`MAX_REDIRECT_HOPS`], or
+///   * the target fails [`validate_external_url`] (blocked host, private/reserved
+///     literal IP, `http://` downgrade outside development, `.local` /
+///     `.internal` TLD) — this is what stops a redirect from bouncing an
+///     initially-valid request onto an internal/blocked host, or
+///   * the target is a **different origin** (scheme/host/port) than `original`,
+///     the originally-configured request URL. Redirect-following clients strip
+///     only well-known sensitive headers on a cross-host hop, not arbitrary
+///     custom headers (e.g. `X-Api-Key`), so a cross-origin hop can exfiltrate a
+///     user-supplied credential to an attacker-controlled public host — a hop the
+///     SSRF range checks cannot catch (the attacker host is an ordinary public
+///     `https://` host). The comparison is always made against `original` (not
+///     the immediately-preceding hop) so no chain of individually-"small" host
+///     changes can walk the request off its origin.
+pub fn validate_redirect_hop(
+    target: &str,
+    original: &str,
+    previous_hops: usize,
+) -> Result<(), String> {
+    if previous_hops >= MAX_REDIRECT_HOPS {
+        return Err("too many redirects".to_string());
+    }
+    validate_external_url(target).map_err(|e| e.to_string())?;
+
+    // Same-origin enforcement (credential-leak defence — see doc comment).
+    // `url::Origin` equality covers scheme + host + port, so an `https`->`http`
+    // downgrade or a port change also counts as cross-origin and is refused.
+    let target_origin = Url::parse(target)
+        .map_err(|e| format!("invalid redirect target URL: {e}"))?
+        .origin();
+    let original_origin = Url::parse(original)
+        .map_err(|e| format!("invalid original request URL: {e}"))?
+        .origin();
+    if target_origin != original_origin {
+        return Err(
+            "cross-origin redirect refused (credential-leak / SSRF hardening): the redirect \
+             target is a different origin than the configured request URL"
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -816,6 +880,50 @@ mod tests {
         assert_eq!(
             out,
             vec![SocketAddr::new("93.184.216.34".parse().unwrap(), 443)]
+        );
+    }
+
+    /// Per-hop SSRF re-validation of redirect targets. `validate_external_url`
+    /// guards only the *initial* URL; a client that follows redirects must
+    /// re-run the guard on every hop, or an initially-valid feed/import URL can
+    /// be bounced onto a blocked/internal host (or a cross-origin host that
+    /// would receive forwarded credentials) after the initial check passed.
+    #[test]
+    fn validate_redirect_hop_refuses_blocked_internal_and_cross_origin_targets() {
+        let original = "https://feed.example.com/listings.xml";
+
+        // A redirect onto a private / cloud-metadata host must be refused on the
+        // hop — only hop re-validation catches it (the initial URL was valid).
+        assert!(
+            validate_redirect_hop("https://10.0.0.1/internal", original, 0).is_err(),
+            "a redirect to a private (10.0.0.0/8) host must be refused"
+        );
+        assert!(
+            validate_redirect_hop("https://169.254.169.254/latest/meta-data/", original, 0)
+                .is_err(),
+            "a redirect to the cloud-metadata host must be refused"
+        );
+
+        // A cross-origin redirect to an otherwise-valid public host is refused
+        // (credential-leak / SSRF hardening) — the SSRF range checks cannot see
+        // this because the attacker host is an ordinary public https host.
+        let err = validate_redirect_hop("https://attacker.example/collect", original, 0)
+            .expect_err("a cross-origin redirect must be refused");
+        assert!(
+            err.contains("cross-origin"),
+            "refusal must cite the cross-origin guard, got: {err}"
+        );
+
+        // Same origin, different path → allowed (guards against over-broad pinning).
+        assert!(
+            validate_redirect_hop("https://feed.example.com/page2.xml", original, 0).is_ok(),
+            "a same-origin redirect (identical scheme/host/port) must still be followed"
+        );
+
+        // A chain that has reached the hop limit → refused.
+        assert_eq!(
+            validate_redirect_hop("https://feed.example.com/x", original, MAX_REDIRECT_HOPS),
+            Err("too many redirects".to_string())
         );
     }
 }

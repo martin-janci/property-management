@@ -275,8 +275,10 @@ pub async fn test_connection(
     // SECURITY (H3, round-9 audit): refuse SSRF-prone feed URLs *before*
     // the stub (and the real implementation that will replace it) tries
     // to fetch them. Hostnames pass this static check; the import worker
-    // must re-validate the resolved IP at fetch time to defend against
-    // DNS rebinding.
+    // must re-validate at fetch time — connect only to IPs passed by
+    // `common::url_validation::validate_resolved_addrs` and re-check every
+    // redirect hop with `common::url_validation::validate_redirect_hop` —
+    // to defend against DNS rebinding and redirect-based SSRF.
     if let Some(url) = data.feed_url.as_deref() {
         if let Err(err) = validate_external_url(url) {
             return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
@@ -326,9 +328,12 @@ pub async fn run_import(
 
     // SECURITY (H3): reject SSRF-prone feed URLs at submission time so
     // the worker queue never accepts http://169.254.169.254/, file://,
-    // or private/loopback targets. NOTE TO WORKER MAINTAINER: after DNS
-    // resolution, re-run this check on the resolved IP — a domain that
-    // passes here can still resolve to a private IP (DNS rebinding).
+    // or private/loopback targets. NOTE TO WORKER MAINTAINER: this static
+    // check is not enough at fetch time — connect only to IPs passed by
+    // `common::url_validation::validate_resolved_addrs` (a domain that
+    // passes here can still resolve to a private IP — DNS rebinding) and
+    // re-check every redirect hop with
+    // `common::url_validation::validate_redirect_hop`.
     if let Some(url) = data.feed_url.as_deref() {
         if let Err(err) = validate_external_url(url) {
             return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
