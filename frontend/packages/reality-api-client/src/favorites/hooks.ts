@@ -8,7 +8,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getApiBase } from '../config';
+import { getApiBase, portalFetch } from '../config';
 import type { ListingSummary } from '../listings/types';
 import type {
   CreateSavedSearchRequest,
@@ -75,7 +75,7 @@ export function useFavorites(page = 1, pageSize = 20) {
   return useQuery({
     queryKey: ['favorites', page, pageSize],
     queryFn: async (): Promise<PaginatedFavorites> => {
-      const response = await fetch(`${getApiBase()}/api/v1/favorites`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/favorites`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorites');
@@ -100,7 +100,7 @@ export function useFavoriteIds() {
   return useQuery({
     queryKey: ['favorite-ids'],
     queryFn: async (): Promise<string[]> => {
-      const response = await fetch(`${getApiBase()}/api/v1/favorites/ids`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/favorites/ids`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorite IDs');
@@ -121,7 +121,7 @@ export function useAddFavorite() {
       listingId: string;
       notes?: string;
     }): Promise<void> => {
-      const response = await fetch(`${getApiBase()}/api/v1/favorites`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/favorites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId, notes }),
@@ -142,7 +142,7 @@ export function useRemoveFavorite() {
 
   return useMutation({
     mutationFn: async (listingId: string): Promise<void> => {
-      const response = await fetch(`${getApiBase()}/api/v1/favorites/${listingId}`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/favorites/${listingId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -181,7 +181,7 @@ export function useUpdateFavorite() {
       listingId: string;
       data: UpdateFavoriteRequest;
     }): Promise<void> => {
-      const response = await fetch(`${getApiBase()}/api/v1/favorites/${listingId}`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/favorites/${listingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -269,7 +269,7 @@ export function useFavoriteAlerts(limit = 100, offset = 0) {
       params.set('limit', String(limit));
       params.set('offset', String(offset));
 
-      const response = await fetch(`${getApiBase()}/api/v1/favorites/alerts?${params}`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/favorites/alerts?${params}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorite alerts');
@@ -295,10 +295,13 @@ export function useMarkFavoriteAlertRead() {
 
   return useMutation({
     mutationFn: async (alertId: string): Promise<void> => {
-      const response = await fetch(`${getApiBase()}/api/v1/favorites/alerts/${alertId}/read`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await portalFetch(
+        `${getApiBase()}/api/v1/favorites/alerts/${alertId}/read`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      );
       if (!response.ok) throw new Error('Failed to mark favorite alert read');
     },
     onSuccess: () => {
@@ -313,7 +316,7 @@ export function useMarkAllFavoriteAlertsRead() {
 
   return useMutation({
     mutationFn: async (): Promise<MarkAllFavoriteAlertsReadResponse> => {
-      const response = await fetch(`${getApiBase()}/api/v1/favorites/alerts/read-all`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/favorites/alerts/read-all`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -332,7 +335,7 @@ export function useSavedSearches() {
   return useQuery({
     queryKey: ['saved-searches'],
     queryFn: async (): Promise<SavedSearch[]> => {
-      const response = await fetch(`${getApiBase()}/api/v1/saved-searches`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/saved-searches`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch saved searches');
@@ -345,7 +348,7 @@ export function useSavedSearch(id: string) {
   return useQuery({
     queryKey: ['saved-search', id],
     queryFn: async (): Promise<SavedSearch> => {
-      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch saved search');
@@ -360,7 +363,7 @@ export function useCreateSavedSearch() {
 
   return useMutation({
     mutationFn: async (data: CreateSavedSearchRequest): Promise<SavedSearch> => {
-      const response = await fetch(`${getApiBase()}/api/v1/saved-searches`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/saved-searches`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -386,7 +389,7 @@ export function useUpdateSavedSearch() {
       id: string;
       data: UpdateSavedSearchRequest;
     }): Promise<SavedSearch> => {
-      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -407,7 +410,7 @@ export function useDeleteSavedSearch() {
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -424,7 +427,7 @@ export function useToggleSearchAlert() {
 
   return useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }): Promise<void> => {
-      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}/alerts`, {
+      const response = await portalFetch(`${getApiBase()}/api/v1/saved-searches/${id}/alerts`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled }),

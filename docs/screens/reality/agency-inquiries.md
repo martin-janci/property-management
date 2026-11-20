@@ -37,5 +37,6 @@ Lists inquiries received for the signed-in principal's listings/agency (UC-49.5)
 - 2026-05-18 — audit: stub created from `frontend/apps/reality-web/src/app/[locale]/agency/inquiries/page.tsx`.
 
 ## Agent Log
+- 2026-11-20 — agent: page now uses `useReceivedInquiries` (`GET /api/v1/inquiries`, realtor-scoped, server shape mapped) instead of the buyer hook; requests carry the portal bearer (`portalFetch`). Listing link falls back to `viewListing` copy (rows carry no listing title).
 - 2026-08-03 — agent: synced to PR #2636 i18n rewrite. Documented `agencyInquiries` next-intl namespace (6 locales); added `inquiries_list` endpoint + `UC-49.5` + `next-intl` shared component; bumped apiStatus stub → partial (real `useMyInquiries` wiring, dedicated agency endpoint pending); replaced stub body with actual page description.
 - 2026-05-18 — agent: created stub for unmapped route.

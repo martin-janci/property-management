@@ -238,3 +238,226 @@ async fn mark_as_read_returns_2xx(pool: PgPool) {
     .await;
     assert!(status.is_success(), "expected 2xx, got {status}");
 }
+
+// ── buyer linkage: signed-in submissions carry user_id ───────────────────────
+//
+// Regression: contact/viewing submissions were always created with
+// `user_id = NULL`, so `GET /inquiries/mine` stayed empty for every buyer.
+// A request with a valid bearer token must link the inquiry to that user;
+// an anonymous one stays unlinked.
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn signed_in_contact_and_viewing_are_linked_to_buyer(pool: PgPool) {
+    let owner = seed_user(&pool, "link-owner").await;
+    let listing_id = seed_listing(&pool, "link", owner).await;
+    let buyer = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+        VALUES ('buyer@inquiries-link.test', 'hash', 'Buyer', 'active', NOW(), 'public')
+        RETURNING id
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("seed buyer");
+    let token = mint_token(buyer);
+    let app = inquiries_router(pool.clone());
+
+    let contact = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/contact/{listing_id}"),
+        Some(&token),
+        json!({
+            "name": "Jane Buyer",
+            "email": "jane@example.com",
+            "message": "Is this property still available?"
+        }),
+    )
+    .await;
+    assert_eq!(contact, 201, "signed-in contact must succeed");
+
+    let viewing = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/viewing/{listing_id}"),
+        Some(&token),
+        json!({
+            "name": "Jane Buyer",
+            "email": "jane@example.com",
+            "preferred_times": ["  ", "Saturday 10:00"]
+        }),
+    )
+    .await;
+    assert_eq!(viewing, 201, "signed-in viewing request must succeed");
+
+    let anonymous = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/contact/{listing_id}"),
+        None,
+        json!({
+            "name": "Anon",
+            "email": "anon@example.com",
+            "message": "Anonymous question about the flat"
+        }),
+    )
+    .await;
+    assert_eq!(anonymous, 201);
+
+    let linked: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM listing_inquiries WHERE listing_id = $1 AND user_id = $2",
+    )
+    .bind(listing_id)
+    .bind(buyer)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(linked, 2, "both signed-in submissions must carry user_id");
+
+    let unlinked: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM listing_inquiries WHERE listing_id = $1 AND user_id IS NULL",
+    )
+    .bind(listing_id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(unlinked, 1, "anonymous submission stays unlinked");
+
+    let slot: Option<String> = sqlx::query_scalar(
+        "SELECT preferred_time FROM listing_inquiries
+         WHERE listing_id = $1 AND inquiry_type = 'viewing'",
+    )
+    .bind(listing_id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(slot.as_deref(), Some("Saturday 10:00"));
+}
+
+// ── buyer thread: detail / reply / cancel viewing (GET|POST /mine/{id}…) ─────
+
+async fn seed_buyer_inquiry(
+    pool: &PgPool,
+    listing_id: Uuid,
+    realtor: Uuid,
+    buyer: Uuid,
+    inquiry_type: &str,
+    status: &str,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO listing_inquiries
+            (listing_id, realtor_id, user_id, name, email, message, inquiry_type, status)
+        VALUES ($1, $2, $3, 'Buyer', 'buyer@inq-hp.test', 'Hello', $4, $5)
+        RETURNING id
+        "#,
+    )
+    .bind(listing_id)
+    .bind(realtor)
+    .bind(buyer)
+    .bind(inquiry_type)
+    .bind(status)
+    .fetch_one(pool)
+    .await
+    .unwrap_or_else(|e| panic!("seed_buyer_inquiry: {e}"))
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn buyer_thread_detail_reply_and_cancel(pool: PgPool) {
+    let realtor = seed_user(&pool, "thread-realtor").await;
+    let buyer = seed_user(&pool, "thread-buyer").await;
+    let other = seed_user(&pool, "thread-other").await;
+    let listing_id = seed_listing(&pool, "thread", realtor).await;
+    let info = seed_buyer_inquiry(&pool, listing_id, realtor, buyer, "info", "responded").await;
+    let viewing = seed_buyer_inquiry(&pool, listing_id, realtor, buyer, "viewing", "new").await;
+    let buyer_token = mint_token(buyer);
+    let other_token = mint_token(other);
+    let app = inquiries_router(pool.clone());
+
+    // Detail: owner 200, another buyer 404 (no leak).
+    let own = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/inquiries/mine/{info}"),
+        Some(&buyer_token),
+    )
+    .await;
+    assert_eq!(own, 200);
+    let foreign = send(
+        &app,
+        Method::GET,
+        &format!("/api/v1/inquiries/mine/{info}"),
+        Some(&other_token),
+    )
+    .await;
+    assert_eq!(foreign, 404, "another buyer's inquiry must 404");
+
+    // Reply: owner 201 and the inquiry returns to the realtor's unanswered queue.
+    let reply = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/mine/{info}/messages"),
+        Some(&buyer_token),
+        json!({ "message": "Can we talk on Monday?" }),
+    )
+    .await;
+    assert_eq!(reply, 201);
+    let (sender, status): (String, String) = sqlx::query_as(
+        "SELECT m.sender_type, i.status FROM inquiry_messages m
+         JOIN listing_inquiries i ON i.id = m.inquiry_id WHERE m.inquiry_id = $1",
+    )
+    .bind(info)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(sender, "user");
+    assert_eq!(status, "new");
+
+    let foreign_reply = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/mine/{info}/messages"),
+        Some(&other_token),
+        json!({ "message": "Not my thread" }),
+    )
+    .await;
+    assert_eq!(foreign_reply, 404);
+
+    // Cancel: only viewing requests qualify.
+    let not_viewing = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/mine/{info}/cancel"),
+        Some(&buyer_token),
+    )
+    .await;
+    assert_eq!(not_viewing, 404, "an info inquiry is not a viewing");
+    let foreign_cancel = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/mine/{viewing}/cancel"),
+        Some(&other_token),
+    )
+    .await;
+    assert_eq!(foreign_cancel, 404);
+    let cancelled = send(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/mine/{viewing}/cancel"),
+        Some(&buyer_token),
+    )
+    .await;
+    assert_eq!(cancelled, 204);
+
+    // A closed thread no longer accepts replies.
+    let closed_reply = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/mine/{viewing}/messages"),
+        Some(&buyer_token),
+        json!({ "message": "Still there?" }),
+    )
+    .await;
+    assert_eq!(closed_reply, 404);
+}

@@ -217,4 +217,41 @@ class NotificationRepositoryTest {
         assertTrue(result.isFailure, "non-2xx should surface as failure, got $result")
         assertTrue(result.exceptionOrNull() is NotificationException)
     }
+
+    @Test
+    fun push_token_and_preferences_hit_user_settings_routes() = runTest {
+        var lastPath: String? = null
+        var lastMethod: HttpMethod? = null
+        val engine = MockEngine { request ->
+            lastPath = request.url.encodedPath
+            lastMethod = request.method
+            val body =
+                if (request.url.encodedPath.endsWith("notification-preferences")) {
+                    """{"new_listings":false,"price_drops":true,"inquiry_responses":true,"listing_updates":true,"marketing":false}"""
+                } else {
+                    """{"success":true}"""
+                }
+            respond(
+                content = ByteReadChannel(body),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+            )
+        }
+        val client =
+            HttpClient(engine) {
+                install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+            }
+        val repo = NotificationRepository("https://example.test", "tok", client)
+
+        assertTrue(repo.registerPushToken("t-1", "android").isSuccess)
+        assertEquals("/api/v1/users/me/push-tokens", lastPath)
+        assertEquals(HttpMethod.Post, lastMethod)
+
+        val prefs = repo.getPreferences().getOrThrow()
+        assertEquals("/api/v1/users/me/notification-preferences", lastPath)
+        assertEquals(false, prefs.newListings)
+
+        assertTrue(repo.updatePreferences(prefs).isSuccess)
+        assertEquals(HttpMethod.Put, lastMethod)
+    }
 }

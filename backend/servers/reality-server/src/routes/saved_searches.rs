@@ -1,9 +1,10 @@
 //! Saved searches routes (Story 16.3).
 //!
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -85,7 +86,7 @@ fn saved_search_error_response(
 )]
 pub async fn list_saved_searches(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<SavedSearchesResponse>, (axum::http::StatusCode, String)> {
     let searches = state
         .reality_portal_repo
@@ -110,7 +111,7 @@ pub async fn list_saved_searches(
 )]
 pub async fn create_saved_search(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Json(data): Json<CreatePortalSavedSearch>,
 ) -> Result<(axum::http::StatusCode, Json<PortalSavedSearch>), (axum::http::StatusCode, String)> {
     let search = state
@@ -136,7 +137,7 @@ pub async fn create_saved_search(
 )]
 pub async fn get_saved_search(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PortalSavedSearch>, (axum::http::StatusCode, String)> {
     // Single-row lookup scoped to the owning user. The previous code fetched
@@ -172,7 +173,7 @@ pub async fn get_saved_search(
 )]
 pub async fn update_saved_search(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePortalSavedSearch>,
 ) -> Result<Json<PortalSavedSearch>, (axum::http::StatusCode, String)> {
@@ -199,7 +200,7 @@ pub async fn update_saved_search(
 )]
 pub async fn delete_saved_search(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     state
@@ -225,7 +226,7 @@ pub async fn delete_saved_search(
 )]
 pub async fn run_saved_search(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RunSavedSearchResponse>, (axum::http::StatusCode, String)> {
     // Single-row lookup scoped to the owning user (same fix as get_saved_search).
@@ -318,7 +319,7 @@ pub struct MarkAllAlertsReadResponse {
 )]
 pub async fn list_search_alerts(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Query(query): Query<SearchAlertsQuery>,
 ) -> Result<Json<SearchAlertsResponse>, (axum::http::StatusCode, String)> {
     let limit = query
@@ -359,7 +360,7 @@ pub async fn list_search_alerts(
 )]
 pub async fn mark_alert_read(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     let marked = state
@@ -390,7 +391,7 @@ pub async fn mark_alert_read(
 )]
 pub async fn mark_all_alerts_read(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<MarkAllAlertsReadResponse>, (axum::http::StatusCode, String)> {
     let marked_read = state
         .reality_portal_repo

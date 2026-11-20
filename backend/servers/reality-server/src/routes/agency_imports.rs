@@ -1,10 +1,11 @@
 //! Agency import routes (UC-50: Agency Import Management).
 //!
 //! Per-agency import history, test-connection, run, and job status.
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -168,7 +169,7 @@ pub struct ImportJobDetailResponse {
 )]
 pub async fn list_import_history(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(agency_id): Path<Uuid>,
     Query(query): Query<ImportHistoryQuery>,
 ) -> Result<Json<ImportHistoryResponse>, (axum::http::StatusCode, String)> {
@@ -261,7 +262,7 @@ pub async fn list_import_history(
 )]
 pub async fn test_connection(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<TestConnectionRequest>,
 ) -> Result<Json<TestConnectionResponse>, (axum::http::StatusCode, String)> {
@@ -315,7 +316,7 @@ pub async fn test_connection(
 )]
 pub async fn run_import(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<RunImportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<RunImportResponse>), (axum::http::StatusCode, String)> {
@@ -388,7 +389,7 @@ pub async fn run_import(
 )]
 pub async fn get_import_job_status(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path((agency_id, job_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ImportJobDetailResponse>, (axum::http::StatusCode, String)> {
     let mut conn = state

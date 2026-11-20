@@ -38,6 +38,7 @@ mod agencies;
 mod imports;
 mod inquiries;
 mod listings;
+mod notifications;
 mod realtors;
 mod searches;
 

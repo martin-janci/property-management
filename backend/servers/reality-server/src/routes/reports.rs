@@ -1,15 +1,15 @@
 //! Listing report routes (UC-23: Report a Listing).
 //!
 //! Allows users to submit reports about problematic listings and track their status.
-//! D1.2: handlers now use the unified `RequestPrincipal` /
-//! `OptionalRequestPrincipal` extractors. The submit-report path stays
+//! D1.2: handlers now use the unified `PortalPrincipal` /
+//! `OptionalPortalPrincipal` extractors. The submit-report path stays
 //! anonymous-friendly via the optional wrapper; the list-my-reports path
 //! requires a real principal.
 
 use crate::handlers::inquiries::{InquiriesHandler, InquiryResult};
 use crate::routes::inquiries::client_ip_bucket;
 use crate::state::AppState;
-use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
+use api_core::extractors::{OptionalPortalPrincipal, PortalPrincipal};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -174,7 +174,7 @@ async fn enforce_public_report_rate_limit(
 )]
 pub async fn submit_report(
     State(state): State<AppState>,
-    OptionalRequestPrincipal(principal): OptionalRequestPrincipal,
+    OptionalPortalPrincipal(principal): OptionalPortalPrincipal,
     headers: HeaderMap,
     Json(data): Json<SubmitReportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<SubmitReportResponse>), (axum::http::StatusCode, String)>
@@ -343,7 +343,7 @@ pub async fn submit_report(
 )]
 pub async fn list_my_reports(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Query(query): Query<MyReportsQuery>,
 ) -> Result<Json<MyReportsResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);

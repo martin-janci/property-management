@@ -83,7 +83,6 @@ async fn seed_active_listing(pool: &PgPool, tag: &str) -> Uuid {
 // ── search (GET /) ───────────────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn search_returns_2xx_on_empty_db(pool: PgPool) {
     let app = listings_router(pool);
     let status = send(&app, Method::GET, "/api/v1/listings", None).await;
@@ -91,7 +90,6 @@ async fn search_returns_2xx_on_empty_db(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn search_returns_2xx_with_seeded_listing(pool: PgPool) {
     seed_active_listing(&pool, "search").await;
     let app = listings_router(pool);
@@ -102,7 +100,6 @@ async fn search_returns_2xx_with_seeded_listing(pool: PgPool) {
 // ── get_featured (GET /featured) ─────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_featured_returns_2xx(pool: PgPool) {
     let app = listings_router(pool);
     let status = send(&app, Method::GET, "/api/v1/listings/featured", None).await;
@@ -112,7 +109,6 @@ async fn get_featured_returns_2xx(pool: PgPool) {
 // ── get_categories (GET /categories) ─────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_categories_returns_2xx(pool: PgPool) {
     let app = listings_router(pool);
     let status = send(&app, Method::GET, "/api/v1/listings/categories", None).await;
@@ -122,7 +118,6 @@ async fn get_categories_returns_2xx(pool: PgPool) {
 // ── get_suggestions (GET /suggestions) ───────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_suggestions_returns_2xx(pool: PgPool) {
     let app = listings_router(pool);
     let status = send(&app, Method::GET, "/api/v1/listings/suggestions", None).await;
@@ -132,7 +127,6 @@ async fn get_suggestions_returns_2xx(pool: PgPool) {
 // ── get_listing (GET /{id}) ──────────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn get_listing_returns_2xx_for_active(pool: PgPool) {
     let listing_id = seed_active_listing(&pool, "detail").await;
     let app = listings_router(pool);
@@ -149,7 +143,6 @@ async fn get_listing_returns_2xx_for_active(pool: PgPool) {
 // ── record_view (POST /{id}/view) ────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"]
 async fn record_view_returns_2xx(pool: PgPool) {
     let listing_id = seed_active_listing(&pool, "view").await;
     let app = listings_router(pool);

@@ -270,4 +270,103 @@ impl RealityPortalRepository {
         tx.commit().await?;
         Ok(Some(msg))
     }
+
+    // ========================================================================
+    // Buyer side of an inquiry thread
+    // ========================================================================
+
+    /// Get a single inquiry by id, scoped to the buyer who submitted it
+    /// (`user_id`). Counterpart to [`Self::get_inquiry_for_realtor`]; another
+    /// buyer's id returns `None` so the route layer can 404 without leaking.
+    pub async fn get_inquiry_for_buyer(
+        &self,
+        inquiry_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Option<ListingInquiry>, SqlxError> {
+        sqlx::query_as::<_, ListingInquiry>(
+            "SELECT * FROM listing_inquiries WHERE id = $1 AND user_id = $2",
+        )
+        .bind(inquiry_id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Add a buyer follow-up message to their own inquiry thread.
+    ///
+    /// Returns `Ok(None)` when the inquiry does not exist, belongs to another
+    /// buyer, or is already closed. Re-opens the conversation for the realtor
+    /// by moving a `responded`/`read` inquiry back to `new`, so it surfaces as
+    /// unanswered in the realtor inbox.
+    pub async fn buyer_reply_to_inquiry(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+        message: &str,
+    ) -> Result<Option<InquiryMessage>, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+
+        let open: bool = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM listing_inquiries
+             WHERE id = $1 AND user_id = $2 AND status <> 'closed')",
+        )
+        .bind(id)
+        .bind(user_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if !open {
+            tx.rollback().await?;
+            return Ok(None);
+        }
+
+        let msg = sqlx::query_as::<_, InquiryMessage>(
+            r#"
+            INSERT INTO inquiry_messages (inquiry_id, sender_type, sender_id, message)
+            VALUES ($1, 'user', $2, $3)
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(user_id)
+        .bind(message)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        sqlx::query(
+            "UPDATE listing_inquiries SET status = 'new', read_at = NULL
+             WHERE id = $1 AND user_id = $2 AND status IN ('read', 'responded')",
+        )
+        .bind(id)
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(Some(msg))
+    }
+
+    /// Cancel a buyer's own viewing request (sets `status = 'closed'`).
+    ///
+    /// Only `inquiry_type = 'viewing'` rows owned by `user_id` qualify.
+    /// Returns `true` when the row is (now or already) closed and `false`
+    /// when there is no such viewing for this buyer, so the caller can 404.
+    pub async fn cancel_viewing_for_buyer(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let updated = sqlx::query_scalar::<_, Uuid>(
+            r#"
+            UPDATE listing_inquiries SET status = 'closed'
+            WHERE id = $1 AND user_id = $2 AND inquiry_type = 'viewing'
+            RETURNING id
+            "#,
+        )
+        .bind(id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(updated.is_some())
+    }
 }

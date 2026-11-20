@@ -1,7 +1,8 @@
 //! Portal user routes - separate from Property Management users.
 //!
 //! Supports SSO with Property Management via OAuth 2.0.
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::extractors::auth::extract_session_token;
 use crate::handlers::users::{
@@ -10,7 +11,7 @@ use crate::handlers::users::{
 };
 use crate::services::{delivery_decision, ResetDelivery};
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::State,
     routing::{get, post, put},
@@ -37,6 +38,9 @@ pub fn router() -> Router<AppState> {
         .route("/logout", post(logout))
         .route("/me", get(get_me))
         .route("/me", put(update_me))
+        // Push tokens + notification preferences (`/me/push-tokens`,
+        // `/me/notification-preferences`).
+        .merge(super::notification_settings::router())
     // OAuth/SSO routes are handled in sso.rs
 }
 
@@ -274,11 +278,11 @@ pub async fn login(
 pub async fn logout(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     // Extract the token from Authorization header or portal_session cookie.
     // Logout is the one place we still need the raw token (to compute the
-    // session-row hash for invalidation); RequestPrincipal carries the
+    // session-row hash for invalidation); PortalPrincipal carries the
     // user id but not the token string.
     if let Some(token) = extract_session_token(&headers) {
         // Invalidate the session
@@ -304,7 +308,7 @@ pub async fn logout(
 )]
 pub async fn get_me(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<UserInfo>, (axum::http::StatusCode, String)> {
     let handler = UserHandler::new(state.portal_repo.clone());
 
@@ -338,7 +342,7 @@ pub async fn get_me(
 )]
 pub async fn update_me(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Json(req): Json<UpdateProfileRequest>,
 ) -> Result<Json<UserInfo>, (axum::http::StatusCode, String)> {
     // Validate name if provided

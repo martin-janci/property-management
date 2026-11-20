@@ -1,9 +1,10 @@
 //! Realtor routes (Epic 33: Realtor Tools).
 //!
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post, put},
@@ -63,7 +64,7 @@ pub struct InquiriesQuery {
 )]
 pub async fn get_my_profile(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
 ) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
     let profile = state
         .reality_portal_repo
@@ -124,7 +125,7 @@ pub async fn get_profile(
 )]
 pub async fn create_profile(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Json(data): Json<CreateRealtorProfile>,
 ) -> Result<(axum::http::StatusCode, Json<ProfileResponse>), (axum::http::StatusCode, String)> {
     let profile = state
@@ -164,7 +165,7 @@ pub async fn create_profile(
 )]
 pub async fn update_profile(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Json(data): Json<UpdateRealtorProfile>,
 ) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
     let profile = state
@@ -201,7 +202,7 @@ pub async fn update_profile(
 )]
 pub async fn list_inquiries(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Query(query): Query<InquiriesQuery>,
 ) -> Result<Json<InquiriesResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
@@ -243,7 +244,7 @@ pub async fn list_inquiries(
 )]
 pub async fn mark_inquiry_read(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     // Issue #519 — was IDOR-able. Scoped to the calling realtor so realtor B
@@ -279,7 +280,7 @@ pub async fn mark_inquiry_read(
 )]
 pub async fn respond_to_inquiry(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<SendInquiryMessage>,
 ) -> Result<(axum::http::StatusCode, Json<InquiryMessage>), (axum::http::StatusCode, String)> {

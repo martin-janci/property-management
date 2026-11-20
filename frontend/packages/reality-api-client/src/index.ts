@@ -29,6 +29,7 @@ export type {
   UpdateBrandingRequest,
   UpdateRealtorRequest,
 } from './agency/types';
+export { getPortalAuthHeaders, portalFetch, setPortalTokenProvider } from './config';
 export * from './favorites';
 // Import module - property import functionality (Epic 46)
 export * from './import';

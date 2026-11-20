@@ -172,7 +172,26 @@ class InquiryRepositoryServerContractTest {
 
         val result = assertNotNull(repo(cap, HttpStatusCode.OK, body).getInquiry("i-1").getOrNull())
 
+        assertEquals("/api/v1/inquiries/mine/i-1", cap.path)
         assertEquals(listOf("Yes"), result.responses.map { it.message })
         assertNull(result.listing)
+    }
+
+    @Test
+    fun cancelViewing_posts_to_buyer_cancel_route() = runTest {
+        val cap = Captured()
+        val result = repo(cap, HttpStatusCode.NoContent, "").cancelViewing("v-1")
+
+        assertTrue(result.isSuccess)
+        assertEquals("/api/v1/inquiries/mine/v-1/cancel", cap.path)
+    }
+
+    @Test
+    fun replyToInquiry_on_closed_thread_fails() = runTest {
+        val cap = Captured()
+        val result = repo(cap, HttpStatusCode.NotFound, "").replyToInquiry("i-1", "Still there?")
+
+        assertTrue(result.isFailure)
+        assertEquals("/api/v1/inquiries/mine/i-1/messages", cap.path)
     }
 }

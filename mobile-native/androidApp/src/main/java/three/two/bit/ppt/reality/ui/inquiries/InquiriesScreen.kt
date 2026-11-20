@@ -67,12 +67,12 @@ private const val TAG = "InquiriesScreen"
  *
  * Inline thread view (`KmpInquiryThreadScreen` in the design) is not wired into this Compose screen
  * yet — only the messages/viewings list is rendered here. The underlying shared APIs it needs now
- * exist in `InquiryRepository` (`replyToInquiry` → POST /api/v1/inquiries/{id}/respond,
- * realtor-only, and the scheduling calendar's `scheduleViewing` → POST
- * /api/v1/inquiries/viewing/{listing_id}, both with commonTest contract coverage), so the earlier
- * "API support not yet present" blocker is resolved; the remaining work is the Android Compose
- * thread + calendar UI itself. iOS already ships this via `InquiryDetailView.swift`. Tracked as a
- * follow-up Android-parity task.
+ * exist in `InquiryRepository` (`replyToInquiry` → POST /api/v1/inquiries/mine/{id}/messages,
+ * `cancelViewing` → POST /api/v1/inquiries/mine/{id}/cancel, and the scheduling calendar's
+ * `scheduleViewing` → POST /api/v1/inquiries/viewing/{listing_id}, both with commonTest contract
+ * coverage), so the earlier "API support not yet present" blocker is resolved; the remaining work
+ * is the Android Compose thread + calendar UI itself. iOS already ships this via
+ * `InquiryDetailView.swift`. Tracked as a follow-up Android-parity task.
  *
  * Epic 48 - Story 48.6: Portal Mobile Inquiries.
  */
@@ -194,9 +194,29 @@ fun InquiriesScreen(
                             ViewingsList(
                                 viewings = viewings,
                                 onViewingClick = { onListingClick(it.listingId) },
-                                // reality-server has no cancel endpoint yet
-                                // (InquiryRepository.cancelViewing), so the action is hidden.
-                                onCancelViewing = null,
+                                onCancelViewing = { viewingId ->
+                                    scope.launch {
+                                        inquiryRepository
+                                            .cancelViewing(viewingId)
+                                            .fold(
+                                                onSuccess = {
+                                                    viewings = viewings.map {
+                                                        if (it.id == viewingId) {
+                                                            it.copy(
+                                                                status = ViewingStatus.CANCELLED,
+                                                            )
+                                                        } else {
+                                                            it
+                                                        }
+                                                    }
+                                                },
+                                                onFailure = {
+                                                    Log.e(TAG, "Failed to cancel viewing", it)
+                                                    errorMessage = friendlyError(it)
+                                                },
+                                            )
+                                    }
+                                },
                             )
                     }
                 }

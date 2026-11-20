@@ -8,7 +8,6 @@ import three.two.bit.ppt.reality.api.HttpClientProvider
 import three.two.bit.ppt.reality.api.asPathSegment
 import three.two.bit.ppt.reality.favorites.FavoriteAlert
 import three.two.bit.ppt.reality.favorites.FavoriteAlertsResponse
-import three.two.bit.ppt.reality.inquiry.UnsupportedFeatureException
 
 /**
  * Repository for notifications and alerts.
@@ -29,9 +28,8 @@ class NotificationRepository(
     //
     // reality-server has no generic `/notifications` inbox. The in-app notification feed it does
     // have is the favorite-alerts feed (`/api/v1/favorites/alerts`: price changes and status
-    // changes on saved listings), so the inbox calls are served from there. Push tokens,
-    // notification preferences and deleting a notification have no server counterpart yet; those
-    // calls fail with [UnsupportedFeatureException] without touching the network.
+    // changes on saved listings), so the inbox calls are served from there. Push tokens and
+    // preferences live under `/api/v1/users/me`.
 
     /** Get the user's notifications (favorite alerts, newest first). */
     suspend fun getNotifications(
@@ -136,43 +134,124 @@ class NotificationRepository(
         }
     }
 
-    /** Delete a notification. Not offered by the server yet. */
-    @Suppress("UNUSED_PARAMETER")
-    suspend fun deleteNotification(notificationId: String): Result<Unit> =
-        unsupported("Deleting notifications is not available yet")
+    /** Delete (dismiss) a notification (`DELETE /api/v1/favorites/alerts/{id}`). */
+    suspend fun deleteNotification(notificationId: String): Result<Unit> {
+        return try {
+            val response =
+                client.delete(
+                    "$baseUrl/api/v1/favorites/alerts/${notificationId.asPathSegment()}",
+                ) {
+                    configureRequest()
+                }
+
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    NotificationException("Failed to delete notification: ${response.status}"),
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     // --- Push Notifications ---
 
-    /** Register a device push token. Not offered by the server yet. */
-    @Suppress("UNUSED_PARAMETER")
+    /**
+     * Register (or refresh) a device push token (`POST /api/v1/users/me/push-tokens`). `platform`
+     * is `android` or `ios`; the server stores them as `fcm` / `apns`.
+     */
     suspend fun registerPushToken(
         token: String,
         platform: String,
         deviceId: String? = null,
-    ): Result<RegisterPushTokenResponse> = unsupported("Push notifications are not available yet")
+    ): Result<RegisterPushTokenResponse> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/users/me/push-tokens") {
+                    configureRequest()
+                    contentType(ContentType.Application.Json)
+                    setBody(RegisterPushTokenRequest(token, platform, deviceId))
+                }
 
-    /** Unregister a device push token. Not offered by the server yet. */
-    @Suppress("UNUSED_PARAMETER")
-    suspend fun unregisterPushToken(token: String): Result<Unit> =
-        unsupported("Push notifications are not available yet")
+            if (response.status.isSuccess()) {
+                Result.success(RegisterPushTokenResponse(success = true))
+            } else {
+                Result.failure(
+                    NotificationException("Failed to register push token: ${response.status}"),
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Unregister a device push token (`DELETE /api/v1/users/me/push-tokens/{token}`). */
+    suspend fun unregisterPushToken(token: String): Result<Unit> {
+        return try {
+            val response =
+                client.delete("$baseUrl/api/v1/users/me/push-tokens/${token.asPathSegment()}") {
+                    configureRequest()
+                }
+
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    NotificationException("Failed to unregister push token: ${response.status}"),
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     // --- Preferences ---
 
-    /**
-     * Notification preferences. Not offered by the server yet; the account screen hides the card.
-     */
-    suspend fun getPreferences(): Result<NotificationPreferences> =
-        unsupported("Notification preferences are not available yet")
+    /** Notification preferences (`GET /api/v1/users/me/notification-preferences`). */
+    suspend fun getPreferences(): Result<NotificationPreferences> {
+        return try {
+            val response =
+                client.get("$baseUrl/api/v1/users/me/notification-preferences") {
+                    configureRequest()
+                }
 
-    /** Update notification preferences. Not offered by the server yet. */
-    @Suppress("UNUSED_PARAMETER")
+            if (response.status.isSuccess()) {
+                Result.success(response.body<NotificationPreferences>())
+            } else {
+                Result.failure(
+                    NotificationException("Failed to load preferences: ${response.status}"),
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Update notification preferences (`PUT /api/v1/users/me/notification-preferences`). */
     suspend fun updatePreferences(
         preferences: NotificationPreferences,
-    ): Result<NotificationPreferences> =
-        unsupported("Notification preferences are not available yet")
+    ): Result<NotificationPreferences> {
+        return try {
+            val response =
+                client.put("$baseUrl/api/v1/users/me/notification-preferences") {
+                    configureRequest()
+                    contentType(ContentType.Application.Json)
+                    setBody(preferences)
+                }
 
-    private fun <T> unsupported(message: String): Result<T> =
-        Result.failure(UnsupportedFeatureException(message))
+            if (response.status.isSuccess()) {
+                Result.success(response.body<NotificationPreferences>())
+            } else {
+                Result.failure(
+                    NotificationException("Failed to update preferences: ${response.status}"),
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 private fun FavoriteAlert.toNotification(): NotificationEntry =

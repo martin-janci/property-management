@@ -3,10 +3,11 @@
 //! Allows portal users to review realtors. The "verified buyer" flag is set
 //! server-side based on whether the reviewer has a prior responded inquiry with
 //! that realtor.
-//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
+//! GH #1300: handlers use `PortalPrincipal` (portal users have no org membership,
+//! so `RequestPrincipal` 403s them); access stays keyed on `principal.user_id`.
 
 use crate::state::AppState;
-use api_core::extractors::RequestPrincipal;
+use api_core::extractors::PortalPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -218,7 +219,7 @@ pub async fn list_reviews(
 )]
 pub async fn create_review(
     State(state): State<AppState>,
-    principal: RequestPrincipal,
+    principal: PortalPrincipal,
     Path(realtor_id): Path<Uuid>,
     Json(data): Json<CreateReviewRequest>,
 ) -> Result<(axum::http::StatusCode, Json<RealtorReview>), (axum::http::StatusCode, String)> {

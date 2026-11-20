@@ -195,7 +195,6 @@ async fn seed_membership(pool: &PgPool, agency_id: Uuid, user_id: Uuid) {
 
 /// Cross-tenant probe: user B requests user A's job → 404.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn import_job_cross_user_returns_404(pool: PgPool) {
     let user_a = seed_portal_user(&pool, "job-user-a").await;
     let user_b = seed_portal_user(&pool, "job-user-b").await;
@@ -222,7 +221,6 @@ async fn import_job_cross_user_returns_404(pool: PgPool) {
 
 /// Happy path: user A requests their own job → 200.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn import_job_owner_returns_200(pool: PgPool) {
     let user_a = seed_portal_user(&pool, "job-owner-a").await;
     let job_id = seed_import_job(&pool, user_a).await;
@@ -254,7 +252,6 @@ async fn import_job_owner_returns_200(pool: PgPool) {
 /// `user_id`, so it gets 404 — not 200 — on another user's import job. There is
 /// no admin bypass at this layer.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn import_job_platform_kind_caller_is_still_user_scoped_404(pool: PgPool) {
     let owner = seed_portal_user(&pool, "job-plat-owner").await;
     let platform_caller = seed_portal_user_with_kind(&pool, "job-plat-admin", "platform").await;
@@ -281,7 +278,6 @@ async fn import_job_platform_kind_caller_is_still_user_scoped_404(pool: PgPool) 
 
 /// Unauthenticated request → 401.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn import_job_unauthenticated_returns_401(pool: PgPool) {
     let user_a = seed_portal_user(&pool, "job-unauth-a").await;
     let job_id = seed_import_job(&pool, user_a).await;
@@ -309,7 +305,6 @@ async fn import_job_unauthenticated_returns_401(pool: PgPool) {
 /// feed created for agency A is readable by every active member of A — not just
 /// the user who happened to create it. Two distinct members both get 200.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn feed_is_shared_across_agency_members(pool: PgPool) {
     let agency_a = seed_agency(&pool, "feed-shared-a").await;
     let member_1 = seed_portal_user(&pool, "feed-member-1").await;
@@ -342,7 +337,6 @@ async fn feed_is_shared_across_agency_members(pool: PgPool) {
 /// feed — the handler resolves the caller's own agency, so the by-id lookup is
 /// scoped away → 404.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn feed_non_member_returns_404(pool: PgPool) {
     let agency_a = seed_agency(&pool, "feed-idor-a").await;
     let agency_b = seed_agency(&pool, "feed-idor-b").await;
@@ -372,7 +366,6 @@ async fn feed_non_member_returns_404(pool: PgPool) {
 /// A caller who is a member of no agency cannot own/list feeds → 403 (rather than
 /// silently operating on a bogus user-id-as-agency-id scope).
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-351 quarantine: pre-existing blind-CI test failure (schema/seed never migrated or repo decode drift); never green on the real PR gate. Repair tracked in BIT-352."]
 async fn feed_caller_without_agency_returns_403(pool: PgPool) {
     let orphan = seed_portal_user(&pool, "feed-orphan").await; // no membership
 

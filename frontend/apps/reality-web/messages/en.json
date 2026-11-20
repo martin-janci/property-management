@@ -972,7 +972,8 @@
       "cancelInquiry": "Cancel inquiry",
       "previous": "Previous",
       "next": "Next",
-      "pageInfo": "Page {page} of {total}"
+      "pageInfo": "Page {page} of {total}",
+      "viewListing": "View listing"
     },
     "savedSearches": {
       "alertsOff": "Alerts off",
@@ -1308,7 +1309,8 @@
       "scheduled": "Scheduled",
       "completed": "Completed",
       "cancelled": "Cancelled"
-    }
+    },
+    "viewListing": "View listing"
   },
   "import": {
     "page": {
