@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-20T06:28:36Z",
+  "archived_at": "2026-11-20T10:30:47Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4083,6 +4083,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-11T20:44:28Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-jwt-no-aud-iss-retry1",
+      "action": "api core jwt no aud iss [retry 1/2 of failed code-review-api-core-jwt-no-aud-iss]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-18T22:26:56Z (retry_of=code-review-api-core-jwt-no-aud-iss reason=failed-no-pr cooldown_ok newest_failure=2026-11-11T20:44:06Z) | gc1-reconcile 2026-11-20T10:25:16Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T22:26:56Z",
+      "retry_of": "code-review-api-core-jwt-no-aud-iss",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3652,
+        "merged_at": "2026-11-20T08:28:20Z",
+        "at": "2026-11-20T10:25:16Z"
       }
     },
     {
@@ -30936,6 +30957,25 @@
       "depends_on": [
         "pm-scrum-master"
       ]
+    },
+    {
+      "id": "pm-tech-lead-create-a-new-sprint-in-sprint-status-yaml-the-current-sprint-2026-11-20",
+      "action": "Create a new sprint in sprint-status.yaml. The current sprint goal is all 'done' and no longer reflects the work being merged (review follow-ups, churn characterization).",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-20 | gc1-reconcile 2026-11-20T10:25:16Z",
+      "first_open_at": "2026-11-20T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3654,
+        "merged_at": "2026-11-20T08:34:50Z",
+        "at": "2026-11-20T10:25:16Z"
+      }
     },
     {
       "id": "pm-tech-lead-decide-2b-build-order",

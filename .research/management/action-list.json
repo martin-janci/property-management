@@ -129,7 +129,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-09"
+      "source": "pm-analysis 2026-11-09",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "code-review-api-core-digest-worker-no-replica-claim",
@@ -176,7 +177,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-16"
+      "source": "pm-analysis 2026-11-16",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
@@ -187,21 +189,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-17"
-    },
-    {
-      "id": "code-review-api-core-jwt-no-aud-iss-retry1",
-      "action": "api core jwt no aud iss [retry 1/2 of failed code-review-api-core-jwt-no-aud-iss]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-18T22:26:56Z (retry_of=code-review-api-core-jwt-no-aud-iss reason=failed-no-pr cooldown_ok newest_failure=2026-11-11T20:44:06Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T22:26:56Z",
-      "retry_of": "code-review-api-core-jwt-no-aud-iss",
-      "retry_round": 1
+      "source": "pm-analysis 2026-11-17",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "code-review-reality-web-feedimport-create-no-error",
@@ -358,7 +347,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-integration-voice-oauth-rfc6749-shape",
@@ -371,7 +361,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-integration-compliance-400-spec",
@@ -384,7 +375,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-integration-property-type-enum-stability",
@@ -397,7 +389,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19",
@@ -410,7 +403,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-scrum-master-3612-supersede-check-2026-11-19",
@@ -423,7 +417,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-scrum-master-airbnb-env-leak-flake-2026-11-19",
@@ -436,7 +431,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "pm-scrum-master-3630-widgetsettings-i18n-merge-2026-11-19",
@@ -449,7 +445,8 @@
       ],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-19"
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
       "id": "code-review-reality-web-preview-hardcoded-alt-text",
@@ -797,18 +794,6 @@
     {
       "id": "pm-tech-lead-split-oauth-integration-tests-rs-3427-loc-by-flow-authorize-2026-11-20",
       "action": "Split oauth_integration_tests.rs (3427 LoC) by flow: authorize, token, introspect/revoke, grants. Extract shared fixtures into a common module.",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-20",
-      "first_open_at": "2026-11-20T03:06:10Z"
-    },
-    {
-      "id": "pm-tech-lead-create-a-new-sprint-in-sprint-status-yaml-the-current-sprint-2026-11-20",
-      "action": "Create a new sprint in sprint-status.yaml. The current sprint goal is all 'done' and no longer reflects the work being merged (review follow-ups, churn characterization).",
       "owner_role": "pm-tech-lead",
       "priority": "medium",
       "dependency": "none",
