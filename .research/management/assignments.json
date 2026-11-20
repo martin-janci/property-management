@@ -75,18 +75,18 @@
     {
       "task_id": "pm-tech-lead-split-oauth-integration-tests-rs-3427-loc-by-flow-authorize-2026-11-20",
       "branch": "auto-impl/pm-tech-lead-split-oauth-integration-tes-96a33b9e",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-20T06:23:18Z",
-      "last_updated": "2026-11-20T06:23:18Z",
-      "status_changed_at": "2026-11-20T06:23:18Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-20T07:05:30Z",
+      "status_changed_at": "2026-11-20T07:05:30Z",
+      "pr_number": 3658,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3658",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3658 status=done specialist=rust-backend scope_drift=true note=split oauth_integration_tests.rs (3427 LoC) by flow; verbatim move (61 sqlx::test identical); fmt+clippy clean; 59 passed/0 failed/1 ignored on throwaway PG; whole-crate test deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -183,5 +183,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-20T06:38:28Z"
+  "generated": "2026-11-20T07:05:30Z"
 }
