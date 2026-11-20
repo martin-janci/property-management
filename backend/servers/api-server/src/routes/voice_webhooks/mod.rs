@@ -32,7 +32,6 @@ use crate::services::voice_oauth::{
 };
 use crate::services::VoiceCommandProcessor;
 use crate::state::AppState;
-use api_core::extractors::RlsConnection;
 use axum::{
     body::Bytes,
     extract::State,
@@ -156,10 +155,20 @@ pub fn voice_webhook_router() -> Router<AppState> {
 async fn alexa_webhook(
     State(state): State<AppState>,
     headers: HeaderMap,
-    mut rls: RlsConnection,
     body: Bytes,
 ) -> Result<Json<AlexaSkillResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify request signature (Story 93.3)
+    // Verify the request signature FIRST (Story 93.3). An Alexa delivery is
+    // authenticated by Amazon's certificate-chain signature over the *raw* body,
+    // NOT by a Property-Management session — so this handler must not be gated by
+    // an auth/RLS extractor.
+    //
+    // It previously took `mut rls: RlsConnection` as a handler argument. That is
+    // an extractor: Axum runs it (via `ValidatedTenantExtractor` — JWT +
+    // tenant-membership validation) BEFORE the handler body. A legitimate Alexa
+    // request carries no PM bearer token, so the extractor rejected every real
+    // delivery with 401 before the body was ever read and the signature was ever
+    // checked. The database connection is now acquired inside the body, after the
+    // signature check and after the device is authenticated from its OAuth token.
     if let Err(e) = verify_alexa_signature(&headers, &body).await {
         tracing::warn!("Alexa signature verification failed: {}", e);
         return Err((
@@ -180,24 +189,47 @@ async fn alexa_webhook(
         )
     })?;
 
-    // Extract access token for user authentication
-    let access_token = request.session.user.access_token.as_ref();
-
-    // Authenticate user via OAuth token
-    let device = if let Some(token) = access_token {
-        authenticate_voice_user(rls.conn(), token, voice_platform::ALEXA).await?
-    } else {
-        // Account linking not complete - return link card
-        rls.release().await;
+    // Extract access token for user authentication.
+    // Account linking not complete -> return the link card (no DB access needed).
+    let Some(token) = request.session.user.access_token.as_ref() else {
         return Ok(Json(build_alexa_link_account_response()));
     };
 
-    // Process the request based on type
+    // Resolve the linked voice device from the presented OAuth access token. The
+    // `voice_assistant_devices` lookup is not RLS-bound (migration 00226), so it
+    // runs on a context-cleared public connection — mirroring `oauth_token_refresh`.
+    let rls_pool = RlsPool::new(state.db.clone());
+    let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
+        tracing::error!("Failed to acquire database connection: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+        )
+    })?;
+    let device = authenticate_voice_user(lookup.conn(), token, voice_platform::ALEXA).await?;
+    drop(lookup);
+
+    // Process the request based on type.
     let locale = match &request.request {
         AlexaRequestBody::LaunchRequest { locale, .. } => locale.clone(),
         AlexaRequestBody::IntentRequest { locale, .. } => locale.clone(),
         AlexaRequestBody::SessionEndedRequest { locale, .. } => locale.clone(),
     };
+
+    // Command processing reads tenant-scoped tables (faults, announcements,
+    // meters, …), so it runs under the *device owner's* org/user RLS context —
+    // the tenant the linked device belongs to, resolved from the authenticated
+    // device above (never a context-cleared or caller-derived context).
+    let mut guard = rls_pool
+        .acquire_with_rls(device.organization_id, device.user_id, false)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to acquire RLS connection: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
 
     let response = match &request.request {
         AlexaRequestBody::LaunchRequest { .. } => {
@@ -211,7 +243,7 @@ async fn alexa_webhook(
                 state.org_repo.clone(),
             );
             let (result, _) = processor
-                .process_command(rls.conn(), device.id, "help", &locale)
+                .process_command(guard.conn(), device.id, "help", &locale)
                 .await
                 .map_err(|e| {
                     tracing::error!("Voice command processing failed: {}", e);
@@ -234,7 +266,7 @@ async fn alexa_webhook(
                 state.org_repo.clone(),
             );
             let (result, _) = processor
-                .process_command(rls.conn(), device.id, &command_text, &locale)
+                .process_command(guard.conn(), device.id, &command_text, &locale)
                 .await
                 .map_err(|e| {
                     tracing::error!("Voice command processing failed: {}", e);
@@ -262,7 +294,6 @@ async fn alexa_webhook(
         }
     };
 
-    rls.release().await;
     Ok(Json(response))
 }
 
@@ -297,38 +328,54 @@ async fn alexa_health_check() -> StatusCode {
 async fn google_actions_webhook(
     State(state): State<AppState>,
     headers: HeaderMap,
-    mut rls: RlsConnection,
     Json(request): Json<GoogleActionsRequest>,
 ) -> Result<Json<GoogleActionsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify request: Google-issued ID token (Bearer) with RS256 signature +
-    // aud/iss/exp validation. Fails closed on any verification error.
+    // Verify the request FIRST: Google-issued ID token (Bearer) with RS256
+    // signature + aud/iss/exp validation. Fails closed on any verification error.
+    //
+    // As with the Alexa handler, a Google Actions delivery authenticates via its
+    // Google-signed ID token, NOT a Property-Management session — so this handler
+    // must not be gated by an auth/RLS extractor. It previously took `mut rls:
+    // RlsConnection`, which Axum runs (JWT + tenant-membership validation) BEFORE
+    // the handler body, so every real Google delivery (which carries no PM
+    // bearer) was rejected with 401 before the body was read and this check ran.
+    // The connection is now acquired inside the body, after verification.
     if let Err(e) = verify_google_request(&headers).await {
         tracing::warn!("Google Actions verification failed: {}", e);
-        rls.release().await;
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(ErrorResponse::new("INVALID_REQUEST", &e)),
         ));
     }
 
-    // Extract access token from user params
-    let access_token = request
+    // Extract access token from user params.
+    // Account linking not complete -> return the link card (no DB access needed).
+    let Some(token) = request
         .user
         .params
         .as_ref()
         .and_then(|p| p.get("bearerToken"))
-        .and_then(|v| v.as_str());
-
-    // Authenticate user via OAuth token
-    let device = if let Some(token) = access_token {
-        authenticate_voice_user(rls.conn(), token, voice_platform::GOOGLE_ASSISTANT).await?
-    } else {
-        // Account linking not complete
-        rls.release().await;
+        .and_then(|v| v.as_str())
+    else {
         return Ok(Json(build_google_link_account_response(
             &request.session.id,
         )));
     };
+
+    // Resolve the linked voice device from the presented OAuth access token on a
+    // context-cleared public connection (`voice_assistant_devices` is not
+    // RLS-bound; migration 00226), mirroring `oauth_token_refresh`.
+    let rls_pool = RlsPool::new(state.db.clone());
+    let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
+        tracing::error!("Failed to acquire database connection: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+        )
+    })?;
+    let device =
+        authenticate_voice_user(lookup.conn(), token, voice_platform::GOOGLE_ASSISTANT).await?;
+    drop(lookup);
 
     // Get locale from session
     let locale = request.session.language_code.as_deref().unwrap_or("en-US");
@@ -340,7 +387,19 @@ async fn google_actions_webhook(
         .as_deref()
         .unwrap_or(&request.handler.name);
 
-    // Process the command
+    // Process the command under the device owner's org/user RLS context — the
+    // tenant the linked device belongs to, resolved from the authenticated device
+    // above (command processing reads tenant-scoped tables).
+    let mut guard = rls_pool
+        .acquire_with_rls(device.organization_id, device.user_id, false)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to acquire RLS connection: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+            )
+        })?;
     let processor = VoiceCommandProcessor::new(
         state.llm_document_repo.clone(),
         state.fault_repo.clone(),
@@ -350,7 +409,7 @@ async fn google_actions_webhook(
         state.org_repo.clone(),
     );
     let (result, _) = processor
-        .process_command(rls.conn(), device.id, command_text, locale)
+        .process_command(guard.conn(), device.id, command_text, locale)
         .await
         .map_err(|e| {
             tracing::error!("Voice command processing failed: {}", e);
@@ -360,7 +419,6 @@ async fn google_actions_webhook(
             )
         })?;
 
-    rls.release().await;
     Ok(Json(build_google_response(&request.session.id, &result)))
 }
 
