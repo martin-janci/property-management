@@ -3,18 +3,18 @@
     {
       "task_id": "pm-tech-lead-split-services-push-fanout-rs-3038-loc-into-a-push-module-fc-2026-11-20",
       "branch": "auto-impl/pm-tech-lead-split-services-push-fanout-76b95929",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-20T04:29:36Z",
-      "last_updated": "2026-11-20T08:34:13Z",
-      "status_changed_at": "2026-11-20T08:34:13Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-20T09:26:11Z",
+      "status_changed_at": "2026-11-20T09:26:11Z",
+      "pr_number": 3659,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3659",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3659 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=verbatim push_fanout.rs(3038)->services/push/{mod,fcm,apns,combined,config,worker}; PushTransport seam kept; public services:: re-exports preserved; fmt+clippy clean; 56 push unit + 7 push DB tests pass; sole verify failure pre-existing unrelated env SSRF test (untouched module)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -137,5 +137,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-20T08:34:13Z"
+  "generated": "2026-11-20T09:26:11Z"
 }
