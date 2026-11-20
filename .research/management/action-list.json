@@ -132,24 +132,6 @@
       "source": "pm-analysis 2026-11-09"
     },
     {
-      "id": "code-review-api-core-statement-account-iban-hardcoded",
-      "action": "api core statement account iban hardcoded",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d api-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-13T22:25:04Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-20T02:28:42Z"
-      }
-    },
-    {
       "id": "code-review-api-core-digest-worker-no-replica-claim",
       "action": "api core digest worker no replica claim",
       "owner_role": "pm-backend",
@@ -186,24 +168,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-import-history-limit-100-trunc",
-      "action": "reality server import history limit 100 trunc",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T00:27:09Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-09-03T00:00:00Z"
-      }
-    },
-    {
       "id": "pm-scrum-master-cloud-runner-kmp-swagger-ui-egress-unblock-2026-11-16",
       "action": "Unblock mobile-native/KMP and swagger-ui egress in the cloud runner (#2652, #2966). Claimable work is a small share of the backlog, and backend security PRs cannot compile.",
       "owner_role": "pm-scrum-master",
@@ -213,41 +177,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-16"
-    },
-    {
-      "id": "code-review-reality-server-record-view-no-check",
-      "action": "reality-server record_view: comment claims existence check but handler does not verify + no per-IP throttle",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-16T18:25:46Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
-      "action": "reality server suggestions hardcoded sk region",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-17T00:24:34Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-09-02T00:00:00Z"
-      }
     },
     {
       "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
@@ -333,24 +262,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-errorboundary-raw-message-prod",
-      "action": "ppt web ui errorboundary raw message prod",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T00:25:54Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-28T00:00:00Z"
-      }
-    },
-    {
       "id": "stalled-review-pr-3380",
       "action": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision",
       "owner_role": "pm-devops",
@@ -368,20 +279,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-categorypref-hardcoded-labels-retry1",
-      "action": "ppt web ui categorypref hardcoded labels [retry 1/2 of failed code-review-ppt-web-ui-categorypref-hardcoded-labels]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-18T22:26:56Z (retry_of=code-review-ppt-web-ui-categorypref-hardcoded-labels reason=failed-no-pr cooldown_ok newest_failure=2026-11-11T14:35:25Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-18T22:26:56Z",
-      "retry_of": "code-review-ppt-web-ui-categorypref-hardcoded-labels",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-api-core-jwt-no-aud-iss-retry1",
       "action": "api core jwt no aud iss [retry 1/2 of failed code-review-api-core-jwt-no-aud-iss]",
       "owner_role": "pm-backend",
@@ -394,24 +291,6 @@
       "first_open_at": "2026-11-18T22:26:56Z",
       "retry_of": "code-review-api-core-jwt-no-aud-iss",
       "retry_round": 1
-    },
-    {
-      "id": "code-review-reality-web-crmconn-create-no-error",
-      "action": "reality web crmconn create no error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T02:27:15Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-27T00:00:00Z"
-      }
     },
     {
       "id": "code-review-reality-web-feedimport-create-no-error",
@@ -660,23 +539,6 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-19"
-    },
-    {
-      "id": "code-review-reality-web-branding-query-unhandled-error",
-      "action": "reality-web useAgencyBranding error path unhandled — silent default-color clobber on fetch failure",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T12:28:44Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
     },
     {
       "id": "code-review-reality-web-preview-hardcoded-alt-text",
@@ -1013,6 +875,26 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-25T09:30:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-3649",
+      "action": "Follow-up: suggestions seed-city for region `de` resolves to Wien (Austria) (PR #3628) (Closes #3649)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-20T02:24:10Z (#3649)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T02:24:10Z",
+      "issue_ref": {
+        "number": 3649,
+        "url": "https://github.com/martin-janci/property-management/issues/3649",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],

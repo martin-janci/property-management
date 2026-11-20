@@ -16265,7 +16265,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-16"
       ],
@@ -16280,7 +16280,12 @@
       ],
       "created_at": "2026-11-16",
       "updated_at": "2026-11-16",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-20T02:23:34Z",
+        "assignment_status": "merged",
+        "pr_number": 3617
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
@@ -16530,7 +16535,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-19 (reality-web)"
       ],
@@ -16542,7 +16547,12 @@
       ],
       "created_at": "2026-11-19",
       "updated_at": "2026-11-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-20T02:23:34Z",
+        "assignment_status": "merged",
+        "pr_number": 3643
+      }
     },
     {
       "id": "code-review-reality-web-preview-hardcoded-alt-text",

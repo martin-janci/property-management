@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-19T22:30:22Z",
+  "archived_at": "2026-11-20T02:27:43Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4719,6 +4719,31 @@
         "merged_pr": 2627,
         "merged_at": "2026-08-02T12:11:30Z",
         "at": "2026-08-02T14:04:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-statement-account-iban-hardcoded",
+      "action": "api core statement account iban hardcoded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-13T22:25:04Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-13T22:25:04Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-20T02:28:42Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3528,
+        "merged_at": "2026-11-19T22:48:00Z",
+        "at": "2026-11-20T02:23:34Z"
       }
     },
     {
@@ -11715,6 +11740,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-categorypref-hardcoded-labels-retry1",
+      "action": "ppt web ui categorypref hardcoded labels [retry 1/2 of failed code-review-ppt-web-ui-categorypref-hardcoded-labels]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-18T22:26:56Z (retry_of=code-review-ppt-web-ui-categorypref-hardcoded-labels reason=failed-no-pr cooldown_ok newest_failure=2026-11-11T14:35:25Z) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T22:26:56Z",
+      "retry_of": "code-review-ppt-web-ui-categorypref-hardcoded-labels",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T02:23:34Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-community-feature-no-i18n",
       "action": "code-review ppt-web-ui: entire community feature (posts, groups, events, marketplace, comments) is shipped English-only — only PostCard.tsx uses useTranslation",
       "owner_role": "pm-backend",
@@ -12231,6 +12277,31 @@
         "merged_pr": 2913,
         "merged_at": "2026-09-01T14:34:21Z",
         "at": "2026-09-01T20:38:46Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-errorboundary-raw-message-prod",
+      "action": "ppt web ui errorboundary raw message prod",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-18T00:25:54Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-18T00:25:54Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-28T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3644,
+        "merged_at": "2026-11-19T22:45:09Z",
+        "at": "2026-11-20T02:23:34Z"
       }
     },
     {
@@ -14193,6 +14264,31 @@
       }
     },
     {
+      "id": "code-review-reality-server-import-history-limit-100-trunc",
+      "action": "reality server import history limit 100 trunc",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-16T00:27:09Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T00:27:09Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-09-03T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3612,
+        "merged_at": "2026-11-20T00:37:22Z",
+        "at": "2026-11-20T02:23:34Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-import-jobs-limit-unclamped",
       "action": "reality server import jobs limit unclamped",
       "owner_role": "pm-backend",
@@ -14856,6 +14952,30 @@
       }
     },
     {
+      "id": "code-review-reality-server-record-view-no-check",
+      "action": "reality-server record_view: comment claims existence check but handler does not verify + no per-IP throttle",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-16T18:25:46Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-16T18:25:46Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3617,
+        "merged_at": "2026-11-19T22:49:51Z",
+        "at": "2026-11-20T02:23:34Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-register-account-enumeration",
       "action": "reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle)",
       "owner_role": "pm-backend",
@@ -15228,6 +15348,31 @@
         "merged_pr": 2800,
         "merged_at": "2026-08-20T06:33:46Z",
         "at": "2026-08-20T06:35:31Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-suggestions-hardcoded-sk-region",
+      "action": "reality server suggestions hardcoded sk region",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-17T00:24:34Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-17T00:24:34Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-09-02T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3628,
+        "merged_at": "2026-11-19T22:46:43Z",
+        "at": "2026-11-20T02:23:34Z"
       }
     },
     {
@@ -15709,6 +15854,30 @@
       }
     },
     {
+      "id": "code-review-reality-web-branding-query-unhandled-error",
+      "action": "reality-web useAgencyBranding error path unhandled — silent default-color clobber on fetch failure",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-19T12:28:44Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T12:28:44Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3643,
+        "merged_at": "2026-11-19T22:43:57Z",
+        "at": "2026-11-20T02:23:34Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-callback-hardcoded-login-string",
       "action": "reality-web SSO callback carries a hardcoded 'login' redirect string — bypasses i18n and locale-aware routing",
       "owner_role": "pm-tech-lead",
@@ -15947,6 +16116,31 @@
         "merged_pr": 3160,
         "merged_at": "2026-10-25T18:39:06Z",
         "at": "2026-10-25T20:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-crmconn-create-no-error",
+      "action": "reality web crmconn create no error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-19T02:27:15Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-20T02:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T02:27:15Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-27T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-20T02:23:34Z"
       }
     },
     {

@@ -5734,6 +5734,28 @@
       "merge_attempted_at": "2026-11-09T12:39:42Z"
     },
     {
+      "task_id": "code-review-api-handlers-hellosign-unbound-envelope",
+      "branch": "auto-impl/code-review-api-handlers-hellosign-unbou-8441e567",
+      "status": "merged",
+      "claimed_at": "2026-11-19T22:29:38Z",
+      "last_updated": "2026-11-20T02:45:34Z",
+      "status_changed_at": "2026-11-20T02:45:34Z",
+      "pr_number": 3648,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3648",
+      "merged_at": "2026-11-20T02:41:19Z",
+      "specialist": "rust-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=b1b9b39b1ea065b4fd7008a49dd952e9c6c38f8f note=hellosign-envelope-binding-correct-approved-as-comment-self-approve-blocked",
+      "last_reviewed_oid": "b1b9b39b1ea065b4fd7008a49dd952e9c6c38f8f",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-20T02:45:34Z"
+    },
+    {
       "task_id": "code-review-api-handlers-impersonation-active-raw-xff-audit",
       "branch": "auto-impl/code-review-api-handlers-impersonation-a-0fade50b",
       "status": "merged",
@@ -10313,6 +10335,28 @@
       "merge_attempted_at": "2026-11-16T08:34:08Z"
     },
     {
+      "task_id": "code-review-ppt-web-core-no-runtime-token-refresh",
+      "branch": "auto-impl/code-review-ppt-web-core-no-runtime-toke-ea4e5438",
+      "status": "merged",
+      "claimed_at": "2026-11-19T22:29:38Z",
+      "last_updated": "2026-11-20T02:45:34Z",
+      "status_changed_at": "2026-11-20T02:45:34Z",
+      "pr_number": 3646,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3646",
+      "merged_at": "2026-11-20T02:41:45Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3646 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=generated @ppt/api-client now does 401 refresh-and-replay (new unauthorized-handler registry + response interceptor) wired to AuthContext single-flight; axios path already had it; frontend verify green (VERIFY OK), IG3 test+fix split",
+      "reviewer_summary": "verdict=approve head_oid=d99706c1087876a17db105e81177cdc922c61256 note=approve-posted-as-comment-review-self-approval-blocked",
+      "last_reviewed_oid": "d99706c1087876a17db105e81177cdc922c61256",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-20T02:45:34Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-notfound-i18n-gap",
       "branch": "auto-impl/code-review-ppt-web-core-notfound-i18n-g-95f13f07",
       "status": "merged",
@@ -11272,6 +11316,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-authcallback-decodeuri-throw",
+      "branch": "auto-impl/code-review-ppt-web-ui-authcallback-deco-b4569a47",
+      "status": "merged",
+      "claimed_at": "2026-11-19T22:29:38Z",
+      "last_updated": "2026-11-20T02:45:34Z",
+      "status_changed_at": "2026-11-20T02:45:34Z",
+      "pr_number": 3645,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3645",
+      "merged_at": "2026-11-20T02:38:56Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3645 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=guarded SSO error_description decode with safeDecodeURIComponent helper (falls back to translated auth.ssoProviderError); regression test on ?error_description=%ZZ fails-before/passes-after; verify green (13185 tests), typecheck+biome clean; draft PR vs dev",
+      "reviewer_summary": "verdict=approve head_oid=2caf10152be4b8f513fb58f47d0826d9b2c08001 note=clean-scoped-decode-guard-tests-ci-green-posted-as-comment-cannot-approve-own-pr",
+      "last_reviewed_oid": "2caf10152be4b8f513fb58f47d0826d9b2c08001",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-20T02:45:34Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-authcallback-raw-err-message",
@@ -13813,6 +13879,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-import-fetch-ssrf-revalidation",
+      "branch": "auto-impl/code-review-reality-server-import-fetch-de496eac",
+      "status": "merged",
+      "claimed_at": "2026-11-19T22:29:38Z",
+      "last_updated": "2026-11-20T02:45:34Z",
+      "status_changed_at": "2026-11-20T02:45:34Z",
+      "pr_number": 3647,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3647",
+      "merged_at": "2026-11-20T02:44:31Z",
+      "specialist": "rust-backend",
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=63175cff1efb37346169fdc1de03334df0f560f8 note=ssrf-redirect-guard-dedup-sound-approved-as-comment-self-approve-blocked",
+      "last_reviewed_oid": "63175cff1efb37346169fdc1de03334df0f560f8",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-20T02:45:34Z"
     },
     {
       "task_id": "code-review-reality-server-import-history-limit-100-trunc",
@@ -30352,6 +30440,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "stalled-review-pr-3380",
+      "branch": "auto-impl/stalled-review-pr-3380-96e63f57",
+      "status": "failed",
+      "claimed_at": "2026-11-20T02:27:16Z",
+      "last_updated": "2026-11-20T02:45:34Z",
+      "status_changed_at": "2026-11-20T02:45:34Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "triage",
+      "implementer_summary": "pr=none status=blocked specialist=triage scope_drift=false code_reuse_warn=none note=PR-3380-already-closed-unmerged-no-action",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "test-gap-disputes-kpis-window-validation",
       "branch": "auto-impl/test-gap-disputes-kpis-window-validation-9248679a",
       "status": "failed",
@@ -31040,5 +31152,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-20T00:44:02Z"
+  "archived_at": "2026-11-20T02:45:41Z"
 }
