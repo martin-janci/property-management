@@ -7,6 +7,7 @@
  * hooks once the SDK is regenerated.
  */
 
+import { getAuthHeader } from './auth-token';
 import { getApiBase } from './env';
 
 /**
@@ -41,13 +42,26 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   // Spread `init` first so caller-provided headers don't drop the defaults
   // below. The `headers` assignment always wins, and the caller's headers
   // (if any) are merged into it after the default `Content-Type`.
+  //
+  // `getAuthHeader()` attaches `Authorization: Bearer …` from the stored
+  // form-login session (`auth-token.ts`). `credentials: 'include'` alone only
+  // covers the OAuth/SSO cookie flow; email/password logins keep their JWT in
+  // localStorage, so without this merge every authenticated realtor endpoint
+  // (own profile, `my/listings` CRUD) was called anonymously and rejected for
+  // form-login users. Mirrors the pattern already used in `auth-context.tsx`
+  // and `auth-api.ts`. Caller headers are spread last so an explicit override
+  // still wins.
   const { headers: callerHeaders, ...rest } = init;
   let response: Response;
   try {
     response = await fetch(`${getApiBase()}${path}`, {
       credentials: 'include',
       ...rest,
-      headers: { 'Content-Type': 'application/json', ...(callerHeaders ?? {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+        ...(callerHeaders ?? {}),
+      },
     });
   } catch {
     throw new RealtorApiError('Network error. Please try again.', 0, 'network');
