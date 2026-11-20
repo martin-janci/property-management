@@ -1510,7 +1510,9 @@ mod tests {
         // unknown/EU/local region still map to Bratislava (existing default).
         assert_eq!(default_city_for_region("sk"), "Bratislava");
         assert_eq!(default_city_for_region("cz"), "Praha");
-        assert_eq!(default_city_for_region("de"), "Wien");
+        // `de` (Germany) seeds from a German capital, not the Austrian `at`/Wien.
+        assert_eq!(default_city_for_region("de"), "Berlin");
+        assert_eq!(default_city_for_region("at"), "Wien");
         assert_eq!(default_city_for_region("eu"), "Bratislava");
         assert_eq!(default_city_for_region("local"), "Bratislava");
         assert_eq!(default_city_for_region("zz-unknown"), "Bratislava");
