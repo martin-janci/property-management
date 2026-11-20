@@ -305,7 +305,7 @@ export function AgencyBranding() {
           <div className="preview-card" style={{ borderColor: primaryColor }}>
             <div className="preview-image">
               {branding?.coverImageUrl || coverPreview ? (
-                <img src={coverPreview || branding?.coverImageUrl} alt="Preview" />
+                <img src={coverPreview || branding?.coverImageUrl} alt={t('previewCoverAlt')} />
               ) : (
                 <div
                   className="preview-image-placeholder"
@@ -319,7 +319,11 @@ export function AgencyBranding() {
             <div className="preview-content">
               <div className="preview-header">
                 {(logoPreview || branding?.logoUrl) && (
-                  <img src={logoPreview || branding?.logoUrl} alt="Logo" className="preview-logo" />
+                  <img
+                    src={logoPreview || branding?.logoUrl}
+                    alt={t('previewLogoAlt')}
+                    className="preview-logo"
+                  />
                 )}
                 <div>
                   <h3 style={{ color: primaryColor }}>{agency?.name || t('yourAgency')}</h3>

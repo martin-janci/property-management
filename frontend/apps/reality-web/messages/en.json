@@ -1287,6 +1287,8 @@
     "accentColor": "Accent Color",
     "previewTitle": "Preview",
     "previewDesc": "See how your branding will appear on listings.",
+    "previewCoverAlt": "Cover preview",
+    "previewLogoAlt": "Logo preview",
     "featured": "Featured",
     "yourAgency": "Your Agency",
     "sampleTitle": "Sample Listing Title",

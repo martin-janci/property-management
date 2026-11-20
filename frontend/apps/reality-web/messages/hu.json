@@ -1280,6 +1280,8 @@
     "accentColor": "Kiemelő szín",
     "previewTitle": "Előnézet",
     "previewDesc": "Nézze meg, hogyan jelenik meg arculata a hirdetéseken.",
+    "previewCoverAlt": "Borítókép előnézete",
+    "previewLogoAlt": "Logó előnézete",
     "featured": "Kiemelt",
     "yourAgency": "Az Ön ügynöksége",
     "sampleTitle": "Minta hirdetéscím",

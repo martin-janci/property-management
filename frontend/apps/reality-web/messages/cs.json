@@ -1287,6 +1287,8 @@
     "accentColor": "Akcentová barva",
     "previewTitle": "Náhled",
     "previewDesc": "Podívejte se, jak se vaše značka zobrazí na nabídkách.",
+    "previewCoverAlt": "Náhled titulního obrázku",
+    "previewLogoAlt": "Náhled loga",
     "featured": "Doporučeno",
     "yourAgency": "Vaše agentura",
     "sampleTitle": "Ukázkový název nabídky",
