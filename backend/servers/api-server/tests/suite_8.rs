@@ -57,6 +57,8 @@ mod voice_oauth_exchange_auth_tests;
 mod voice_oauth_refresh_auth_tests;
 #[path = "suites/voice_oauth_token_encryption_roundtrip_tests.rs"]
 mod voice_oauth_token_encryption_roundtrip_tests;
+#[path = "suites/voice_webhook_signature_before_auth_tests.rs"]
+mod voice_webhook_signature_before_auth_tests;
 #[path = "suites/voting_behaviour_tests.rs"]
 mod voting_behaviour_tests;
 #[path = "suites/voting_happy_path_tests.rs"]
