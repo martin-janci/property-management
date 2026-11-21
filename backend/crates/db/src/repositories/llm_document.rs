@@ -741,9 +741,9 @@ impl LlmDocumentRepository {
 
     /// Search documents by embedding vector using cosine similarity.
     ///
-    /// Story 97.2: Implements semantic similarity search for RAG.
-    /// When pgvector extension is enabled, this uses native vector operations.
-    /// Otherwise, falls back to application-level cosine similarity calculation.
+    /// Story 97.2: Implements semantic similarity search for RAG over the JSONB
+    /// `embedding` column, computing cosine similarity in the application. For
+    /// native pgvector search use `search_documents_pgvector`.
     ///
     /// Returns document chunks ordered by relevance (highest similarity first).
     ///
@@ -759,59 +759,14 @@ impl LlmDocumentRepository {
     ) -> Result<Vec<(DocumentEmbedding, f64)>, SqlxError> {
         let min_sim = min_similarity.unwrap_or(0.5);
 
-        // First, try to use pgvector if available (native cosine similarity)
-        // Check if pgvector extension exists
-        let pgvector_available: Option<bool> = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'vector')",
-        )
-        .fetch_optional(&mut *conn)
-        .await?;
-
-        if pgvector_available == Some(true) {
-            // Use pgvector's native cosine similarity (<=> operator)
-            // Note: Requires embedding column to be of type vector(1536)
-            let results: Vec<DocumentEmbedding> = sqlx::query_as::<_, DocumentEmbedding>(
-                r#"
-                SELECT de.*
-                FROM document_embeddings de
-                WHERE de.organization_id = $1
-                  AND de.embedding IS NOT NULL
-                ORDER BY de.embedding::vector <=> $2::vector
-                LIMIT $3
-                "#,
-            )
-            .bind(organization_id)
-            .bind(serde_json::to_value(query_embedding).unwrap_or_default())
-            .bind(limit)
-            .fetch_all(&mut *conn)
-            .await?;
-
-            // Calculate similarity scores for the results
-            let results_with_scores: Vec<(DocumentEmbedding, f64)> = results
-                .into_iter()
-                .filter_map(|doc| {
-                    let doc_embedding: Option<Vec<f32>> = doc.embedding.as_ref().and_then(|e| {
-                        serde_json::from_value(serde_json::Value::Array(
-                            e.iter().map(|v| serde_json::Value::from(*v)).collect(),
-                        ))
-                        .ok()
-                    });
-
-                    if let Some(ref emb) = doc_embedding {
-                        let similarity = cosine_similarity(query_embedding, emb);
-                        if similarity >= min_sim {
-                            return Some((doc, similarity));
-                        }
-                    }
-                    None
-                })
-                .collect();
-
-            return Ok(results_with_scores);
-        }
-
-        // Fallback: Load all embeddings and compute similarity in application
-        // This is less efficient but works without pgvector
+        // Application-level cosine similarity over the JSONB `embedding` column.
+        //
+        // This used to have a "pgvector fast path" that ordered by
+        // `de.embedding::vector`, but `embedding` is JSONB and Postgres has no
+        // jsonb→vector cast, so on any DB with pgvector installed the call
+        // failed outright (BIT-352). The native pgvector search lives in
+        // `search_documents_pgvector` (SQL function over `embedding_vector`),
+        // which only falls back here when that function is absent.
         let all_docs = sqlx::query_as::<_, DocumentEmbedding>(
             r#"
             SELECT * FROM document_embeddings

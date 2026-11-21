@@ -21,8 +21,11 @@
 //! realigns the view; the stats assertions below are the regression guard for
 //! that fix, and would fail on `dev` before 00203.
 //!
-//! CI runs against stock PostgreSQL **without** the pgvector extension, so
-//! these tests deliberately drive the JSONB-fallback code paths. They connect
+//! The tests run both with and without the pgvector extension (CI has it).
+//! `search_documents_by_embedding` is always the application-level JSONB
+//! search; `search_documents_pgvector` uses the SQL function when pgvector is
+//! installed, so the provenance test seeds 1536-dim vectors that fit
+//! `embedding_vector vector(1536)`. They connect
 //! as the `#[sqlx::test]` superuser (RLS is exercised separately in
 //! `llm_document_rls_repo_tests.rs`); the focus here is retrieval correctness
 //! and the stats-view contract.
@@ -38,15 +41,32 @@
 //! group. The provenance retrieval-filter contract (#2239) lives in its own
 //! function `search_documents_pgvector_model_filter_provenance` so the regression
 //! guard is an independently-named case with a small blast radius (#2272) rather
-//! than section E buried inside the combined test. Both functions are `#[ignore]`d
-//! under the BIT-351 quarantine and only run once the DB lane is repaired
-//! (BIT-352); prefer consolidating new assertions into an existing function over
+//! than section E buried inside the combined test. Prefer consolidating new assertions into an existing function over
 //! adding a fresh migrator run unless a guard genuinely warrants its own case.
 
 use crate::common::seed_org;
 use db::repositories::LlmDocumentRepository;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+/// Whether migration 00081 installed the pgvector search function (only when
+/// the pgvector extension is available on the server).
+async fn pgvector_search_available(pool: &PgPool) -> bool {
+    sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'search_similar_documents')",
+    )
+    .fetch_one(pool)
+    .await
+    .expect("probe pgvector search function")
+}
+
+/// A 1536-dim unit vector along axis `i` — the dimension of
+/// `document_embeddings.embedding_vector` when pgvector is installed.
+fn axis_1536(i: usize) -> Vec<f32> {
+    let mut v = vec![0.0_f32; 1536];
+    v[i] = 1.0;
+    v
+}
 
 async fn set_super_ctx(pool: &PgPool) {
     sqlx::query("SELECT set_request_context($1, $2, $3)")
@@ -107,7 +127,6 @@ async fn seed_document(pool: &PgPool, org_id: Uuid, created_by: Uuid, title: &st
 ///   C. Stats view: regression guard for migration 00203
 ///   D. Upsert identity + provenance persisted into metadata (Story 84.5 / #2201)
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3-dim vectors against vector(1536). Passes only on a DB without pgvector."]
 async fn rag_retrieval_correctness(pool: PgPool) {
     set_super_ctx(&pool).await;
     let repo = LlmDocumentRepository::new(pool.clone());
@@ -199,17 +218,20 @@ async fn rag_retrieval_correctness(pool: PgPool) {
     assert_eq!(limited.len(), 1, "limit=1 must return a single chunk");
     assert_eq!(limited[0].0.chunk_text, "near chunk");
 
-    // The pgvector wrapper falls back to the same path when the SQL function
-    // is absent (CI), so it must return the same top hit.
-    let via_wrapper = repo
-        .search_documents_pgvector(&mut conn, org_a, &query, 10, Some(0.5), None)
-        .await
-        .expect("pgvector wrapper search");
-    assert_eq!(
-        via_wrapper.first().map(|r| r.0.chunk_text.as_str()),
-        Some("near chunk"),
-        "search_documents_pgvector fallback must match the application search"
-    );
+    // Without pgvector the wrapper falls back to the same JSONB path, so it must
+    // return the same top hit. With pgvector it searches `embedding_vector`
+    // instead (covered by `search_documents_pgvector_model_filter_provenance`).
+    if !pgvector_search_available(&pool).await {
+        let via_wrapper = repo
+            .search_documents_pgvector(&mut conn, org_a, &query, 10, Some(0.5), None)
+            .await
+            .expect("pgvector wrapper search");
+        assert_eq!(
+            via_wrapper.first().map(|r| r.0.chunk_text.as_str()),
+            Some("near chunk"),
+            "search_documents_pgvector fallback must match the application search"
+        );
+    }
 
     // -------------------------------------------------------------------------
     // B. Org-scoping IDOR: a query in org A must never surface org B's chunks
@@ -310,10 +332,24 @@ async fn rag_retrieval_correctness(pool: PgPool) {
 
     assert_eq!(stats.indexed_documents, 1, "one source document indexed");
     assert_eq!(stats.total_chunks, 3, "three chunks total");
-    assert_eq!(
-        stats.chunks_with_vector, 2,
-        "two chunks carry an embedding (JSONB fallback counts as 'with vector')"
-    );
+    let pgvector = pgvector_search_available(&pool).await;
+    if pgvector {
+        // With pgvector the view counts `embedding_vector`; JSONB-only rows from
+        // `create_embedding` are reported as pending migration instead.
+        assert_eq!(
+            stats.chunks_with_vector, 0,
+            "no chunk has embedding_vector yet"
+        );
+        assert_eq!(
+            stats.chunks_pending_migration, 2,
+            "two JSONB embeddings await migration to embedding_vector"
+        );
+    } else {
+        assert_eq!(
+            stats.chunks_with_vector, 2,
+            "two chunks carry an embedding (JSONB fallback counts as 'with vector')"
+        );
+    }
     assert!(
         stats.avg_chunk_length > 0,
         "avg chunk length should be computed, got {}",
@@ -326,8 +362,9 @@ async fn rag_retrieval_correctness(pool: PgPool) {
 
     // -------------------------------------------------------------------------
     // D. Upsert wrapper (Story 84.5): insert-then-update identity on
-    //    (org, document, chunk_index) via the JSONB fallback path (CI has no
-    //    pgvector, so the SQL function from 00081 is absent).
+    //    (org, document, chunk_index). With pgvector this goes through the
+    //    00081 SQL function into `embedding_vector`; without it, the JSONB
+    //    fallback. 1536-dim vectors fit both.
     // -------------------------------------------------------------------------
 
     let org_up = seed_org(&pool, "rag-upsert-a").await;
@@ -341,7 +378,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
             doc_up,
             0,
             "original chunk text",
-            &[1.0, 0.0, 0.0],
+            &axis_1536(0),
             "test-model-v1",
             serde_json::json!({"rev": 1}),
         )
@@ -355,7 +392,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
             doc_up,
             0,
             "revised chunk text",
-            &[0.0, 1.0, 0.0],
+            &axis_1536(1),
             "test-model-v1",
             serde_json::json!({"rev": 2}),
         )
@@ -373,10 +410,11 @@ async fn rag_retrieval_correctness(pool: PgPool) {
         .expect("find upserted chunks");
     assert_eq!(chunks.len(), 1, "upsert must not duplicate the chunk");
     assert_eq!(chunks[0].chunk_text, "revised chunk text");
-    assert_eq!(
-        chunks[0].embedding.as_deref(),
-        Some(&[0.0_f32, 1.0, 0.0][..])
-    );
+    if !pgvector {
+        // The JSONB fallback stores the vector in `embedding`; under pgvector it
+        // lives in `embedding_vector`, which the model does not project.
+        assert_eq!(chunks[0].embedding.as_deref(), Some(&axis_1536(1)[..]));
+    }
     assert_eq!(chunks[0].metadata["rev"], 2);
     // Provenance (#2201): the model that produced the vector is folded into
     // metadata on upsert so retrieval can filter to a single embedding space.
@@ -393,7 +431,7 @@ async fn rag_retrieval_correctness(pool: PgPool) {
             doc_up,
             1,
             "second chunk",
-            &[0.0, 0.0, 1.0],
+            &axis_1536(2),
             "test-model-v1",
             serde_json::json!({}),
         )
@@ -419,7 +457,6 @@ async fn rag_retrieval_correctness(pool: PgPool) {
 ///     backward-compat behaviour of `filter_by_embedding_model`),
 ///   * `limit` is honoured after over-fetch (×4, cap 200) + post-filter.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3-dim vectors against vector(1536). Passes only on a DB without pgvector."]
 async fn search_documents_pgvector_model_filter_provenance(pool: PgPool) {
     set_super_ctx(&pool).await;
     let repo = LlmDocumentRepository::new(pool.clone());
@@ -432,7 +469,8 @@ async fn search_documents_pgvector_model_filter_provenance(pool: PgPool) {
     // All three chunks share the query vector, so cosine similarity is ~1.0 for
     // each and they all clear the min_similarity floor — the ONLY thing that can
     // remove a row from the result set is the model provenance filter.
-    let prov_vec = [1.0_f32, 0.0, 0.0];
+    // 1536 dims so the rows also land in `embedding_vector` under pgvector.
+    let prov_vec = axis_1536(0);
 
     // chunk 0: matching model — upsert folds `embedding_model` into metadata.
     repo.upsert_embedding(
@@ -464,19 +502,29 @@ async fn search_documents_pgvector_model_filter_provenance(pool: PgPool) {
     .expect("seed mismatched-model chunk");
 
     // chunk 2: legacy row indexed before provenance existed — metadata carries
-    // NO `embedding_model` key, so `create_embedding` (not `upsert_embedding`,
-    // which always stamps the model) writes it directly.
-    repo.create_embedding(
-        &mut *conn,
+    // NO `embedding_model` key. `upsert_embedding` always stamps the model (and
+    // is the only writer that fills `embedding_vector` under pgvector), so seed
+    // through it and then strip the key, as a pre-#2201 row would look.
+    repo.upsert_embedding(
+        &mut conn,
         org_prov,
         doc_prov,
         2,
         "prov legacy untagged",
-        Some(prov_vec.to_vec()),
+        &prov_vec,
+        "legacy",
         serde_json::json!({"note": "no embedding_model"}),
     )
     .await
     .expect("seed legacy untagged chunk");
+    sqlx::query(
+        "UPDATE document_embeddings SET metadata = metadata - 'embedding_model' \
+         WHERE document_id = $1 AND chunk_index = 2",
+    )
+    .bind(doc_prov)
+    .execute(&mut *conn)
+    .await
+    .expect("strip embedding_model from legacy chunk");
 
     let prov_query = prov_vec.to_vec();
 
