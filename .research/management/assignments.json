@@ -113,18 +113,18 @@
     {
       "task_id": "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
       "branch": "auto-impl/repeated-churn-backend-servers-api-serve-41df4a81",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-21T00:36:31Z",
-      "last_updated": "2026-11-21T00:36:31Z",
-      "status_changed_at": "2026-11-21T00:36:31Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-21T01:11:24Z",
+      "status_changed_at": "2026-11-21T01:11:24Z",
+      "pr_number": 3685,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3685",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3685 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=oauth suite already split in #3658; extracted token.rs(1396LoC) into token_refresh_rotation/token_grant_validation/token_provider_security; 28 sqlx tests preserved; fmt+clippy+test --no-run green; DB tests deferred to CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -133,5 +133,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-21T00:53:22Z"
+  "generated": "2026-11-21T01:11:24Z"
 }
