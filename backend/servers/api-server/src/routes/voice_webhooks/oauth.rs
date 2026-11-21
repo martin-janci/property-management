@@ -46,7 +46,7 @@ use uuid::Uuid;
 // enum lets both shapes flow through a single handler `Result` while each
 // serialises to its own wire form; the `From` impls make `?` carry either an
 // `ErrorResponse` tuple or an `OAuthError` tuple unchanged.
-enum VoiceOAuthHandlerError {
+pub(crate) enum VoiceOAuthHandlerError {
     /// PPT-standard `{code, message, …}` error envelope.
     Standard(StatusCode, Json<ErrorResponse>),
     /// RFC 6749 §5.2 `{error, error_description?}` OAuth error.
