@@ -21,7 +21,18 @@ const contactsApiList = vi.fn();
 const invoicesApiCreate = vi.fn();
 const invoicesApiDelete = vi.fn();
 
+vi.mock('../../../hooks/useOrganization', () => ({
+  useOrganization: () => ({ organizationId: 'org-1' }),
+}));
+
+const invoicesApiGet = vi.fn();
+const invoicesApiListItems = vi.fn();
+const invoicesApiUpdate = vi.fn();
+
 vi.mock('@ppt/api-client', () => ({
+  invoicesApiGet: (args: unknown) => invoicesApiGet(args),
+  invoicesApiListItems: (args: unknown) => invoicesApiListItems(args),
+  invoicesApiUpdate: (args: unknown) => invoicesApiUpdate(args),
   invoicesApiList: () => invoicesApiList(),
   contactsApiList: () => contactsApiList(),
   invoicesApiCreate: (args: unknown) => invoicesApiCreate(args),
@@ -36,14 +47,18 @@ vi.mock('../../../components', async (importOriginal) => ({
   useToast: () => ({ showToast: mockShowToast }),
 }));
 
+// Wire shape: snake_case, decimals as strings (rust_decimal).
 const invoice = {
   id: 'inv-1',
+  contact_id: 'contact-1',
   number: 'INV-001',
-  dueDate: '2026-09-01',
-  issueDate: '2026-08-01',
+  due_date: '2026-09-01',
+  issue_date: '2026-08-01',
   currency: 'CZK',
-  totalAmount: 121,
-  vatAmount: 21,
+  total_amount: '121.00',
+  base_amount: '100.00',
+  vat_amount: '21.00',
+  paid_amount: '0',
   status: 'issued',
 };
 
@@ -144,6 +159,77 @@ describe('AccountingInvoiceManagementPage — error surfacing', () => {
           // Raw `Error.message` ("Create exploded") is mapped to the safe,
           // localized default copy rather than shown verbatim to the user.
           message: 'An unexpected error occurred.',
+        })
+      )
+    );
+  });
+
+  it('sends the snake_case wire body with the session tenant_id', async () => {
+    invoicesApiCreate.mockResolvedValue({ data: invoice });
+    const { container } = render(renderPage());
+    await userEvent.click(screen.getByRole('button', { name: /create invoice/i }));
+    await screen.findByText('New Invoice');
+    await userEvent.selectOptions(
+      container.querySelector('select') as HTMLSelectElement,
+      'contact-1'
+    );
+    fireEvent.change(container.querySelector('input[type="text"]') as HTMLInputElement, {
+      target: { value: 'INV-003' },
+    });
+    const dateInputs = Array.from(
+      container.querySelectorAll('input[type="date"]')
+    ) as HTMLInputElement[];
+    const dueDate = dateInputs.find((d) => d.value === '') ?? dateInputs[dateInputs.length - 1];
+    fireEvent.change(dueDate, { target: { value: '2026-12-31' } });
+    fireEvent.change(
+      container.querySelector('input[placeholder="Item description"]') as HTMLInputElement,
+      { target: { value: 'Consulting' } }
+    );
+    const submit = screen
+      .getAllByRole('button', { name: /create invoice/i })
+      .find((b) => (b as HTMLButtonElement).type === 'submit') as HTMLButtonElement;
+    await userEvent.click(submit);
+
+    await waitFor(() => expect(invoicesApiCreate).toHaveBeenCalledTimes(1));
+    const { body } = invoicesApiCreate.mock.calls[0][0] as { body: Record<string, unknown> };
+    expect(body).toMatchObject({
+      tenant_id: 'org-1',
+      contact_id: 'contact-1',
+      number: 'INV-003',
+      due_date: '2026-12-31',
+      items: [expect.objectContaining({ description: 'Consulting', qty: '1', unit_price: '0' })],
+    });
+    expect(body).not.toHaveProperty('contactId');
+  });
+
+  it('opens the invoice detail and records a full payment as paid', async () => {
+    invoicesApiGet.mockResolvedValue({ data: invoice });
+    invoicesApiListItems.mockResolvedValue({
+      data: [
+        {
+          id: 'item-1',
+          description: 'Consulting',
+          qty: '1',
+          unit_price: '100.00',
+          vat_rate: '21',
+          total_amount: '121.00',
+        },
+      ],
+    });
+    invoicesApiUpdate.mockResolvedValue({ data: { ...invoice, status: 'paid' } });
+    render(renderPage());
+
+    await userEvent.click(await screen.findByText('INV-001'));
+    await screen.findByText('Consulting');
+    await userEvent.click(
+      screen.getAllByRole('button', { name: /record payment/i }).at(-1) as HTMLElement
+    );
+
+    await waitFor(() =>
+      expect(invoicesApiUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          path: { id: 'inv-1' },
+          body: { paid_amount: '121.00', status: 'paid' },
         })
       )
     );

@@ -91,7 +91,7 @@ export type AccountingContact = {
     /**
      * Tenant identifier
      */
-    tenantId: SharedUuid;
+    tenant_id: SharedUuid;
     /**
      * Contact name
      */
@@ -107,7 +107,7 @@ export type AccountingContact = {
     /**
      * Email address
      */
-    email?: SharedEmail;
+    email?: string;
     /**
      * Phone number
      */
@@ -123,19 +123,11 @@ export type AccountingContact = {
     /**
      * Creation timestamp
      */
-    createdAt: SharedDateTime;
+    created_at: SharedDateTime;
     /**
      * Last update timestamp
      */
-    updatedAt: SharedDateTime;
-    /**
-     * ID of user who created this entity
-     */
-    createdBy?: SharedUuid;
-    /**
-     * ID of user who last updated this entity
-     */
-    updatedBy?: SharedUuid;
+    updated_at: SharedDateTime;
 };
 
 /**
@@ -147,31 +139,35 @@ export type AccountingCreateInvoiceItem = {
      */
     description: string;
     /**
-     * Quantity
+     * Quantity (decimal string)
      */
-    qty: number;
+    qty: string;
     /**
-     * Unit price excluding VAT
+     * Unit price excluding VAT (decimal string)
      */
-    unitPrice: number;
+    unit_price: string;
     /**
-     * VAT rate percentage
+     * VAT rate percentage (decimal string)
      */
-    vatRate: number;
+    vat_rate: string;
     /**
-     * Optional named VAT rate (overrides vatRate if provided)
+     * Optional named VAT rate (overrides vat_rate if provided)
      */
-    vatRateType?: AccountingVatRate;
+    vat_rate_type?: AccountingVatRate;
 };
 
 /**
- * Request to create a new invoice
+ * Request to create a new invoice (the tenant comes from the session)
  */
 export type AccountingCreateInvoiceRequest = {
     /**
+     * Ignored: overwritten with the session tenant. Required by the server's body shape.
+     */
+    tenant_id: SharedUuid;
+    /**
      * Contact identifier
      */
-    contactId: SharedUuid;
+    contact_id: SharedUuid;
     /**
      * Invoice number
      */
@@ -179,23 +175,23 @@ export type AccountingCreateInvoiceRequest = {
     /**
      * Issue date
      */
-    issueDate: SharedDate;
+    issue_date: SharedDate;
     /**
      * Due date
      */
-    dueDate: SharedDate;
+    due_date: SharedDate;
     /**
      * Taxable supply date
      */
-    taxableSupplyDate?: SharedDate;
+    taxable_supply_date?: SharedDate;
     /**
-     * Currency code (e.g., CZK)
+     * Currency code (CZK or EUR)
      */
     currency: string;
     /**
      * Variable symbol
      */
-    variableSymbol?: string;
+    variable_symbol?: string;
     /**
      * Initial status
      */
@@ -221,11 +217,11 @@ export type AccountingInvoice = {
     /**
      * Tenant identifier
      */
-    tenantId: SharedUuid;
+    tenant_id: SharedUuid;
     /**
      * Contact identifier
      */
-    contactId: SharedUuid;
+    contact_id: SharedUuid;
     /**
      * Invoice number
      */
@@ -233,59 +229,51 @@ export type AccountingInvoice = {
     /**
      * Issue date
      */
-    issueDate: SharedDate;
+    issue_date: SharedDate;
     /**
      * Due date
      */
-    dueDate: SharedDate;
+    due_date: SharedDate;
     /**
      * Taxable supply date
      */
-    taxableSupplyDate?: SharedDate;
+    taxable_supply_date?: SharedDate;
     /**
      * Currency code (e.g., CZK)
      */
     currency: string;
     /**
-     * Total amount including VAT
+     * Total amount including VAT (decimal string)
      */
-    totalAmount: number;
+    total_amount: string;
     /**
-     * Base amount excluding VAT
+     * Base amount excluding VAT (decimal string)
      */
-    baseAmount: number;
+    base_amount: string;
     /**
-     * VAT amount
+     * VAT amount (decimal string)
      */
-    vatAmount: number;
+    vat_amount: string;
     /**
      * Variable symbol for payment identification
      */
-    variableSymbol?: string;
+    variable_symbol?: string;
     /**
      * Current status
      */
     status: AccountingInvoiceStatus;
     /**
-     * Amount already paid
+     * Amount already paid (decimal string)
      */
-    paidAmount: number;
+    paid_amount: string;
     /**
      * Creation timestamp
      */
-    createdAt: SharedDateTime;
+    created_at: SharedDateTime;
     /**
      * Last update timestamp
      */
-    updatedAt: SharedDateTime;
-    /**
-     * ID of user who created this entity
-     */
-    createdBy?: SharedUuid;
-    /**
-     * ID of user who last updated this entity
-     */
-    updatedBy?: SharedUuid;
+    updated_at: SharedDateTime;
 };
 
 /**
@@ -299,45 +287,45 @@ export type AccountingInvoiceItem = {
     /**
      * Invoice identifier
      */
-    invoiceId: SharedUuid;
+    invoice_id: SharedUuid;
     /**
      * Tenant identifier
      */
-    tenantId: SharedUuid;
+    tenant_id: SharedUuid;
     /**
      * Description of the item
      */
     description: string;
     /**
-     * Quantity
+     * Quantity (decimal string)
      */
-    qty: number;
+    qty: string;
     /**
-     * Unit price excluding VAT
+     * Unit price excluding VAT (decimal string)
      */
-    unitPrice: number;
+    unit_price: string;
     /**
-     * VAT rate percentage
+     * VAT rate percentage (decimal string)
      */
-    vatRate: number;
+    vat_rate: string;
     /**
-     * Total amount including VAT
+     * Total amount including VAT (decimal string)
      */
-    totalAmount: number;
+    total_amount: string;
     /**
-     * Base amount excluding VAT
+     * Base amount excluding VAT (decimal string)
      */
-    baseAmount: number;
+    base_amount: string;
     /**
-     * VAT amount
+     * VAT amount (decimal string)
      */
-    vatAmount: number;
+    vat_amount: string;
 };
 
 /**
- * Status of an issued invoice
+ * Status of an issued invoice (UC-ACC-05.17 lifecycle)
  */
-export type AccountingInvoiceStatus = 'draft' | 'issued' | 'paid' | 'partially_paid' | 'overdue';
+export type AccountingInvoiceStatus = 'draft' | 'issued' | 'sent' | 'paid' | 'partially_paid' | 'overdue' | 'cancelled';
 
 /**
  * A suggested or decided match between a statement line and an invoice
@@ -389,7 +377,7 @@ export type AccountingUpdateInvoiceRequest = {
     /**
      * Contact identifier
      */
-    contactId?: SharedUuid;
+    contact_id?: SharedUuid;
     /**
      * Invoice number
      */
@@ -397,15 +385,15 @@ export type AccountingUpdateInvoiceRequest = {
     /**
      * Issue date
      */
-    issueDate?: SharedDate;
+    issue_date?: SharedDate;
     /**
      * Due date
      */
-    dueDate?: SharedDate;
+    due_date?: SharedDate;
     /**
      * Taxable supply date
      */
-    taxableSupplyDate?: SharedDate;
+    taxable_supply_date?: SharedDate;
     /**
      * Currency code
      */
@@ -413,15 +401,15 @@ export type AccountingUpdateInvoiceRequest = {
     /**
      * Variable symbol
      */
-    variableSymbol?: string;
+    variable_symbol?: string;
     /**
      * Status
      */
     status?: AccountingInvoiceStatus;
     /**
-     * Paid amount
+     * Paid amount (decimal string)
      */
-    paidAmount?: number;
+    paid_amount?: string;
 };
 
 /**

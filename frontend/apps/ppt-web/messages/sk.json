@@ -7043,7 +7043,9 @@
       "issued": "Vystavená",
       "paid": "Zaplatená",
       "partiallyPaid": "Čiastočne zaplatená",
-      "overdue": "Po splatnosti"
+      "overdue": "Po splatnosti",
+      "sent": "Odoslaná",
+      "cancelled": "Stornovaná"
     },
     "form": {
       "contact": "Kontakt",
@@ -7125,6 +7127,32 @@
       "label": "Sekcie účtovníctva",
       "invoices": "Faktúry",
       "paymentMatching": "Párovanie platieb"
+    },
+    "detail": {
+      "back": "Späť na faktúry",
+      "title": "Faktúra {{number}}",
+      "issueDate": "Dátum vystavenia",
+      "dueDate": "Dátum splatnosti",
+      "variableSymbol": "Variabilný symbol",
+      "paidAmount": "Uhradené",
+      "items": "Položky",
+      "description": "Popis",
+      "qty": "Množstvo",
+      "unitPrice": "Jednotková cena",
+      "vatRate": "DPH",
+      "lineTotal": "Spolu",
+      "base": "Základ",
+      "vat": "DPH",
+      "total": "Spolu",
+      "draftHint": "Faktúra je koncept. Vystavte ju, aby sa dala uhradiť.",
+      "issue": "Vystaviť faktúru",
+      "issued": "Faktúra bola vystavená",
+      "recordPayment": "Zaznamenať platbu",
+      "remaining": "Zostáva uhradiť: {{amount}} {{currency}}",
+      "paymentAmount": "Suma",
+      "paymentRecorded": "Platba bola zaznamenaná",
+      "invalidPayment": "Zadajte sumu väčšiu ako 0",
+      "updateFailed": "Faktúru sa nepodarilo aktualizovať"
     }
   },
   "shell": {

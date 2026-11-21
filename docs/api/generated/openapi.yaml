@@ -5941,16 +5941,16 @@ components:
       type: object
       required:
         - id
-        - tenantId
+        - tenant_id
         - name
-        - createdAt
-        - updatedAt
+        - created_at
+        - updated_at
       properties:
         id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Unique identifier
-        tenantId:
+        tenant_id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Tenant identifier
@@ -5964,8 +5964,7 @@ components:
           type: string
           description: DIC (tax identification number)
         email:
-          allOf:
-            - $ref: '#/components/schemas/Shared.email'
+          type: string
           description: Email address
         phone:
           type: string
@@ -5976,84 +5975,78 @@ components:
         iban:
           type: string
           description: IBAN for payments
-        createdAt:
+        created_at:
           allOf:
             - $ref: '#/components/schemas/Shared.dateTime'
           description: Creation timestamp
-        updatedAt:
+        updated_at:
           allOf:
             - $ref: '#/components/schemas/Shared.dateTime'
           description: Last update timestamp
-        createdBy:
-          allOf:
-            - $ref: '#/components/schemas/Shared.uuid'
-          description: ID of user who created this entity
-        updatedBy:
-          allOf:
-            - $ref: '#/components/schemas/Shared.uuid'
-          description: ID of user who last updated this entity
       description: Native contact (CRM)
     Accounting.CreateInvoiceItem:
       type: object
       required:
         - description
         - qty
-        - unitPrice
-        - vatRate
+        - unit_price
+        - vat_rate
       properties:
         description:
           type: string
           description: Description
         qty:
-          type: number
-          format: double
-          description: Quantity
-        unitPrice:
-          type: number
-          format: double
-          description: Unit price excluding VAT
-        vatRate:
-          type: number
-          format: double
-          description: VAT rate percentage
-        vatRateType:
+          type: string
+          description: Quantity (decimal string)
+        unit_price:
+          type: string
+          description: Unit price excluding VAT (decimal string)
+        vat_rate:
+          type: string
+          description: VAT rate percentage (decimal string)
+        vat_rate_type:
           allOf:
             - $ref: '#/components/schemas/Accounting.VatRate'
-          description: Optional named VAT rate (overrides vatRate if provided)
+          description: Optional named VAT rate (overrides vat_rate if provided)
       description: Request to create a new invoice item
     Accounting.CreateInvoiceRequest:
       type: object
       required:
-        - contactId
+        - tenant_id
+        - contact_id
         - number
-        - issueDate
-        - dueDate
+        - issue_date
+        - due_date
         - currency
         - items
       properties:
-        contactId:
+        tenant_id:
+          allOf:
+            - $ref: '#/components/schemas/Shared.uuid'
+          description: "Ignored: overwritten with the session tenant. Required by the server's body shape."
+        contact_id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Contact identifier
         number:
           type: string
           description: Invoice number
-        issueDate:
+        issue_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Issue date
-        dueDate:
+        due_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Due date
-        taxableSupplyDate:
+        taxable_supply_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Taxable supply date
         currency:
           type: string
-          description: Currency code (e.g., CZK)
-        variableSymbol:
+          description: Currency code (CZK or EUR)
+        variable_symbol:
           type: string
           description: Variable symbol
         status:
@@ -6068,118 +6061,106 @@ components:
         country:
           type: string
           description: Optional country code (e.g., 'CZ', 'SK') to resolve named VAT rates
-      description: Request to create a new invoice
+      description: Request to create a new invoice (the tenant comes from the session)
     Accounting.Invoice:
       type: object
       required:
         - id
-        - tenantId
-        - contactId
+        - tenant_id
+        - contact_id
         - number
-        - issueDate
-        - dueDate
+        - issue_date
+        - due_date
         - currency
-        - totalAmount
-        - baseAmount
-        - vatAmount
+        - total_amount
+        - base_amount
+        - vat_amount
         - status
-        - paidAmount
-        - createdAt
-        - updatedAt
+        - paid_amount
+        - created_at
+        - updated_at
       properties:
         id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Unique identifier
-        tenantId:
+        tenant_id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Tenant identifier
-        contactId:
+        contact_id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Contact identifier
         number:
           type: string
           description: Invoice number
-        issueDate:
+        issue_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Issue date
-        dueDate:
+        due_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Due date
-        taxableSupplyDate:
+        taxable_supply_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Taxable supply date
         currency:
           type: string
           description: Currency code (e.g., CZK)
-        totalAmount:
-          type: number
-          format: double
-          description: Total amount including VAT
-        baseAmount:
-          type: number
-          format: double
-          description: Base amount excluding VAT
-        vatAmount:
-          type: number
-          format: double
-          description: VAT amount
-        variableSymbol:
+        total_amount:
+          type: string
+          description: Total amount including VAT (decimal string)
+        base_amount:
+          type: string
+          description: Base amount excluding VAT (decimal string)
+        vat_amount:
+          type: string
+          description: VAT amount (decimal string)
+        variable_symbol:
           type: string
           description: Variable symbol for payment identification
         status:
           allOf:
             - $ref: '#/components/schemas/Accounting.InvoiceStatus'
           description: Current status
-        paidAmount:
-          type: number
-          format: double
-          description: Amount already paid
-        createdAt:
+        paid_amount:
+          type: string
+          description: Amount already paid (decimal string)
+        created_at:
           allOf:
             - $ref: '#/components/schemas/Shared.dateTime'
           description: Creation timestamp
-        updatedAt:
+        updated_at:
           allOf:
             - $ref: '#/components/schemas/Shared.dateTime'
           description: Last update timestamp
-        createdBy:
-          allOf:
-            - $ref: '#/components/schemas/Shared.uuid'
-          description: ID of user who created this entity
-        updatedBy:
-          allOf:
-            - $ref: '#/components/schemas/Shared.uuid'
-          description: ID of user who last updated this entity
       description: Native issued invoice
     Accounting.InvoiceItem:
       type: object
       required:
         - id
-        - invoiceId
-        - tenantId
+        - invoice_id
+        - tenant_id
         - description
         - qty
-        - unitPrice
-        - vatRate
-        - totalAmount
-        - baseAmount
-        - vatAmount
+        - unit_price
+        - vat_rate
+        - total_amount
+        - base_amount
+        - vat_amount
       properties:
         id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Unique identifier
-        invoiceId:
+        invoice_id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Invoice identifier
-        tenantId:
+        tenant_id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Tenant identifier
@@ -6187,39 +6168,35 @@ components:
           type: string
           description: Description of the item
         qty:
-          type: number
-          format: double
-          description: Quantity
-        unitPrice:
-          type: number
-          format: double
-          description: Unit price excluding VAT
-        vatRate:
-          type: number
-          format: double
-          description: VAT rate percentage
-        totalAmount:
-          type: number
-          format: double
-          description: Total amount including VAT
-        baseAmount:
-          type: number
-          format: double
-          description: Base amount excluding VAT
-        vatAmount:
-          type: number
-          format: double
-          description: VAT amount
+          type: string
+          description: Quantity (decimal string)
+        unit_price:
+          type: string
+          description: Unit price excluding VAT (decimal string)
+        vat_rate:
+          type: string
+          description: VAT rate percentage (decimal string)
+        total_amount:
+          type: string
+          description: Total amount including VAT (decimal string)
+        base_amount:
+          type: string
+          description: Base amount excluding VAT (decimal string)
+        vat_amount:
+          type: string
+          description: VAT amount (decimal string)
       description: Line item for an invoice
     Accounting.InvoiceStatus:
       type: string
       enum:
         - draft
         - issued
+        - sent
         - paid
         - partially_paid
         - overdue
-      description: Status of an issued invoice
+        - cancelled
+      description: Status of an issued invoice (UC-ACC-05.17 lifecycle)
     Accounting.PaymentMatch:
       type: object
       required:
@@ -6272,39 +6249,38 @@ components:
     Accounting.UpdateInvoiceRequest:
       type: object
       properties:
-        contactId:
+        contact_id:
           allOf:
             - $ref: '#/components/schemas/Shared.uuid'
           description: Contact identifier
         number:
           type: string
           description: Invoice number
-        issueDate:
+        issue_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Issue date
-        dueDate:
+        due_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Due date
-        taxableSupplyDate:
+        taxable_supply_date:
           allOf:
             - $ref: '#/components/schemas/Shared.date'
           description: Taxable supply date
         currency:
           type: string
           description: Currency code
-        variableSymbol:
+        variable_symbol:
           type: string
           description: Variable symbol
         status:
           allOf:
             - $ref: '#/components/schemas/Accounting.InvoiceStatus'
           description: Status
-        paidAmount:
-          type: number
-          format: double
-          description: Paid amount
+        paid_amount:
+          type: string
+          description: Paid amount (decimal string)
       description: Request to update an existing invoice
     Accounting.VatRate:
       type: string

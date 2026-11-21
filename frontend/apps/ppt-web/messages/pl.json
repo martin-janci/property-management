@@ -7237,7 +7237,9 @@
       "issued": "Wystawiona",
       "paid": "Opłacona",
       "partiallyPaid": "Częściowo opłacona",
-      "overdue": "Przeterminowana"
+      "overdue": "Przeterminowana",
+      "sent": "Wysłana",
+      "cancelled": "Anulowana"
     },
     "form": {
       "contact": "Kontakt",
@@ -7319,6 +7321,32 @@
       "label": "Sekcje księgowości",
       "invoices": "Faktury",
       "paymentMatching": "Dopasowanie płatności"
+    },
+    "detail": {
+      "back": "Powrót do faktur",
+      "title": "Faktura {{number}}",
+      "issueDate": "Data wystawienia",
+      "dueDate": "Termin płatności",
+      "variableSymbol": "Symbol zmienny",
+      "paidAmount": "Zapłacono",
+      "items": "Pozycje",
+      "description": "Opis",
+      "qty": "Ilość",
+      "unitPrice": "Cena jednostkowa",
+      "vatRate": "VAT",
+      "lineTotal": "Razem",
+      "base": "Netto",
+      "vat": "VAT",
+      "total": "Razem",
+      "draftHint": "Ta faktura jest szkicem. Wystaw ją, aby przyjmować płatności.",
+      "issue": "Wystaw fakturę",
+      "issued": "Faktura wystawiona",
+      "recordPayment": "Zarejestruj płatność",
+      "remaining": "Pozostało: {{amount}} {{currency}}",
+      "paymentAmount": "Kwota",
+      "paymentRecorded": "Płatność zarejestrowana",
+      "invalidPayment": "Podaj kwotę większą od 0",
+      "updateFailed": "Nie udało się zaktualizować faktury"
     }
   },
   "shell": {

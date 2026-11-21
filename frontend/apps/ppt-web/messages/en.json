@@ -8549,7 +8549,9 @@
       "issued": "Issued",
       "paid": "Paid",
       "partiallyPaid": "Partially Paid",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "sent": "Sent",
+      "cancelled": "Cancelled"
     },
     "form": {
       "contact": "Contact",
@@ -8631,6 +8633,32 @@
       "label": "Accounting sections",
       "invoices": "Invoices",
       "paymentMatching": "Payment matching"
+    },
+    "detail": {
+      "back": "Back to invoices",
+      "title": "Invoice {{number}}",
+      "issueDate": "Issue date",
+      "dueDate": "Due date",
+      "variableSymbol": "Variable symbol",
+      "paidAmount": "Paid",
+      "items": "Line items",
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "vatRate": "VAT",
+      "lineTotal": "Total",
+      "base": "Base",
+      "vat": "VAT",
+      "total": "Total",
+      "draftHint": "This invoice is a draft. Issue it to start collecting payment.",
+      "issue": "Issue invoice",
+      "issued": "Invoice issued",
+      "recordPayment": "Record payment",
+      "remaining": "Remaining: {{amount}} {{currency}}",
+      "paymentAmount": "Amount",
+      "paymentRecorded": "Payment recorded",
+      "invalidPayment": "Enter an amount greater than 0",
+      "updateFailed": "Could not update the invoice"
     }
   },
   "shell": {
