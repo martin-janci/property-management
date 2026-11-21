@@ -322,4 +322,69 @@ class ListingModelsContractTest {
         val decoded: ListingDetail = json.decodeFromString(json.encodeToString(detail))
         assertEquals(detail, decoded)
     }
+
+    // -------------------------------------------------------------------
+    // slug propagation (#3616) — always-populated detail-lookup identifier
+    // -------------------------------------------------------------------
+
+    @Test
+    fun searchSummary_slug_reaches_domain() {
+        val wire =
+            WireListingSummary(
+                id = "11111111-1111-1111-1111-111111111111",
+                title = "Cosy 2br",
+                slug = "cosy-2br-11111111-1111-1111-1111-111111111111",
+                price = 250_000,
+            )
+        assertEquals(
+            "cosy-2br-11111111-1111-1111-1111-111111111111",
+            wire.toDomain().slug,
+        )
+    }
+
+    @Test
+    fun searchSummary_slug_falls_back_to_id_when_server_omits_it() {
+        // slug defaults to null on the lenient wire DTO; the domain model is
+        // always-populated, falling back to the bare UUID (still accepted by the
+        // detail endpoint) so a detail lookup is always possible.
+        val wire = WireListingSummary(id = "bare-uuid", title = "t", price = 1)
+        assertEquals("bare-uuid", wire.toDomain().slug)
+    }
+
+    @Test
+    fun featuredSummary_slug_reaches_domain() {
+        val wire =
+            WireRichListingSummary(
+                id = "22222222-2222-2222-2222-222222222222",
+                title = "Penthouse",
+                slug = "penthouse-22222222-2222-2222-2222-222222222222",
+                price = 1500,
+            )
+        assertEquals(
+            "penthouse-22222222-2222-2222-2222-222222222222",
+            wire.toDomain().slug,
+        )
+    }
+
+    @Test
+    fun listingSummary_decodes_slug_field() {
+        val raw =
+            """
+            {
+              "id": "lst-9",
+              "title": "With slug",
+              "slug": "with-slug-lst-9",
+              "type": "sale",
+              "category": "apartment",
+              "status": "active",
+              "price": 100,
+              "address": { "city": "Bratislava", "country": "SK" },
+              "created_at": "2026-04-26T10:00:00Z",
+              "updated_at": "2026-04-26T10:00:00Z"
+            }
+            """
+                .trimIndent()
+        val summary: ListingSummary = json.decodeFromString(raw)
+        assertEquals("with-slug-lst-9", summary.slug)
+    }
 }
