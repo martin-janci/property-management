@@ -305,42 +305,153 @@ mod tests {
     use db::models::voice_platform;
     use uuid::Uuid;
 
-    /// Regression (code-review: oauth client error leak): the client-facing
-    /// body for a failed voice OAuth exchange / refresh must carry only the
-    /// static, non-revealing message — never the upstream provider detail,
-    /// which can embed internal hosts, client ids, or bearer credentials.
+    /// Contract (RFC 6749 §5.2): the sanitized client body for a failed voice
+    /// OAuth exchange / refresh on the Alexa/Google account-linking path is a
+    /// spec-shaped OAuth error — a JSON object with `error` (one of the spec
+    /// token-error codes) and an optional `error_description` — NOT the PPT
+    /// `code`/`message` envelope. It also never echoes the upstream provider
+    /// `detail`, which can embed internal hosts, client ids, or bearer
+    /// credentials (code-review: oauth client error leak).
     #[test]
-    fn voice_oauth_error_response_does_not_leak_upstream_detail() {
+    fn voice_oauth_error_response_is_rfc6749_shaped_and_does_not_leak_detail() {
         let sensitive = "connect error: dns failure for secret-internal-host.oauth.example:443 \
              (bearer AKIA-LEAKED-SECRET)";
 
-        for (code, message) in [
-            ("OAUTH_EXCHANGE_FAILED", OAUTH_EXCHANGE_FAILED_MESSAGE),
-            ("TOKEN_REFRESH_FAILED", OAUTH_REFRESH_FAILED_MESSAGE),
-        ] {
-            let (status, body) =
-                voice_oauth_error_response(StatusCode::BAD_REQUEST, code, message, sensitive);
-            assert_eq!(status, StatusCode::BAD_REQUEST);
+        // (error, expected RFC 6749 §5.2 code, expected HTTP status).
+        let cases = [
+            (
+                OAuthError::invalid_grant(OAUTH_EXCHANGE_FAILED_MESSAGE),
+                "invalid_grant",
+                StatusCode::BAD_REQUEST,
+            ),
+            (
+                OAuthError::invalid_request("Unsupported voice platform"),
+                "invalid_request",
+                StatusCode::BAD_REQUEST,
+            ),
+            (
+                OAuthError::server_error(OAUTH_REFRESH_FAILED_MESSAGE),
+                "server_error",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+        ];
 
-            let json = serde_json::to_string(&body.0).expect("serialize ErrorResponse");
-            assert!(
-                !json.contains("secret-internal-host"),
-                "leaked upstream host in {code} body: {json}"
-            );
-            assert!(
-                !json.contains("AKIA-LEAKED-SECRET"),
-                "leaked credential in {code} body: {json}"
-            );
-            assert!(
-                !json.contains("dns failure"),
-                "leaked transport detail in {code} body: {json}"
-            );
-            assert_eq!(body.0.code, code, "error code altered: {json}");
+        for (err, expected_code, expected_status) in cases {
+            let expected_desc = err.error_description.clone();
+            let (status, body) = voice_oauth_error_response(err, sensitive);
+
+            // RFC 6749 §5.2 status mapping is driven by the error code.
+            assert_eq!(status, expected_status, "status for {expected_code}");
+
+            let json: serde_json::Value =
+                serde_json::to_value(&body.0).expect("serialize OAuthError");
+
+            // Body shape: spec `error` + `error_description`, and NONE of the
+            // PPT `code`/`message` envelope fields.
             assert_eq!(
-                body.0.message, message,
-                "client body must be exactly the sanitized message: {json}"
+                json.get("error").and_then(|v| v.as_str()),
+                Some(expected_code),
+                "RFC 6749 §5.2 `error` field: {json}"
+            );
+            assert_eq!(
+                json.get("error_description").and_then(|v| v.as_str()),
+                expected_desc.as_deref(),
+                "`error_description` must be the static client message: {json}"
+            );
+            assert!(
+                json.get("code").is_none() && json.get("message").is_none(),
+                "must NOT use the PPT code/message envelope: {json}"
+            );
+
+            // The upstream detail must never reach the client body.
+            let raw = json.to_string();
+            for needle in ["secret-internal-host", "AKIA-LEAKED-SECRET", "dns failure"] {
+                assert!(!raw.contains(needle), "leaked `{needle}` in body: {raw}");
+            }
+        }
+    }
+
+    /// RFC 6749 §5.2 fixes the HTTP status by error code: `invalid_client` is
+    /// 401, `server_error` is 500, and every other token-endpoint error code is
+    /// 400 (this is the bug the old path had — a failed refresh returned 500 for
+    /// what is really an `invalid_grant`).
+    #[test]
+    fn oauth_error_status_follows_rfc6749() {
+        for code in [
+            OAuthError::invalid_grant("x"),
+            OAuthError::invalid_request("x"),
+            OAuthError::invalid_scope("x"),
+            OAuthError::unauthorized_client("x"),
+        ] {
+            assert_eq!(
+                oauth_error_status(&code),
+                StatusCode::BAD_REQUEST,
+                "`{}` must be 400",
+                code.error
             );
         }
+        assert_eq!(
+            oauth_error_status(&OAuthError::invalid_client("x")),
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            oauth_error_status(&OAuthError::server_error("x")),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+
+    /// Upstream voice OAuth failures classify to the RFC 6749 §5.2 code that
+    /// matches their cause: a provider grant rejection is `invalid_grant`, a
+    /// bad platform is `invalid_request`, and our-side faults (unparseable
+    /// provider response, missing config) are `server_error`. The sanitized
+    /// `error_description` is always the static client message, never the
+    /// provider detail.
+    #[test]
+    fn classify_voice_oauth_error_maps_to_spec_codes() {
+        use integrations::VoiceOAuthError as E;
+
+        assert_eq!(
+            classify_voice_oauth_error(
+                &E::ExchangeFailed("provider rejected the code".into()),
+                OAUTH_EXCHANGE_FAILED_MESSAGE,
+            )
+            .error,
+            "invalid_grant"
+        );
+        assert_eq!(
+            classify_voice_oauth_error(
+                &E::RefreshFailed("provider rejected the refresh token".into()),
+                OAUTH_REFRESH_FAILED_MESSAGE,
+            )
+            .error,
+            "invalid_grant"
+        );
+        assert_eq!(
+            classify_voice_oauth_error(
+                &E::InvalidPlatform("weird".into()),
+                "Unsupported voice platform",
+            )
+            .error,
+            "invalid_request"
+        );
+        for server in [
+            E::InvalidResponse("garbage body".into()),
+            E::MissingConfig("ALEXA_CLIENT_ID".into()),
+        ] {
+            let classified = classify_voice_oauth_error(&server, OAUTH_REFRESH_FAILED_MESSAGE);
+            assert_eq!(classified.error, "server_error", "{server:?} -> server_error");
+        }
+
+        // Description is the static message, not the (potentially sensitive)
+        // provider detail embedded in the upstream error.
+        let classified = classify_voice_oauth_error(
+            &E::ExchangeFailed("https://api.amazon.com/auth leaked host".into()),
+            OAUTH_EXCHANGE_FAILED_MESSAGE,
+        );
+        assert_eq!(
+            classified.error_description.as_deref(),
+            Some(OAUTH_EXCHANGE_FAILED_MESSAGE)
+        );
     }
 
     // --- voice OAuth simulated-token fallback gate (#890) ---------------
