@@ -35,6 +35,7 @@ already built but unrouted; this screen is now reachable on web.
 ## Notes
 
 ### Specific (recent)
+- 2026-11-21 — Management list uses `include_inactive=true` (manager-only); lease pickers keep the active-only default. Delete is a hard delete, refused with 409 when any lease references the template.
 - 2026-06-08 — PAP-20: mounted route group; renders against the dev stack with
   stub/empty data pending the meters+leases api-client module.
 
@@ -47,4 +48,5 @@ already built but unrouted; this screen is now reachable on web.
 
 <!-- newest entries on top -->
 
+- 2026-11-21 — agent: Delete wired to new `DELETE /leases/templates/{id}` (confirm dialog; 409 `TEMPLATE_IN_USE` shown as "deactivate instead"); list now requests `include_inactive=true` so deactivated templates stay visible and can be re-activated (previously they vanished).
 - 2026-11-04 — agent: now linked from the leases dashboard header (was orphan)

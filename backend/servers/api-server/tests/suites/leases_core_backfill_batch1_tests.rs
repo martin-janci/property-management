@@ -512,6 +512,139 @@ async fn test_update_template_returns_200(pool: PgPool) {
     );
 }
 
+async fn tpl_request(
+    app: &common::TestApp,
+    method: Method,
+    uri: String,
+    token: &str,
+    org_id: Uuid,
+) -> (StatusCode, String) {
+    let resp = app
+        .execute(
+            Request::builder()
+                .method(method)
+                .uri(uri)
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header("X-Tenant-ID", org_id.to_string())
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+    (resp.status, resp.text())
+}
+
+/// Deactivated templates are hidden from the default list (lease pickers)
+/// but returned with `include_inactive=true`, so the management screen can
+/// re-activate them instead of losing them.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_templates_include_inactive(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "inatpl").await;
+    let user_id = seed_user(&pool, "inatpl").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_manager_jwt(user_id, org_id);
+    let tpl_id = seed_template(&pool, org_id, user_id, "inatpl").await;
+    sqlx::query("UPDATE lease_templates SET is_active = false WHERE id = $1")
+        .bind(tpl_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    let (status, body) = tpl_request(
+        &app,
+        Method::GET,
+        format!("/api/v1/leases/templates?organization_id={org_id}"),
+        &token,
+        org_id,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert!(
+        !body.contains(&tpl_id.to_string()),
+        "default list hides inactive"
+    );
+
+    let (status, body) = tpl_request(
+        &app,
+        Method::GET,
+        format!("/api/v1/leases/templates?organization_id={org_id}&include_inactive=true"),
+        &token,
+        org_id,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert!(
+        body.contains(&tpl_id.to_string()),
+        "include_inactive lists it"
+    );
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_delete_unused_template_returns_204(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "deltpl").await;
+    let user_id = seed_user(&pool, "deltpl").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_manager_jwt(user_id, org_id);
+    let tpl_id = seed_template(&pool, org_id, user_id, "deltpl").await;
+
+    let uri = format!("/api/v1/leases/templates/{tpl_id}");
+    let (status, body) = tpl_request(&app, Method::DELETE, uri.clone(), &token, org_id).await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+
+    let (status, _) = tpl_request(&app, Method::GET, uri, &token, org_id).await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_delete_template_in_use_returns_409(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "usetpl").await;
+    let user_id = seed_user(&pool, "usetpl").await;
+    common::seed_membership(&pool, org_id, user_id, "manager").await;
+    let token = mint_manager_jwt(user_id, org_id);
+    let tpl_id = seed_template(&pool, org_id, user_id, "usetpl").await;
+    let unit_id = seed_unit(&pool, org_id, "usetpl").await;
+    let lease_id = seed_lease(&pool, org_id, unit_id, user_id).await;
+    sqlx::query("UPDATE leases SET template_id = $1 WHERE id = $2")
+        .bind(tpl_id)
+        .bind(lease_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    let (status, body) = tpl_request(
+        &app,
+        Method::DELETE,
+        format!("/api/v1/leases/templates/{tpl_id}"),
+        &token,
+        org_id,
+    )
+    .await;
+    assert_eq!(status, StatusCode::CONFLICT, "{body}");
+    assert!(body.contains("TEMPLATE_IN_USE"), "{body}");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_delete_template_requires_manager(pool: PgPool) {
+    let app = common::TestApp::new(pool.clone()).await;
+    let org_id = seed_org(&pool, "rdeltpl").await;
+    let user_id = seed_user(&pool, "rdeltpl").await;
+    common::seed_membership(&pool, org_id, user_id, "resident").await;
+    let token = mint_manager_jwt(user_id, org_id);
+    let tpl_id = seed_template(&pool, org_id, user_id, "rdeltpl").await;
+
+    let (status, body) = tpl_request(
+        &app,
+        Method::DELETE,
+        format!("/api/v1/leases/templates/{tpl_id}"),
+        &token,
+        org_id,
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
+}
+
 // ---------------------------------------------------------------------------
 // Core Leases
 // ---------------------------------------------------------------------------

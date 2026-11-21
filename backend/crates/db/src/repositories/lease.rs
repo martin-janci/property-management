@@ -824,18 +824,70 @@ impl LeaseRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
+        self.list_templates_filtered_rls(executor, org_id, false)
+            .await
+    }
+
+    /// List templates for an organization; `include_inactive` also returns
+    /// deactivated templates (the management screen needs them so a
+    /// deactivated template can be re-activated or deleted).
+    pub async fn list_templates_filtered_rls<'e, E>(
+        &self,
+        executor: E,
+        org_id: Uuid,
+        include_inactive: bool,
+    ) -> Result<Vec<LeaseTemplate>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
         let templates = sqlx::query_as::<_, LeaseTemplate>(
             r#"
             SELECT * FROM lease_templates
-            WHERE organization_id = $1 AND is_active = true
-            ORDER BY is_default DESC, name ASC
+            WHERE organization_id = $1 AND ($2 OR is_active = true)
+            ORDER BY is_active DESC, is_default DESC, name ASC
             "#,
         )
         .bind(org_id)
+        .bind(include_inactive)
         .fetch_all(executor)
         .await?;
 
         Ok(templates)
+    }
+
+    /// Number of leases created from a template (any status). A referenced
+    /// template cannot be hard-deleted (`leases.template_id` FK).
+    pub async fn count_leases_using_template_rls<'e, E>(
+        &self,
+        executor: E,
+        template_id: Uuid,
+    ) -> Result<i64, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM leases WHERE template_id = $1")
+            .bind(template_id)
+            .fetch_one(executor)
+            .await
+    }
+
+    /// Hard-delete a template scoped to its organization. Returns whether a
+    /// row was deleted.
+    pub async fn delete_template_rls<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let res = sqlx::query("DELETE FROM lease_templates WHERE id = $1 AND organization_id = $2")
+            .bind(id)
+            .bind(org_id)
+            .execute(executor)
+            .await?;
+        Ok(res.rows_affected() > 0)
     }
 
     // ------------------------------------------------------------------------

@@ -64,6 +64,7 @@ const {
     recordPayment: vi.fn(),
     createTemplate: vi.fn(),
     updateTemplate: vi.fn(),
+    deleteTemplate: vi.fn(),
     initiateScreening: vi.fn(),
     reviewApplication: vi.fn(),
     updateViolation: vi.fn(),
@@ -148,6 +149,7 @@ vi.mock('@ppt/api-client', () => ({
   useRecordLeasePayment: mutationHook(mutations.recordPayment),
   useCreateLeaseTemplate: mutationHook(mutations.createTemplate),
   useUpdateLeaseTemplate: mutationHook(mutations.updateTemplate),
+  useDeleteLeaseTemplate: mutationHook(mutations.deleteTemplate),
   useInitiateScreening: mutationHook(mutations.initiateScreening),
   useReviewApplication: mutationHook(mutations.reviewApplication),
   useCreateViolation: mutationHook(vi.fn()),
@@ -421,7 +423,7 @@ describe('LeaseDetailPageRoute — record payment', () => {
 });
 
 // ============================================================================
-// Templates — create / edit / toggle, delete hidden
+// Templates — create / edit / toggle / delete
 // ============================================================================
 
 describe('TemplatesPageRoute', () => {
@@ -451,10 +453,49 @@ describe('TemplatesPageRoute', () => {
     expect(mockShowToast).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
-  it('deactivates a template via PUT is_active=false and hides Delete', async () => {
+  it('lists inactive templates too so they can be re-activated', async () => {
     renderAt('/leases/templates');
     await screen.findByText('Štandardná nájomná zmluva');
-    expect(screen.queryByRole('button', { name: 'common.delete' })).not.toBeInTheDocument();
+    expect(mockUseLeaseTemplates).toHaveBeenCalledWith('org-1', { includeInactive: true });
+  });
+
+  it('deletes a template after confirmation', async () => {
+    mutations.deleteTemplate.mockResolvedValueOnce(undefined);
+    renderAt('/leases/templates');
+    await screen.findByText('Štandardná nájomná zmluva');
+    await userEvent.click(screen.getByRole('button', { name: 'common.delete' }));
+    const dialog = await screen.findByRole('alertdialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'common.delete' }));
+    await waitFor(() =>
+      expect(mutations.deleteTemplate).toHaveBeenCalledWith({
+        id: 'tpl-1',
+        organizationId: 'org-1',
+      })
+    );
+    expect(mockShowToast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'success', message: 'leases.templates.deleted' })
+    );
+  });
+
+  it('explains TEMPLATE_IN_USE instead of a raw error', async () => {
+    mutations.deleteTemplate.mockRejectedValueOnce(
+      Object.assign(new Error('Template is used'), { code: 'TEMPLATE_IN_USE', status: 409 })
+    );
+    renderAt('/leases/templates');
+    await screen.findByText('Štandardná nájomná zmluva');
+    await userEvent.click(screen.getByRole('button', { name: 'common.delete' }));
+    const dialog = await screen.findByRole('alertdialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'common.delete' }));
+    await waitFor(() =>
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', message: 'leases.templates.inUse' })
+      )
+    );
+  });
+
+  it('deactivates a template via PUT is_active=false', async () => {
+    renderAt('/leases/templates');
+    await screen.findByText('Štandardná nájomná zmluva');
     await userEvent.click(screen.getByRole('button', { name: 'leases.templates.deactivate' }));
     await waitFor(() =>
       expect(mutations.updateTemplate).toHaveBeenCalledWith({

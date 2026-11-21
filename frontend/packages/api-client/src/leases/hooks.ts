@@ -99,10 +99,17 @@ export function useExpiringLeases(query: ExpiringLeasesQuery | undefined) {
 }
 
 /** List lease templates for an organization. */
-export function useLeaseTemplates(organizationId: string | undefined) {
+export function useLeaseTemplates(
+  organizationId: string | undefined,
+  options: { includeInactive?: boolean } = {}
+) {
+  const includeInactive = options.includeInactive ?? false;
   return useQuery({
-    queryKey: leaseKeys.templates(organizationId ?? ''),
-    queryFn: () => api.listLeaseTemplates(organizationId as string),
+    // Prefix stays `templates(org)` so mutations invalidate both variants.
+    queryKey: includeInactive
+      ? [...leaseKeys.templates(organizationId ?? ''), 'all']
+      : leaseKeys.templates(organizationId ?? ''),
+    queryFn: () => api.listLeaseTemplates(organizationId as string, { includeInactive }),
     enabled: !!organizationId,
   });
 }
@@ -236,6 +243,18 @@ export function useUpdateLeaseTemplate() {
     onSuccess: (_data, { id, body }) => {
       queryClient.invalidateQueries({ queryKey: leaseKeys.templates(body.organization_id) });
       queryClient.invalidateQueries({ queryKey: leaseKeys.template(id) });
+    },
+  });
+}
+
+/** Delete an unused lease template; invalidates the org's template lists. */
+export function useDeleteLeaseTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; organizationId: string }) => api.deleteLeaseTemplate(id),
+    onSuccess: (_data, { id, organizationId }) => {
+      queryClient.invalidateQueries({ queryKey: leaseKeys.templates(organizationId) });
+      queryClient.removeQueries({ queryKey: leaseKeys.template(id) });
     },
   });
 }

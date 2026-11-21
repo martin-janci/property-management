@@ -13,7 +13,7 @@ interface TemplatesPageProps {
   isSubmitting?: boolean;
   onCreateTemplate: (data: CreateTemplateData) => void;
   onUpdateTemplate: (id: string, data: Partial<CreateTemplateData>) => void;
-  /** Omit to hide the Delete control (the API has no template delete endpoint). */
+  /** Omit to hide the Delete control. The server refuses (409) templates used by leases. */
   onDeleteTemplate?: (id: string) => void;
   onToggleActive: (id: string, isActive: boolean) => void;
   /**
