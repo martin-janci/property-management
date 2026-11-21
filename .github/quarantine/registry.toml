@@ -1,0 +1,1275 @@
+# Quarantine registry — owner + deadline for every `#[ignore]`d Rust test.
+#
+# Policy: docs/quarantine-policy.md. Enforced by
+# .github/workflows/scripts/check-quarantine-age.py (quarantine-age-gate.yml).
+#
+# Each row grants a quarantined test an OWNER (accountable pm-* role) and a
+# DUE date (re-triage-by). When `due` passes, CI fails until the test is
+# fixed/un-ignored or re-triaged with a new deadline. Prefer fixing the test
+# and DELETING its row over bumping `due`.
+#
+# `test` key = "<path-relative-to-repo-root>::<test-fn-name>".
+# Regenerate the skeleton after releasing/adding quarantines:
+#   python3 .github/workflows/scripts/check-quarantine-age.py --census
+#
+# Rollout 2026-11-21: the 201 tests below were grandfathered in with a
+# shared 90-day burn-down deadline (2027-02-19). New quarantines must set
+# their own owner + a deadline no more than 90 days out.
+
+[[quarantine]]
+test = "backend/crates/db/src/repositories/integration.rs::non_terminal_workflow_is_updated"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database (test_pool); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/src/repositories/integration.rs::redelivered_event_does_not_overwrite_terminal_state"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database (test_pool); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/src/repositories/reality_portal/tests.rs::list_inquiry_messages_returns_persisted_message"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database (test_pool); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/src/repositories/reality_portal/tests.rs::realtor_a_can_respond_to_own_inquiry"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database (test_pool); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/src/repositories/reality_portal/tests.rs::realtor_b_cannot_respond_to_realtor_a_inquiry"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database (test_pool); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_cross_tenant_org_isolation"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_cross_tenant_role_isolation"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_null_context_blocks_access"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_permission_boundary_update"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_rls_context_cleared_after_release"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_rls_context_isolation_between_connections"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_rls_coverage_validation"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_sql_injection_prevention"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_penetration_tests.rs::test_super_admin_access"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres RLS test database; run serially with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_context_clearing"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_cross_tenant_isolation"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_null_context_blocks_access"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_phase0_rls_cross_tenant_isolation"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/agency_domain_cache_tests.rs::release_invalidates_cached_resolution"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires TEST_DATABASE_URL with migrations applied"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_comments_rls_tests.rs::comment_insert_is_tenant_isolated"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires non-superuser TEST_DATABASE_URL (rls_test_runner); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_comments_rls_tests.rs::comment_select_is_tenant_isolated"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires non-superuser TEST_DATABASE_URL (rls_test_runner); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_comments_rls_tests.rs::comment_soft_delete_is_tenant_isolated"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires non-superuser TEST_DATABASE_URL (rls_test_runner); run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_acknowledge_announcement"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_attachments"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_rls_coverage"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_rls_isolation"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_status_transitions"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_targeting"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_auto_unpin_expired"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_create_announcement"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_mark_announcement_read"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_pin_announcement"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/announcement_tests.rs::test_scheduled_announcement"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/portal_user_merge_tests.rs::collision_writes_collision_row_no_silent_merge"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "Phase 6: portal_users table dropped (migration 00148); re-target before re-enabling"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/portal_user_merge_tests.rs::merge_is_idempotent"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "Phase 6: portal_users table dropped (migration 00148); re-target before re-enabling"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/portal_user_merge_tests.rs::non_collision_inserts_users_row_with_origin_pointer"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "Phase 6: portal_users table dropped (migration 00148); re-target before re-enabling"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/rag_similarity_search_tests.rs::rag_retrieval_correctness"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-352"
+reason = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3..."
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/rag_similarity_search_tests.rs::search_documents_pgvector_model_filter_provenance"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-352"
+reason = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3..."
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_building_repository_create"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_building_repository_rls_isolation"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_email_verification_token_lifecycle"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_organization_membership"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_organization_repository_create"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_organization_repository_unique_slug"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_create_success"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_email_exists"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_find_by_email_found"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_find_by_email_not_found"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_soft_delete"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_update_password"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_verify_email"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires Postgres test database; run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::clear_request_context_resets_global_read"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::four_context_listings_visibility"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::new_listing_defaults_to_not_published"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::platform_host_cannot_write_listings"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires database with migrations; run with --ignored"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/admin_mfa_recovery_tests.rs::concurrent_double_consume_skipped"
+owner = "pm-security"
+due = "2027-02-19"
+reason = "concurrent TOCTOU test not yet implemented — see comment"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/admin_mfa_recovery_tests.rs::happy_path_consumes_code_and_opens_window"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires postgres + migrations"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/ai_auth_tests.rs::ai_chat_with_valid_jwt_ignores_forged_tenant_header"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "needs authenticated-user-with-host-tenant fixture; see test doc"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/ai_auth_tests.rs::ai_equipment_list_without_auth_is_rejected"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "TestApp router exposes /ai/equipment but the handler returns a status outside the assert_rejected 4xx set under test conditions; covered by the chat/llm/sent..."
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/ai_auth_tests.rs::ai_workflows_list_without_auth_is_rejected"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "TestApp router exposes /ai/workflows but the handler returns a status outside the assert_rejected 4xx set under test conditions; covered by the chat/llm/sent..."
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs::pa_list_comparisons_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "#3104"
+reason = "#3104: list_comparisons repo SELECTs a `name` column that does not exist in the property_comparisons schema (migration 00091) -> 500 Database error. Needs a ..."
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs::pp_get_dashboard_summary_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "#3104"
+reason = "#3104: PortfolioPerformanceRepository::get_dashboard_summary calls get_portfolio(portfolio_id, Uuid::nil()) (repositories/portfolio_performance.rs:1337) so t..."
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs::pp_get_metrics_summary_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "#3104"
+reason = "#3104: 500 Portfolio not found despite seeded portfolio; server-side route lookup bug requires investigation"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/auth_partial_backfill_batch1_tests.rs::verify_email_with_valid_token_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-588"
+reason = "BIT-588: email_verification_tokens stores token_hash (argon2), not the raw token — test cannot retrieve the plaintext token from DB to drive the verify-email..."
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/automation_auth_tests.rs::get_rule_from_other_org_returns_404"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "needs multi-tenant fixture builder (JWT + ResolvedTenant + user_memberships) — see header comment. Repo-layer behaviour is enforced by signature: find_rule_f..."
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::create_workflow_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "ai/workflows POST returns 404; route may not exist in this server version"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::get_workflow_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "ai_workflows seed INSERT fails with DB schema mismatch; get_workflow_succeeds depends on seed_workflow"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::import_workflow_template_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "import endpoint returns 422 missing field 'template_id'; AI-generated body missing required field"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::list_workflows_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "ai/workflows route returns DATABASE_ERROR; ai_workflows table schema mismatch"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/caddy_ask_tests.rs::prod_mode_correct_token_and_known_host_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "mutates process env (RUST_ENV/INTERNAL_API_TOKEN); flakes under parallel runner — run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/caddy_ask_tests.rs::prod_mode_missing_token_returns_401"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "mutates process env (RUST_ENV/INTERNAL_API_TOKEN); flakes under parallel runner — run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/caddy_ask_tests.rs::prod_mode_wrong_token_returns_401"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "mutates process env (RUST_ENV/INTERNAL_API_TOKEN); flakes under parallel runner — run with --ignored --test-threads=1"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs::complete_edd_transitions_status_to_completed"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "EDD complete returns 500 - server-side bug, tracked separately"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs::initiate_edd_creates_record_and_returns_body_shape"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "EDD initiation returns 500 - server-side bug, tracked separately"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_actions_escalations_happy_path"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_kpis_happy_path"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440 (de-quarantine tracked by #2575 when BIT-440 clears)"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_lifecycle_happy_path"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_sessions_happy_path"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_withdraw_happy_path"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::add_field_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::archive_form_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::create_form_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::delete_field_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::delete_form_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::get_form_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::get_statistics_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::get_submission_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_available_forms_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_fields_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_forms_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_submissions_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::publish_form_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::record_download_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::reorder_fields_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::review_submission_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::update_field_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::update_form_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_add_attachment"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_assign_fault_to_self"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_delete_attachment"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_get_ai_suggestion"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_list_attachments_empty"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_list_faults_returns_created_fault"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_triage_new_fault"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_check_feature_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_create_package_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_package_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_provider_complete_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_public_package_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_resolved_features_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_upgrade_options_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_list_packages_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_list_public_packages_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace feature tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::award_badge_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::compare_packages_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "endpoint requires 'ids' query param not provided in test"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::create_review_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::delete_review_returns_204"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_feature_stats_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_rating_breakdown_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_resolved_features_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_review_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::list_provider_badges_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::list_provider_reviews_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::list_public_packages_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::mark_review_helpful_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::moderate_review_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::respond_to_review_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::set_feature_preference_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::update_review_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "seed_provider fails: marketplace providers table not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::acknowledge_legal_notice_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::apply_compliance_template_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::create_compliance_template_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::create_legal_notice_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::delete_compliance_template_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::delete_legal_notice_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::get_compliance_template_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::get_legal_notice_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_audit_trail_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_compliance_templates_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_legal_notices_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_notice_recipients_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::send_legal_notice_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::update_compliance_template_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::update_legal_notice_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: legal notices tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::create_connector_as_admin_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::create_marketplace_integration_as_admin_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::delete_marketplace_integration_as_admin_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::delete_review_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::delete_rfq_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_connector_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_marketplace_integration_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_rating_breakdown_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_review_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::list_connector_actions_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::list_provider_reviews_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::mark_review_helpful_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::moderate_review_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::respond_to_review_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::update_marketplace_integration_as_admin_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::update_review_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: marketplace ecosystem tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/messaging_attachments_authz_tests.rs::download_url_authz_gate"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/messaging_attachments_authz_tests.rs::non_sender_cannot_link_attachment"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/mfa_e2e_tests.rs::test_mfa_verify_rate_limited"
+owner = "pm-security"
+due = "2027-02-19"
+ticket = "#487"
+reason = "Awaiting rate-limit middleware on /auth/mfa/verify — issue #487"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/notification_preference_realtime_sync_tests.rs::preference_update_publishes_realtime_event"
+owner = "pm-devops"
+due = "2027-02-19"
+reason = "requires live Redis — set REDIS_URL and run with --include-ignored"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/notification_prefs_granular_tests.rs::update_event_preference_returns_ok"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: notification prefs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/notification_prefs_granular_tests.rs::update_event_preference_unknown_type_returns_404"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: notification prefs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/oauth_integration_tests/admin_analytics.rs::update_client_scope_change_writes_audit_with_reason"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "requires postgres + migrations"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/package_visitor_happy_path_tests.rs::packages_happy_path"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/package_visitor_happy_path_tests.rs::visitors_happy_path"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/push_token_tests.rs::register_push_token_valid_request_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "needs TestApp to wire host_tenant_middleware for positive-path tenant derivation; contract: POST with valid JWT + tenant membership → 200 with PushTokenRespo..."
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_booking_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_calendar_block_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_connection_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_guest_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_ical_feed_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_report_returns_201"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_get_report_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_submit_report_returns_200"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "BIT-440"
+reason = "BIT-440: quarantined — fails on dev (workspace hostage); see BIT-440"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::add_legal_document_version_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::create_compliance_verification_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::create_legal_document_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::create_legal_requirement_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::delete_legal_document_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::delete_legal_requirement_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::get_legal_document_version_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::get_legal_requirement_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_compliance_verifications_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_legal_document_versions_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_legal_documents_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_legal_requirements_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::update_legal_document_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::update_legal_requirement_succeeds"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "schema mismatch: signatures legal docs tables not seeded"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/token_scope_tests.rs::token_is_rejected_after_membership_revoked"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "#11"
+reason = "sqlx::test transactional template cannot observe committed super-admin context; needs detached-pool fixture (leak #11)"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/token_scope_tests.rs::token_is_rejected_for_org_without_active_membership"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "#11"
+reason = "sqlx::test transactional template cannot observe committed super-admin context; needs detached-pool fixture (leak #11)"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/token_scope_tests.rs::token_works_for_org_with_active_membership"
+owner = "pm-backend"
+due = "2027-02-19"
+ticket = "#11"
+reason = "sqlx::test transactional template cannot observe committed super-admin context; needs detached-pool fixture (leak #11)"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/suites/workflow_cross_tenant_idor_tests.rs::trigger_workflow_from_owning_org_does_not_404"
+owner = "pm-backend"
+due = "2027-02-19"
+reason = "needs TestApp to wire host_tenant_middleware for positive-path tenant derivation"
+
+[[quarantine]]
+test = "backend/servers/api-server/tests/ws_integration_tests.rs::ws_pubsub_fanout_delivers_to_correct_subscriber"
+owner = "pm-devops"
+due = "2027-02-19"
+reason = "requires live Redis — set REDIS_URL and run with --include-ignored"
+
+[[quarantine]]
+test = "backend/servers/deploy-server/src/infra/docker.rs::run_frontend_dev_against_local_docker"
+owner = "pm-devops"
+due = "2027-02-19"
+reason = "requires local docker daemon; run manually with --ignored"
+
+[[quarantine]]
+test = "backend/servers/deploy-server/tests/smoke.rs::dedicated_open_close_with_dump"
+owner = "pm-devops"
+due = "2027-02-19"
+reason = "requires postgres + GH API + docker daemon + branch images"
+
+[[quarantine]]
+test = "backend/servers/deploy-server/tests/smoke.rs::open_status_close_flow"
+owner = "pm-devops"
+due = "2027-02-19"
+reason = "requires docker daemon + ppt-frontend-dev:local image"
+
+[[quarantine]]
+test = "backend/servers/deploy-server/tests/smoke.rs::promote_and_rollback_flow"
+owner = "pm-devops"
+due = "2027-02-19"
+reason = "requires docker daemon to actually deploy; tests auth + parse paths without it"
