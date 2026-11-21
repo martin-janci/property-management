@@ -41,6 +41,7 @@ import {
 import { trackSignupLoggedIn } from '../features/auth/analytics';
 import { configureApiClient, resetApiClient } from '../lib/api';
 import { AUTHED_QUERY_KEY_ROOTS } from '../lib/queryKeys';
+import { purgeAuthedLocalStorage } from '../lib/storage';
 
 export type { AuthErrorCode, AuthUser };
 // Re-export types from api-client for convenience
@@ -712,7 +713,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
    *     explicit `AUTHED_QUERY_KEY_ROOTS` list and remove each subtree —
    *     anything outside that list (router-internal caches, third-party
    *     library caches, future lookup tables) is left untouched.
-   *  4. Best-effort server-side token revocation (fire-and-forget).
+   *  4. Purge auth-scoped data persisted OUTSIDE the query cache (feature-local
+   *     localStorage stores such as the dispute-filing draft) via
+   *     `purgeAuthedLocalStorage()`, for the same shared-workstation reason.
+   *  5. Best-effort server-side token revocation (fire-and-forget).
    *
    * @see Issue #712 — replaced `queryClient.clear()` with a scoped removal.
    */
@@ -733,7 +737,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       queryClient.removeQueries({ queryKey: [root] });
     }
 
-    // 4 — Always attempt server-side revocation. Since the refresh token is no
+    // 4 — Drop auth-scoped data persisted outside the query cache (e.g. the
+    // dispute-filing draft in localStorage). The query-root purge above does
+    // not reach these feature-local stores, so without this they survive
+    // logout and leak into the next session on a shared workstation.
+    purgeAuthedLocalStorage();
+
+    // 5 — Always attempt server-side revocation. Since the refresh token is no
     // longer kept in localStorage, after a reload the in-memory copy is empty —
     // but the HttpOnly cookie is still present and is what the server revokes
     // (and clears). Gating this on a non-empty in-memory token would skip

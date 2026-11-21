@@ -18,11 +18,17 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { DISPUTE_FILING_DRAFT_KEY } from '../../../lib/storage';
 import { DraftSavedIndicator } from '../components/DraftSavedIndicator';
 import { useDraftStorage } from '../hooks/useDraftStorage';
 
-/** localStorage key for the in-progress dispute-filing draft (AC-4). */
-export const DISPUTE_DRAFT_KEY = 'ppt-dispute-filing-draft';
+/**
+ * localStorage key for the in-progress dispute-filing draft (AC-4).
+ *
+ * Re-exported from `lib/storage` so the draft key has a single source of truth
+ * shared with `AUTHED_LOCAL_STORAGE_KEYS` (which `AuthContext.logout` purges).
+ */
+export const DISPUTE_DRAFT_KEY = DISPUTE_FILING_DRAFT_KEY;
 
 // ============================================
 // Validation schema
