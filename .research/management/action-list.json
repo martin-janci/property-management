@@ -167,20 +167,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "pm-integration-voice-oauth-rfc6749-shape",
-      "action": "Verify sanitized voice_oauth_error_response bodies follow RFC 6749 §5.2 (error+error_description, correct status codes) on Alexa/Google account-linking path; contract test required",
-      "owner_role": "pm-integration",
-      "priority": "medium",
-      "dependency": "pm-security",
-      "depends_on": [
-        "UNRESOLVED:pm-security"
-      ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
       "id": "pm-integration-property-type-enum-stability",
       "action": "Verify #3609 property_type i18n helper keeps API filter contract on stable enum codes across sk/cs/de/en; localize labels only in display fields",
       "owner_role": "pm-integration",
@@ -256,24 +242,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-26T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-search-drainer-stub-marks-delivered",
-      "action": "search drainer stub marks delivered",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T22:25:12Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-25T09:30:00Z"
       }
     },
     {
@@ -759,44 +727,8 @@
       }
     },
     {
-      "id": "pm-backend-unquarantine-release-248-tests-2026-11-21",
-      "action": "Un-quarantine the release-248 tests introduced by #3675 (tenant application/forms 500 fixes + feed delete); establish a quarantine-aging policy (every quarantined test has owner+deadline)",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-21",
-      "first_open_at": "2026-11-21T03:06:10Z"
-    },
-    {
-      "id": "pm-backend-finish-accounting-mvp-trio-2558-2026-11-21",
-      "action": "Finish the accounting MVP trio: verify #2558 state after #3661 landed sent/cancel lifecycle + PAY-by-square QR; close as superseded or sequence the remaining slice",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-21",
-      "first_open_at": "2026-11-21T03:06:10Z"
-    },
-    {
       "id": "pm-backend-address-mobile-native-stubs-2026-11-21",
       "action": "Address mobile-native stubs: CreateListingScreen onSubmit NotImplementedError + InquiriesResponse page_size/limit contract mismatch + Ktor HttpTimeout default. Package as one KMP PR per issue once #2652 egress unblocks",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-21",
-      "first_open_at": "2026-11-21T03:06:10Z"
-    },
-    {
-      "id": "pm-backend-regression-coverage-3669-reality-surface-2026-11-21",
-      "action": "Add regression coverage for #3669 reality-server portal auth fix + buyer inquiry threads + notification settings + agency dashboard so the broad surface does not regress on the next push_fanout touch",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
@@ -811,18 +743,6 @@
       "action": "Characterize the post-split push/ and voice_webhooks/ child modules in sprint-status and coverage; the new file footprint should move to a 'done, under watch' bucket for the next 2 runs so regressions surface",
       "owner_role": "pm-backend",
       "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-21",
-      "first_open_at": "2026-11-21T03:06:10Z"
-    },
-    {
-      "id": "pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21",
-      "action": "Sweep the new push/ and voice_webhooks/ child modules for the RLS-before-verify ordering bug that survived the split",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",

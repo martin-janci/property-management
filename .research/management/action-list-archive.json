@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-21T08:30:30Z",
+  "archived_at": "2026-11-21T10:32:31Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -18342,6 +18342,31 @@
       }
     },
     {
+      "id": "code-review-search-drainer-stub-marks-delivered",
+      "action": "search drainer stub marks delivered",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-21T10:30:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-19T22:25:12Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-25T09:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3682,
+        "merged_at": "2026-11-21T08:43:19Z",
+        "at": "2026-11-21T10:30:37Z"
+      }
+    },
+    {
       "id": "data-announcement-fanout-metric-2026-07-23",
       "action": "Instrument announcement fan-out with delivered/read/ack metrics per targeting scope; also feed #2484 real-SQL integration test data-quality check (currently pure-Rust re-model)",
       "owner_role": "pm-data",
@@ -29902,6 +29927,25 @@
       "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
+      "id": "pm-backend-finish-accounting-mvp-trio-2558-2026-11-21",
+      "action": "Finish the accounting MVP trio: verify #2558 state after #3661 landed sent/cancel lifecycle + PAY-by-square QR; close as superseded or sequence the remaining slice",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21 | gc1-reconcile 2026-11-21T10:30:37Z",
+      "first_open_at": "2026-11-21T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3691,
+        "merged_at": "2026-11-21T08:43:19Z",
+        "at": "2026-11-21T10:30:37Z"
+      }
+    },
+    {
       "id": "pm-backend-fix-ai-equipment-idor",
       "action": "Fix cross-tenant IDOR cluster in ai.rs: thread tenant_id into equipment_repo.update/delete/update_maintenance and scope the WHERE clauses (or route through the RLS connection) for update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), update_maintenance (ai.rs:1192) — all currently discard `_principal`; add a cross-tenant regression test",
       "owner_role": "pm-backend",
@@ -29944,6 +29988,25 @@
       }
     },
     {
+      "id": "pm-backend-regression-coverage-3669-reality-surface-2026-11-21",
+      "action": "Add regression coverage for #3669 reality-server portal auth fix + buyer inquiry threads + notification settings + agency dashboard so the broad surface does not regress on the next push_fanout touch",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21 | gc1-reconcile 2026-11-21T10:30:37Z",
+      "first_open_at": "2026-11-21T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3693,
+        "merged_at": "2026-11-21T08:43:19Z",
+        "at": "2026-11-21T10:30:37Z"
+      }
+    },
+    {
       "id": "pm-backend-scheduler-rs-refactor-extract-jobs",
       "action": "Investigate repeated churn on backend/servers/api-server/src/services/scheduler.rs (top-churn 2 windows running) — propose extraction of retention/prune jobs to a dedicated module",
       "owner_role": "pm-backend",
@@ -29974,6 +30037,25 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-21T06:25:04Z"
+      }
+    },
+    {
+      "id": "pm-backend-unquarantine-release-248-tests-2026-11-21",
+      "action": "Un-quarantine the release-248 tests introduced by #3675 (tenant application/forms 500 fixes + feed delete); establish a quarantine-aging policy (every quarantined test has owner+deadline)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21 | gc1-reconcile 2026-11-21T10:30:37Z",
+      "first_open_at": "2026-11-21T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3692,
+        "merged_at": "2026-11-21T08:43:19Z",
+        "at": "2026-11-21T10:30:37Z"
       }
     },
     {
@@ -30478,6 +30560,27 @@
         "merged_pr": 3687,
         "merged_at": "2026-11-21T06:42:26Z",
         "at": "2026-11-21T08:27:12Z"
+      }
+    },
+    {
+      "id": "pm-integration-voice-oauth-rfc6749-shape",
+      "action": "Verify sanitized voice_oauth_error_response bodies follow RFC 6749 §5.2 (error+error_description, correct status codes) on Alexa/Google account-linking path; contract test required",
+      "owner_role": "pm-integration",
+      "priority": "medium",
+      "dependency": "pm-security",
+      "depends_on": [
+        "UNRESOLVED:pm-security"
+      ],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19 | gc1-reconcile 2026-11-21T10:30:37Z",
+      "first_open_at": "2026-11-20T10:30:27Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3689,
+        "merged_at": "2026-11-21T08:43:19Z",
+        "at": "2026-11-21T10:30:37Z"
       }
     },
     {
@@ -31491,6 +31594,25 @@
       "retry_of": "pm-scrum-master-stalled-invoice-lifecycle-2555",
       "retry_round": 1,
       "last_updated": "2026-10-25T18:32:57Z"
+    },
+    {
+      "id": "pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21",
+      "action": "Sweep the new push/ and voice_webhooks/ child modules for the RLS-before-verify ordering bug that survived the split",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21 | gc1-reconcile 2026-11-21T10:30:37Z",
+      "first_open_at": "2026-11-21T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-21T10:30:37Z"
+      }
     },
     {
       "id": "pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20",
