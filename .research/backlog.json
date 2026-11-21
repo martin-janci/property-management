@@ -16517,7 +16517,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commits 2026-11-18..19 (listings.rs 2 touches, 201 line churn)"
       ],
@@ -16529,7 +16529,12 @@
       ],
       "created_at": "2026-11-19",
       "updated_at": "2026-11-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-21T00:26:30Z",
+        "assignment_status": "merged",
+        "pr_number": 3673
+      }
     },
     {
       "id": "code-review-reality-web-branding-query-unhandled-error",
