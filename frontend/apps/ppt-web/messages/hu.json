@@ -6647,7 +6647,8 @@
     "create": {
       "title": "Új bérleti szerződés",
       "subtitle": "Új bérleti szerződés előkészítése egy bérlő számára",
-      "back": "Vissza a szerződésekhez"
+      "back": "Vissza a szerződésekhez",
+      "failedToLoad": "Az egység- és bérlőopciók betöltése nem sikerült"
     },
     "form": {
       "template": "Szerződéssablon",
@@ -6676,7 +6677,9 @@
         "endDateAfterStart": "A bérlet vége nem lehet korábbi a kezdeténél",
         "rentAmountRequired": "Adja meg a bérleti díj összegét",
         "paymentDayInvalid": "Az esedékesség napja 1 és 28 között lehet"
-      }
+      },
+      "noUnits": "Nincs elérhető egység. A bérleti szerződés létrehozása előtt adjon hozzá egy épületet egységekkel.",
+      "noTenants": "Nincs elérhető bérlő. Először hívjon meg lakókat a szervezetébe."
     },
     "esign": {
       "requestSignature": "Aláírás kérése",
