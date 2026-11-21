@@ -12,13 +12,18 @@
  * Available" fallback, the Available/Active section titles & descriptions, the
  * active-widget size/refresh meta line, the Remove button, the "Refresh All
  * Widgets" button and the "How to Add Widgets" instructions — was still
- * hardcoded English. This suite locks the contract: that copy is now sourced
- * from `widgets.*` / `common.*` i18n keys via `t()`, with matching entries in
- * every locale JSON.
+ * hardcoded English. That copy is now sourced from `widgets.*` / `common.*`
+ * i18n keys via `t()`, with matching entries in every locale JSON.
  *
- * Mirrors PersonMonthsScreen.i18n.test.tsx: the render layer asserts the UI is
- * built from i18n KEYS (global setup mocks `t(key) => key`); the resource layer
- * asserts the locale JSON carries those keys with real translations.
+ * Part 3 (code-review-mobile-rn-widget-settings-alerts-i18n): every `t()` call
+ * (UI copy + the native Alert titles/messages) is now the object form
+ * `t(key, { defaultValue })` — matching the app-wide convention
+ * (VoteDetailScreen, ArticleDetailScreen) so an untranslated key degrades to a
+ * readable English fallback instead of leaking the raw key. This suite locks
+ * that contract with a *spyable* `t` (mirroring VoteDetailScreen.test): the
+ * render layer asserts the resolved fallback text AND that each string is
+ * routed through `t(key, { defaultValue })`; the resource layer asserts the
+ * locale JSON carries those keys with real translations.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
@@ -29,6 +34,20 @@ import hu from '../../locales/hu.json';
 import pl from '../../locales/pl.json';
 import sk from '../../locales/sk.json';
 import { WidgetSettingsScreen } from './WidgetSettingsScreen';
+
+// Override the global `react-i18next` mock (src/test/setup.ts) with a *spyable*
+// `t` so these suites can assert that each string is routed THROUGH
+// `t(key, { defaultValue })`. The behavior is identical to the global mock
+// (`defaultValue ?? key`), so the resolved fallback text matches en.json.
+// `mock`-prefixed names are allowed inside a hoisted jest.mock factory.
+const mockT = jest.fn((key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key);
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mockT,
+    i18n: { language: 'en', changeLanguage: jest.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: jest.fn() },
+}));
 
 // No available widget types so no RN <Switch> renders — jest-expo 56's preset
 // can't transform the Switch native component (same codegen-spec limitation the
@@ -58,16 +77,26 @@ describe('WidgetSettingsScreen Alert i18n', () => {
     jest.clearAllMocks();
   });
 
-  it('raises the "widgets updated" Alert via i18n keys, not hardcoded literals', async () => {
+  it('raises the "widgets updated" Alert via object-form t(key, { defaultValue })', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     await render(<WidgetSettingsScreen onNavigate={jest.fn()} />);
 
-    const refresh = await screen.findByText('widgets.refreshAll');
+    const refresh = await screen.findByText('🔄 Refresh All Widgets');
     fireEvent.press(refresh);
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('widgets.updatedTitle', 'widgets.updatedMessage');
+      // Resolved fallback text (the real Alert the user sees)…
+      expect(alertSpy).toHaveBeenCalledWith('Widgets Updated', 'All widgets have been refreshed.');
     });
+    // …and proof the titles/messages are routed through i18n keys, not literals.
+    expect(mockT).toHaveBeenCalledWith(
+      'widgets.updatedTitle',
+      expect.objectContaining({ defaultValue: 'Widgets Updated' })
+    );
+    expect(mockT).toHaveBeenCalledWith(
+      'widgets.updatedMessage',
+      expect.objectContaining({ defaultValue: 'All widgets have been refreshed.' })
+    );
     alertSpy.mockRestore();
   });
 });
@@ -77,28 +106,41 @@ describe('WidgetSettingsScreen static copy i18n', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the screen chrome from i18n keys, not hardcoded English', async () => {
+  it('renders the screen chrome via object-form t(key, { defaultValue })', async () => {
     await render(<WidgetSettingsScreen onNavigate={jest.fn()} />);
 
-    // Header + Back control (Back reuses the shared common.back key).
-    expect(await screen.findByText('widgets.settingsTitle')).toBeTruthy();
-    expect(screen.getByText('← common.back')).toBeTruthy();
+    // Resolved fallback text renders (via each key's defaultValue).
+    expect(await screen.findByText('Widget Settings')).toBeTruthy();
+    expect(screen.getByText('← Back')).toBeTruthy();
+    expect(screen.getByText('Available Widgets')).toBeTruthy();
+    expect(screen.getByText('Configure which widgets appear on your home screen.')).toBeTruthy();
+    expect(screen.getByText('Active Widgets')).toBeTruthy();
+    expect(screen.getByText('No widgets configured yet.')).toBeTruthy();
+    expect(screen.getByText('🔄 Refresh All Widgets')).toBeTruthy();
+    expect(screen.getByText('How to Add Widgets')).toBeTruthy();
 
-    // Section titles / descriptions.
-    expect(screen.getByText('widgets.availableTitle')).toBeTruthy();
-    expect(screen.getByText('widgets.availableDescription')).toBeTruthy();
-    expect(screen.getByText('widgets.activeTitle')).toBeTruthy();
-
-    // Empty-state, refresh action and instructions block.
-    expect(screen.getByText('widgets.emptyText')).toBeTruthy();
-    expect(screen.getByText('widgets.refreshAll')).toBeTruthy();
-    expect(screen.getByText('widgets.instructionsTitle')).toBeTruthy();
-
-    // No raw English leaked through.
-    expect(screen.queryByText('Widget Settings')).toBeNull();
-    expect(screen.queryByText('Available Widgets')).toBeNull();
-    expect(screen.queryByText('🔄 Refresh All Widgets')).toBeNull();
-    expect(screen.queryByText('How to Add Widgets')).toBeNull();
+    // Each string is routed through an i18n key with an explicit defaultValue —
+    // not a hardcoded literal.
+    expect(mockT).toHaveBeenCalledWith(
+      'widgets.settingsTitle',
+      expect.objectContaining({ defaultValue: 'Widget Settings' })
+    );
+    expect(mockT).toHaveBeenCalledWith(
+      'common.back',
+      expect.objectContaining({ defaultValue: 'Back' })
+    );
+    expect(mockT).toHaveBeenCalledWith(
+      'widgets.availableTitle',
+      expect.objectContaining({ defaultValue: 'Available Widgets' })
+    );
+    expect(mockT).toHaveBeenCalledWith(
+      'widgets.refreshAll',
+      expect.objectContaining({ defaultValue: '🔄 Refresh All Widgets' })
+    );
+    expect(mockT).toHaveBeenCalledWith(
+      'widgets.instructionsTitle',
+      expect.objectContaining({ defaultValue: 'How to Add Widgets' })
+    );
   });
 });
 
