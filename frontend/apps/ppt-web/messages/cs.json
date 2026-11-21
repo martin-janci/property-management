@@ -7082,7 +7082,8 @@
       },
       "errors": {
         "requiredFields": "Vyplňte všechna povinná pole",
-        "invalidNumbers": "Množství a jednotková cena musí být platná čísla"
+        "invalidNumbers": "Množství a jednotková cena musí být platná čísla",
+        "noLineItems": "Přidejte alespoň jednu položku s popisem"
       }
     },
     "paymentMatching": {

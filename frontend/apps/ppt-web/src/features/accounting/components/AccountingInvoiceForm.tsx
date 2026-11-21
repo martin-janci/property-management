@@ -102,7 +102,7 @@ export function AccountingInvoiceForm({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
-    if (!contactId || !number || !dueDate || items.length === 0) {
+    if (!contactId || !number || !dueDate) {
       setFormError(t('accounting.form.errors.requiredFields'));
       return;
     }
@@ -112,6 +112,17 @@ export function AccountingInvoiceForm({
     const submittedItems = items
       .filter((i) => i.description.trim() !== '')
       .map((i) => ({ ...i, vatRate: resolveVatRate(i, country) }));
+
+    // An invoice must carry at least one real line item. `items` always holds at
+    // least one row (initial state + the removeItem floor of 1), so the raw
+    // `items.length` can never be 0 — the old guard checking it was dead. But
+    // every row may have a blank description, in which case the filter above
+    // drops them all and we'd POST an invoice with an empty items[] array. Guard
+    // the *filtered* list so a no-line-item invoice can never reach onSubmit.
+    if (submittedItems.length === 0) {
+      setFormError(t('accounting.form.errors.noLineItems'));
+      return;
+    }
 
     // Defense in depth: never persist a line with a non-finite qty/unitPrice
     // (e.g. a cleared field left NaN in state). parseNumericInput normalizes on

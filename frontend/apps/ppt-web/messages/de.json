@@ -7140,7 +7140,8 @@
       },
       "errors": {
         "requiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
-        "invalidNumbers": "Menge und Einzelpreis müssen gültige Zahlen sein"
+        "invalidNumbers": "Menge und Einzelpreis müssen gültige Zahlen sein",
+        "noLineItems": "Fügen Sie mindestens eine Position mit Beschreibung hinzu"
       }
     },
     "paymentMatching": {

@@ -95,6 +95,7 @@ const REQUIRED_KEYS: string[] = [
   'accounting.form.vatRate.zero',
   'accounting.form.errors.requiredFields',
   'accounting.form.errors.invalidNumbers',
+  'accounting.form.errors.noLineItems',
 ];
 
 /**

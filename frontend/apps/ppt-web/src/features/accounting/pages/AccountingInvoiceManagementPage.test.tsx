@@ -122,6 +122,14 @@ describe('AccountingInvoiceManagementPage — error surfacing', () => {
     const dueDate = dateInputs.find((d) => d.value === '') ?? dateInputs[dateInputs.length - 1];
     fireEvent.change(dueDate, { target: { value: '2026-12-31' } });
 
+    // Give the single line item a description so it survives the form's
+    // empty-line-items guard and the create mutation actually fires (the point
+    // of this test is the mutation's onError toast, not the client-side guard).
+    const descInput = container.querySelector(
+      'input[placeholder="Item description"]'
+    ) as HTMLInputElement;
+    fireEvent.change(descInput, { target: { value: 'Consulting' } });
+
     // Submit — the in-form submit button is the one with type="submit".
     const submit = screen
       .getAllByRole('button', { name: /create invoice/i })

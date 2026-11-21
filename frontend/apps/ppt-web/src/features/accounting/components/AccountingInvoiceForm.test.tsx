@@ -60,6 +60,42 @@ describe('AccountingInvoiceForm — NaN line-total guard', () => {
   });
 });
 
+describe('AccountingInvoiceForm — empty line-items guard', () => {
+  it('never submits an invoice whose items[] is empty after the description filter', () => {
+    const onSubmit = vi.fn();
+    const { container, queryByRole } = render(
+      <AccountingInvoiceForm contacts={contacts} onSubmit={onSubmit} onCancel={() => {}} />
+    );
+
+    // Fill every required header field so the required-fields guard passes.
+    const contactSelect = container.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(contactSelect, { target: { value: 'contact-1' } });
+
+    const numberInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+    fireEvent.change(numberInput, { target: { value: 'INV-300' } });
+
+    const dateInputs = Array.from(
+      container.querySelectorAll('input[type="date"]')
+    ) as HTMLInputElement[];
+    const dueDate = dateInputs.find((d) => d.value === '') ?? dateInputs[dateInputs.length - 1];
+    fireEvent.change(dueDate, { target: { value: '2026-12-31' } });
+
+    // Leave the single line item's description blank. `items.length` stays 1
+    // (the removeItem floor), but the submit filter drops the blank-description
+    // row, so the payload's items[] would be empty. On the pre-fix tree the
+    // guard only checked the raw `items.length`, so onSubmit fired with items: [].
+    fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+
+    // The guard must block the submit entirely and surface an inline error.
+    const emptyItemsSubmitted = onSubmit.mock.calls.some(
+      ([payload]) => (payload.items as unknown[]).length === 0
+    );
+    expect(emptyItemsSubmitted).toBe(false);
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(queryByRole('alert')).not.toBeNull();
+  });
+});
+
 describe('AccountingInvoiceForm — VAT rate payload consistency', () => {
   it('submits item.vatRate matching the country/type-derived rate shown in the UI', () => {
     const onSubmit = vi.fn();
