@@ -3,19 +3,24 @@
  */
 
 import {
-  type AccountingCreateInvoiceRequest,
+  type AccountingUpdateInvoiceRequest,
   contactsApiList,
   invoicesApiCreate,
   invoicesApiDelete,
+  invoicesApiGet,
   invoicesApiList,
+  invoicesApiListItems,
+  invoicesApiUpdate,
 } from '@ppt/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfirmationDialog, useToast } from '../../../components';
+import { useOrganization } from '../../../hooks/useOrganization';
 import { parseApiError } from '../../../lib/errorHandler';
 import { queryKeys } from '../../../lib/queryKeys';
-import { AccountingInvoiceForm } from '../components/AccountingInvoiceForm';
+import { AccountingInvoiceDetail } from '../components/AccountingInvoiceDetail';
+import { AccountingInvoiceForm, type InvoiceFormSubmit } from '../components/AccountingInvoiceForm';
 import { AccountingInvoiceList } from '../components/AccountingInvoiceList';
 import { AccountingSubNav } from '../components/AccountingSubNav';
 
@@ -23,6 +28,8 @@ export function AccountingInvoiceManagementPage() {
   const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { organizationId } = useOrganization();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
@@ -41,7 +48,13 @@ export function AccountingInvoiceManagementPage() {
   const isLoading = invoicesLoading || contactsLoading;
 
   const createMutation = useMutation({
-    mutationFn: (data: AccountingCreateInvoiceRequest) => invoicesApiCreate({ body: data }),
+    // The server overwrites tenant_id with the session tenant, but its body
+    // shape requires the field. throwOnError so failures reach onError.
+    mutationFn: (data: InvoiceFormSubmit) =>
+      invoicesApiCreate({
+        body: { ...data, tenant_id: organizationId },
+        throwOnError: true,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
       setIsCreating(false);
@@ -57,7 +70,7 @@ export function AccountingInvoiceManagementPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => invoicesApiDelete({ path: { id } }),
+    mutationFn: (id: string) => invoicesApiDelete({ path: { id }, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
       setDeleteTargetId(null);
@@ -71,6 +84,45 @@ export function AccountingInvoiceManagementPage() {
       });
     },
   });
+
+  const selectedQuery = useQuery({
+    queryKey: [...queryKeys.accounting.invoices(), 'detail', selectedId],
+    queryFn: async () =>
+      (await invoicesApiGet({ path: { id: selectedId as string }, throwOnError: true })).data,
+    enabled: selectedId !== null,
+  });
+  const itemsQuery = useQuery({
+    queryKey: [...queryKeys.accounting.invoices(), 'items', selectedId],
+    queryFn: async () =>
+      (await invoicesApiListItems({ path: { id: selectedId as string }, throwOnError: true }))
+        .data ?? [],
+    enabled: selectedId !== null,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: AccountingUpdateInvoiceRequest;
+      successKey: string;
+    }) => invoicesApiUpdate({ path: { id }, body, throwOnError: true }),
+    onSuccess: (_data, { successKey }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounting.invoices() });
+      showToast({ type: 'success', title: t(successKey) });
+    },
+    onError: (error) => {
+      showToast({
+        type: 'error',
+        title: t('accounting.detail.updateFailed'),
+        message: parseApiError(error).message,
+      });
+    },
+  });
+
+  const selectedInvoice =
+    selectedQuery.data ?? (invoices?.data || []).find((inv) => inv.id === selectedId);
 
   return (
     <div className="p-8">
@@ -91,7 +143,19 @@ export function AccountingInvoiceManagementPage() {
         )}
       </div>
 
-      {isCreating ? (
+      {selectedId !== null && selectedInvoice ? (
+        <AccountingInvoiceDetail
+          invoice={selectedInvoice}
+          items={itemsQuery.data ?? []}
+          contacts={contacts?.data || []}
+          isLoadingItems={itemsQuery.isLoading}
+          isUpdating={updateMutation.isPending}
+          onUpdate={(body, successKey) =>
+            updateMutation.mutate({ id: selectedId, body, successKey })
+          }
+          onBack={() => setSelectedId(null)}
+        />
+      ) : isCreating ? (
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-semibold mb-4">{t('accounting.newInvoice')}</h2>
           <AccountingInvoiceForm
@@ -105,10 +169,7 @@ export function AccountingInvoiceManagementPage() {
         <AccountingInvoiceList
           invoices={invoices?.data || []}
           isLoading={isLoading}
-          // No onViewInvoice: these are accounting-server invoices (a separate
-          // entity from /financial invoices) and no accounting invoice detail
-          // view exists yet (#1522), so rows are not clickable rather than a
-          // silent no-op.
+          onViewInvoice={(id) => setSelectedId(id)}
           onDeleteInvoice={(id) => setDeleteTargetId(id)}
         />
       )}

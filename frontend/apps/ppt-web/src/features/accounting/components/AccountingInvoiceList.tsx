@@ -6,21 +6,31 @@ import type { AccountingInvoice, AccountingInvoiceStatus } from '@ppt/api-client
 import { useTranslation } from 'react-i18next';
 
 /** Map the API's snake_case status onto its `accounting.status.*` i18n key. */
-const INVOICE_STATUS_I18N_KEYS: Record<AccountingInvoiceStatus, string> = {
+export const INVOICE_STATUS_I18N_KEYS: Record<AccountingInvoiceStatus, string> = {
   draft: 'accounting.status.draft',
   issued: 'accounting.status.issued',
   paid: 'accounting.status.paid',
   partially_paid: 'accounting.status.partiallyPaid',
   overdue: 'accounting.status.overdue',
+  sent: 'accounting.status.sent',
+  cancelled: 'accounting.status.cancelled',
 };
 
-const INVOICE_STATUS_STYLES: Record<AccountingInvoiceStatus, string> = {
+export const INVOICE_STATUS_STYLES: Record<AccountingInvoiceStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
   issued: 'bg-blue-100 text-blue-800',
   paid: 'bg-green-100 text-green-800',
   partially_paid: 'bg-yellow-100 text-yellow-800',
   overdue: 'bg-red-100 text-red-800',
+  sent: 'bg-indigo-100 text-indigo-800',
+  cancelled: 'bg-gray-200 text-gray-600 line-through',
 };
+
+/** Decimal amounts arrive as strings (`rust_decimal`); render with 2 places. */
+export function formatAmount(value: string | number | undefined | null): string {
+  const n = Number(value ?? 0);
+  return Number.isFinite(n) ? n.toFixed(2) : '0.00';
+}
 
 interface AccountingInvoiceListProps {
   invoices: AccountingInvoice[];
@@ -81,7 +91,7 @@ export function AccountingInvoiceList({
                   <p className="text-sm font-medium text-blue-600 truncate">{invoice.number}</p>
                   <p className="text-xs text-gray-500">
                     {t('accounting.due', {
-                      date: new Date(invoice.dueDate).toLocaleDateString(i18n.language, {
+                      date: new Date(invoice.due_date).toLocaleDateString(i18n.language, {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
@@ -92,10 +102,10 @@ export function AccountingInvoiceList({
                 <div className="ml-2 flex-shrink-0 flex items-center gap-4">
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-semibold text-gray-900">
-                      {invoice.totalAmount.toFixed(2)} {invoice.currency}
+                      {formatAmount(invoice.total_amount)} {invoice.currency}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {t('accounting.vat', { amount: invoice.vatAmount.toFixed(2) })}
+                      {t('accounting.vat', { amount: formatAmount(invoice.vat_amount) })}
                     </p>
                   </div>
                   <p

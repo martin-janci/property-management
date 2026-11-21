@@ -52,8 +52,8 @@ describe('AccountingInvoiceForm — NaN line-total guard', () => {
 
     // The guard must ensure no non-finite qty/unitPrice ever reaches onSubmit.
     const nanSubmitted = onSubmit.mock.calls.some(([payload]) =>
-      (payload.items as { qty: number; unitPrice: number }[]).some(
-        (i) => !Number.isFinite(i.qty) || !Number.isFinite(i.unitPrice)
+      (payload.items as { qty: string; unit_price: string }[]).some(
+        (i) => !Number.isFinite(Number(i.qty)) || !Number.isFinite(Number(i.unit_price))
       )
     );
     expect(nanSubmitted).toBe(false);
@@ -135,8 +135,8 @@ describe('AccountingInvoiceForm — VAT rate payload consistency', () => {
     // never the stale initial 21. Otherwise the stored invoice drifts from the UI.
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const payload = onSubmit.mock.calls[0][0] as {
-      items: { vatRate: number; vatRateType?: string }[];
+      items: { vat_rate: string; vat_rate_type?: string }[];
     };
-    expect(payload.items[0].vatRate).toBe(20);
+    expect(payload.items[0].vat_rate).toBe('20');
   });
 });

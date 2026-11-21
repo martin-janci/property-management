@@ -4,7 +4,6 @@
 
 import type {
   AccountingContact,
-  AccountingCreateInvoiceItem,
   AccountingCreateInvoiceRequest,
   AccountingInvoice,
   AccountingVatRate,
@@ -23,6 +22,21 @@ function parseNumericInput(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Line item as edited in the form: numbers for arithmetic. Mapped onto the
+ * wire's snake_case decimal-string `AccountingCreateInvoiceItem` on submit.
+ */
+export interface InvoiceFormItem {
+  description: string;
+  qty: number;
+  unitPrice: number;
+  vatRate: number;
+  vatRateType?: AccountingVatRate;
+}
+
+/** Invoice payload the form emits; the page adds `tenant_id` (session org). */
+export type InvoiceFormSubmit = Omit<AccountingCreateInvoiceRequest, 'tenant_id'>;
+
 /** VAT rate options, by value + the `accounting.form.vatRate.*` i18n key. */
 const VAT_RATE_OPTIONS: { i18nKey: string; value: AccountingVatRate }[] = [
   { i18nKey: 'accounting.form.vatRate.standard', value: 'standard' },
@@ -39,7 +53,7 @@ const VAT_RATE_OPTIONS: { i18nKey: string; value: AccountingVatRate }[] = [
  * sync so a stored invoice can never drift from what the user saw (e.g. a SK
  * standard line showing 20% must not persist the stale default 21%).
  */
-function resolveVatRate(item: AccountingCreateInvoiceItem, country: 'CZ' | 'SK'): number {
+function resolveVatRate(item: InvoiceFormItem, country: 'CZ' | 'SK'): number {
   switch (item.vatRateType) {
     case 'standard':
       return country === 'CZ' ? 21 : 20;
@@ -57,7 +71,7 @@ function resolveVatRate(item: AccountingCreateInvoiceItem, country: 'CZ' | 'SK')
 interface AccountingInvoiceFormProps {
   contacts: AccountingContact[];
   initialData?: Partial<AccountingInvoice>;
-  onSubmit: (data: AccountingCreateInvoiceRequest) => void;
+  onSubmit: (data: InvoiceFormSubmit) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
@@ -71,15 +85,15 @@ export function AccountingInvoiceForm({
 }: AccountingInvoiceFormProps) {
   const { t } = useTranslation();
   const [formError, setFormError] = useState<string | null>(null);
-  const [contactId, setContactId] = useState(initialData?.contactId || '');
+  const [contactId, setContactId] = useState(initialData?.contact_id || '');
   const [number, setNumber] = useState(initialData?.number || '');
   const [issueDate, setIssueDate] = useState(
-    initialData?.issueDate || new Date().toISOString().split('T')[0]
+    initialData?.issue_date || new Date().toISOString().split('T')[0]
   );
-  const [dueDate, setDueDate] = useState(initialData?.dueDate || '');
+  const [dueDate, setDueDate] = useState(initialData?.due_date || '');
   const [currency, setCurrency] = useState(initialData?.currency || 'CZK');
-  const [variableSymbol, setVariableSymbol] = useState(initialData?.variableSymbol || '');
-  const [items, setItems] = useState<AccountingCreateInvoiceItem[]>([
+  const [variableSymbol, setVariableSymbol] = useState(initialData?.variable_symbol || '');
+  const [items, setItems] = useState<InvoiceFormItem[]>([
     { description: '', qty: 1, unitPrice: 0, vatRate: 21, vatRateType: 'standard' },
   ]);
   const [country, setCountry] = useState<'CZ' | 'SK'>('CZ');
@@ -136,14 +150,21 @@ export function AccountingInvoiceForm({
     }
 
     setFormError(null);
+    // The api-server takes snake_case fields and decimal strings.
     onSubmit({
-      contactId,
+      contact_id: contactId,
       number,
-      issueDate,
-      dueDate,
+      issue_date: issueDate,
+      due_date: dueDate,
       currency,
-      variableSymbol: variableSymbol || undefined,
-      items: submittedItems,
+      variable_symbol: variableSymbol || undefined,
+      items: submittedItems.map((i) => ({
+        description: i.description,
+        qty: String(i.qty),
+        unit_price: String(i.unitPrice),
+        vat_rate: String(i.vatRate),
+        vat_rate_type: i.vatRateType,
+      })),
       country,
     });
   };
@@ -163,7 +184,7 @@ export function AccountingInvoiceForm({
 
   const updateItem = (
     index: number,
-    field: keyof AccountingCreateInvoiceItem,
+    field: keyof InvoiceFormItem,
     value: string | number | undefined
   ) => {
     const newItems = [...items];

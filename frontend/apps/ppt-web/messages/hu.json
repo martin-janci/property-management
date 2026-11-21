@@ -7101,7 +7101,9 @@
       "issued": "Kiállítva",
       "paid": "Fizetve",
       "partiallyPaid": "Részben fizetve",
-      "overdue": "Lejárt"
+      "overdue": "Lejárt",
+      "sent": "Elküldve",
+      "cancelled": "Sztornózva"
     },
     "form": {
       "contact": "Kapcsolat",
@@ -7183,6 +7185,32 @@
       "label": "Könyvelési részlegek",
       "invoices": "Számlák",
       "paymentMatching": "Befizetések párosítása"
+    },
+    "detail": {
+      "back": "Vissza a számlákhoz",
+      "title": "{{number}} számla",
+      "issueDate": "Kiállítás dátuma",
+      "dueDate": "Fizetési határidő",
+      "variableSymbol": "Változó szimbólum",
+      "paidAmount": "Kifizetve",
+      "items": "Tételek",
+      "description": "Leírás",
+      "qty": "Mennyiség",
+      "unitPrice": "Egységár",
+      "vatRate": "ÁFA",
+      "lineTotal": "Összesen",
+      "base": "Nettó",
+      "vat": "ÁFA",
+      "total": "Összesen",
+      "draftHint": "Ez a számla piszkozat. Állítsa ki a fizetés fogadásához.",
+      "issue": "Számla kiállítása",
+      "issued": "Számla kiállítva",
+      "recordPayment": "Fizetés rögzítése",
+      "remaining": "Hátralék: {{amount}} {{currency}}",
+      "paymentAmount": "Összeg",
+      "paymentRecorded": "Fizetés rögzítve",
+      "invalidPayment": "Adjon meg 0-nál nagyobb összeget",
+      "updateFailed": "A számlát nem sikerült frissíteni"
     }
   },
   "shell": {

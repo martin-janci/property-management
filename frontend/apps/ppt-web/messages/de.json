@@ -7101,7 +7101,9 @@
       "issued": "Ausgestellt",
       "paid": "Bezahlt",
       "partiallyPaid": "Teilweise bezahlt",
-      "overdue": "Überfällig"
+      "overdue": "Überfällig",
+      "sent": "Versendet",
+      "cancelled": "Storniert"
     },
     "form": {
       "contact": "Kontakt",
@@ -7183,6 +7185,32 @@
       "label": "Buchhaltungsbereiche",
       "invoices": "Rechnungen",
       "paymentMatching": "Zahlungsabgleich"
+    },
+    "detail": {
+      "back": "Zurück zu den Rechnungen",
+      "title": "Rechnung {{number}}",
+      "issueDate": "Rechnungsdatum",
+      "dueDate": "Fälligkeitsdatum",
+      "variableSymbol": "Variables Symbol",
+      "paidAmount": "Bezahlt",
+      "items": "Positionen",
+      "description": "Beschreibung",
+      "qty": "Menge",
+      "unitPrice": "Einzelpreis",
+      "vatRate": "MwSt.",
+      "lineTotal": "Gesamt",
+      "base": "Netto",
+      "vat": "MwSt.",
+      "total": "Gesamt",
+      "draftHint": "Diese Rechnung ist ein Entwurf. Stellen Sie sie aus, um die Zahlung einzuziehen.",
+      "issue": "Rechnung ausstellen",
+      "issued": "Rechnung ausgestellt",
+      "recordPayment": "Zahlung erfassen",
+      "remaining": "Offen: {{amount}} {{currency}}",
+      "paymentAmount": "Betrag",
+      "paymentRecorded": "Zahlung erfasst",
+      "invalidPayment": "Geben Sie einen Betrag größer als 0 ein",
+      "updateFailed": "Rechnung konnte nicht aktualisiert werden"
     }
   },
   "shell": {

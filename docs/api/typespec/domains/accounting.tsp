@@ -8,13 +8,22 @@ namespace PropertyManagement.Accounting;
 using TypeSpec.Http;
 using PropertyManagement.Shared;
 
+// ============================================================================
+// Contacts & issued invoices.
+//
+// NOTE: snake_case field names, matching what the api-server serializes (the
+// handlers return / accept the `db::models::accounting` structs directly, which
+// have no `serde(rename_all)`). Decimal amounts travel as strings
+// (`rust_decimal` serde), so money / quantity / rate fields are `string`.
+// ============================================================================
+
 @doc("Native contact (CRM)")
 model Contact {
   @doc("Unique identifier")
   id: uuid;
 
   @doc("Tenant identifier")
-  tenantId: uuid;
+  tenant_id: uuid;
 
   @doc("Contact name")
   name: string;
@@ -26,7 +35,7 @@ model Contact {
   dic?: string;
 
   @doc("Email address")
-  email?: email;
+  email?: string;
 
   @doc("Phone number")
   phone?: string;
@@ -37,16 +46,22 @@ model Contact {
   @doc("IBAN for payments")
   iban?: string;
 
-  ...AuditableEntity;
+  @doc("Creation timestamp")
+  created_at: dateTime;
+
+  @doc("Last update timestamp")
+  updated_at: dateTime;
 }
 
-@doc("Status of an issued invoice")
+@doc("Status of an issued invoice (UC-ACC-05.17 lifecycle)")
 enum InvoiceStatus {
   Draft: "draft",
   Issued: "issued",
+  Sent: "sent",
   Paid: "paid",
   PartiallyPaid: "partially_paid",
   Overdue: "overdue",
+  Cancelled: "cancelled",
 }
 
 @doc("VAT rate types for CZ/SK")
@@ -67,45 +82,49 @@ model Invoice {
   id: uuid;
 
   @doc("Tenant identifier")
-  tenantId: uuid;
+  tenant_id: uuid;
 
   @doc("Contact identifier")
-  contactId: uuid;
+  contact_id: uuid;
 
   @doc("Invoice number")
   number: string;
 
   @doc("Issue date")
-  issueDate: date;
+  issue_date: date;
 
   @doc("Due date")
-  dueDate: date;
+  due_date: date;
 
   @doc("Taxable supply date")
-  taxableSupplyDate?: date;
+  taxable_supply_date?: date;
 
   @doc("Currency code (e.g., CZK)")
   currency: string;
 
-  @doc("Total amount including VAT")
-  totalAmount: float64;
+  @doc("Total amount including VAT (decimal string)")
+  total_amount: string;
 
-  @doc("Base amount excluding VAT")
-  baseAmount: float64;
+  @doc("Base amount excluding VAT (decimal string)")
+  base_amount: string;
 
-  @doc("VAT amount")
-  vatAmount: float64;
+  @doc("VAT amount (decimal string)")
+  vat_amount: string;
 
   @doc("Variable symbol for payment identification")
-  variableSymbol?: string;
+  variable_symbol?: string;
 
   @doc("Current status")
   status: InvoiceStatus;
 
-  @doc("Amount already paid")
-  paidAmount: float64;
+  @doc("Amount already paid (decimal string)")
+  paid_amount: string;
 
-  ...AuditableEntity;
+  @doc("Creation timestamp")
+  created_at: dateTime;
+
+  @doc("Last update timestamp")
+  updated_at: dateTime;
 }
 
 @doc("Line item for an invoice")
@@ -114,55 +133,58 @@ model InvoiceItem {
   id: uuid;
 
   @doc("Invoice identifier")
-  invoiceId: uuid;
+  invoice_id: uuid;
 
   @doc("Tenant identifier")
-  tenantId: uuid;
+  tenant_id: uuid;
 
   @doc("Description of the item")
   description: string;
 
-  @doc("Quantity")
-  qty: float64;
+  @doc("Quantity (decimal string)")
+  qty: string;
 
-  @doc("Unit price excluding VAT")
-  unitPrice: float64;
+  @doc("Unit price excluding VAT (decimal string)")
+  unit_price: string;
 
-  @doc("VAT rate percentage")
-  vatRate: float64;
+  @doc("VAT rate percentage (decimal string)")
+  vat_rate: string;
 
-  @doc("Total amount including VAT")
-  totalAmount: float64;
+  @doc("Total amount including VAT (decimal string)")
+  total_amount: string;
 
-  @doc("Base amount excluding VAT")
-  baseAmount: float64;
+  @doc("Base amount excluding VAT (decimal string)")
+  base_amount: string;
 
-  @doc("VAT amount")
-  vatAmount: float64;
+  @doc("VAT amount (decimal string)")
+  vat_amount: string;
 }
 
-@doc("Request to create a new invoice")
+@doc("Request to create a new invoice (the tenant comes from the session)")
 model CreateInvoiceRequest {
+  @doc("Ignored: overwritten with the session tenant. Required by the server's body shape.")
+  tenant_id: uuid;
+
   @doc("Contact identifier")
-  contactId: uuid;
+  contact_id: uuid;
 
   @doc("Invoice number")
   number: string;
 
   @doc("Issue date")
-  issueDate: date;
+  issue_date: date;
 
   @doc("Due date")
-  dueDate: date;
+  due_date: date;
 
   @doc("Taxable supply date")
-  taxableSupplyDate?: date;
+  taxable_supply_date?: date;
 
-  @doc("Currency code (e.g., CZK)")
+  @doc("Currency code (CZK or EUR)")
   currency: string;
 
   @doc("Variable symbol")
-  variableSymbol?: string;
+  variable_symbol?: string;
 
   @doc("Initial status")
   status?: InvoiceStatus;
@@ -179,47 +201,47 @@ model CreateInvoiceItem {
   @doc("Description")
   description: string;
 
-  @doc("Quantity")
-  qty: float64;
+  @doc("Quantity (decimal string)")
+  qty: string;
 
-  @doc("Unit price excluding VAT")
-  unitPrice: float64;
+  @doc("Unit price excluding VAT (decimal string)")
+  unit_price: string;
 
-  @doc("VAT rate percentage")
-  vatRate: float64;
+  @doc("VAT rate percentage (decimal string)")
+  vat_rate: string;
 
-  @doc("Optional named VAT rate (overrides vatRate if provided)")
-  vatRateType?: VatRate;
+  @doc("Optional named VAT rate (overrides vat_rate if provided)")
+  vat_rate_type?: VatRate;
 }
 
 @doc("Request to update an existing invoice")
 model UpdateInvoiceRequest {
   @doc("Contact identifier")
-  contactId?: uuid;
+  contact_id?: uuid;
 
   @doc("Invoice number")
   number?: string;
 
   @doc("Issue date")
-  issueDate?: date;
+  issue_date?: date;
 
   @doc("Due date")
-  dueDate?: date;
+  due_date?: date;
 
   @doc("Taxable supply date")
-  taxableSupplyDate?: date;
+  taxable_supply_date?: date;
 
   @doc("Currency code")
   currency?: string;
 
   @doc("Variable symbol")
-  variableSymbol?: string;
+  variable_symbol?: string;
 
   @doc("Status")
   status?: InvoiceStatus;
 
-  @doc("Paid amount")
-  paidAmount?: float64;
+  @doc("Paid amount (decimal string)")
+  paid_amount?: string;
 }
 
 @route("/api/v1/accounting/contacts")
