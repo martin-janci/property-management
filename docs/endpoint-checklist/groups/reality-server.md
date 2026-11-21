@@ -20,6 +20,18 @@ _Server: reality-server. Modules: agencies, agency_branding, agency_imports, age
 | GET | /api/v1/listings/{id} | get_listing | done | listings_tests.rs | get_listing_unknown_id_returns_404 |
 | POST | /api/v1/listings/{id}/view | record_view | done | listings_tests.rs | record_view_unknown_listing_returns_404 |
 
+> **`slug` contract (#3616).** `ListingSummary.slug` (search, `GET /api/v1/listings`)
+> and `RichListingSummary.slug` (featured, `GET /api/v1/listings/featured`) are
+> **always populated**: `{slugified-title}-{uuid}`, degrading to the bare UUID when
+> the title slugifies to nothing (see `util/slug.rs`). The trailing UUID is the
+> **authoritative detail-lookup identifier** — `GET /api/v1/listings/{id}` resolves
+> `{id}` via `util::slug::parse_listing_id`, which accepts the full slug or a bare
+> UUID. Clients should treat `slug` as the value to pass to the detail endpoint and
+> to build SEO deep links. Propagated to: `@ppt/reality-api-client`
+> (`ListingSummary.slug`), and the KMP shared module domain `ListingSummary.slug`
+> (consumed by Compose + SwiftUI). The KMP wire DTOs decode `slug` leniently
+> (nullable) and the mapper falls back to `id`, so the domain field is never empty.
+
 ## users.rs  (mount: /api/v1/users)
 | Method | Path | Handler | Status | Tests | Notes |
 |---|---|---|---|---|---|

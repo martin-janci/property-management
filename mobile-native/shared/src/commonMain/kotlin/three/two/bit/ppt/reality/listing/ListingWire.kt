@@ -17,6 +17,12 @@ import kotlinx.serialization.Serializable
 internal data class WireListingSummary(
     val id: String,
     val title: String,
+    /**
+     * SEO slug `{slugified-title}-{uuid}` (#3616). The server always emits this;
+     * it is nullable here only so decoding tolerates older/empty payloads. The
+     * mapper falls back to [id] so the domain [ListingSummary.slug] is always
+     * populated. The trailing UUID is the detail-lookup identifier.
+     */
     val slug: String? = null,
     val description: String? = null,
     val price: Long,
@@ -92,6 +98,8 @@ internal data class WireRichPhoto(
 internal data class WireRichListingSummary(
     val id: String,
     val title: String,
+    /** SEO slug `{slugified-title}-{uuid}` (#3616); see [WireListingSummary.slug]. */
+    val slug: String? = null,
     val propertyType: String = "",
     val transactionType: String = "",
     val status: String = "active",
@@ -182,6 +190,8 @@ internal fun WireListingSummary.toDomain(): ListingSummary =
     ListingSummary(
         id = id,
         title = title,
+        // Always-populated detail-lookup identifier; fall back to the bare UUID.
+        slug = slug ?: id,
         type = transactionTypeToDomain(transactionType),
         category = ServerPropertyType.toDomain(propertyType),
         status = ListingStatus.ACTIVE,
@@ -202,6 +212,8 @@ internal fun WireRichListingSummary.toDomain(): ListingSummary =
     ListingSummary(
         id = id,
         title = title,
+        // Always-populated detail-lookup identifier; fall back to the bare UUID.
+        slug = slug ?: id,
         type = transactionTypeToDomain(transactionType),
         category = ServerPropertyType.toDomain(propertyType),
         status = ListingStatus.ACTIVE,
