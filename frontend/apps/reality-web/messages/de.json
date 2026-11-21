@@ -700,9 +700,13 @@
       "listingRefPlaceholder": "z. B. https://rlt.sk/listings/ba-byt-3i oder #12345",
       "descriptionLabel": "Beschreibung des Problems",
       "descriptionPlaceholder": "Beschreiben Sie, warum Sie dieses Inserat melden. Je mehr Details Sie angeben, desto schneller können wir es prüfen.",
-      "attachmentsLabel": "Anhänge (demnächst)",
-      "attachmentsComingSoon": "Das Hinzufügen von Anhängen wird bald verfügbar sein",
-      "attachmentsHint": "Das Hochladen von Screenshots ist noch nicht verfügbar — bitte beschreiben Sie die Belege in der obigen Beschreibung. Wir arbeiten daran.",
+      "attachmentsLabel": "Anhänge (optional)",
+      "attachmentsUrlPlaceholder": "https://… Link zu einem Screenshot oder Dokument",
+      "attachmentsAdd": "Link hinzufügen",
+      "attachmentsRemove": "Entfernen",
+      "attachmentsInvalidUrl": "Geben Sie einen gültigen http(s)-Link ein (max. 2048 Zeichen).",
+      "attachmentsMax": "Sie können höchstens {max} Links hinzufügen.",
+      "attachmentsHint": "Fügen Sie Links zu anderswo gehosteten Belegen ein (Screenshots, Dokumente). Bis zu {max} http(s)-Links.",
       "gdpr": {
         "label": "Ich stimme der Verarbeitung personenbezogener Daten zum Zweck der Prüfung meiner Meldung gemäß der {privacyLink} zu.",
         "privacyLink": "Datenschutzrichtlinie"

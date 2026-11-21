@@ -11,13 +11,14 @@
  *      and only then shows the success screen;
  *   2. a rate-limit (429) surfaces an error alert instead of a fake success;
  *   3. a missing listing reference blocks the POST and surfaces an error;
- *   4. the attachment control collects nothing and the submit body is
- *      attachment-free (#3017) — the page must not imply evidence is sent.
+ *   4. added evidence links ride along in the POST body as `attachments`
+ *      (#3017) — the control is now functional (URL links, no file upload),
+ *      and an invalid link is rejected inline rather than sent.
  *
  * On `dev` test (1) fails at the `expect(post).toBeDefined()` assertion
- * because no fetch ever happens — this is the IG3 regression guard. Test (4)
- * is the #3017 regression guard: on `dev` the file input still exists so the
- * `toBeNull()` assertion fails.
+ * because no fetch ever happens — this is the IG3 regression guard. The
+ * attachment tests are the #3017 regression guard: on `dev` the control is
+ * disabled and collects nothing, so the "attachments in body" assertion fails.
  *
  * Only the Header/Footer chrome and next/navigation are mocked; the submit
  * path and `useSubmitReport` are the real thing.
@@ -77,6 +78,12 @@ function renderPage() {
   );
 }
 
+// The page now has several buttons (Add-link, per-row Remove, Submit), so a
+// bare getByRole('button') is ambiguous. The submit button's label is the
+// `submit`/`submitting` message key (echoed verbatim by the mock), so scope by
+// name. The Add-link button is `attachmentsAdd`; Remove is `attachmentsRemove`.
+const submitBtn = () => screen.getByRole('button', { name: /submit/i });
+
 // Select first problem card, type a description, accept GDPR.
 function fillForm(container: HTMLElement, description = 'This looks like a scam') {
   fireEvent.click(screen.getAllByRole('radio')[0]);
@@ -84,6 +91,14 @@ function fillForm(container: HTMLElement, description = 'This looks like a scam'
   if (!textarea) throw new Error('description textarea not found');
   fireEvent.change(textarea, { target: { value: description } });
   fireEvent.click(screen.getByRole('checkbox'));
+}
+
+// Type a link into the attachment URL field and click Add.
+function addAttachment(container: HTMLElement, url: string) {
+  const input = container.querySelector('#attachment-url') as HTMLInputElement | null;
+  if (!input) throw new Error('attachment url input not found');
+  fireEvent.change(input, { target: { value: url } });
+  fireEvent.click(screen.getByRole('button', { name: 'attachmentsAdd' }));
 }
 
 describe('ReportPage — abuse-report submit wiring', () => {
@@ -109,7 +124,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
 
     const { container } = renderPage();
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
 
     await waitFor(() => {
       const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
@@ -148,7 +163,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
 
     const { container } = renderPage();
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
 
     const ref = await screen.findByTestId('report-reference-id');
     expect(ref).toHaveTextContent(REPORT_ID);
@@ -162,29 +177,73 @@ describe('ReportPage — abuse-report submit wiring', () => {
 
     const { container } = renderPage();
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('errorRateLimit');
     expect(screen.queryByText('successTitle')).not.toBeInTheDocument();
   });
 
-  // #3017: the attachment control used to collect File objects that
-  // handleSubmit never transmitted, so a reporter saw a success screen while
-  // the evidence was silently dropped. Until an upload endpoint exists the
-  // control is disabled with a "coming soon" hint and carries no file input,
-  // so the page must not imply evidence can be attached and sent.
-  it('does not collect attachments (control disabled, no file input, coming-soon hint)', () => {
+  // #3017: the report form accepts evidence as pre-hosted http(s) links (the
+  // public portal has no upload endpoint, but POST /api/v1/reports takes an
+  // `attachments: string[]` of URLs). Added links must ride along in the POST
+  // body. On `dev` the control is a disabled "coming soon" placeholder with no
+  // URL input, so this test fails there — the #3017 regression guard.
+  it('includes added evidence links in the submit body as attachments', async () => {
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        json: async () => ({ report: { id: 'r-a', listing_id: LISTING_ID, status: 'received' } }),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
     const { container } = renderPage();
-    // No file input: nothing to collect, nothing to silently drop.
-    expect(container.querySelector('input[type="file"]')).toBeNull();
-    // A disabled "coming soon" placeholder stands in for the old control.
-    const placeholder = screen.getByText('attachmentsComingSoon');
-    expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveAttribute('aria-disabled', 'true');
+    addAttachment(container, 'https://example.com/evidence-1.png');
+    addAttachment(container, 'https://example.com/evidence-2.pdf');
+    fillForm(container);
+    fireEvent.click(submitBtn());
+
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
+      expect(post).toBeDefined();
+      const body = JSON.parse(String(post?.[1]?.body));
+      expect(body.attachments).toEqual([
+        'https://example.com/evidence-1.png',
+        'https://example.com/evidence-2.pdf',
+      ]);
+    });
   });
 
-  it('keeps the submit body attachment-free even after the form is filled', async () => {
+  it('rejects an invalid attachment link inline and never sends it', async () => {
+    const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        json: async () => ({ report: { id: 'r-b', listing_id: LISTING_ID, status: 'received' } }),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { container } = renderPage();
+    // A javascript: scheme is the stored-XSS vector the server also rejects.
+    addAttachment(container, 'javascript:alert(1)');
+    expect(await screen.findByText('attachmentsInvalidUrl')).toBeInTheDocument();
+
+    fillForm(container);
+    fireEvent.click(submitBtn());
+
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
+      expect(post).toBeDefined();
+      const body = JSON.parse(String(post?.[1]?.body));
+      // The rejected link was never added, so the body carries no attachments.
+      expect(body).not.toHaveProperty('attachments');
+    });
+  });
+
+  it('omits the attachments key when no link is added', async () => {
     const fetchMock = vi.fn((_url: string, _init?: RequestInit) =>
       Promise.resolve({
         ok: true,
@@ -196,14 +255,13 @@ describe('ReportPage — abuse-report submit wiring', () => {
 
     const { container } = renderPage();
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
 
     await waitFor(() => {
       const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
       expect(post).toBeDefined();
       const body = JSON.parse(String(post?.[1]?.body));
-      // The POST body carries no `attachments` key — the page does not pretend
-      // to submit evidence it cannot upload yet.
+      // No evidence links added → no `attachments` key (optional on the wire).
       expect(body).not.toHaveProperty('attachments');
     });
   });
@@ -217,7 +275,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
 
     const { container } = renderPage();
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('errorNoListing');
@@ -235,7 +293,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
       vi.stubGlobal('fetch', fetchMock);
       const { container, unmount } = renderPage();
       fillForm(container);
-      fireEvent.click(screen.getByRole('button'));
+      fireEvent.click(submitBtn());
       expect(await screen.findByRole('alert')).toHaveTextContent(re);
       expect(screen.queryByText('successTitle')).not.toBeInTheDocument();
       unmount();
@@ -255,7 +313,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
       target: { value: url },
     });
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
 
     await waitFor(() => {
       const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
@@ -278,7 +336,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
       target: { value: LISTING_ID },
     });
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(body.description).toBe('This looks like a scam');
@@ -296,7 +354,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
       target: { value: LISTING_ID },
     });
     fillForm(container);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(submitBtn());
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(body.listing_id).toBe(OTHER);
@@ -330,7 +388,7 @@ describe('ReportPage — abuse-report submit wiring', () => {
     fillForm(container);
     const form = container.querySelector('form') as HTMLFormElement;
     fireEvent.submit(form);
-    await waitFor(() => expect(screen.getByRole('button')).toHaveTextContent('submitting'));
+    await waitFor(() => expect(submitBtn()).toHaveTextContent('submitting'));
     fireEvent.submit(form);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 

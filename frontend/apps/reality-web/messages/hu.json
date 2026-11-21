@@ -700,9 +700,13 @@
       "listingRefPlaceholder": "pl. https://rlt.sk/listings/ba-byt-3i vagy #12345",
       "descriptionLabel": "A probléma leírása",
       "descriptionPlaceholder": "Írja le, miért jelenti be ezt a hirdetést. Minél több részletet ad meg, annál gyorsabban ki tudjuk vizsgálni.",
-      "attachmentsLabel": "Mellékletek (hamarosan)",
-      "attachmentsComingSoon": "A mellékletek hozzáadása hamarosan elérhető lesz",
-      "attachmentsHint": "A képernyőképek feltöltése még nem érhető el — kérjük, írja le a bizonyítékokat a fenti leírásban. Dolgozunk rajta.",
+      "attachmentsLabel": "Mellékletek (opcionális)",
+      "attachmentsUrlPlaceholder": "https://… hivatkozás képernyőképre vagy dokumentumra",
+      "attachmentsAdd": "Hivatkozás hozzáadása",
+      "attachmentsRemove": "Eltávolítás",
+      "attachmentsInvalidUrl": "Adjon meg érvényes http(s) hivatkozást (max. 2048 karakter).",
+      "attachmentsMax": "Legfeljebb {max} hivatkozást adhat hozzá.",
+      "attachmentsHint": "Illesszen be máshol tárolt bizonyítékokra mutató hivatkozásokat (képernyőképek, dokumentumok). Legfeljebb {max} http(s) hivatkozás.",
       "gdpr": {
         "label": "Hozzájárulok a személyes adatok kezeléséhez a bejelentésem kivizsgálása céljából a {privacyLink} szerint.",
         "privacyLink": "Adatvédelmi szabályzat"
