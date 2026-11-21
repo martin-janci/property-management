@@ -75,8 +75,11 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
         setConfigs((prev) => [...prev, newConfig]);
 
         Alert.alert(
-          t('widgets.addedTitle'),
-          t('widgets.addedMessage', { name: widgetMeta?.name ?? type })
+          t('widgets.addedTitle', { defaultValue: 'Widget Added' }),
+          t('widgets.addedMessage', {
+            name: widgetMeta?.name ?? type,
+            defaultValue: '{{name}} widget has been configured.',
+          })
         );
       } else if (!enabled && existingConfig) {
         await bridge.removeWidget(existingConfig.id);
@@ -90,7 +93,10 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
     setIsLoading(true);
     await bridge.updateAllWidgets();
     setIsLoading(false);
-    Alert.alert(t('widgets.updatedTitle'), t('widgets.updatedMessage'));
+    Alert.alert(
+      t('widgets.updatedTitle', { defaultValue: 'Widgets Updated' }),
+      t('widgets.updatedMessage', { defaultValue: 'All widgets have been refreshed.' })
+    );
   }, [bridge, t]);
 
   if (isLoading) {
@@ -98,12 +104,18 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable onPress={() => onNavigate('Dashboard')} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← {t('common.back')}</Text>
+            <Text style={styles.backButtonText}>
+              ← {t('common.back', { defaultValue: 'Back' })}
+            </Text>
           </Pressable>
-          <Text style={styles.title}>{t('widgets.settingsTitle')}</Text>
+          <Text style={styles.title}>
+            {t('widgets.settingsTitle', { defaultValue: 'Widget Settings' })}
+          </Text>
         </View>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{t('common.loading')}</Text>
+          <Text style={styles.loadingText}>
+            {t('common.loading', { defaultValue: 'Loading...' })}
+          </Text>
         </View>
       </View>
     );
@@ -114,15 +126,27 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable onPress={() => onNavigate('Dashboard')} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← {t('common.back')}</Text>
+            <Text style={styles.backButtonText}>
+              ← {t('common.back', { defaultValue: 'Back' })}
+            </Text>
           </Pressable>
-          <Text style={styles.title}>{t('widgets.settingsTitle')}</Text>
+          <Text style={styles.title}>
+            {t('widgets.settingsTitle', { defaultValue: 'Widget Settings' })}
+          </Text>
         </View>
         <View style={styles.unsupportedContainer}>
           <Text style={styles.unsupportedIcon}>📱</Text>
-          <Text style={styles.unsupportedTitle}>{t('widgets.notAvailableTitle')}</Text>
+          <Text style={styles.unsupportedTitle}>
+            {t('widgets.notAvailableTitle', { defaultValue: 'Widgets Not Available' })}
+          </Text>
           <Text style={styles.unsupportedText}>
-            {t(Platform.OS === 'ios' ? 'widgets.notAvailableIos' : 'widgets.notAvailableAndroid')}
+            {Platform.OS === 'ios'
+              ? t('widgets.notAvailableIos', {
+                  defaultValue: 'Home screen widgets require iOS 14 or later.',
+                })
+              : t('widgets.notAvailableAndroid', {
+                  defaultValue: 'Widgets are not supported on this device.',
+                })}
           </Text>
         </View>
       </View>
@@ -133,15 +157,23 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={() => onNavigate('Dashboard')} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← {t('common.back')}</Text>
+          <Text style={styles.backButtonText}>← {t('common.back', { defaultValue: 'Back' })}</Text>
         </Pressable>
-        <Text style={styles.title}>{t('widgets.settingsTitle')}</Text>
+        <Text style={styles.title}>
+          {t('widgets.settingsTitle', { defaultValue: 'Widget Settings' })}
+        </Text>
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('widgets.availableTitle')}</Text>
-          <Text style={styles.sectionDescription}>{t('widgets.availableDescription')}</Text>
+          <Text style={styles.sectionTitle}>
+            {t('widgets.availableTitle', { defaultValue: 'Available Widgets' })}
+          </Text>
+          <Text style={styles.sectionDescription}>
+            {t('widgets.availableDescription', {
+              defaultValue: 'Configure which widgets appear on your home screen.',
+            })}
+          </Text>
 
           {availableTypes.map((widgetType) => {
             const isEnabled = configs.some((c) => c.type === widgetType.type);
@@ -170,9 +202,13 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('widgets.activeTitle')}</Text>
+          <Text style={styles.sectionTitle}>
+            {t('widgets.activeTitle', { defaultValue: 'Active Widgets' })}
+          </Text>
           {configs.length === 0 ? (
-            <Text style={styles.emptyText}>{t('widgets.emptyText')}</Text>
+            <Text style={styles.emptyText}>
+              {t('widgets.emptyText', { defaultValue: 'No widgets configured yet.' })}
+            </Text>
           ) : (
             configs.map((config) => {
               const meta = availableTypes.find((wt) => wt.type === config.type);
@@ -184,6 +220,7 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
                       {t('widgets.metaInfo', {
                         size: config.size,
                         interval: config.refreshInterval,
+                        defaultValue: 'Size: {{size}} • Refresh: {{interval}}min',
                       })}
                     </Text>
                   </View>
@@ -191,7 +228,9 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
                     style={styles.removeButton}
                     onPress={() => handleToggleWidget(config.type, false)}
                   >
-                    <Text style={styles.removeButtonText}>{t('widgets.remove')}</Text>
+                    <Text style={styles.removeButtonText}>
+                      {t('widgets.remove', { defaultValue: 'Remove' })}
+                    </Text>
                   </Pressable>
                 </View>
               );
@@ -200,13 +239,25 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
         </View>
 
         <Pressable style={styles.refreshButton} onPress={handleRefreshAll}>
-          <Text style={styles.refreshButtonText}>{t('widgets.refreshAll')}</Text>
+          <Text style={styles.refreshButtonText}>
+            {t('widgets.refreshAll', { defaultValue: '🔄 Refresh All Widgets' })}
+          </Text>
         </Pressable>
 
         <View style={styles.instructionsSection}>
-          <Text style={styles.instructionsTitle}>{t('widgets.instructionsTitle')}</Text>
+          <Text style={styles.instructionsTitle}>
+            {t('widgets.instructionsTitle', { defaultValue: 'How to Add Widgets' })}
+          </Text>
           <Text style={styles.instructionsText}>
-            {t(Platform.OS === 'ios' ? 'widgets.instructionsIos' : 'widgets.instructionsAndroid')}
+            {Platform.OS === 'ios'
+              ? t('widgets.instructionsIos', {
+                  defaultValue:
+                    '1. Long press on your home screen\n2. Tap the + button in the top left\n3. Search for "PPT"\n4. Choose a widget size and tap "Add Widget"',
+                })
+              : t('widgets.instructionsAndroid', {
+                  defaultValue:
+                    '1. Long press on your home screen\n2. Tap "Widgets"\n3. Find "PPT Property Management"\n4. Drag a widget to your home screen',
+                })}
           </Text>
         </View>
       </ScrollView>
