@@ -8,8 +8,9 @@
  * when the check failed, so a user never books against unknown availability
  * thinking the slots are confirmed free.
  */
-import { render, screen } from '@testing-library/react';
+
 import type { Facility } from '@ppt/api-client';
+import { render, screen } from '@testing-library/react';
 import { BookingForm } from './BookingForm';
 
 vi.mock('react-i18next', () => ({
@@ -34,7 +35,7 @@ function renderForm(props: Partial<React.ComponentProps<typeof BookingForm>> = {
       onSubmit={() => {}}
       onCancel={() => {}}
       {...props}
-    />,
+    />
   );
 }
 
@@ -48,7 +49,7 @@ describe('BookingForm availability feedback', () => {
   it('shows a checking status while availability is loading', () => {
     renderForm({ isCheckingAvailability: true });
     expect(screen.getByRole('status')).toHaveTextContent(
-      'facilities.bookings.form.checkingAvailability',
+      'facilities.bookings.form.checkingAvailability'
     );
   });
 

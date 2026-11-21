@@ -703,6 +703,7 @@
       "rejectFailed": "Nie udało się odrzucić rezerwacji",
       "createFailed": "Nie udało się utworzyć rezerwacji",
       "loadFacilityFailed": "Nie udało się wczytać szczegółów obiektu",
+      "loadAvailabilityFailed": "Nie udało się sprawdzić dostępności. Wyświetlane godziny mogą nie uwzględniać istniejących rezerwacji.",
       "form": {
         "location": "Lokalizacja: {{location}}",
         "capacity": "Pojemność (osoby): {{count}}",
@@ -713,6 +714,7 @@
         "startTime": "Godzina rozpoczęcia",
         "endTime": "Godzina zakończenia",
         "selectTime": "Wybierz godzinę",
+        "checkingAvailability": "Sprawdzanie dostępności…",
         "unavailable": "(niedostępne)",
         "purpose": "Cel rezerwacji",
         "purposePlaceholder": "np. spotkanie, przyjęcie urodzinowe",
