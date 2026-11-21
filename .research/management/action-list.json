@@ -257,34 +257,6 @@
       "first_open_at": "2026-11-20T03:06:10Z"
     },
     {
-      "id": "code-review-ppt-web-core-ws-notifications-token-in-url-retry1",
-      "action": "ppt web core ws notifications token in url [retry 1/2 of failed code-review-ppt-web-core-ws-notifications-token-in-url]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-ppt-web-core-ws-notifications-token-in-url reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T02:39:42Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "retry_of": "code-review-ppt-web-core-ws-notifications-token-in-url",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-reality-web-report-attachments-disabled-3017-retry1",
-      "action": "reality web report attachments disabled 3017 [retry 1/2 of failed code-review-reality-web-report-attachments-disabled-3017]",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-reality-web-report-attachments-disabled-3017 reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T02:39:42Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "retry_of": "code-review-reality-web-report-attachments-disabled-3017",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-ppt-web-core-create-lease-empty-pickers-retry1",
       "action": "ppt web core create lease empty pickers [retry 1/2 of failed code-review-ppt-web-core-create-lease-empty-pickers]",
       "owner_role": "pm-tech-lead",
@@ -418,24 +390,6 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-08-24T10:40:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-invoice-empty-items",
-      "action": "ppt web ui invoice empty items",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T18:26:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-24T08:40:00Z"
       }
     },
     {
@@ -675,24 +629,6 @@
     {
       "id": "code-review-api-handlers-summarize-discards-persist-err",
       "action": "api handlers summarize discards persist err",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-23T05:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-workflow-enable-silent-fail",
-      "action": "api handlers workflow enable silent fail",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",

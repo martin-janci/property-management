@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-21T10:32:31Z",
+  "archived_at": "2026-11-21T16:31:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7152,6 +7152,31 @@
       "first_open_at": "2026-07-08T12:21:22Z"
     },
     {
+      "id": "code-review-api-handlers-workflow-enable-silent-fail",
+      "action": "api handlers workflow enable silent fail",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-21T16:25:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-23T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3698,
+        "merged_at": "2026-11-21T14:36:12Z",
+        "at": "2026-11-21T16:25:00Z"
+      }
+    },
+    {
       "id": "code-review-frontend-packages-auth-exp-bypass",
       "action": "frontend packages auth exp bypass",
       "owner_role": "pm-backend",
@@ -11570,6 +11595,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-ws-notifications-token-in-url-retry1",
+      "action": "ppt web core ws notifications token in url [retry 1/2 of failed code-review-ppt-web-core-ws-notifications-token-in-url]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-ppt-web-core-ws-notifications-token-in-url reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T02:39:42Z) | gc1-reconcile 2026-11-21T16:25:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T14:24:50Z",
+      "retry_of": "code-review-ppt-web-core-ws-notifications-token-in-url",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3696,
+        "merged_at": "2026-11-21T14:33:35Z",
+        "at": "2026-11-21T16:25:00Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-ws-pong-timeout-drop",
       "action": "ppt-web-core: the client heartbeat sends an APPLICATION-level ping frame {type:'ping', pa...",
       "owner_role": "pm-backend",
@@ -13038,6 +13084,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-21T02:23:44Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-empty-items",
+      "action": "ppt web ui invoice empty items",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-21T16:25:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T18:26:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-24T08:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3697,
+        "merged_at": "2026-11-21T14:35:48Z",
+        "at": "2026-11-21T16:25:00Z"
       }
     },
     {
@@ -17925,6 +17996,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-13T04:23:48Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-report-attachments-disabled-3017-retry1",
+      "action": "reality web report attachments disabled 3017 [retry 1/2 of failed code-review-reality-web-report-attachments-disabled-3017]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-reality-web-report-attachments-disabled-3017 reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T02:39:42Z) | gc1-reconcile 2026-11-21T16:25:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T14:24:50Z",
+      "retry_of": "code-review-reality-web-report-attachments-disabled-3017",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3695,
+        "merged_at": "2026-11-21T14:34:11Z",
+        "at": "2026-11-21T16:25:00Z"
       }
     },
     {
