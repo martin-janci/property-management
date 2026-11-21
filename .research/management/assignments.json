@@ -49,15 +49,15 @@
       "branch": "auto-impl/pm-scrum-master-reset-sprint-status-yaml-01f4f4e9",
       "status": "review",
       "claimed_at": "2026-11-21T18:29:01Z",
-      "last_updated": "2026-11-21T20:29:25Z",
+      "last_updated": "2026-11-21T20:36:14Z",
       "status_changed_at": "2026-11-21T20:29:25Z",
       "pr_number": 3704,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3704",
       "merged_at": null,
       "specialist": null,
       "implementer_summary": "[reconciled: PR #3704 opened by implementer]",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=3965690ceb1ce05f15266a1a39e8644676379e4a note=yaml-planning-artifact-clean-ci-green",
+      "last_reviewed_oid": "3965690ceb1ce05f15266a1a39e8644676379e4a",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -133,28 +133,6 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "code-review-ppt-web-ui-facilities-hardcoded-i18n",
-      "branch": "auto-impl/code-review-ppt-web-ui-facilities-hardco-ffe00bb1",
-      "status": "in-progress",
-      "claimed_at": "2026-11-21T20:29:25Z",
-      "last_updated": "2026-11-21T20:29:25Z",
-      "status_changed_at": "2026-11-21T20:29:25Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "code-review-ppt-web-ui-invoice-vat-table-drift",
       "branch": "auto-impl/code-review-ppt-web-ui-invoice-vat-table-03780c7c",
       "status": "in-progress",
@@ -177,5 +155,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-21T18:40:07Z"
+  "generated": "2026-11-21T20:36:26Z"
 }
