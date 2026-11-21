@@ -145,3 +145,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-11-17, pm-data):** Define 'abandoned' semantics and retention — soft-terminal column vs. dead-letter table. Owner: backend/architect.
 - **NEW (2026-11-17, pm-data):** Choose the canonical analytics event schema and naming convention, and the mobile analytics sink. Owner: pm/frontend lead.
 - **NEW (2026-11-17, pm-data):** Decide whether inactivity should be computed from `refresh_tokens` or from a dedicated `last_active_at` column. Owner: backend/architect.
+
+---
+
+## Decisions logged 2026-11-21 (Phase 1.6 — pm-scrum-master + pm-backend)
+
+- **NEW (2026-11-21, pm-backend):** Webhook route handlers must declare signature verification BEFORE any RLS/DB extractor — is this enforced via a lint, a review rule, or an axum extractor-ordering convention? The three split modules (#3659/#3685/#3686) landed without closing this ordering hazard. Owner: pm-tech-lead.
+- **NEW (2026-11-21, pm-backend):** Quarantine-aging policy — every quarantined test must have an owner + deadline, or auto-delete at N days. Release-248 (#3675) just added a new set without aging rules. Owner: pm-qa.
+- **NEW (2026-11-21, pm-backend):** Reviewer-slot rotation for large-scope feature PRs — the accounting MVP trio (#2555/#2559 just closed via #3661) sat 110+ days on reviewer starvation; capture the learning in policy. Owner: pm-tech-lead.
+- **NEW (2026-11-21, pm-scrum-master):** Promote-or-close policy for drafts open >72h — 4 drafts (#3687/#3688, #3676/#3677) + dependabot #3668 + search-drainer #3682 form a 6-PR open overhang this run. Owner: pm-scrum-master.
+- **NEW (2026-11-21, pm-scrum-master):** Reset `_bmad-output/implementation-artifacts/sprint-status.yaml` with the next hardening-track sprint goal — the current sprint is fully 'done' and no longer reflects the work being merged (refactor splits, review follow-ups, churn characterization). Owner: pm-tech-lead.

@@ -879,7 +879,139 @@
         "vector": "bug",
         "generated": "2026-08-23T05:00:00Z"
       }
+    },
+    {
+      "id": "pm-backend-sweep-push-voice-rls-before-verify-ordering-2026-11-21",
+      "action": "Sweep the new push/ (post-#3659) and voice_webhooks/ (post-#3685) child modules for the RLS-before-verify ordering bug: webhook signature verification must precede the RlsConnection extractor so every real Alexa/Google body does not return 401",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-backend-unquarantine-release-248-tests-2026-11-21",
+      "action": "Un-quarantine the release-248 tests introduced by #3675 (tenant application/forms 500 fixes + feed delete); establish a quarantine-aging policy (every quarantined test has owner+deadline)",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-backend-finish-accounting-mvp-trio-2558-2026-11-21",
+      "action": "Finish the accounting MVP trio: verify #2558 state after #3661 landed sent/cancel lifecycle + PAY-by-square QR; close as superseded or sequence the remaining slice",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-backend-address-mobile-native-stubs-2026-11-21",
+      "action": "Address mobile-native stubs: CreateListingScreen onSubmit NotImplementedError + InquiriesResponse page_size/limit contract mismatch + Ktor HttpTimeout default. Package as one KMP PR per issue once #2652 egress unblocks",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-backend-regression-coverage-3669-reality-surface-2026-11-21",
+      "action": "Add regression coverage for #3669 reality-server portal auth fix + buyer inquiry threads + notification settings + agency dashboard so the broad surface does not regress on the next push_fanout touch",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-backend-characterize-postsplit-modules-under-watch-2026-11-21",
+      "action": "Characterize the post-split push/ and voice_webhooks/ child modules in sprint-status and coverage; the new file footprint should move to a 'done, under watch' bucket for the next 2 runs so regressions surface",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21",
+      "action": "Sweep the new push/ and voice_webhooks/ child modules for the RLS-before-verify ordering bug that survived the split",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-scrum-master-promote-or-close-6-open-prs-2026-11-21",
+      "action": "Promote-or-close the 6 open PRs (#3668 dependabot cargo group rebase, #3687/#3688 pm-integration drafts, #3676/#3677 mobile-rn i18n drafts, #3682 search-drainer) within 48h",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-2026-11-21",
+      "action": "Resolve dispatcher stall #3357 — same blockers as last run; the 32-PR merge wave did not drain it (3 approved PRs blocked on non-mechanical conflicts)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-scrum-master-unblock-kmp-swagger-ui-egress-2652-2966-2026-11-21",
+      "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — claimable still ≈9/72",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "pm-scrum-master-reset-sprint-status-yaml-hardening-track-2026-11-21",
+      "action": "Reset sprint-status.yaml — current sprint goal is fully 'done'; next sprint goal should name the hardening/refactor track explicitly (new modules under watch, release-248 quarantine burn-down, mobile-native backlog)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21",
+      "first_open_at": "2026-11-21T03:06:10Z"
     }
   ],
-  "generated": "2026-11-20T03:06:10Z"
+  "generated": "2026-11-21T03:06:10Z"
 }

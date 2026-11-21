@@ -1,58 +1,54 @@
 # Project State — PPT (Property Management)
 
-<sub>Generated: 2026-11-20T03:06:10Z — Scrum Master synthesis + pm-tech-lead (rotation index 0 → 1). Coverage cursor advanced idx 6 → 7 (epic-81 re-checked, next epic-82).</sub>
+<sub>Generated: 2026-11-21T03:06:10Z — Scrum Master synthesis + pm-backend (rotation index 1 → 2). Coverage cursor advanced idx 7 → 8 (epic-82 re-checked, next epic-83).</sub>
 
 ## Executive summary
 
-Sprint (Epic 6 / 7A / 8A / 10A) and the six tracked epics remain **done**; `coverage.json` holds 49/49 stories done (0 partial, 0 not-started). Delivery is a continuous hardening track. 16 PRs merged this window (#3630, #3631, #3632, #3633, #3638, #3639, #3640, #3641, #3642, #3643, #3644, #3645, #3646, #3647, #3648, #3628) — all code-review follow-ups + churn characterization + KPI definitions. Highlights: shared SSRF redirect revalidation guard (#3647), HelloSign webhook envelope binding (#3648), runtime 401 token refresh (#3646), cross-tenant rental connection IDOR regression (#3642), dead unscoped rental IDOR-footgun removal (#3641), vote-reminder throttle (#3639), WidgetSettings i18n (#3630). pm-tech-lead's 29-days-since-last-run reads surfaced a clear structural signal: the three churn hotspots this run (voice_webhooks.rs 3066 LoC / runs_seen=5, push_fanout.rs 3038 LoC / runs_seen=4, oauth_integration_tests.rs 3427 LoC / runs_seen=2) all breach a reasonable file-size ceiling and keep being re-touched; decomposition is overdue. Follow-up issue #3649 (suggestions seed-city for region `de` resolves to Wien) was opened as a direct fallout of #3628. Phase 1.5 rotating review of `api-handlers` (churn-aligned) surfaced one bug: `voice_webhooks.rs` handlers run `RlsConnection` extractor **before** signature verification — returning 401 to every live Alexa/Google webhook body.
+A major delivery wave: **32 PRs merged** (#3650–#3686). The three structural refactors pm-tech-lead escalated last run — `push_fanout.rs` / `voice_webhooks.rs` / `oauth_integration_tests.rs` — **all shipped in-window** (#3659 push/, #3685 voice_webhooks/, #3686 oauth_integration_tests/). Accounting MVP trio progressed: #3661 landed invoice sent/cancel lifecycle + PAY-by-square QR, closing #2555 / #2559. Issues #3649 (suggestions seed-city for `de`) and #3666 (HelloSign webhook replay) both closed. #3669 broadened the reality-server surface (portal auth fix + buyer inquiry threads + notification settings + agency dashboard). #3675 shipped feed delete + tenant application/forms 500 fixes + release 248 quarantined tests. Sprint spine (6/6 epics) remains done — delivery continues in continuous-hardening mode. Churn files this run (`voice_webhooks/` children, `push/` children, `oauth_integration_tests/` children) are the new post-split module trees; the real question for the next run is whether behaviour survived the splits.
 
 ## Sprint progress
 
-- **Sprint:** Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
+- **Sprint:** Hardening & refactor track (post-sprint — Epic 6, 7A, 8A, 10A, 10B, 9 all done)
 - **Epics done:** 6 of 6 (100%)
-- **Coverage (upkeep this run):** 49 of 49 stories done; rotating cursor re-checked **epic-81** (`last_checked` advanced for its stories; no status transitions).
+- **Coverage (upkeep this run):** 49 of 49 stories done; rotating cursor re-checked **epic-82** (iOS SwiftUI Reality Portal — 5/5 stories done; `last_checked` advanced).
 
-## Shipped since last run (2026-11-19T03:18:31Z → 2026-11-20T03:06:10Z)
+## Shipped since last run (2026-11-20T03:06:10Z → 2026-11-21T03:06:10Z)
 
-- #3647 — share per-hop SSRF redirect revalidation guard (reality-server import fetch)
-- #3648 — bind HelloSign webhook envelope to verified provider
-- #3646 — runtime 401 token refresh for the generated API client (ppt-web)
-- #3645 — guard SSO error_description decode against URIError
-- #3644 — gate raw ErrorBoundary message behind DEV
-- #3643 — handle useAgencyBranding fetch error (reality-web — no silent colour reset)
-- #3642 — regression test for cross-tenant rental connection IDOR
-- #3641 — remove dead unscoped rental IDOR-footgun repo methods
-- #3640 — surface swallowed idempotency commit error
-- #3639 — throttle vote reminders to a ~5-minute minimum interval
-- #3631 — echo clamped limit in compliance audit-log pagination
-- #3630 — WidgetSettingsScreen copy routed through i18n (mobile RN)
-- #3628 — derive suggestions seed region from request (opened follow-up #3649)
-- #3632 — characterize role-default JSONB parsing (churn hotspot)
-- #3633 — characterize digest config parsing (churn hotspot)
-- #3638 — backfill shipped-story KPI definitions + story Events/KPI template section
+- #3659 — `push_fanout.rs` → `push/` module split (fcm/apns/adapter/worker/config)
+- #3685 — `voice_webhooks.rs` module split (verification + handler + parsers)
+- #3686 — `oauth_integration_tests.rs` split by flow (authorize/token/introspect-revoke/grants)
+- #3669 — reality-server portal auth fix + buyer inquiry threads + notification settings + agency dashboard
+- #3675 — feed delete, tenant application/forms 500 fixes, release 248 quarantined tests
+- #3660 — reality-portal client alignment
+- #3670 — reality-portal Authorization header fix
+- #3661 — accounting-server invoice sent/cancel lifecycle + PAY-by-square QR (closes #2555 / #2559)
+- #3666 — HelloSign webhook replay (issue closed)
+- #3649 — suggestions seed-city for region `de` (issue closed)
+- Many code-review-* fix PRs across api-core, api-handlers, reality-web, mobile-rn
 
 ## What's next (top 5)
 
-1. **[high · pm-tech-lead]** Split `services/push_fanout.rs` (3038 LoC) into a `push/` module (fcm/apns/adapter/worker/config) — DoD: no file > ~800 LoC, behaviour unchanged, existing push tests pass.
-2. **[high · pm-tech-lead]** Split `routes/voice_webhooks.rs` (3066 LoC, 5-run hotspot) into signature verification + idempotent event handler + provider parsers; move business logic into `services/`.
-3. **[high · pm-tech-lead]** Resolve dispatcher stall #3357: rebase/resolve the 3 approved conflicting PRs; define an escalation path for non-mechanical conflicts.
-4. **[high · pm-backend]** Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and merge before #3628 follow-up; fix #3649 so region `de` does not seed Wien.
-5. **[high · pm-devops]** Unblock KMP and swagger-ui egress in the cloud runner (#2652, #2966) — current claimable only ~9/72 for mobile-native.
+1. **[high · pm-backend]** Sweep the new `push/` and `voice_webhooks/` child modules for the RLS-before-verify ordering bug that survived the split — webhook signature verification must precede the `RlsConnection` extractor.
+2. **[high · pm-scrum-master]** Promote-or-close the 6 open PRs (#3668 dependabot, #3687/#3688 pm-integration drafts, #3676/#3677 mobile-rn i18n drafts, #3682 search-drainer) within 48h.
+3. **[high · pm-tech-lead]** Resolve dispatcher stall #3357 — same blockers as last run; the 32-PR merge wave did not drain it.
+4. **[high · pm-devops]** Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — claimable still ≈9/72.
+5. **[medium · pm-tech-lead]** Reset `sprint-status.yaml` — current sprint goal is fully "done"; next sprint goal should name the hardening/refactor track explicitly.
 
 ## Blockers
 
-- **Dispatcher pipeline (#3357)** — 3 approved PRs blocked on non-mechanical conflicts; pipeline fully stalled. Owner: `pm-tech-lead`.
-- **KMP / mobile-native backlog items** (inquiries-response-contract, create-listing-not-wired, http-client-no-timeout, sso-error-body-unguarded) — Gradle/KMP builds unavailable in cloud runner (#2652, #2966); claimable ~9/72. Owner: `pm-devops`.
-- **Dependabot bumps** (#3634-#3637, #3441, #3635 gradle wrapper) — open, unmerged; gradle/kotlinx bumps cannot be validated in cloud. Owner: `pm-devops`.
+- **Dispatcher pipeline (#3357)** — 3 approved PRs still blocked on non-mechanical conflicts; the merge wave did not drain it. Owner: `pm-tech-lead`.
+- **KMP / mobile-native backlog items** (CreateListingScreen stub, InquiriesResponse contract, Ktor HttpTimeout, SSO error body) — Gradle/KMP builds unavailable in cloud runner (#2652, #2966); claimable ≈9/72. Owner: `pm-devops`.
+- **Dependabot cargo-group bump #3668** — open, unmerged; needs rebase against post-split HEAD. Owner: `pm-devops`.
+- **6 open PRs** — drafts need promotion-or-close decisions. Owner: `pm-scrum-master`.
 
 ## Role focus today
 
-`pm-scrum-master` (always-on), `pm-tech-lead` (rotation index 0 → 1).
+`pm-scrum-master` (always-on), `pm-backend` (rotation index 1 → 2).
 
-### pm-tech-lead — one-line
+### pm-backend — one-line
 
-Three oversized backend files are churning in a tight loop (voice_webhooks.rs, push_fanout.rs, oauth_integration_tests.rs). The structural risk — not feature risk — is now the top delivery blocker; decompose before more review follow-ups land.
+The three oversized backend files all split this window (#3659/#3685/#3686) + accounting lifecycle (#3661) + HelloSign replay (#3666 closed). The next structural risk is whether the mechanical splits kept the RLS-before-verify ordering correct — that's a sweep, not a refactor.
 
 ### pm-scrum-master — one-line
 
-Sprint spine is fully done (6/6 epics). This run was a hardening wave (16 merged code-review PRs). The pipeline is the constraint: dispatcher stall + KMP/swagger egress keep the real bottlenecks off the claimable buffer.
+32 PRs merged, 3 structural refactors executed, 2 issues closed, accounting MVP progressed. Pipeline-side the constraint remains #3357 + KMP/swagger egress + a 6-PR open-draft overhang.

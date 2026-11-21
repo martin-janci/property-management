@@ -1,0 +1,223 @@
+{
+  "date": "2026-11-21",
+  "run_start_iso": "2026-11-21T03:06:30Z",
+  "run_lag_hours": 24,
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-20..21",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "backend/servers/api-server/tests/suites/oauth_integration_tests.rs — 3440 LoC churn this run (top-1 raw hotspot), but the churn is dominated by the test-suite split landed in PR #3685 (token.rs → token_refresh_rotation/token_grant_validation/token_provider_security), on top of PR #3658's initial per-flow split. Parent file is now a 45-LoC mod shim. hotspot_history.runs_seen 2 → 3; score not re-applied (cumulative dedup, item already in backlog as resolved this run)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-20..21",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks.rs — 3066 LoC churn this run (top-2 raw hotspot), but the churn is the file DELETION itself (PR #3653 + PR #3686 split it into voice_webhooks/{mod,signature,parsers,oauth,handlers,verify}.rs). hotspot_history.runs_seen 5 → 6; score not re-applied (cumulative dedup, backlog item resolved to `done` this run)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-push-fanout-rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-20..21",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs — 3038 LoC churn this run (top-3 raw hotspot), but the churn is the file DELETION itself (PR #3659 split it into push/{mod,fcm,apns,combined,config,worker}.rs). hotspot_history.runs_seen 4 → 5; score not re-applied (cumulative dedup; backlog item still tracks via its deleted-file sibling, see action-list.json)."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3668",
+      "type": "dep-update-noise",
+      "source": "PR #3668",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot[bot]: chore(deps): bump the cargo-minor-patch group across 1 directory with 7 updates (open, labels=[dependencies,rust]). Supersedes closed PR #3636."
+      ]
+    },
+    {
+      "id": "dep-update-noise-pr-3636",
+      "type": "dep-update-noise",
+      "source": "PR #3636",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "dep-update",
+      "evidence": [
+        "dependabot[bot]: chore(deps): bump the cargo-minor-patch group across 1 directory with 5 updates (closed unmerged 2026-11-20T17:31:03Z, superseded by #3668 which has 7 updates)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-worker-silent-requeue-drop",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-21 api-core (churn-aligned; rust)",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "file": "backend/servers/api-server/src/services/push/worker.rs",
+      "line": "264-287",
+      "evidence": [
+        "JobDisposition::Retry path drops the job silently when serde_json::to_string(&job) OR redis.queue_push fails — only a tracing::warn! \"job dropped\" fires; no durable backing, no deadletter, no retry-on-publish. Reintroduces the exact silent-loss failure mode the retry mechanism was added to close: a Redis blip (NOAUTH/LOADING/connection reset) during requeue permanently loses the push that just failed its first delivery attempt. The comment at :274 (\"job dropped\") acknowledges the window with no mitigation path."
+      ]
+    },
+    {
+      "id": "code-review-api-core-fcm-2xx-parse-retry",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-21 api-core (churn-aligned; rust)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "file": "backend/servers/api-server/src/services/push/fcm.rs",
+      "line": "636-660",
+      "evidence": [
+        "send_fcm_v1: `match resp.json::<FcmSendResponse>().await` treats `Err(parse_error)` as (false,false) regardless of captured status. A 2xx FCM response with an unexpected body shape therefore returns success=false → ProviderOutcome::Failed(PushFailed) → is_transient_push_error → Retry, requeuing a message FCM already accepted. Hidden duplicate-delivery window on parse edge cases (field renames, proxy rewrites, truncated reads)."
+      ]
+    },
+    {
+      "id": "code-review-api-core-push-db-err-leak",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-21 api-core (churn-aligned; rust)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "file": "backend/servers/api-server/src/services/push/combined.rs",
+      "line": "181-183",
+      "evidence": [
+        "NotificationError::PushFailed(format!(\"DB error fetching tokens: {e}\")) folds raw sqlx::Error display into the fanout-worker log payload AND the `error_message` column that notification-pipeline rows may surface. Pattern repeats at apns.rs:392-394. Sibling code (services/voice_oauth.rs::voice_oauth_error_response, services/oauth.rs::OAuthServiceError::DatabaseError) explicitly sanitises {e} to a generic message; this path does not — schema/constraint leakage risk."
+      ]
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "brief exists + H1 matches date",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD",
+      "observed": "cursors + seen_signals + hotspot_history advanced",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "signal-dedup: non-cumulative IDs new; cumulative churn-hotspot re-emits have score_delta == 0",
+      "observed": "5 new ids absent from prev seen_signals; 3 re-emits all score_delta=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap + decay",
+      "observed": "no score>8; 0 decay candidates (nothing >14d stale)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "promoted plans have adversarial-pass annotation",
+      "observed": "0 new plans promoted",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; each with 15 sections + Mode + Files",
+      "observed": "0 new plans",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "deferred to Phase 6 gate",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged diff",
+      "observed": "deferred to Phase 6 gate",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md matches regen",
+      "observed": "regenerated this run; byte-identity checked post-stage",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failed; brief lists 'none'",
+      "expected": "true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans still in plans/ or _archive/",
+      "observed": "all prior-run plans accounted for",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD",
+      "observed": "no archive moves this run; count stable",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md matches regen",
+      "observed": "regenerated this run",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "no auto-fix action this run; candidate bar not met",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts + GC7 coverage_cursor advance",
+      "observed": "action-list/risks parse; project-state non-empty; pm_cursor 1->2, coverage_cursor 7->8",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token value in diff",
+      "observed": "no token literal in staged diff",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}
