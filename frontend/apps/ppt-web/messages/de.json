@@ -2036,7 +2036,8 @@
       "actionDescription": "Beschreibung",
       "actionAssignee": "Zuweisen an",
       "actionDueDate": "Fälligkeitsdatum",
-      "create": "Erstellen"
+      "create": "Erstellen",
+      "termCompleted": "Bedingung als erfüllt markiert"
     },
     "timeline": {
       "title": "Aktivitätsverlauf",
@@ -3757,7 +3758,12 @@
       "errors": {
         "nameRequired": "Vorlagenname ist erforderlich",
         "contentRequired": "Vertragsinhalt ist erforderlich"
-      }
+      },
+      "deleteConfirmTitle": "Vorlage löschen?",
+      "deleteConfirmMessage": "Die Vorlage „{{name}}“ wird endgültig gelöscht.",
+      "deleted": "Vorlage gelöscht",
+      "deleteFailed": "Vorlage konnte nicht gelöscht werden",
+      "inUse": "Diese Vorlage wurde für bestehende Verträge verwendet und kann nicht gelöscht werden. Deaktivieren Sie sie stattdessen."
     },
     "applications": {
       "screeningStarted": "Mieterprüfung angefordert",

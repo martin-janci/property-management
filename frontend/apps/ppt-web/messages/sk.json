@@ -2076,7 +2076,8 @@
       "actionDescription": "Popis",
       "actionAssignee": "Prideliť",
       "actionDueDate": "Termín",
-      "create": "Vytvoriť"
+      "create": "Vytvoriť",
+      "termCompleted": "Podmienka bola označená ako splnená"
     },
     "timeline": {
       "title": "Priebeh aktivít",
@@ -3817,7 +3818,12 @@
       "months_one": "{{count}} mesiac",
       "months_few": "{{count}} mesiace",
       "months_many": "{{count}} mesiaca",
-      "months_other": "{{count}} mesiacov"
+      "months_other": "{{count}} mesiacov",
+      "deleteConfirmTitle": "Zmazať šablónu?",
+      "deleteConfirmMessage": "Šablóna „{{name}}“ bude natrvalo zmazaná.",
+      "deleted": "Šablóna bola zmazaná",
+      "deleteFailed": "Šablónu sa nepodarilo zmazať",
+      "inUse": "Šablóna bola použitá pri existujúcich zmluvách, preto ju nemožno zmazať. Namiesto toho ju deaktivujte."
     },
     "violations": {
       "title": "Porušenia nájomných zmlúv",

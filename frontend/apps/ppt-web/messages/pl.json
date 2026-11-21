@@ -2076,7 +2076,8 @@
       "actionDescription": "Opis",
       "actionAssignee": "Przypisz do",
       "actionDueDate": "Termin",
-      "create": "Utwórz"
+      "create": "Utwórz",
+      "termCompleted": "Warunek oznaczono jako spełniony"
     },
     "timeline": {
       "title": "Historia aktywności",
@@ -6459,7 +6460,12 @@
       "errors": {
         "nameRequired": "Podaj nazwę szablonu",
         "contentRequired": "Podaj treść umowy"
-      }
+      },
+      "deleteConfirmTitle": "Usunąć szablon?",
+      "deleteConfirmMessage": "Szablon „{{name}}” zostanie trwale usunięty.",
+      "deleted": "Szablon usunięty",
+      "deleteFailed": "Nie udało się usunąć szablonu",
+      "inUse": "Ten szablon został użyty w istniejących umowach, więc nie można go usunąć. Zamiast tego go dezaktywuj."
     },
     "applications": {
       "screeningStarted": "Zlecono weryfikację najemcy",

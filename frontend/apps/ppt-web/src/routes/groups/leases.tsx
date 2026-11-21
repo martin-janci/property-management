@@ -60,6 +60,7 @@ import {
   useCreateLeaseTemplate,
   useCreateViolation,
   useCreateViolationAppeal,
+  useDeleteLeaseTemplate,
   useExpiringLeases,
   useInitiateScreening,
   useLease,
@@ -1256,11 +1257,41 @@ function TemplatesPageRoute() {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { organizationId } = useOrganization();
-  const { data, isLoading } = useLeaseTemplates(organizationId);
+  // Include deactivated templates so they can be re-activated or deleted here
+  // (lease pickers use the default, active-only list).
+  const { data, isLoading } = useLeaseTemplates(organizationId, { includeInactive: true });
   const createTemplate = useCreateLeaseTemplate();
   const updateTemplate = useUpdateLeaseTemplate();
+  const deleteTemplate = useDeleteLeaseTemplate();
+  const [deleteTarget, setDeleteTarget] = useState<UiLeaseTemplate | null>(null);
 
   const templates = (data ?? []).map(mapTemplateToUi);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteTemplate.mutateAsync({ id: deleteTarget.id, organizationId });
+      showToast({
+        type: 'success',
+        title: t('common.deleted', { defaultValue: 'Deleted' }),
+        message: t('leases.templates.deleted'),
+      });
+    } catch (err) {
+      const inUse =
+        typeof err === 'object' &&
+        err !== null &&
+        (err as { code?: string }).code === 'TEMPLATE_IN_USE';
+      showToast({
+        type: 'error',
+        title: t('leases.templates.deleteFailed'),
+        message: inUse
+          ? t('leases.templates.inUse')
+          : errorMessage(err, t('leases.templates.deleteFailed')),
+      });
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
 
   const failToast = (err: unknown, fallbackKey: string, fallback: string) =>
     showToast({
@@ -1286,44 +1317,58 @@ function TemplatesPageRoute() {
   };
 
   return (
-    <TemplatesPage
-      templates={templates}
-      isLoading={isLoading}
-      isSubmitting={createTemplate.isPending || updateTemplate.isPending}
-      showRentDefaults={false}
-      onCreateTemplate={async (formData) => {
-        try {
-          const fields = mapTemplateDataToApi(formData);
-          await createTemplate.mutateAsync({
-            organization_id: organizationId,
-            ...fields,
-            name: formData.name,
-            content_html: formData.content,
-          });
-          showToast({
-            type: 'success',
-            title: t('common.created', { defaultValue: 'Created' }),
-            message: t('leases.templates.created', { defaultValue: 'Template created' }),
-          });
-        } catch (err) {
-          failToast(err, 'leases.templates.createFailed', 'Could not create template');
+    <>
+      <TemplatesPage
+        templates={templates}
+        isLoading={isLoading}
+        isSubmitting={createTemplate.isPending || updateTemplate.isPending}
+        showRentDefaults={false}
+        onCreateTemplate={async (formData) => {
+          try {
+            const fields = mapTemplateDataToApi(formData);
+            await createTemplate.mutateAsync({
+              organization_id: organizationId,
+              ...fields,
+              name: formData.name,
+              content_html: formData.content,
+            });
+            showToast({
+              type: 'success',
+              title: t('common.created', { defaultValue: 'Created' }),
+              message: t('leases.templates.created', { defaultValue: 'Template created' }),
+            });
+          } catch (err) {
+            failToast(err, 'leases.templates.createFailed', 'Could not create template');
+          }
+        }}
+        onUpdateTemplate={(id, formData) =>
+          update(
+            id,
+            { ...mapTemplateDataToApi(formData), is_active: formData.isActive },
+            'leases.templates.updated'
+          )
         }
-      }}
-      onUpdateTemplate={(id, formData) =>
-        update(
-          id,
-          { ...mapTemplateDataToApi(formData), is_active: formData.isActive },
-          'leases.templates.updated'
-        )
-      }
-      onToggleActive={(id, isActive) =>
-        update(
-          id,
-          { is_active: isActive },
-          isActive ? 'leases.templates.activated' : 'leases.templates.deactivated'
-        )
-      }
-    />
+        onToggleActive={(id, isActive) =>
+          update(
+            id,
+            { is_active: isActive },
+            isActive ? 'leases.templates.activated' : 'leases.templates.deactivated'
+          )
+        }
+        onDeleteTemplate={(id) => setDeleteTarget(templates.find((tpl) => tpl.id === id) ?? null)}
+      />
+      <ConfirmationDialog
+        isOpen={deleteTarget !== null}
+        variant="danger"
+        title={t('leases.templates.deleteConfirmTitle')}
+        message={t('leases.templates.deleteConfirmMessage', { name: deleteTarget?.name ?? '' })}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        isLoading={deleteTemplate.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </>
   );
 }
 

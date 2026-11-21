@@ -8,6 +8,7 @@
 import {
   useAcceptResolution,
   useCompleteActionItem,
+  useCompleteResolutionTerm,
   useCreateActionItem,
   useDeleteEvidence,
   useDispute,
@@ -173,6 +174,7 @@ function DisputeDetailRoute() {
   const voteOnResolution = useVoteOnResolution(disputeId);
   const acceptResolution = useAcceptResolution(disputeId);
   const implementResolution = useImplementResolution(disputeId);
+  const completeTerm = useCompleteResolutionTerm(disputeId);
   const createAction = useCreateActionItem(disputeId);
   const completeAction = useCompleteActionItem(disputeId);
   const sendReminder = useSendActionReminder(disputeId);
@@ -276,6 +278,12 @@ function DisputeDetailRoute() {
       }
       onImplementResolution={(id) =>
         run(() => implementResolution.mutateAsync(id), t('disputes.detail.resolutionImplemented'))
+      }
+      onCompleteResolutionTerm={(resolutionId, termId) =>
+        run(
+          () => completeTerm.mutateAsync({ resolutionId, termId }),
+          t('disputes.detail.termCompleted')
+        )
       }
       onCreateAction={(data) =>
         run(() => createAction.mutateAsync(data), t('disputes.detail.actionCreated'))

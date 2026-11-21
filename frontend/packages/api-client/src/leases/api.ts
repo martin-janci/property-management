@@ -158,9 +158,19 @@ export async function getExpiringLeases(query: ExpiringLeasesQuery): Promise<Exp
 // Lease templates
 // ============================================================================
 
-/** List lease templates for an organization. */
-export async function listLeaseTemplates(organizationId: string): Promise<LeaseTemplate[]> {
-  const qs = buildQueryString({ organization_id: organizationId });
+/**
+ * List lease templates for an organization. Active templates only by default
+ * (lease pickers); `includeInactive` also returns deactivated ones for the
+ * management screen (managers only — ignored by the server otherwise).
+ */
+export async function listLeaseTemplates(
+  organizationId: string,
+  options: { includeInactive?: boolean } = {}
+): Promise<LeaseTemplate[]> {
+  const qs = buildQueryString({
+    organization_id: organizationId,
+    ...(options.includeInactive ? { include_inactive: true } : {}),
+  });
   return fetchApi<LeaseTemplate[]>(`${LEASES_BASE}/templates${qs}`);
 }
 
@@ -188,6 +198,15 @@ export async function updateLeaseTemplate(
     method: 'PUT',
     body: JSON.stringify(body),
   });
+}
+
+/**
+ * Delete an unused lease template (`DELETE /api/v1/leases/templates/{id}`).
+ * The server answers `409 TEMPLATE_IN_USE` when a lease was created from it;
+ * deactivate it instead in that case.
+ */
+export async function deleteLeaseTemplate(id: string): Promise<void> {
+  await fetchApi<void>(`${LEASES_BASE}/templates/${id}`, { method: 'DELETE' });
 }
 
 // ============================================================================

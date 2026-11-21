@@ -2036,7 +2036,8 @@
       "actionDescription": "Leírás",
       "actionAssignee": "Felelős",
       "actionDueDate": "Határidő",
-      "create": "Létrehozás"
+      "create": "Létrehozás",
+      "termCompleted": "A feltétel teljesítettként megjelölve"
     },
     "timeline": {
       "title": "Tevékenységnapló",
@@ -6347,7 +6348,12 @@
       "errors": {
         "nameRequired": "Adja meg a sablon nevét",
         "contentRequired": "Adja meg a szerződés tartalmát"
-      }
+      },
+      "deleteConfirmTitle": "Törli a sablont?",
+      "deleteConfirmMessage": "A(z) „{{name}}” sablon véglegesen törlődik.",
+      "deleted": "Sablon törölve",
+      "deleteFailed": "A sablont nem sikerült törölni",
+      "inUse": "Ezt a sablont meglévő szerződésekhez használták, ezért nem törölhető. Inkább deaktiválja."
     },
     "applications": {
       "screeningStarted": "A bérlő ellenőrzése elindítva",

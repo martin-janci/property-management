@@ -61,6 +61,7 @@ vi.mock('@ppt/api-client', () => ({
   useVoteOnResolution: mutationHook('voteOnResolution'),
   useAcceptResolution: mutationHook('acceptResolution'),
   useImplementResolution: mutationHook('implementResolution'),
+  useCompleteResolutionTerm: mutationHook('completeResolutionTerm'),
   useCreateActionItem: mutationHook('createActionItem'),
   useCompleteActionItem: mutationHook('completeActionItem'),
   useSendActionReminder: mutationHook('sendActionReminder'),
@@ -266,9 +267,8 @@ describe('DisputeDetailRoute (/disputes/:disputeId)', () => {
     expect(p.isParty).toBe(false);
     expect(p.isMediator).toBe(false);
     expect(p.isLoading).toBe(false);
-    // No backend route for these: the page gets no handler, so no affordance.
+    // No backend route for this: the page gets no handler, so no affordance.
     expect(p.onAddEvidence).toBeUndefined();
-    expect(p.onCompleteResolutionTerm).toBeUndefined();
   });
 
   it('onUpdateStatus sends the status as-is (UI and API statuses match) and toasts', async () => {
@@ -302,6 +302,11 @@ describe('DisputeDetailRoute (/disputes/:disputeId)', () => {
     expect(mocks.mutations.acceptResolution).toHaveBeenCalledWith('r-1');
     await p.onImplementResolution('r-1');
     expect(mocks.mutations.implementResolution).toHaveBeenCalledWith('r-1');
+    await p.onCompleteResolutionTerm?.('r-1', 'term-1');
+    expect(mocks.mutations.completeResolutionTerm).toHaveBeenCalledWith({
+      resolutionId: 'r-1',
+      termId: 'term-1',
+    });
     const action = { title: 'T', description: 'D', assignedTo: 'user-4', dueDate: '2026-08-01' };
     await p.onCreateAction(action);
     expect(mocks.mutations.createActionItem).toHaveBeenCalledWith(action);

@@ -7,7 +7,7 @@ use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::{get, patch, post, put},
+    routing::{delete, get, patch, post, put},
     Json, Router,
 };
 use common::errors::ErrorResponse;
@@ -45,6 +45,7 @@ pub fn router() -> Router<AppState> {
         .route("/templates", get(list_templates))
         .route("/templates/{id}", get(get_template))
         .route("/templates/{id}", put(update_template))
+        .route("/templates/{id}", delete(delete_template))
         // Leases (Story 19.3, 19.4)
         .route("/", post(create_lease))
         .route("/", get(list_leases))
@@ -851,10 +852,20 @@ async fn create_template(
     result
 }
 
+/// Query for `GET /leases/templates`.
+#[derive(Debug, Deserialize)]
+pub struct TemplateListQuery {
+    /// Organization ID
+    pub organization_id: Uuid,
+    /// Also return deactivated templates (managers only; ignored otherwise).
+    #[serde(default)]
+    pub include_inactive: bool,
+}
+
 async fn list_templates(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Query(query): Query<OrgQuery>,
+    Query(query): Query<TemplateListQuery>,
 ) -> Result<Json<Vec<db::models::LeaseTemplate>>, (StatusCode, Json<ErrorResponse>)> {
     // Verify request org_id matches authenticated tenant
     if query.organization_id != rls.tenant_id() {
@@ -868,9 +879,10 @@ async fn list_templates(
         ));
     }
 
+    let include_inactive = query.include_inactive && is_lease_manager(&rls);
     let result = state
         .lease_repo
-        .list_templates_rls(&mut **rls.conn(), query.organization_id)
+        .list_templates_filtered_rls(&mut **rls.conn(), query.organization_id, include_inactive)
         .await
         .map(Json)
         .map_err(|e| {
@@ -959,6 +971,63 @@ async fn update_template(
                 Json(ErrorResponse::new("DB_ERROR", "Failed to update template")),
             )
         });
+
+    rls.release().await;
+    result
+}
+
+/// `DELETE /leases/templates/{id}` — hard-delete an unused template.
+///
+/// Managers only. A template that any lease was created from is kept for
+/// history (`leases.template_id` FK): `409 TEMPLATE_IN_USE`, the caller should
+/// deactivate it instead.
+async fn delete_template(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    guard!(
+        rls,
+        require_lease_manager(&rls, "Only managers can delete lease templates")
+    );
+    guard!(rls, ensure_template_in_org(&state, &mut rls, id).await);
+
+    let in_use = match state
+        .lease_repo
+        .count_leases_using_template_rls(&mut **rls.conn(), id)
+        .await
+    {
+        Ok(n) => n,
+        Err(e) => {
+            rls.release().await;
+            tracing::error!("Failed to count template usage: {:?}", e);
+            return Err(db_error("Failed to delete template"));
+        }
+    };
+    if in_use > 0 {
+        rls.release().await;
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse::new(
+                "TEMPLATE_IN_USE",
+                "Template is used by existing leases; deactivate it instead",
+            )),
+        ));
+    }
+
+    let org_id = rls.tenant_id();
+    let result = match state
+        .lease_repo
+        .delete_template_rls(&mut **rls.conn(), id, org_id)
+        .await
+    {
+        Ok(true) => Ok(StatusCode::NO_CONTENT),
+        Ok(false) => Err(not_found("Template not found")),
+        Err(e) => {
+            tracing::error!("Failed to delete template: {:?}", e);
+            Err(db_error("Failed to delete template"))
+        }
+    };
 
     rls.release().await;
     result

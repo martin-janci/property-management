@@ -380,6 +380,7 @@ pub mod activity_type {
     pub const RESOLUTION_PROPOSED: &str = "resolution_proposed";
     pub const RESOLUTION_VOTED: &str = "resolution_voted";
     pub const RESOLUTION_ACCEPTED: &str = "resolution_accepted";
+    pub const RESOLUTION_TERM_COMPLETED: &str = "resolution_term_completed";
     pub const ACTION_CREATED: &str = "action_created";
     pub const ACTION_COMPLETED: &str = "action_completed";
     pub const COMMENT_ADDED: &str = "comment_added";
@@ -396,6 +397,7 @@ pub mod activity_type {
         RESOLUTION_PROPOSED,
         RESOLUTION_VOTED,
         RESOLUTION_ACCEPTED,
+        RESOLUTION_TERM_COMPLETED,
         ACTION_CREATED,
         ACTION_COMPLETED,
         COMMENT_ADDED,

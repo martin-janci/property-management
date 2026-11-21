@@ -1599,6 +1599,97 @@ impl DisputeRepository {
         Ok(resolution)
     }
 
+    /// Mark one term of an accepted / implemented resolution as completed.
+    ///
+    /// The `terms` JSON is rewritten under a row lock so concurrent completions
+    /// of different terms don't overwrite each other. Already-completed terms
+    /// are returned unchanged (idempotent). Errors: `NotFound` (resolution or
+    /// term id), `Conflict` (resolution not accepted / implemented yet).
+    pub async fn complete_resolution_term(
+        &self,
+        resolution_id: Uuid,
+        term_id: &str,
+        actor_id: Uuid,
+    ) -> Result<DisputeResolution, AppError> {
+        let mut tx = self
+            .pool
+            .begin()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let mut resolution = sqlx::query_as::<_, DisputeResolution>(
+            r#"
+            SELECT id, dispute_id, proposed_by, resolution_text, terms, status,
+                   proposed_at, accepted_at, implemented_at, created_at, updated_at
+            FROM dispute_resolutions
+            WHERE id = $1
+            FOR UPDATE
+            "#,
+        )
+        .bind(resolution_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Resolution not found".to_string()))?;
+
+        if resolution.status != resolution_status::ACCEPTED
+            && resolution.status != resolution_status::IMPLEMENTED
+        {
+            return Err(AppError::Conflict(
+                "Only terms of an accepted resolution can be completed".to_string(),
+            ));
+        }
+
+        let term = resolution
+            .terms
+            .0
+            .iter_mut()
+            .find(|t| t.id == term_id)
+            .ok_or_else(|| AppError::NotFound("Resolution term not found".to_string()))?;
+        if term.completed {
+            tx.rollback().await.ok();
+            return Ok(resolution);
+        }
+        term.completed = true;
+        term.completed_at = Some(Utc::now());
+        let description = format!("Resolution term completed: {}", term.description);
+
+        let updated = sqlx::query_as::<_, DisputeResolution>(
+            r#"
+            UPDATE dispute_resolutions
+            SET terms = $2, updated_at = NOW()
+            WHERE id = $1
+            RETURNING id, dispute_id, proposed_by, resolution_text, terms, status,
+                      proposed_at, accepted_at, implemented_at, created_at, updated_at
+            "#,
+        )
+        .bind(resolution_id)
+        .bind(&resolution.terms)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO dispute_activities (dispute_id, actor_id, activity_type, description, metadata)
+            VALUES ($1, $2, $3, $4, $5)
+            "#,
+        )
+        .bind(updated.dispute_id)
+        .bind(actor_id)
+        .bind(activity_type::RESOLUTION_TERM_COMPLETED)
+        .bind(description)
+        .bind(serde_json::json!({ "resolution_id": resolution_id, "term_id": term_id }))
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        tx.commit()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+        Ok(updated)
+    }
+
     // ======================== Resolution Enforcement (Story 77.4) ========================
 
     pub async fn list_action_items(&self, dispute_id: Uuid) -> Result<Vec<ActionItem>, AppError> {

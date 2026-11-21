@@ -2036,7 +2036,8 @@
       "actionDescription": "Description",
       "actionAssignee": "Assign to",
       "actionDueDate": "Due date",
-      "create": "Create"
+      "create": "Create",
+      "termCompleted": "Term marked as fulfilled"
     },
     "timeline": {
       "title": "Activity Timeline",
@@ -5087,7 +5088,12 @@
       "activated": "Template activated",
       "deactivated": "Template deactivated",
       "months_one": "{{count}} month",
-      "months_other": "{{count}} months"
+      "months_other": "{{count}} months",
+      "deleteConfirmTitle": "Delete template?",
+      "deleteConfirmMessage": "Template \"{{name}}\" will be permanently deleted.",
+      "deleted": "Template deleted",
+      "deleteFailed": "Could not delete template",
+      "inUse": "This template was used for existing leases, so it cannot be deleted. Deactivate it instead."
     },
     "violations": {
       "title": "Lease Violations",

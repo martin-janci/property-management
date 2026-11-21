@@ -348,6 +348,17 @@ export function useImplementResolution(disputeId: string) {
   });
 }
 
+export function useCompleteResolutionTerm(disputeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ resolutionId, termId }: { resolutionId: string; termId: string }) =>
+      api.completeResolutionTerm(disputeId, resolutionId, termId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: disputeKeys.detail(disputeId) });
+    },
+  });
+}
+
 // ============================================
 // Enforcement (Story 77.4)
 // ============================================
