@@ -91,18 +91,18 @@
     {
       "task_id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
       "branch": "auto-impl/repeated-churn-backend-servers-api-serve-804c64c3",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-21T00:36:31Z",
-      "last_updated": "2026-11-21T00:36:31Z",
-      "status_changed_at": "2026-11-21T00:36:31Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-21T01:18:42Z",
+      "status_changed_at": "2026-11-21T01:18:42Z",
+      "pr_number": 3686,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3686",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3686 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=split voice_webhooks mod.rs -> handlers/oauth/verify submodules (behaviour-preserving; initial split landed via #3653); fmt+clippy clean, 801/802 tests pass (1 fail is pre-existing env-only SSRF test, identical blob SHA to dev); scope_drift expected (backend refactor under pm-tech-lead owner tag)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -133,5 +133,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-21T01:11:24Z"
+  "generated": "2026-11-21T01:18:42Z"
 }
