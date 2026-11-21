@@ -47,18 +47,18 @@
     {
       "task_id": "code-review-api-handlers-summarize-discards-persist-err",
       "branch": "auto-impl/code-review-api-handlers-summarize-disca-5f603fbe",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-21T22:35:11Z",
-      "last_updated": "2026-11-21T22:35:11Z",
-      "status_changed_at": "2026-11-21T22:35:11Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-21T23:06:27Z",
+      "status_changed_at": "2026-11-21T23:06:27Z",
+      "pr_number": 3708,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3708",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3708 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=ai_summarize_document discarded update_summary Result via let _; now matches Result, logs+releases RLS+returns 500 PERSIST_ERROR; fmt+clippy green 807/808 (sole failure DNS-rebinding test proven pre-existing)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -69,5 +69,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-21T22:52:20Z"
+  "generated": "2026-11-21T23:06:27Z"
 }
