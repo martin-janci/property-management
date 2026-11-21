@@ -699,6 +699,7 @@
       "rejectFailed": "Failed to reject booking",
       "createFailed": "Failed to create booking",
       "loadFacilityFailed": "Failed to load facility details",
+      "loadAvailabilityFailed": "Couldn't check availability. The times shown may not reflect existing bookings.",
       "form": {
         "location": "Location: {{location}}",
         "capacity": "Capacity (people): {{count}}",
@@ -709,6 +710,7 @@
         "startTime": "Start time",
         "endTime": "End time",
         "selectTime": "Select time",
+        "checkingAvailability": "Checking availability…",
         "unavailable": "(unavailable)",
         "purpose": "Purpose of booking",
         "purposePlaceholder": "e.g. team meeting, birthday party",

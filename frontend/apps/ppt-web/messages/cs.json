@@ -703,6 +703,7 @@
       "rejectFailed": "Rezervaci se nepodařilo zamítnout",
       "createFailed": "Rezervaci se nepodařilo vytvořit",
       "loadFacilityFailed": "Podrobnosti prostoru se nepodařilo načíst",
+      "loadAvailabilityFailed": "Dostupnost se nepodařilo načíst. Zobrazené časy nemusí zohledňovat existující rezervace.",
       "form": {
         "location": "Umístění: {{location}}",
         "capacity": "Kapacita (osoby): {{count}}",
@@ -713,6 +714,7 @@
         "startTime": "Začátek",
         "endTime": "Konec",
         "selectTime": "Vyberte čas",
+        "checkingAvailability": "Kontrola dostupnosti…",
         "unavailable": "(nedostupné)",
         "purpose": "Účel rezervace",
         "purposePlaceholder": "např. schůzka, narozeninová oslava",

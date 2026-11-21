@@ -699,6 +699,7 @@
       "rejectFailed": "Buchung konnte nicht abgelehnt werden",
       "createFailed": "Buchung konnte nicht erstellt werden",
       "loadFacilityFailed": "Details der Einrichtung konnten nicht geladen werden",
+      "loadAvailabilityFailed": "Verfügbarkeit konnte nicht geprüft werden. Die angezeigten Zeiten berücksichtigen bestehende Buchungen möglicherweise nicht.",
       "form": {
         "location": "Lage: {{location}}",
         "capacity": "Kapazität (Personen): {{count}}",
@@ -709,6 +710,7 @@
         "startTime": "Beginn",
         "endTime": "Ende",
         "selectTime": "Uhrzeit wählen",
+        "checkingAvailability": "Verfügbarkeit wird geprüft…",
         "unavailable": "(nicht verfügbar)",
         "purpose": "Zweck der Buchung",
         "purposePlaceholder": "z. B. Besprechung, Geburtstagsfeier",

@@ -699,6 +699,7 @@
       "rejectFailed": "Nem sikerült elutasítani a foglalást",
       "createFailed": "Nem sikerült létrehozni a foglalást",
       "loadFacilityFailed": "Nem sikerült betölteni a helyiség adatait",
+      "loadAvailabilityFailed": "Nem sikerült ellenőrizni a foglaltságot. A megjelenített időpontok nem feltétlenül tükrözik a meglévő foglalásokat.",
       "form": {
         "location": "Elhelyezkedés: {{location}}",
         "capacity": "Férőhely (fő): {{count}}",
@@ -709,6 +710,7 @@
         "startTime": "Kezdés",
         "endTime": "Befejezés",
         "selectTime": "Válasszon időpontot",
+        "checkingAvailability": "Foglaltság ellenőrzése…",
         "unavailable": "(nem elérhető)",
         "purpose": "A foglalás célja",
         "purposePlaceholder": "pl. megbeszélés, születésnapi buli",

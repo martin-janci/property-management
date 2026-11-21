@@ -16,6 +16,8 @@ interface BookingFormProps {
   onSubmit: (data: CreateBookingRequest) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  isCheckingAvailability?: boolean;
+  availabilityError?: string | null;
 }
 
 /**
@@ -44,6 +46,8 @@ export function BookingForm({
   onSubmit,
   onCancel,
   isSubmitting,
+  isCheckingAvailability,
+  availabilityError,
 }: BookingFormProps) {
   const { t, i18n } = useTranslation();
   const formatNumber = (value: number, fractionDigits = 0) =>
@@ -187,6 +191,21 @@ export function BookingForm({
         />
         {errors.date && <p className="mt-1 text-sm text-red-600">{errors.date}</p>}
       </div>
+
+      {/* Availability status */}
+      {isCheckingAvailability && (
+        <p className="text-sm text-gray-500" role="status">
+          {t('facilities.bookings.form.checkingAvailability')}
+        </p>
+      )}
+      {availabilityError && (
+        <div
+          role="alert"
+          className="p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800"
+        >
+          {availabilityError}
+        </div>
+      )}
 
       {/* Time Selection */}
       <div className="grid grid-cols-2 gap-4">

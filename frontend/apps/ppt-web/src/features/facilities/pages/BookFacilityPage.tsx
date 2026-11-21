@@ -22,6 +22,8 @@ export function BookFacilityPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
 
   // Fetch facility details
   useEffect(() => {
@@ -46,17 +48,33 @@ export function BookFacilityPage() {
   useEffect(() => {
     if (!buildingId || !facilityId || !selectedDate) return;
 
+    let cancelled = false;
+
     const fetchAvailability = async () => {
+      setIsCheckingAvailability(true);
+      setAvailabilityError(null);
       try {
         const slots = await checkAvailability(buildingId, facilityId, { date: selectedDate });
+        if (cancelled) return;
         setAvailableSlots(slots);
       } catch (err) {
+        if (cancelled) return;
+        // Surface the failure instead of silently leaving every slot bookable:
+        // without availability data the form can no longer vouch for free times.
+        setAvailableSlots([]);
+        setAvailabilityError(t('facilities.bookings.loadAvailabilityFailed'));
         console.error('Failed to fetch availability:', err);
+      } finally {
+        if (!cancelled) setIsCheckingAvailability(false);
       }
     };
 
     fetchAvailability();
-  }, [buildingId, facilityId, selectedDate]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [buildingId, facilityId, selectedDate, t]);
 
   const handleSubmit = async (data: CreateBookingRequest) => {
     if (!buildingId || !facilityId) return;
@@ -142,6 +160,8 @@ export function BookFacilityPage() {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isSubmitting={isSubmitting}
+        isCheckingAvailability={isCheckingAvailability}
+        availabilityError={availabilityError}
       />
     </div>
   );
