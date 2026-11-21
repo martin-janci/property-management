@@ -11,6 +11,8 @@ mod common;
 mod finance_r4_authz_tests;
 #[path = "suites/mobile_config_route_tests.rs"]
 mod mobile_config_route_tests;
+#[path = "suites/moderation_assign_cross_org_idor_tests.rs"]
+mod moderation_assign_cross_org_idor_tests;
 #[path = "suites/platform_r4_authz_tests.rs"]
 mod platform_r4_authz_tests;
 #[path = "suites/reports_export_org_scope_tests.rs"]
