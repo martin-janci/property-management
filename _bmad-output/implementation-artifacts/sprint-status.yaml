@@ -1,6 +1,12 @@
 # Sprint Status Tracking
 # Generated: 2025-12-21
 # Updated: 2026-05-25 — added test-hardening batch (issues #480-#487)
+# Updated: 2026-11-21 — sprint reset (pm-scrum-master): the Epic 6/7A/8A/10A/10B/80/79/82/84/85/9
+#   delivery sprint below is fully `done` (sprint_status: done). The active sprint is now the
+#   hardening/refactor track in `current_sprint:` (modules under watch, release-248 quarantine
+#   burn-down, mobile-native backlog). This supersedes the 2026-11-20 `next_sprint:` draft, whose
+#   review-follow-ups workstream (#480/#483/#484) went stale the same day it was slotted — all three
+#   were reconciled CLOSED on 2026-11-20 (see test_hardening_batch, now status: done).
 #
 # STATUS DEFINITIONS:
 #   - backlog: Not yet planned for development
@@ -13,6 +19,13 @@
 sprint_name: "Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth"
 sprint_goal: "Enable managers to broadcast announcements, manage documents, users to control notification preferences, and implement OAuth provider"
 started_at: 2025-12-21
+# Delivery sprint CLOSED 2026-11-21 (pm-scrum-master): every epic rollup below is status=done,
+# every development_status story is `done`, and test_hardening_batch thb-2026-05-25 is status=done
+# (all of #480-#487 CLOSED on GitHub). The development_status map below is retained as the
+# authoritative done-story ledger the ppt-project-management skill reads — do not prune it. The
+# active sprint is `current_sprint:` at the bottom of this file.
+sprint_status: done
+closed_at: 2026-11-21
 
 # Epic tracking
 epics:
@@ -241,55 +254,82 @@ notes:
 blockers: []
 
 # ───────────────────────────────────────────────────
-# NEXT SPRINT — slotted 2026-11-20 (pm-tech-lead)
-# The Epic 6/7A/8A/10A/10B/80/79/82/84/85/9 delivery sprint above is fully
-# `done`; its sprint_goal no longer reflects the work now being merged.
-# This block re-points the goal at the active post-delivery workstreams:
-# review follow-ups (remaining test-hardening issues), churn / large-file
-# refactors, and NFR baselining. Mirrors the schema of the sprint above
-# (sprint_name / sprint_goal / started_at / rollup / development_status /
-# notes / blockers), nested under `next_sprint` to stay additive and keep
-# the YAML free of duplicate top-level keys.
+# CURRENT SPRINT — reset 2026-11-21 (pm-scrum-master)
+# The Epic 6/7A/8A/10A/10B/80/79/82/84/85/9 delivery sprint above is fully `done`
+# (sprint_status: done). This block is the now-active sprint and names the
+# hardening/refactor track explicitly, per the task spec: the three workstreams
+# are (1) new modules under watch, (2) release-248 quarantine burn-down, and
+# (3) mobile-native backlog.
+#
+# Supersedes the 2026-11-20 `next_sprint:` draft (pm-tech-lead). Changes vs that draft:
+#   - review-follow-ups workstream RETIRED — its three items #480/#483/#484 were all
+#     reconciled CLOSED on 2026-11-20 (test_hardening_batch is now status: done), so the
+#     workstream was empty the day after it was slotted.
+#   - the generic "churn / large-file refactors" workstream is now the concrete
+#     "modules-under-watch" track (named oversized modules).
+#   - "release-248 quarantine burn-down" and "mobile-native backlog" added (both were
+#     absent from the prior draft) — these are the two live hardening tracks with
+#     enumerated work.
+#   - NFR baselining folded to a parked note (not one of the three named tracks; revisit
+#     once the quarantine burn-down frees backend capacity).
+# Mirrors the schema of the delivery sprint above (sprint_name / sprint_goal / started_at /
+# workstream rollup / development_status / notes / blockers), kept under `current_sprint:`
+# to stay additive and free of duplicate top-level keys.
 # ───────────────────────────────────────────────────
-next_sprint:
-  sprint_name: "Hardening & NFR Baseline - Review Follow-ups, Churn Refactors, NFR Baselining"
-  sprint_goal: "Close out open post-merge review follow-ups, refactor churn / large-file hotspots, and establish NFR (performance, reliability, security) baselines across the stack"
-  started_at: 2026-11-20
+current_sprint:
+  sprint_name: "Hardening & Refactor - Modules Under Watch, release-248 Quarantine Burn-down, Mobile-native Backlog"
+  sprint_goal: "Harden the post-delivery codebase along three explicit tracks: (1) refactor the new oversized / high-churn modules under watch, (2) burn down the release-248 quarantine registry (201 #[ignore]d Rust tests, shared 2027-02-19 deadline) toward zero, and (3) land the mobile-native (KMP) backlog once cloud-runner builds are unblocked."
+  started_at: 2026-11-21
 
   # Workstream rollup (mirrors the `epics:` tracking shape above)
   workstreams:
-    review-follow-ups:
-      name: "Post-merge review follow-ups"
+    modules-under-watch:
+      name: "New modules under watch (oversized / high-churn refactors)"
       status: in-progress
-      items_total: 3
-      items_completed: 0   # test-hardening batch thb-2026-05-25 residue: #480, #483, #484 still open
-    churn-refactors:
-      name: "Churn / large-file refactors"
-      status: ready-for-dev
-      items_total: 0        # hotspots to be enumerated from the research routine's Phase 1 churn analysis
+      items_total: 6        # oversized modules flagged by repo-map / churn; split by domain seam
       items_completed: 0
-    nfr-baselining:
-      name: "NFR baselining (performance / reliability / security)"
-      status: ready-for-dev
-      items_total: 0        # baseline targets + measurement harness to be defined before pickup
+    release-248-quarantine-burndown:
+      name: "release-248 quarantine burn-down (.github/quarantine/registry.toml)"
+      status: in-progress
+      items_total: 201      # quarantined #[ignore]d Rust tests grandfathered 2026-11-21, due 2027-02-19
+      items_completed: 0    # burn-down target = 0 rows (prefer fix+delete over bumping `due`)
+    mobile-native-backlog:
+      name: "Mobile-native (KMP) backlog"
+      status: blocked       # cloud-runner KMP builds unavailable (#2652, #2966); owner pm-devops
+      items_total: 4        # CreateListingScreen stub, InquiriesResponse contract, Ktor HttpTimeout, SSO error body
       items_completed: 0
 
   # Item-level development status (mirrors `development_status:` above)
   development_status:
-    # Review follow-ups — carried from test-hardening batch thb-2026-05-25
-    rfu-480-websocket-auth-token-logging: open        # #480 — WS auth token in query param logged + session not re-validated after JWT expiry (gated 8a-3)
-    rfu-483-voice-device-idor-tests: open             # #483 — Voice device IDOR fix has no tests; list-commands leaks existence via empty vs 403
-    rfu-484-notification-dispatch-serial: open        # #484 — dispatch_to_users is serial + FCM stub swallows failures (gated 8a-2/8a-3)
-    # Churn / large-file refactors — to be populated from churn characterization
-    churn-large-file-refactors: ready-for-dev         # enumerate churn hotspots / oversized modules, split by domain
-    # NFR baselining
-    nfr-baseline-performance: ready-for-dev           # define perf budgets + capture baseline
-    nfr-baseline-reliability: ready-for-dev           # error-budget / availability baseline
-    nfr-baseline-security: ready-for-dev              # security posture baseline (authz / RLS / rate-limit coverage)
+    # ── Track 1: new modules under watch — oversized/high-churn modules to split along
+    #    domain seams. Sizes from docs/repo-map.md "Largest route files" + live tree scan
+    #    (2026-11-21). Each stays in-progress until the module is decomposed + tests kept green.
+    watch-backend-repositories-vote: in-progress      # crates/db/src/repositories/vote.rs (~103K) — largest repo file
+    watch-reality-server-routes-sso: in-progress      # servers/reality-server/src/routes/sso.rs (~89K)
+    watch-api-server-routes-financial: in-progress    # servers/api-server/src/routes/financial.rs (~85K)
+    watch-backend-repositories-lease: in-progress     # crates/db/src/repositories/lease.rs (~83K)
+    watch-api-server-routes-reports: in-progress      # servers/api-server/src/routes/reports/mod.rs (~80K)
+    watch-backend-repositories-llm-document: in-progress  # crates/db/src/repositories/llm_document.rs (~79K)
+    # ── Track 2: release-248 quarantine burn-down — registry at .github/quarantine/registry.toml.
+    #    201 rows, all due 2027-02-19; owners pm-backend (193), pm-devops (6), pm-security (2).
+    #    Gate: .github/workflows/quarantine-age-gate.yml fails CI once a `due` passes. DoD = 0 rows.
+    quarantine-burndown-pm-backend: in-progress       # 193 rows — most are "requires Postgres test DB; run with --ignored"; convert to a gated integration-test lane + delete rows
+    quarantine-burndown-pm-devops: ready-for-dev       # 6 rows — devops-owned flaky/infra-gated tests
+    quarantine-burndown-pm-security: ready-for-dev     # 2 rows — security-owned (RLS/penetration) tests
+    # ── Track 3: mobile-native (KMP) backlog — structurally unclaimable in the cloud runner
+    #    until #2652 (KMP egress) + #2966 are fixed. Owner pm-devops for the unblock; pm-backend
+    #    pairs each with a jvmTest contract test so compiled-but-dead stubs are caught (risks.md).
+    mobile-native-create-listing-screen: blocked      # CreateListingScreen NotImplementedError stub — needs device/KMP build (#2652)
+    mobile-native-inquiries-response-contract: blocked # InquiriesResponse contract mismatch — pair with jvmTest contract test
+    mobile-native-ktor-http-timeout: blocked          # Ktor HttpTimeout not configured on the KMP client
+    mobile-native-sso-error-body: blocked             # SSO error-body parsing on the KMP/Android deep-link path
 
   notes:
-    - "2026-11-20: next sprint slotted (pm-tech-lead) — prior delivery sprint is fully done; goal re-pointed at review follow-ups, churn / large-file refactors, and NFR baselining to reflect the work actually being merged."
-    - "Review follow-ups seeded from the still-open items of test-hardening batch thb-2026-05-25 (#480, #483, #484). That batch stays in-progress until all three are closed or deferred."
-    - "Churn-refactor and NFR items are intentionally un-sized (items_total: 0) — to be enumerated from the research routine's Phase 1 churn analysis and NFR targets before pickup."
+    - "2026-11-21: sprint reset (pm-scrum-master). Delivery sprint above is fully done; this block is the active sprint and names the hardening/refactor track explicitly — (1) new modules under watch, (2) release-248 quarantine burn-down, (3) mobile-native backlog. Supersedes the 2026-11-20 next_sprint draft."
+    - "Track 1 (modules under watch): seeded from docs/repo-map.md 'Largest route files' + a live tree scan on 2026-11-21. The six listed modules are the current oversized/high-churn hotspots; enumerate finer split tasks from the research routine's Phase 1 churn analysis as they surface. Refactors must keep `just verify` green (no behaviour change)."
+    - "Track 2 (release-248 quarantine burn-down): 201 #[ignore]d Rust tests registered in .github/quarantine/registry.toml on 2026-11-21 with a shared 2027-02-19 (90-day) deadline. Enforced by .github/workflows/quarantine-age-gate.yml (CI fails once a `due` passes). Policy docs/quarantine-policy.md: prefer FIXING the test and DELETING its row over bumping `due`. Burn-down target = 0 rows before the deadline. Owner split: pm-backend 193 / pm-devops 6 / pm-security 2."
+    - "Track 3 (mobile-native backlog): the 4 open KMP items are structurally unclaimable in the cloud runner — Gradle/KMP builds are egress-blocked (#2652, compounded by #2966). Owner pm-devops for the cloud-build unblock; until then these stay `blocked`. Per risks.md, pair every mobile-native item with a contract test on jvmTest (not androidTest) so compiled-but-dead stubs are caught, and tag items that need a real device run."
+    - "Parked (not one of the three named tracks this reset): NFR baselining (performance / reliability / security) from the 2026-11-20 draft — revisit once the quarantine burn-down frees backend capacity."
 
-  blockers: []
+  blockers:
+    - "Mobile-native backlog (track 3) is blocked on pm-devops unblocking cloud-runner KMP + swagger-ui egress (#2652, #2966). Until fixed, ~4-9 of 72 backlog items remain structurally unclaimable in the cloud."
