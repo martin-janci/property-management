@@ -93,6 +93,7 @@ UC-38 single-dispute deep view. Combines patterns from `ppt/announcements` (chro
 - 2026-11-16 — agent: screen-map-drift-pr-3486 — reconciled with merged PR #3486: route now gated behind `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/disputes.tsx`; anonymous visitors redirect to `/login`. No route/component/buildStatus/apiStatus change.
 
 <!-- newest entries on top -->
+- 2026-11-21 — agent: resolution term checkboxes wired to new `POST /disputes/{id}/resolutions/{rid}/terms/{termId}/complete` (managers, mediator, responsible party; only for accepted/implemented resolutions, 409 otherwise).
 - 2026-11-04 — agent: page renders spinner / load-error / not-found before reading `dispute.*` (crashed on undefined dispute); route passes real loading and error flags (R3 #3).
 - 2026-11-04 — agent: localized the detail page (headings, buttons, dialogs, empty states, pending/overdue counters with plurals), ActionItemCard, ResolutionCard and DisputeTimeline into `disputes.detail|action|resolution|timeline.*` in all six locales; status/priority/category/role labels via shared `utils/labels.ts` key maps; dates and the approval percentage now use the app language (`i18n.language`), not the browser locale. Added `disputesI18nCompleteness.test.ts` (parity, plural forms, placeholders, used-keys-exist) and `DisputeCards.i18n.test.tsx`.
 

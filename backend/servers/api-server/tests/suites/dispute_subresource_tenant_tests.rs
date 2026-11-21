@@ -1074,3 +1074,150 @@ async fn bodies_without_path_or_jwt_fields_are_accepted(pool: PgPool) {
         1
     );
 }
+
+// =============================================================================
+// Resolution terms: mark a term as fulfilled
+// =============================================================================
+
+/// Give the fixture resolution two terms, the second owned by `party_id`, and
+/// set its status.
+async fn seed_terms(pool: &PgPool, f: &OrgFixture, status: &str, party_id: Option<Uuid>) {
+    let terms = json!([
+        { "id": "t-1", "description": "Quiet hours", "responsible_party_id": null,
+          "deadline": null, "completed": false, "completed_at": null },
+        { "id": "t-2", "description": "Install a mat", "responsible_party_id": party_id,
+          "deadline": null, "completed": false, "completed_at": null },
+    ]);
+    sqlx::query("UPDATE dispute_resolutions SET terms = $2, status = $3 WHERE id = $1")
+        .bind(f.resolution)
+        .bind(terms)
+        .bind(status)
+        .execute(pool)
+        .await
+        .expect("seed terms");
+}
+
+async fn term_completed(pool: &PgPool, resolution: Uuid, term: &str) -> bool {
+    sqlx::query_scalar::<_, bool>(
+        "SELECT (t->>'completed')::bool FROM dispute_resolutions r, \
+         jsonb_array_elements(r.terms) t WHERE r.id = $1 AND t->>'id' = $2",
+    )
+    .bind(resolution)
+    .bind(term)
+    .fetch_one(pool)
+    .await
+    .expect("term completed")
+}
+
+/// A manager completes a term of an accepted resolution; the other term is
+/// untouched, an activity is recorded and repeating the call is a no-op.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn manager_completes_resolution_term(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "term").await;
+    seed_terms(&pool, &f, "accepted", None).await;
+    let token = mint_token(f.user, f.org, "manager");
+    let uri = format!(
+        "/api/v1/disputes/{}/resolutions/{}/terms/t-1/complete",
+        f.dispute, f.resolution
+    );
+
+    for _ in 0..2 {
+        let resp = call(&app, &token, f.org, Method::POST, &uri, None).await;
+        assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    }
+    assert!(term_completed(&pool, f.resolution, "t-1").await);
+    assert!(!term_completed(&pool, f.resolution, "t-2").await);
+    assert_eq!(
+        count(
+            &pool,
+            "SELECT COUNT(*) FROM dispute_activities WHERE dispute_id = $1 \
+             AND activity_type = 'resolution_term_completed'",
+            f.dispute
+        )
+        .await,
+        1
+    );
+
+    let missing = format!(
+        "/api/v1/disputes/{}/resolutions/{}/terms/nope/complete",
+        f.dispute, f.resolution
+    );
+    let resp = call(&app, &token, f.org, Method::POST, &missing, None).await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
+}
+
+/// Terms of a merely proposed resolution cannot be completed yet.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn proposed_resolution_term_is_409(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "tprop").await;
+    seed_terms(&pool, &f, "proposed", None).await;
+    let token = mint_token(f.user, f.org, "manager");
+    let uri = format!(
+        "/api/v1/disputes/{}/resolutions/{}/terms/t-1/complete",
+        f.dispute, f.resolution
+    );
+    let resp = call(&app, &token, f.org, Method::POST, &uri, None).await;
+    assert_eq!(resp.status, StatusCode::CONFLICT, "{}", resp.text());
+    assert!(!term_completed(&pool, f.resolution, "t-1").await);
+}
+
+/// The responsible party may complete its own term but not someone else's;
+/// a non-party resident may complete nothing.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn responsible_party_completes_only_own_term(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "tparty").await;
+    let (party_user, party_token) =
+        seed_actor(&pool, &f, "tparty-r", "resident", Some("respondent")).await;
+    let party_id = sqlx::query_scalar::<_, Uuid>(
+        "SELECT id FROM dispute_parties WHERE dispute_id = $1 AND user_id = $2",
+    )
+    .bind(f.dispute)
+    .bind(party_user)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    seed_terms(&pool, &f, "accepted", Some(party_id)).await;
+    let base = format!(
+        "/api/v1/disputes/{}/resolutions/{}/terms",
+        f.dispute, f.resolution
+    );
+
+    let resp = call(
+        &app,
+        &party_token,
+        f.org,
+        Method::POST,
+        &format!("{base}/t-1/complete"),
+        None,
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+
+    let resp = call(
+        &app,
+        &party_token,
+        f.org,
+        Method::POST,
+        &format!("{base}/t-2/complete"),
+        None,
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    assert!(term_completed(&pool, f.resolution, "t-2").await);
+
+    let (_, outsider) = seed_actor(&pool, &f, "tparty-o", "resident", None).await;
+    let resp = call(
+        &app,
+        &outsider,
+        f.org,
+        Method::POST,
+        &format!("{base}/t-1/complete"),
+        None,
+    )
+    .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+    assert!(!term_completed(&pool, f.resolution, "t-1").await);
+}

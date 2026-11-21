@@ -680,6 +680,24 @@ export async function implementResolution(
   return mapResolution(wire);
 }
 
+/**
+ * Mark one resolution term as fulfilled
+ * (`POST /disputes/{id}/resolutions/{rid}/terms/{termId}/complete`).
+ * Managers, the mediator and the term's responsible party may call it; the
+ * resolution must be accepted or implemented (409 otherwise).
+ */
+export async function completeResolutionTerm(
+  disputeId: string,
+  resolutionId: string,
+  termId: string
+): Promise<DisputeResolution> {
+  const wire = await apiRequest<DisputeResolutionWire>(
+    `${API_BASE}/${disputeId}/resolutions/${resolutionId}/terms/${encodeURIComponent(termId)}/complete`,
+    { method: 'POST' }
+  );
+  return mapResolution(wire);
+}
+
 // ============================================
 // Enforcement (Story 77.4)
 // ============================================

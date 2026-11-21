@@ -80,6 +80,9 @@ export function ResolutionCard({
   const { t, i18n } = useTranslation();
   const formatDate = (dateString: string) => formatDisputeDate(dateString, i18n.language);
 
+  // The server only completes terms of an accepted / implemented resolution.
+  const termsCompletable =
+    !!onCompleteItem && (resolution.status === 'accepted' || resolution.status === 'implemented');
   const completedTerms = resolution.terms.filter((term) => term.completed).length;
   const totalTerms = resolution.terms.length;
   const progressPercent = totalTerms > 0 ? (completedTerms / totalTerms) * 100 : 0;
@@ -150,8 +153,9 @@ export function ResolutionCard({
                 <input
                   type="checkbox"
                   checked={term.completed}
-                  disabled={term.completed || !onCompleteItem}
+                  disabled={term.completed || !termsCompletable}
                   onChange={() => onCompleteItem?.(resolution.id, term.id)}
+                  aria-label={term.description}
                   className="mt-1 rounded border-gray-300"
                 />
                 <div className="flex-1">

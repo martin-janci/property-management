@@ -89,7 +89,11 @@ interface DisputeDetailPageProps {
   onVoteResolution: (resolutionId: string, accepted: boolean, comments?: string) => void;
   onAcceptResolution: (resolutionId: string) => void;
   onImplementResolution: (resolutionId: string) => void;
-  /** Omit to render resolution terms read-only (no backend route completes a term). */
+  /**
+   * Omit to render resolution terms read-only. The server lets managers, the
+   * mediator and the term's responsible party complete a term of an accepted
+   * resolution.
+   */
   onCompleteResolutionTerm?: (resolutionId: string, termId: string) => void;
   onCreateAction: (data: {
     title: string;
@@ -455,7 +459,7 @@ function DisputeDetailContent({
                     onVote={onVoteResolution}
                     onAccept={onAcceptResolution}
                     onImplement={onImplementResolution}
-                    onCompleteItem={onCompleteResolutionTerm}
+                    onCompleteItem={canManage || isParty ? onCompleteResolutionTerm : undefined}
                   />
                 ))}
               </div>

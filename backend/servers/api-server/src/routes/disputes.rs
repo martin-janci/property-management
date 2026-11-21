@@ -82,6 +82,10 @@ pub fn router() -> Router<AppState> {
             "/{id}/resolutions/{resolution_id}/implement",
             post(implement_resolution),
         )
+        .route(
+            "/{id}/resolutions/{resolution_id}/terms/{term_id}/complete",
+            post(complete_resolution_term),
+        )
         // Enforcement (Story 77.4)
         .route("/{id}/actions", get(list_action_items))
         .route("/{id}/actions", post(create_action_item))
@@ -1722,6 +1726,81 @@ async fn implement_resolution(
                     "Failed to implement resolution",
                 )),
             )
+        })
+}
+
+/// Mark one resolution term as fulfilled.
+///
+/// Allowed for managers, the dispute mediator, and the party the term names
+/// as responsible. Only terms of an `accepted` / `implemented` resolution can
+/// be completed (409 otherwise); repeating the call is a no-op.
+async fn complete_resolution_term(
+    State(state): State<AppState>,
+    TenantAuthUser(user): TenantAuthUser,
+    Path((id, resolution_id, term_id)): Path<(Uuid, Uuid, String)>,
+) -> Result<Json<DisputeResolution>, (StatusCode, Json<ErrorResponse>)> {
+    let org = guard_dispute(&state, &user, id).await?;
+    guard_child(&state, &user, DisputeChild::Resolution, resolution_id, id).await?;
+
+    let not_found = |msg: &str| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", msg)),
+        )
+    };
+    let resolution = state
+        .dispute_repo
+        .get_resolution_with_votes(resolution_id)
+        .await
+        .map_err(|e| map_dispute_err(e, "Failed to load resolution"))?
+        .ok_or_else(|| not_found("Resolution not found"))?
+        .resolution;
+    let term = resolution
+        .terms
+        .0
+        .iter()
+        .find(|t| t.id == term_id)
+        .ok_or_else(|| not_found("Resolution term not found"))?;
+
+    let privileged = is_manager(&user) || is_dispute_mediator(&state, &user, id, org).await?;
+    if !privileged {
+        let party = state
+            .dispute_repo
+            .find_party_by_user(id, user.user_id)
+            .await
+            .map_err(|e| map_dispute_err(e, "Failed to verify dispute party"))?;
+        let responsible = matches!(
+            (party, term.responsible_party_id),
+            (Some(p), Some(rp)) if p.id == rp
+        );
+        if !responsible {
+            return Err(forbidden(
+                "Only a manager, the mediator or the responsible party may complete this term",
+            ));
+        }
+    }
+
+    state
+        .dispute_repo
+        .complete_resolution_term(resolution_id, &term_id, user.user_id)
+        .await
+        .map(Json)
+        .map_err(|e| match e {
+            common::errors::AppError::Conflict(msg) => (
+                StatusCode::CONFLICT,
+                Json(ErrorResponse::new("RESOLUTION_NOT_ACCEPTED", &msg)),
+            ),
+            common::errors::AppError::NotFound(msg) => not_found(&msg),
+            e => {
+                tracing::error!("Failed to complete resolution term: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DB_ERROR",
+                        "Failed to complete resolution term",
+                    )),
+                )
+            }
         })
 }
 
