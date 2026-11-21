@@ -7142,6 +7142,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-workflow-enable-silent-fail",
+      "branch": "auto-impl/code-review-api-handlers-workflow-enable-c3723f52",
+      "status": "merged",
+      "claimed_at": "2026-11-21T12:33:50Z",
+      "last_updated": "2026-11-21T14:36:44Z",
+      "status_changed_at": "2026-11-21T14:36:44Z",
+      "pr_number": 3698,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3698",
+      "merged_at": "2026-11-21T14:36:12Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3698 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=import_workflow_template enable-update no longer discards Err/Ok(None) (db_error/internal_error + rls.release); IG3 static-guard regression test; 21 verify fails are DB-less-env only not the diff; draft pending backend.yml CI",
+      "reviewer_summary": "verdict=approve head_oid=5a67d091fe64dfb83d64e5f1612765fe87537ecf note=correct-fix-mirrors-create-path-rls-release-ok-ci-green-self-approve-blocked",
+      "last_reviewed_oid": "5a67d091fe64dfb83d64e5f1612765fe87537ecf",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T14:32:22Z"
+    },
+    {
       "task_id": "code-review-frontend-packages-auth-exp-bypass",
       "branch": "auto-impl/code-review-frontend-packages-auth-exp-b-a928edfd",
       "status": "merged",
@@ -11254,6 +11276,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-ws-notifications-token-in-url-retry1",
+      "branch": "auto-impl/code-review-ppt-web-core-ws-notifications-token-in-url-f3f0b1fa",
+      "status": "merged",
+      "claimed_at": "2026-11-21T12:33:50Z",
+      "last_updated": "2026-11-21T14:36:44Z",
+      "status_changed_at": "2026-11-21T14:36:44Z",
+      "pr_number": 3696,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3696",
+      "merged_at": "2026-11-21T14:33:35Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3696 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=hardened buildWebSocketUrl to strip query/fragment so a token cannot leak into WS handshake; 2-commit TDD, verify green 13192 tests",
+      "reviewer_summary": "verdict=approve head_oid=99175c1bc912969caabf4adbb942349f038bc0c6 note=ws-url-token-strip-correct-scoped-tested; approve posted as COMMENT (self-approval blocked on own PR)",
+      "last_reviewed_oid": "99175c1bc912969caabf4adbb942349f038bc0c6",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T14:32:22Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-ws-pong-timeout-drop",
       "branch": "auto-impl/code-review-ppt-web-core-ws-pong-timeout-1957eba9",
       "status": "merged",
@@ -12656,6 +12700,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-invoice-empty-items",
+      "branch": "auto-impl/code-review-ppt-web-ui-invoice-empty-ite-8397e2fb",
+      "status": "merged",
+      "claimed_at": "2026-11-21T12:33:50Z",
+      "last_updated": "2026-11-21T14:36:44Z",
+      "status_changed_at": "2026-11-21T14:36:44Z",
+      "pr_number": 3697,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3697",
+      "merged_at": "2026-11-21T14:35:48Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3697 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=AccountingInvoiceForm now rejects empty items[] (guard filtered list, inline noLineItems error + 6 locales); 2-commit TDD, verify green 13198 tests",
+      "reviewer_summary": "verdict=approve head_oid=6413a251a2bab5952873195243fd21ac75c95083 note=empty-items-guard-correct-scope-clean-selfapprove-blocked-posted-as-comment",
+      "last_reviewed_oid": "6413a251a2bab5952873195243fd21ac75c95083",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T14:32:22Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-invoice-feature-no-i18n",
@@ -17372,6 +17438,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-report-attachments-disabled-3017-retry1",
+      "branch": "auto-impl/code-review-reality-web-report-attachmen-7e5c0d4c",
+      "status": "merged",
+      "claimed_at": "2026-11-21T12:33:50Z",
+      "last_updated": "2026-11-21T14:36:44Z",
+      "status_changed_at": "2026-11-21T14:36:44Z",
+      "pr_number": 3695,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3695",
+      "merged_at": "2026-11-21T14:34:11Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3695 status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=wired /report attachments to existing attachments[] URL contract; reality-web 613 tests green, IG3 two-commit split",
+      "reviewer_summary": "verdict=approve head_oid=85755fa671215035092e44948191623cfd49d3a0 note=clean-frontend-only-fix-ci-green-self-approve-blocked-posted-as-comment",
+      "last_reviewed_oid": "85755fa671215035092e44948191623cfd49d3a0",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T14:32:22Z"
     },
     {
       "task_id": "code-review-reality-web-report-page-hardcoded-sk",
@@ -32520,5 +32608,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-21T08:43:29Z"
+  "archived_at": "2026-11-21T14:37:25Z"
 }
