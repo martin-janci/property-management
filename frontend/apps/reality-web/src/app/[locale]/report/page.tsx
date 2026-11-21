@@ -5,7 +5,11 @@
  * Screen-map: docs/screens/reality/report-listing.md
  */
 
-import { SubmitReportError, useSubmitReport } from '@ppt/reality-api-client';
+import {
+  SubmitReportError,
+  type SubmitReportRequest,
+  useSubmitReport,
+} from '@ppt/reality-api-client';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -14,14 +18,37 @@ import { Link } from '@/i18n/routing';
 import { REPORT_PROBLEMS, type ReportProblem } from './_mock';
 
 // TODO: replace problem cards with @ppt/ui-kit/RadioCards once available
-// TODO(#3017): the attachment control is disabled pending an upload pipeline
-// — see the "Attachments" block below for why it collects nothing today.
 
 // reality-server's `POST /api/v1/reports` requires a UUID `listing_id` that
 // resolves to an active listing. A deep link from a listing ("report this
 // listing") passes `?listing=<uuid>`; otherwise we fish a UUID out of the
 // free-text reference the reporter pasted.
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+// Attachment bounds mirror reality-server's `submit_report` validation
+// (`MAX_REPORT_ATTACHMENTS` + `validate_image_or_link_url`): at most 10
+// http(s) URLs, each <= 2048 chars. We enforce the same client-side so a
+// reporter sees an inline hint instead of a 400 after submit. No upload
+// endpoint exists on the public portal (#3017), so attachments are evidence
+// *links* the reporter already hosts elsewhere — exactly what the endpoint's
+// `attachments: string[]` contract accepts.
+const MAX_ATTACHMENTS = 10;
+const MAX_ATTACHMENT_URL_LEN = 2048;
+
+// Client mirror of reality-server's `validate_image_or_link_url`: http(s)
+// scheme only (blocks javascript:/data:/file: stored-XSS vectors) and a
+// length cap. The server re-validates — this is a UX shortcut, not the
+// security boundary.
+function isValidAttachmentUrl(value: string): boolean {
+  if (value.length > MAX_ATTACHMENT_URL_LEN) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+  return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+}
 
 export default function ReportPage() {
   const t = useTranslations('pages.report');
@@ -30,6 +57,9 @@ export default function ReportPage() {
   const [problem, setProblem] = useState<ReportProblem | null>(null);
   const [listingRef, setListingRef] = useState('');
   const [description, setDescription] = useState('');
+  const [attachmentUrls, setAttachmentUrls] = useState<string[]>([]);
+  const [attachmentInput, setAttachmentInput] = useState('');
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [gdprAccepted, setGdprAccepted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [reportId, setReportId] = useState<string | null>(null);
@@ -57,6 +87,33 @@ export default function ReportPage() {
     const refMatch = listingRef.match(UUID_RE);
     if (refMatch) return refMatch[0];
     return null;
+  };
+
+  // Add the typed evidence link to the list after mirroring the server's
+  // http(s)/length checks. Silently de-dupes; surfaces an inline hint when the
+  // cap is hit or the URL is malformed so the reporter fixes it before submit.
+  const handleAddAttachment = () => {
+    setAttachmentError(null);
+    const value = attachmentInput.trim();
+    if (!value) return;
+    if (attachmentUrls.length >= MAX_ATTACHMENTS) {
+      setAttachmentError(t('attachmentsMax', { max: MAX_ATTACHMENTS }));
+      return;
+    }
+    if (!isValidAttachmentUrl(value)) {
+      setAttachmentError(t('attachmentsInvalidUrl'));
+      return;
+    }
+    if (attachmentUrls.includes(value)) {
+      setAttachmentInput('');
+      return;
+    }
+    setAttachmentUrls([...attachmentUrls, value]);
+    setAttachmentInput('');
+  };
+
+  const handleRemoveAttachment = (url: string) => {
+    setAttachmentUrls(attachmentUrls.filter((u) => u !== url));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,11 +145,18 @@ export default function ReportPage() {
       // the success card can surface a reference the reporter can quote in a
       // follow-up. The server returns a raw UUID today (no "R-…" scheme is
       // defined server-side yet), so we surface the id verbatim.
-      const result = await submitReport.mutateAsync({
+      const payload: SubmitReportRequest = {
         listing_id: listingId,
         problem_type: problem,
         description: fullDescription,
-      });
+      };
+      // Only attach the key when the reporter actually added evidence links —
+      // omitting it keeps the body minimal and matches the endpoint's optional
+      // `attachments` contract.
+      if (attachmentUrls.length > 0) {
+        payload.attachments = attachmentUrls;
+      }
+      const result = await submitReport.mutateAsync(payload);
       setReportId(result.report?.id ?? null);
       setSubmitted(true);
     } catch (err) {
@@ -353,18 +417,17 @@ export default function ReportPage() {
             />
           </div>
 
-          {/* Attachments — intentionally NOT wired to submit (see #3017).
-              reality-server's POST /api/v1/reports accepts `attachments` as
-              pre-uploaded http(s) URLs, but no upload endpoint exists yet, so
-              the old control collected File objects that handleSubmit never
-              transmitted — a reporter saw a success screen while the evidence
-              was silently dropped. Until the upload pipeline lands, the
-              control is disabled with a "coming soon" hint and carries no file
-              input, so the page no longer implies evidence is submitted.
-              TODO(#3017): restore an active upload control wired to a presigned
-              upload, then pass the returned URLs as `attachments`. */}
+          {/* Attachments — evidence links (#3017). The public portal has no
+              file-upload endpoint, but reality-server's POST /api/v1/reports
+              accepts up to 10 pre-hosted http(s) URLs as `attachments`, so the
+              reporter pastes links to evidence they already host (a screenshot
+              service, cloud drive, the offending external page). The links are
+              collected into `attachmentUrls` and sent in the submit body.
+              TODO: swap the URL input for @ppt/ui-kit/FileUpload wired to a
+              presigned upload once the portal gains one. */}
           <div>
             <label
+              htmlFor="attachment-url"
               style={{
                 display: 'block',
                 fontWeight: 600,
@@ -374,31 +437,112 @@ export default function ReportPage() {
             >
               {t('attachmentsLabel')}
             </label>
-            {/* TODO(#3017): replace with @ppt/ui-kit/FileUpload wired to a
-                presigned upload once available. */}
-            <div
-              aria-disabled="true"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '14px 18px',
-                border: '2px dashed var(--ppt-border-default, #e5e7eb)',
-                borderRadius: 8,
-                cursor: 'not-allowed',
-                color: 'var(--ppt-fg-muted, #9ca3af)',
-                fontSize: '0.9375rem',
-                opacity: 0.6,
-                userSelect: 'none',
-              }}
-            >
-              <span style={{ fontSize: '1.25rem' }}>📎</span>
-              {t('attachmentsComingSoon')}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                id="attachment-url"
+                type="url"
+                inputMode="url"
+                placeholder={t('attachmentsUrlPlaceholder')}
+                value={attachmentInput}
+                onChange={(e) => setAttachmentInput(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter adds the link instead of submitting the whole form.
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddAttachment();
+                  }
+                }}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={handleAddAttachment}
+                disabled={attachmentUrls.length >= MAX_ATTACHMENTS}
+                style={{
+                  padding: '0 20px',
+                  background: 'var(--ppt-bg-surface)',
+                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  color: 'var(--ppt-fg-primary)',
+                  cursor: attachmentUrls.length >= MAX_ATTACHMENTS ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {t('attachmentsAdd')}
+              </button>
             </div>
+            {attachmentError && (
+              <p
+                role="alert"
+                style={{
+                  fontSize: '0.8125rem',
+                  color: 'var(--ppt-color-danger, #ef4444)',
+                  marginTop: 6,
+                }}
+              >
+                {attachmentError}
+              </p>
+            )}
+            {attachmentUrls.length > 0 && (
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: '12px 0 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
+                {attachmentUrls.map((url) => (
+                  <li
+                    key={url}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      background: 'var(--ppt-bg-surface)',
+                      border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem' }}>📎</span>
+                    <span
+                      style={{
+                        flex: 1,
+                        fontSize: '0.875rem',
+                        color: 'var(--ppt-fg-secondary)',
+                        wordBreak: 'break-all',
+                      }}
+                    >
+                      {url}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={t('attachmentsRemove')}
+                      onClick={() => handleRemoveAttachment(url)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--ppt-color-danger, #ef4444)',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        padding: '2px 6px',
+                      }}
+                    >
+                      {t('attachmentsRemove')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <p
               style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)', marginTop: 6 }}
             >
-              {t('attachmentsHint')}
+              {t('attachmentsHint', { max: MAX_ATTACHMENTS })}
             </p>
           </div>
 

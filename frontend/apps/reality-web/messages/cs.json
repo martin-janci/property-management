@@ -700,9 +700,13 @@
       "listingRefPlaceholder": "např. https://rlt.sk/listings/ba-byt-3i nebo #12345",
       "descriptionLabel": "Popis problému",
       "descriptionPlaceholder": "Popište, proč tento inzerát nahlašujete. Čím více detailů uvedete, tím rychleji to prověříme.",
-      "attachmentsLabel": "Přílohy (brzy)",
-      "attachmentsComingSoon": "Přidávání příloh bude brzy k dispozici",
-      "attachmentsHint": "Nahrávání screenshotů zatím není k dispozici — popište prosím důkazy v popisu výše. Pracujeme na tom.",
+      "attachmentsLabel": "Přílohy (volitelné)",
+      "attachmentsUrlPlaceholder": "https://… odkaz na screenshot nebo dokument",
+      "attachmentsAdd": "Přidat odkaz",
+      "attachmentsRemove": "Odebrat",
+      "attachmentsInvalidUrl": "Zadejte platný http(s) odkaz (max. 2048 znaků).",
+      "attachmentsMax": "Můžete přidat nejvýše {max} odkazů.",
+      "attachmentsHint": "Vložte odkazy na důkazy uložené jinde (screenshoty, dokumenty). Nejvýše {max} http(s) odkazů.",
       "gdpr": {
         "label": "Souhlasím se zpracováním osobních údajů za účelem prověření mého nahlášení v souladu se {privacyLink}.",
         "privacyLink": "Zásadami ochrany soukromí"
