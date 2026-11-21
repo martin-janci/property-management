@@ -10155,6 +10155,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect-retry1",
+      "branch": "auto-impl/code-review-ppt-web-core-iot-ws-unbounde-a3ccc188",
+      "status": "failed",
+      "claimed_at": "2026-11-21T00:36:31Z",
+      "last_updated": "2026-11-21T00:47:09Z",
+      "status_changed_at": "2026-11-21T00:47:09Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=duplicate: IoT ws reconnect already bounded (backoff+cap+give-up+tests) on dev, landed b12b1fd; empty diff",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-leases-hardcoded-eur-currency",
       "branch": "auto-impl/code-review-ppt-web-core-leases-hardcode-b0b3ffaa",
       "status": "merged",
@@ -11857,6 +11879,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-community-list-routes-empty-retry1",
+      "branch": "auto-impl/code-review-ppt-web-ui-community-list-ro-9375c1e1",
+      "status": "failed",
+      "claimed_at": "2026-11-21T00:36:31Z",
+      "last_updated": "2026-11-21T00:49:19Z",
+      "status_changed_at": "2026-11-21T00:49:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=false-positive/stale finding: community list routes already fully wired + green on dev (7 files/348 tests pass); no defect",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-confirm-dialog-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-confirm-dialog-i1-b34929e9",
       "status": "merged",
@@ -12564,6 +12608,28 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-groupdetail-delete-noop-retry1",
+      "branch": "auto-impl/code-review-ppt-web-ui-groupdetail-delet-7dc4a1d1",
+      "status": "failed",
+      "claimed_at": "2026-11-21T00:36:31Z",
+      "last_updated": "2026-11-21T00:47:09Z",
+      "status_changed_at": "2026-11-21T00:47:09Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=false-positive: GroupDetailPage delete already fully wired (button->ConfirmationDialog->handleDelete->deleteGroup.mutate->DELETE /groups/{id} + toast/nav/invalidate); nothing to implement",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
@@ -29891,6 +29957,28 @@
       "merge_attempted_at": "2026-08-06T10:16:14Z"
     },
     {
+      "task_id": "repeated-churn-backend-servers-api-server-src-services-push-fanout-rs",
+      "branch": "auto-impl/repeated-churn-backend-servers-api-serve-07fb2e17",
+      "status": "failed",
+      "claimed_at": "2026-11-21T00:36:31Z",
+      "last_updated": "2026-11-21T00:46:32Z",
+      "status_changed_at": "2026-11-21T00:46:32Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=duplicate: push_fanout.rs already split into push/ module via PR #3659 on dev; fresh branch empty diff, nothing to implement",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
       "branch": "auto-impl/repeated-churn-backend-servers-reality-s-5f889d47",
       "status": "merged",
@@ -32102,5 +32190,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-21T00:39:07Z"
+  "archived_at": "2026-11-21T00:52:17Z"
 }
