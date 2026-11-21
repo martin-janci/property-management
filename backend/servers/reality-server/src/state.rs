@@ -1255,3 +1255,67 @@ mod sso_token_service_tests {
         assert_eq!(redeemed_second.unwrap().user_id, "second");
     }
 }
+
+#[cfg(test)]
+mod pm_oauth_client_timeout_tests {
+    use super::{
+        build_pm_oauth_client, build_pm_oauth_client_with, PM_OAUTH_CONNECT_TIMEOUT,
+        PM_OAUTH_REQUEST_TIMEOUT,
+    };
+    use std::time::{Duration, Instant};
+
+    /// The default-configured SSO client must build successfully and the
+    /// documented defaults must be bounded and non-zero. A build failure used to
+    /// degrade silently to the timeout-less `reqwest::Client::default()` via
+    /// `.unwrap_or_default()`; `build_pm_oauth_client` now fails fast instead, and
+    /// this guards that the happy path still produces a client.
+    #[test]
+    fn default_sso_client_builds_with_bounded_timeouts() {
+        let _client = build_pm_oauth_client();
+        assert!(
+            PM_OAUTH_REQUEST_TIMEOUT > Duration::ZERO,
+            "request timeout must be a positive bound",
+        );
+        assert!(
+            PM_OAUTH_CONNECT_TIMEOUT > Duration::ZERO,
+            "connect timeout must be a positive bound",
+        );
+        assert!(
+            PM_OAUTH_CONNECT_TIMEOUT <= PM_OAUTH_REQUEST_TIMEOUT,
+            "connect bound should not exceed the overall request bound",
+        );
+    }
+
+    /// A PM endpoint that accepts the TCP connection but never answers must NOT
+    /// hang the SSO call forever: the request timeout has to fire and surface as
+    /// an error. Proves the client the SSO handlers share actually enforces a
+    /// bounded request timeout — the whole reason this client exists.
+    #[tokio::test]
+    async fn stalled_pm_endpoint_hits_request_timeout() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind stub");
+        let addr = listener.local_addr().expect("addr");
+        // Accept connections and hold them open without ever writing a response,
+        // so only a client-side timeout can end the request.
+        tokio::spawn(async move {
+            let mut held = Vec::new();
+            while let Ok((sock, _)) = listener.accept().await {
+                held.push(sock); // keep the socket alive; never reply
+            }
+        });
+
+        let timeout = Duration::from_millis(300);
+        let client = build_pm_oauth_client_with(timeout, timeout);
+        let start = Instant::now();
+        let result = client.get(format!("http://{addr}/")).send().await;
+        let elapsed = start.elapsed();
+
+        let err = result.expect_err("a stalled PM endpoint must surface as an error, not hang");
+        assert!(err.is_timeout(), "the error must be a timeout, got: {err}");
+        assert!(
+            elapsed < Duration::from_secs(5),
+            "the request must abort near the 300ms bound, not hang (took {elapsed:?})",
+        );
+    }
+}
