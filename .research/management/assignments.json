@@ -45,54 +45,6 @@
       "merge_attempted_at": "2026-11-21T12:36:33Z"
     },
     {
-      "task_id": "code-review-ppt-web-core-community-route-fully-stubbed-retry1",
-      "branch": "auto-impl/code-review-ppt-web-core-community-route-8aba77d8",
-      "status": "in-progress",
-      "claimed_at": "2026-11-21T22:35:11Z",
-      "last_updated": "2026-11-21T22:35:11Z",
-      "status_changed_at": "2026-11-21T22:35:11Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
-      "task_id": "code-review-reality-server-drainer-mark-fail-redeliver",
-      "branch": "auto-impl/code-review-reality-server-drainer-mark-a9cefa52",
-      "status": "in-progress",
-      "claimed_at": "2026-11-21T22:35:11Z",
-      "last_updated": "2026-11-21T22:35:11Z",
-      "status_changed_at": "2026-11-21T22:35:11Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null
-    },
-    {
       "task_id": "code-review-api-handlers-summarize-discards-persist-err",
       "branch": "auto-impl/code-review-api-handlers-summarize-disca-5f603fbe",
       "status": "in-progress",
@@ -117,5 +69,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-21T22:36:23Z"
+  "generated": "2026-11-21T22:52:20Z"
 }

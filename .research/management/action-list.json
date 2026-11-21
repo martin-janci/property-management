@@ -510,25 +510,6 @@
       "last_updated": "2026-11-21T22:35:11Z"
     },
     {
-      "id": "code-review-reality-server-drainer-mark-fail-redeliver",
-      "action": "reality server drainer mark fail redeliver",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-23T05:00:00Z"
-      },
-      "last_updated": "2026-11-21T22:35:11Z"
-    },
-    {
       "id": "pm-backend-address-mobile-native-stubs-2026-11-21",
       "action": "Address mobile-native stubs: CreateListingScreen onSubmit NotImplementedError + InquiriesResponse page_size/limit contract mismatch + Ktor HttpTimeout default. Package as one KMP PR per issue once #2652 egress unblocks",
       "owner_role": "pm-backend",
@@ -557,18 +538,6 @@
       "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — claimable still ≈9/72",
       "owner_role": "pm-scrum-master",
       "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-21",
-      "first_open_at": "2026-11-21T03:06:10Z"
-    },
-    {
-      "id": "pm-scrum-master-reset-sprint-status-yaml-hardening-track-2026-11-21",
-      "action": "Reset sprint-status.yaml — current sprint goal is fully 'done'; next sprint goal should name the hardening/refactor track explicitly (new modules under watch, release-248 quarantine burn-down, mobile-native backlog)",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
@@ -724,21 +693,6 @@
       "first_open_at": "2026-11-21T22:25:02Z",
       "retry_of": "code-review-ppt-web-ui-registry-page-no-i18n",
       "retry_round": 1
-    },
-    {
-      "id": "code-review-ppt-web-core-community-route-fully-stubbed-retry1",
-      "action": "ppt web core community route fully stubbed [retry 1/2 of failed code-review-ppt-web-core-community-route-fully-stubbed]",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-11-21T22:25:02Z (retry_of=code-review-ppt-web-core-community-route-fully-stubbed reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T16:43:38Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-21T22:25:02Z",
-      "retry_of": "code-review-ppt-web-core-community-route-fully-stubbed",
-      "retry_round": 1,
-      "last_updated": "2026-11-21T22:35:11Z"
     },
     {
       "id": "code-review-ppt-web-core-orgprovider-unmemoized-retry1",

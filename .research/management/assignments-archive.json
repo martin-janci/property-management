@@ -9703,6 +9703,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-community-route-fully-stubbed-retry1",
+      "branch": "auto-impl/code-review-ppt-web-core-community-route-8aba77d8",
+      "status": "failed",
+      "claimed_at": "2026-11-21T22:35:11Z",
+      "last_updated": "2026-11-21T22:52:20Z",
+      "status_changed_at": "2026-11-21T22:52:20Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=stale finding; community route fully implemented on dev (Epic 42); empty diff, no PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-create-lease-empty-pickers",
       "branch": "auto-impl/code-review-ppt-web-core-create-lease-em-c3f3d968",
       "status": "failed",
@@ -14519,6 +14543,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-drainer-mark-fail-redeliver",
+      "branch": "auto-impl/code-review-reality-server-drainer-mark-a9cefa52",
+      "status": "failed",
+      "claimed_at": "2026-11-21T22:35:11Z",
+      "last_updated": "2026-11-21T22:52:20Z",
+      "status_changed_at": "2026-11-21T22:52:20Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed-by-#3682 (drainer marks-fail+redelivers); stale/duplicate finding, no code change, no PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-reality-server-dup-url-validator",
@@ -32916,5 +32964,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-21T22:36:34Z"
+  "archived_at": "2026-11-21T22:52:20Z"
 }

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-21T22:35:22Z",
+  "archived_at": "2026-11-21T22:52:37Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9891,6 +9891,21 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed-retry1",
+      "action": "[STALE-DROP: community route already implemented on dev (Epic 42); retry found empty diff] ppt web core community route fully stubbed [retry 1/2 of failed code-review-ppt-web-core-community-route-fully-stubbed]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-21T22:25:02Z (retry_of=code-review-ppt-web-core-community-route-fully-stubbed reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T16:43:38Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T22:25:02Z",
+      "retry_of": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "retry_round": 1,
+      "last_updated": "2026-11-21T22:52:37Z"
+    },
+    {
       "id": "code-review-ppt-web-core-create-lease-empty-pickers",
       "action": "ppt web core create lease empty pickers",
       "owner_role": "pm-tech-lead",
@@ -14911,6 +14926,25 @@
         "subject": "code-review-reality-server-db-error-string-status-map: classify DB errors by sqlx variant, not message text (#3302)",
         "at": "2026-11-04T20:31:10Z"
       }
+    },
+    {
+      "id": "code-review-reality-server-drainer-mark-fail-redeliver",
+      "action": "[STALE-DROP: already fixed by #3682; no code change] reality server drainer mark fail redeliver",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-server score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-23T05:00:00Z"
+      },
+      "last_updated": "2026-11-21T22:52:37Z"
     },
     {
       "id": "code-review-reality-server-dup-url-validator",
@@ -31551,6 +31585,25 @@
       "source": "pm-analysis 2026-11-09",
       "resolved_at": "2026-11-13",
       "resolved_by": "resolved by dispatcher burst: 58 PRs merged in 4-day window"
+    },
+    {
+      "id": "pm-scrum-master-reset-sprint-status-yaml-hardening-track-2026-11-21",
+      "action": "Reset sprint-status.yaml — current sprint goal is fully 'done'; next sprint goal should name the hardening/refactor track explicitly (new modules under watch, release-248 quarantine burn-down, mobile-native backlog)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21 | gc1-reconcile 2026-11-21T22:52:20Z",
+      "first_open_at": "2026-11-21T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3704,
+        "merged_at": "2026-11-21T22:36:23Z",
+        "at": "2026-11-21T22:52:20Z"
+      }
     },
     {
       "id": "pm-scrum-master-resolve-dispatcher-stall-3357-2026-11-21",
