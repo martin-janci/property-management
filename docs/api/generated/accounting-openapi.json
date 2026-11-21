@@ -1268,6 +1268,52 @@
         }
       }
     },
+    "/api/v1/invoices/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Cancel an unpaid document (UC-ACC-05.17).",
+        "description": "Lifecycle rules: drafts are deleted (not cancelled), and once any payment\nhas landed the correction path is a credit note (UC-ACC-05.7) — so only\n`issued`/`sent`/`overdue` documents with `paid_amount = 0` cancel. The\nsame guard is repeated inside the UPDATE (`cancel_invoice_rls`), so a\npayment confirmation committing concurrently can never be swallowed by a\ncancellation. The number allocated at issue stays consumed — the document\nis retained (gapless numbering, UC-ACC-02.3), only its status changes.",
+        "operationId": "cancel_invoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccInvoiceExt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not cancellable (draft, paid, or already cancelled)"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/invoices/{id}/credit-note": {
       "post": {
         "tags": [
@@ -1579,6 +1625,95 @@
           },
           "500": {
             "description": "Render failed (e.g. fonts missing on host)"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/qr": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Payment QR payloads — PAY by square (SK) + SPAYD (CZ) (UC-ACC-05.8).",
+        "description": "Amount due = `total_amount - paid_amount`; when nothing is owed both\npayloads are `None` (\"omitted when paid\"). The IBAN comes from the\ndocument's pinned bank account, falling back to the default/first one\n(UC-ACC-02.10); without any bank account there is nothing to encode — 400.",
+        "operationId": "get_invoice_qr",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "QR payload strings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentQrResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No bank account configured"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{id}/send": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Mark an issued invoice as sent (UC-ACC-05.10 / .17).",
+        "description": "Records the delivery step of the lifecycle: only `issued` advances to\n`sent`. The guard lives in the UPDATE (`mark_sent_rls`), so a concurrent\ntransition cannot double-fire. Email transport is the\n[`hooks::DocumentMailer`] seam — both that flow and out-of-band delivery\n(\"I sent it myself\") record the transition through this endpoint.",
+        "operationId": "mark_sent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Invoice id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Marked sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccInvoiceExt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not in issued state"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
           }
         }
       }
@@ -3581,13 +3716,15 @@
       },
       "InvoiceStatus": {
         "type": "string",
-        "description": "Status of an issued invoice.",
+        "description": "Status of an issued invoice.\n\nFull lifecycle (UC-ACC-05.17): draft → issued → sent → paid/partially_paid/\noverdue, with cancelled reachable from issued/sent/overdue while nothing is\npaid. The DB CHECK (migration 00202) allows the same set.",
         "enum": [
           "draft",
           "issued",
+          "sent",
           "paid",
           "partially_paid",
-          "overdue"
+          "overdue",
+          "cancelled"
         ]
       },
       "IssueInvoiceRequest": {
@@ -3694,6 +3831,26 @@
             "items": {
               "$ref": "#/components/schemas/CompanyAccessDto"
             }
+          }
+        }
+      },
+      "PaymentQrResponse": {
+        "type": "object",
+        "description": "Payment-QR payloads for a document (UC-ACC-05.8).\n\nBoth fields are the STRING a QR generator encodes (the frontend renders the\nimage). `None` when nothing is owed — a settled document carries no QR.",
+        "properties": {
+          "pay_by_square": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PAY by square (SK banking-app standard, by square PAY v1.2.0)."
+          },
+          "spayd": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SPAYD (CZ \"QR platba\" convention)."
           }
         }
       },
