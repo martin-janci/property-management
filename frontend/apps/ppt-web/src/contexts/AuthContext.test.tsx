@@ -413,4 +413,48 @@ describe('AuthContext.logout — Issue #712', () => {
       expect(screen.getByText('Login page')).toBeInTheDocument();
     });
   });
+
+  /**
+   * Shared-workstation session-leak regression: the dispute-filing form
+   * auto-saves an in-progress draft to localStorage under
+   * `ppt-dispute-filing-draft` (FileDisputePage / useDraftStorage, Epic 80).
+   * Unlike the TanStack Query cache, this persisted draft is NOT part of the
+   * query-root purge, so before the fix it survived logout and the next user
+   * on the same machine could read (and submit) the previous user's draft.
+   * Logout must drop it, while leaving unrelated (non-auth-scoped) localStorage
+   * keys intact so the purge stays bounded.
+   */
+  it('purges the persisted dispute-filing draft from localStorage on logout', async () => {
+    const DISPUTE_DRAFT_KEY = 'ppt-dispute-filing-draft';
+    const UNRELATED_KEY = 'ppt-theme-preference';
+
+    // Seed a draft in the real on-disk shape written by useDraftStorage
+    // ({ values, savedAt }), plus an unrelated key the purge must NOT touch.
+    localStorage.setItem(
+      DISPUTE_DRAFT_KEY,
+      JSON.stringify({
+        values: { type: 'noise', subject: "Alice's confidential complaint" },
+        savedAt: Date.now(),
+      })
+    );
+    localStorage.setItem(UNRELATED_KEY, 'dark');
+
+    const { ctxRef } = renderAuthApp();
+
+    await waitFor(() => {
+      expect(ctxRef.current?.isAuthenticated).toBe(true);
+    });
+
+    // Draft present before logout.
+    expect(localStorage.getItem(DISPUTE_DRAFT_KEY)).not.toBeNull();
+
+    await act(async () => {
+      await ctxRef.current?.logout();
+    });
+
+    // (a) The previous user's dispute draft is gone.
+    expect(localStorage.getItem(DISPUTE_DRAFT_KEY)).toBeNull();
+    // (b) Unrelated, non-auth-scoped storage survives — purge stays bounded.
+    expect(localStorage.getItem(UNRELATED_KEY)).toBe('dark');
+  });
 });
