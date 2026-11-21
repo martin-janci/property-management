@@ -17,6 +17,18 @@ pub const SYNDICATION_QUEUE: &str = "syndication";
 /// Worker identifier recorded on claimed syndication jobs.
 const SYNDICATION_WORKER_ID: &str = "api-server-syndication-drain";
 
+/// Reason recorded when a syndication job cannot be fulfilled because no
+/// outbound portal API integration exists yet.
+///
+/// There is no real portal client anywhere in the backend
+/// (`integrations::portals::PortalClient` is itself a stub), so the processor
+/// cannot actually publish/update/remove a listing on an external portal. This
+/// string is surfaced both in the background-job error and in
+/// `listing_syndications.last_error`, so the unimplemented work is observable
+/// rather than hidden behind a fabricated `SYNCED` status.
+const PORTAL_INTEGRATION_UNIMPLEMENTED: &str =
+    "outbound portal syndication is not implemented: no API client is configured for this portal";
+
 /// Configuration for the syndication queue drain worker.
 #[derive(Debug, Clone)]
 pub struct SyndicationDrainConfig {
@@ -351,15 +363,27 @@ impl SyndicationService {
         Ok(job.id)
     }
 
-    /// Process a syndication job (would be called by a background worker).
+    /// Process a syndication job claimed from the queue.
     ///
-    /// This is a placeholder for the actual portal API integration.
-    /// In production, this would call the respective portal APIs.
+    /// **No outbound portal integration is implemented.** There is no real API
+    /// client for any configured portal — `integrations::portals::PortalClient`
+    /// is itself a stub — so this cannot actually publish, update, or remove a
+    /// listing on an external portal.
+    ///
+    /// This method used to *pretend* it had succeeded: for a PUBLISH job it
+    /// minted a fabricated external ID and wrote `syndication_status::SYNCED`,
+    /// which made the dashboard report a listing as live on
+    /// SReality/Bezrealitky/etc. when nothing had ever been sent — a silent
+    /// no-op that corrupted the syndication state. Instead of hiding the gap, it
+    /// now records an explicit `FAILED` status with an actionable `last_error`,
+    /// invents no external ID, logs a warning, and returns an error so the
+    /// unfulfilled job is surfaced (the drain finalizes it as failed and the DB
+    /// re-queues it until `max_attempts` is exhausted).
     pub async fn process_syndication_job(
         &self,
         payload: &SyndicationJobPayload,
     ) -> Result<String, String> {
-        // Get the listing (verify it exists)
+        // Verify the listing exists before touching syndication state.
         let _listing = self
             .listing_repo
             .find_by_id(payload.listing_id)
@@ -367,111 +391,43 @@ impl SyndicationService {
             .map_err(|e| format!("Failed to find listing: {}", e))?
             .ok_or_else(|| "Listing not found".to_string())?;
 
-        // Get photos for the listing (for portal API calls)
-        let photos = self
-            .listing_repo
-            .get_photos(payload.listing_id)
-            .await
-            .map_err(|e| format!("Failed to get listing photos: {}", e))?;
-
+        // Reject unknown operations distinctly so a typo doesn't get lumped in
+        // with the "not implemented" reason below.
         match payload.operation.as_str() {
-            syndication_job_type::PUBLISH => {
-                // Simulate publishing to portal
-                tracing::info!(
-                    listing_id = %payload.listing_id,
-                    portal = %payload.portal,
-                    "Publishing listing to portal"
-                );
-
-                // Generate a mock external ID
-                let external_id = format!("{}_{}", payload.portal, uuid::Uuid::new_v4());
-
-                // Update syndication status
-                self.listing_repo
-                    .update_syndication_status(
-                        payload.listing_id,
-                        &payload.portal,
-                        syndication_status::SYNCED,
-                        Some(&external_id),
-                        None,
-                    )
-                    .await
-                    .map_err(|e| format!("Failed to update syndication status: {}", e))?;
-
-                Ok(external_id)
-            }
-            syndication_job_type::STATUS_CHANGE => {
-                let portal_status = payload
-                    .new_status
-                    .as_ref()
-                    .and_then(|s| get_portal_status(s, &payload.portal));
-
-                tracing::info!(
-                    listing_id = %payload.listing_id,
-                    portal = %payload.portal,
-                    portal_status = ?portal_status,
-                    "Propagating status change to portal"
-                );
-
-                // Update syndication timestamp
-                self.listing_repo
-                    .update_syndication_status(
-                        payload.listing_id,
-                        &payload.portal,
-                        syndication_status::SYNCED,
-                        None,
-                        None,
-                    )
-                    .await
-                    .map_err(|e| format!("Failed to update syndication status: {}", e))?;
-
-                Ok("status_updated".to_string())
-            }
-            syndication_job_type::UPDATE => {
-                tracing::info!(
-                    listing_id = %payload.listing_id,
-                    portal = %payload.portal,
-                    photos_count = photos.len(),
-                    "Updating listing on portal"
-                );
-
-                // Update syndication timestamp
-                self.listing_repo
-                    .update_syndication_status(
-                        payload.listing_id,
-                        &payload.portal,
-                        syndication_status::SYNCED,
-                        None,
-                        None,
-                    )
-                    .await
-                    .map_err(|e| format!("Failed to update syndication status: {}", e))?;
-
-                Ok("updated".to_string())
-            }
-            syndication_job_type::REMOVE => {
-                tracing::info!(
-                    listing_id = %payload.listing_id,
-                    portal = %payload.portal,
-                    "Removing listing from portal"
-                );
-
-                // Mark syndication as removed
-                self.listing_repo
-                    .update_syndication_status(
-                        payload.listing_id,
-                        &payload.portal,
-                        syndication_status::REMOVED,
-                        None,
-                        None,
-                    )
-                    .await
-                    .map_err(|e| format!("Failed to update syndication status: {}", e))?;
-
-                Ok("removed".to_string())
-            }
-            _ => Err(format!("Unknown operation: {}", payload.operation)),
+            syndication_job_type::PUBLISH
+            | syndication_job_type::STATUS_CHANGE
+            | syndication_job_type::UPDATE
+            | syndication_job_type::REMOVE => {}
+            other => return Err(format!("Unknown operation: {}", other)),
         }
+
+        let reason = format!(
+            "{} (portal={}, operation={})",
+            PORTAL_INTEGRATION_UNIMPLEMENTED, payload.portal, payload.operation
+        );
+
+        tracing::warn!(
+            listing_id = %payload.listing_id,
+            portal = %payload.portal,
+            operation = %payload.operation,
+            "Syndication job not processed: no outbound portal API integration; \
+             marking FAILED instead of fabricating a synced status"
+        );
+
+        // Record the honest state — this syndication is NOT live on the portal.
+        // Do not invent an external ID; surface the reason via `last_error`.
+        self.listing_repo
+            .update_syndication_status(
+                payload.listing_id,
+                &payload.portal,
+                syndication_status::FAILED,
+                None,
+                Some(&reason),
+            )
+            .await
+            .map_err(|e| format!("Failed to update syndication status: {}", e))?;
+
+        Err(reason)
     }
 
     /// Drain up to `limit` due jobs from the syndication queue.
