@@ -37,15 +37,23 @@
 //! out strictly by that row's `user_id`, so one user's alert can never be
 //! delivered to another user's address or device.
 
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
 use async_trait::async_trait;
+use common::i18n::{I18nResolver, Locale as I18nLocale, MessageKey};
 use db::models::user::Locale;
 use db::repositories::{DevicePushTokenRepository, RealityPortalRepository};
 use db::DbPool;
 use tokio::time::interval;
 use tracing::Instrument;
+
+/// Process-wide i18n resolver for alert copy. Built once (parses the embedded
+/// Fluent bundles) and shared across every alert render.
+fn alert_i18n() -> &'static I18nResolver {
+    static RESOLVER: OnceLock<I18nResolver> = OnceLock::new();
+    RESOLVER.get_or_init(I18nResolver::new)
+}
 
 /// A composed alert notification, ready to hand to a transport.
 #[derive(Debug, Clone)]
@@ -62,99 +70,41 @@ impl AlertNotification {
     /// enqueued) and the saved-search `name`.
     ///
     /// `locale` is the recipient's carried locale string (`u.locale`), which may
-    /// be absent — [`Locale::parse`] normalizes it and falls back to English for
-    /// an absent or unrecognized value. Every supported language (sk, cs, de, en)
-    /// is covered, with correct count-based noun/verb forms.
+    /// be absent — [`Locale::parse`] normalizes it to one of the supported
+    /// languages (sk, cs, de, en) and falls back to English for an absent or
+    /// unrecognized value. The subject and body copy — including count-based
+    /// plural forms — is rendered from the shared Fluent i18n layer
+    /// (`common::i18n`, keys `search-alert-subject` / `search-alert-body`), so
+    /// translators own the wording rather than it being hardcoded here.
     pub fn localized(locale: Option<&str>, count: usize, name: &str) -> Self {
         let loc = Locale::parse(locale.unwrap_or_default());
-        let (subject, body) = compose_alert_copy(&loc, count, name);
+        let i18n_locale = match loc {
+            Locale::Slovak => I18nLocale::Sk,
+            Locale::Czech => I18nLocale::Cs,
+            Locale::German => I18nLocale::De,
+            Locale::English => I18nLocale::En,
+        };
+
+        let resolver = alert_i18n();
+        let count_arg: &[(&str, i64)] = &[("count", count as i64)];
+        let name_arg: &[(&str, &str)] = &[("name", name)];
+        let subject = resolver.get_with_plural_args(
+            i18n_locale,
+            MessageKey::SearchAlertSubject,
+            count_arg,
+            name_arg,
+        );
+        let body = resolver.get_with_plural_args(
+            i18n_locale,
+            MessageKey::SearchAlertBody,
+            count_arg,
+            name_arg,
+        );
+
         Self {
             subject,
             body,
             locale: loc.as_str().to_string(),
-        }
-    }
-}
-
-/// Render the localized (subject, body) pair for one saved-search alert.
-///
-/// Slovak and Czech use three count buckets (1 / 2–4 / 5+); German and English
-/// use two (1 / many). Verb and pronoun agreement follow the same bucketing.
-fn compose_alert_copy(locale: &Locale, count: usize, name: &str) -> (String, String) {
-    // Slavic plural category for `count`: 0 = singular, 1 = paucal (2–4),
-    // 2 = plural/genitive (0, 5+). Only ever called with count ≥ 1.
-    let slavic_bucket = |n: usize| -> usize {
-        match n {
-            1 => 0,
-            2..=4 => 1,
-            _ => 2,
-        }
-    };
-
-    match locale {
-        Locale::Slovak => {
-            let noun = ["nový inzerát", "nové inzeráty", "nových inzerátov"][slavic_bucket(count)];
-            let matches_verb = if count == 1 {
-                "zodpovedá"
-            } else {
-                "zodpovedajú"
-            };
-            let pronoun = if count == 1 { "ho" } else { "ich" };
-            (
-                format!("{count} {noun} {matches_verb} vášmu uloženému hľadaniu „{name}“"),
-                format!(
-                    "Vaše uložené hľadanie „{name}“ má {count} {noun}. \
-                     Otvorte aplikáciu a zobrazte si {pronoun}."
-                ),
-            )
-        }
-        Locale::Czech => {
-            let noun = ["nový inzerát", "nové inzeráty", "nových inzerátů"][slavic_bucket(count)];
-            let matches_verb = if (2..=4).contains(&count) {
-                "odpovídají"
-            } else {
-                "odpovídá"
-            };
-            let pronoun = if count == 1 { "jej" } else { "je" };
-            (
-                format!("{count} {noun} {matches_verb} vašemu uloženému hledání „{name}“"),
-                format!(
-                    "Vaše uložené hledání „{name}“ má {count} {noun}. \
-                     Otevřete aplikaci a zobrazte si {pronoun}."
-                ),
-            )
-        }
-        Locale::German => {
-            let (noun, matches_verb, pronoun) = if count == 1 {
-                ("neues Inserat", "passt", "es")
-            } else {
-                ("neue Inserate", "passen", "sie")
-            };
-            (
-                format!("{count} {noun} {matches_verb} zu Ihrer gespeicherten Suche „{name}“"),
-                format!(
-                    "Ihre gespeicherte Suche „{name}“ hat {count} neue passende \
-                     {inserat}. Öffnen Sie die App, um {pronoun} anzusehen.",
-                    inserat = if count == 1 { "Inserat" } else { "Inserate" },
-                ),
-            )
-        }
-        Locale::English => {
-            let noun = if count == 1 {
-                "new listing"
-            } else {
-                "new listings"
-            };
-            let matches_verb = if count == 1 { "matches" } else { "match" };
-            let pronoun = if count == 1 { "it" } else { "them" };
-            (
-                format!("{count} {noun} {matches_verb} your saved search \"{name}\""),
-                format!(
-                    "Your saved search \"{name}\" has {count} new matching {listing}. \
-                     Open the app to view {pronoun}.",
-                    listing = if count == 1 { "listing" } else { "listings" },
-                ),
-            )
         }
     }
 }
