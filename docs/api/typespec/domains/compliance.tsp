@@ -173,7 +173,15 @@ interface ComplianceApi {
     @body body: { consentType: ConsentType; granted: boolean; }
   ): Consent;
 
-  @doc("Get audit logs (admin)")
+  @doc("""
+    Get audit logs (admin).
+
+    Pagination (`limit`/`offset`) maps straight onto SQL `LIMIT`/`OFFSET`, which
+    PostgreSQL rejects when negative. The handler validates this up front and
+    returns `400 Bad Request` with a plain-text body (e.g.
+    `limit must not be negative: -1`) rather than letting the bad value surface
+    as a 500. An unrecognised `action` filter is rejected the same way.
+    """)
   @get
   @route("/audit-logs")
   getAuditLogs(
@@ -185,5 +193,5 @@ interface ComplianceApi {
     @query resourceType?: string,
     @query from?: dateTime,
     @query to?: dateTime
-  ): PaginatedResponse<AuditLog>;
+  ): PaginatedResponse<AuditLog> | PlainTextBadRequestError;
 }
