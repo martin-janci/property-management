@@ -6775,7 +6775,8 @@
     "create": {
       "title": "Nowa umowa najmu",
       "subtitle": "Przygotuj nową umowę najmu dla najemcy",
-      "back": "Powrót do umów"
+      "back": "Powrót do umów",
+      "failedToLoad": "Nie udało się załadować opcji lokali i najemców"
     },
     "form": {
       "template": "Szablon umowy",
@@ -6804,7 +6805,9 @@
         "endDateAfterStart": "Koniec najmu musi przypadać po jego początku",
         "rentAmountRequired": "Podaj wysokość czynszu",
         "paymentDayInvalid": "Dzień płatności musi być od 1 do 28"
-      }
+      },
+      "noUnits": "Brak dostępnych lokali. Przed utworzeniem umowy najmu dodaj budynek z lokalami.",
+      "noTenants": "Brak dostępnych najemców. Najpierw zaproś mieszkańców do swojej organizacji."
     },
     "esign": {
       "requestSignature": "Poproś o podpis",

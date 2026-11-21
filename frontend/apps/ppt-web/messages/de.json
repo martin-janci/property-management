@@ -4057,7 +4057,8 @@
     "create": {
       "title": "Neuer Mietvertrag",
       "subtitle": "Einen neuen Mietvertrag für einen Mieter anlegen",
-      "back": "Zurück zu den Mietverträgen"
+      "back": "Zurück zu den Mietverträgen",
+      "failedToLoad": "Die Einheiten- und Mieteroptionen konnten nicht geladen werden"
     },
     "form": {
       "template": "Vertragsvorlage",
@@ -4086,7 +4087,9 @@
         "endDateAfterStart": "Das Mietende muss nach dem Mietbeginn liegen",
         "rentAmountRequired": "Miethöhe ist erforderlich",
         "paymentDayInvalid": "Der Fälligkeitstag muss zwischen 1 und 28 liegen"
-      }
+      },
+      "noUnits": "Keine Einheiten verfügbar. Fügen Sie ein Gebäude mit Einheiten hinzu, bevor Sie einen Mietvertrag erstellen.",
+      "noTenants": "Keine Mieter verfügbar. Laden Sie zuerst Bewohner in Ihre Organisation ein."
     },
     "actions": {
       "edit": {

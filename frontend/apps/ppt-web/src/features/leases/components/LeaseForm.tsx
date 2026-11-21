@@ -180,6 +180,9 @@ export function LeaseForm({
           ))}
         </select>
         {errors.unitId && <p className="mt-1 text-sm text-red-500">{errors.unitId}</p>}
+        {!errors.unitId && units.length === 0 && (
+          <p className="mt-1 text-sm text-amber-600">{t('leases.form.noUnits')}</p>
+        )}
       </div>
 
       {/* Tenant Selection */}
@@ -204,6 +207,9 @@ export function LeaseForm({
           ))}
         </select>
         {errors.tenantId && <p className="mt-1 text-sm text-red-500">{errors.tenantId}</p>}
+        {!errors.tenantId && tenants.length === 0 && (
+          <p className="mt-1 text-sm text-amber-600">{t('leases.form.noTenants')}</p>
+        )}
       </div>
 
       {/* Date Range */}

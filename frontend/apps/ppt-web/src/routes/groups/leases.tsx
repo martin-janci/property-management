@@ -673,7 +673,12 @@ export function selectTenantCandidates(members: OrganizationMember[]) {
  * `GET /buildings/{id}/units` per building (max page size).
  */
 function useOrganizationUnits() {
-  const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
+  const {
+    data: buildingsData,
+    isLoading: buildingsLoading,
+    isError: buildingsError,
+    refetch: refetchBuildings,
+  } = useBuildings();
   const buildings = buildingsData?.items ?? [];
   const results = useQueries({
     queries: buildings.map((b) => ({
@@ -690,7 +695,12 @@ function useOrganizationUnits() {
     }))
   );
   const isLoading = buildingsLoading || results.some((r) => r.isLoading);
-  return { units, isLoading };
+  const isError = buildingsError || results.some((r) => r.isError);
+  const refetch = () => {
+    void refetchBuildings();
+    for (const r of results) void r.refetch();
+  };
+  return { units, isLoading, isError, refetch };
 }
 
 /** Error message for a failed mutation, falling back to a translated default. */
@@ -1158,20 +1168,36 @@ function CreateLeasePageRoute() {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { organizationId, organizationName } = useOrganization();
-  const { data: templatesData, isLoading: templatesLoading } = useLeaseTemplates(organizationId);
-  const { units, isLoading: unitsLoading } = useOrganizationUnits();
-  const { data: membersData, isLoading: membersLoading } = useOrganizationMembers(organizationId);
+  const templatesQuery = useLeaseTemplates(organizationId);
+  const {
+    units,
+    isLoading: unitsLoading,
+    isError: unitsError,
+    refetch: refetchUnits,
+  } = useOrganizationUnits();
+  const membersQuery = useOrganizationMembers(organizationId);
   const createLease = useCreateLease();
 
-  const templates = (templatesData ?? []).map(mapTemplateToUi).filter((tpl) => tpl.isActive);
-  const tenants = selectTenantCandidates(membersData?.members ?? []);
+  const templates = (templatesQuery.data ?? []).map(mapTemplateToUi).filter((tpl) => tpl.isActive);
+  const tenants = selectTenantCandidates(membersQuery.data?.members ?? []);
+
+  // The unit and tenant pickers are required to create a lease; surface a
+  // retryable error when either source fails. A templates fetch error does not
+  // block the form (templates are optional), but retry refetches it too.
+  const pickersError = unitsError || membersQuery.isError;
 
   return (
     <CreateLeasePage
       units={units}
       tenants={tenants}
       templates={templates}
-      isLoading={templatesLoading || unitsLoading || membersLoading}
+      isLoading={templatesQuery.isLoading || unitsLoading || membersQuery.isLoading}
+      isError={pickersError}
+      onRetry={() => {
+        void refetchUnits();
+        void membersQuery.refetch();
+        void templatesQuery.refetch();
+      }}
       isSubmitting={createLease.isPending}
       onCancel={() => navigate('/leases/list')}
       onSubmit={async (formData: CreateLeaseData) => {
