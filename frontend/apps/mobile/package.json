@@ -30,7 +30,7 @@
     "@ppt/shared": "workspace:*",
     "@react-native-async-storage/async-storage": "3.1.1",
     "@react-native-community/netinfo": "12.0.1",
-    "@tanstack/react-query": "^5.105.2",
+    "@tanstack/react-query": "^5.107.1",
     "expo": "~57.0.18",
     "expo-clipboard": "^57.0.1",
     "expo-constants": "~56.0.18",
@@ -52,7 +52,7 @@
     "react-native": "0.88.1"
   },
   "devDependencies": {
-    "@babel/core": "^8.1.0",
+    "@babel/core": "^8.1.2",
     "@babel/plugin-transform-flow-strip-types": "^8.0.1",
     "@expo/config-plugins": "~57.0.9",
     "@expo/metro-config": "~57.0.12",
