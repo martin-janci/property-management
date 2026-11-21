@@ -120,7 +120,7 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
       <View style={s.searchContainer}>
         <TextInput
           style={s.searchInput}
-          placeholder="Search messages…"
+          placeholder={t('messages.searchPlaceholder', { defaultValue: 'Search messages…' })}
           value={search}
           onChangeText={setSearch}
         />

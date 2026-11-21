@@ -605,6 +605,7 @@
     "backToList": "Wiadomości",
     "threadTitleFallback": "Rozmowa",
     "composerPlaceholder": "Napisz wiadomość…",
+    "searchPlaceholder": "Szukaj wiadomości…",
     "syncing": "Synchronizowanie…",
     "authorYou": "Ty",
     "authorFallback": "Uczestnik",

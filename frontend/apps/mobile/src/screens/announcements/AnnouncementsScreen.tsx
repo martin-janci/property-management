@@ -241,7 +241,9 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search announcements..."
+          placeholder={t('announcements.searchPlaceholder', {
+            defaultValue: 'Search announcements...',
+          })}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
