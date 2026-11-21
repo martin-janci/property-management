@@ -92,6 +92,11 @@ export function parseServerMessage(raw: unknown): WebSocketMessage | null {
  * which the api-server reads (see `ws_notifications.rs`). The `base` may be a
  * bare origin (`ws://localhost:8080`) or already include a path — in either
  * case we normalise to the canonical handler path.
+ *
+ * As defence-in-depth we also drop any query string and fragment the base
+ * carried: a legacy or mis-configured `VITE_WS_URL` such as
+ * `ws://host/ws?token=<jwt>` must never leak a credential into the handshake
+ * URL (and therefore into access logs), regardless of how it was configured.
  */
 export function buildWebSocketUrl(base: string): string {
   // `URL` needs an absolute base; ws/wss are valid absolute schemes.
@@ -99,6 +104,11 @@ export function buildWebSocketUrl(base: string): string {
   // Force the canonical path regardless of what the base carried, so a
   // legacy `/ws` (or empty) path is corrected to the mounted handler.
   url.pathname = WS_NOTIFICATIONS_PATH;
+  // Strip any query/fragment so a token (or any other credential) carried by a
+  // mis-configured base can never survive into the connection URL. The JWT
+  // travels only in the handshake subprotocol (see `buildWsSubprotocols`).
+  url.search = '';
+  url.hash = '';
   return url.toString();
 }
 
