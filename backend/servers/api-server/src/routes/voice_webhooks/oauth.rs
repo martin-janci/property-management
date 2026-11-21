@@ -13,20 +13,66 @@
 
 use crate::routes::rate_limit::{rate_limit_allowed, InProcessRateLimiter};
 use crate::services::voice_oauth::{
-    encrypt_voice_token_pair, voice_oauth_error_response, voice_simulated_oauth_allowed,
-    OAUTH_EXCHANGE_FAILED_MESSAGE, OAUTH_REFRESH_FAILED_MESSAGE,
+    classify_voice_oauth_error, encrypt_voice_token_pair, voice_oauth_error_response,
+    voice_simulated_oauth_allowed, OAUTH_EXCHANGE_FAILED_MESSAGE, OAUTH_REFRESH_FAILED_MESSAGE,
 };
 use crate::state::AppState;
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use chrono::{Duration, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
-    voice_platform, VoiceOAuthExchangeRequest, VoiceOAuthExchangeResponse,
+    voice_platform, OAuthError, VoiceOAuthExchangeRequest, VoiceOAuthExchangeResponse,
     VoiceTokenRefreshRequest, VoiceTokenRefreshResult,
 };
 use db::RlsPool;
 use integrations::IntegrationCrypto;
 use uuid::Uuid;
+
+// ============================================================================
+// Handler error channel
+// ============================================================================
+//
+// The voice OAuth account-linking handlers emit two body shapes. Most failures
+// use the PPT-standard `ErrorResponse` envelope (`code`/`message`), but the
+// sanitized **upstream exchange/refresh failure** path returns an RFC 6749 §5.2
+// OAuth error body (`{error, error_description}`) — the account-linking flow is
+// an OAuth 2.0 token exchange, so its grant failures must speak the spec's wire
+// shape and status codes (`invalid_grant` 400, `server_error` 500, …). This
+// enum lets both shapes flow through a single handler `Result` while each
+// serialises to its own wire form; the `From` impls make `?` carry either an
+// `ErrorResponse` tuple or an `OAuthError` tuple unchanged.
+enum VoiceOAuthHandlerError {
+    /// PPT-standard `{code, message, …}` error envelope.
+    Standard(StatusCode, Json<ErrorResponse>),
+    /// RFC 6749 §5.2 `{error, error_description?}` OAuth error.
+    OAuth(StatusCode, Json<OAuthError>),
+}
+
+impl IntoResponse for VoiceOAuthHandlerError {
+    fn into_response(self) -> Response {
+        match self {
+            Self::Standard(status, body) => (status, body).into_response(),
+            Self::OAuth(status, body) => (status, body).into_response(),
+        }
+    }
+}
+
+impl From<(StatusCode, Json<ErrorResponse>)> for VoiceOAuthHandlerError {
+    fn from((status, body): (StatusCode, Json<ErrorResponse>)) -> Self {
+        Self::Standard(status, body)
+    }
+}
+
+impl From<(StatusCode, Json<OAuthError>)> for VoiceOAuthHandlerError {
+    fn from((status, body): (StatusCode, Json<OAuthError>)) -> Self {
+        Self::OAuth(status, body)
+    }
+}
 
 // ============================================================================
 // Rate limiting (#2769)
@@ -112,7 +158,7 @@ pub(crate) async fn oauth_token_exchange(
     State(state): State<AppState>,
     api_core::TenantAuthUser(auth): api_core::TenantAuthUser,
     Json(request): Json<VoiceOAuthExchangeRequest>,
-) -> Result<Json<VoiceOAuthExchangeResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<VoiceOAuthExchangeResponse>, VoiceOAuthHandlerError> {
     use integrations::{VoiceOAuthManager, VoicePlatform};
 
     // Throttle authenticated abuse: a valid principal must not be able to loop
@@ -129,7 +175,8 @@ pub(crate) async fn oauth_token_exchange(
                 "RATE_LIMITED",
                 "Too many token exchange attempts; try again later",
             )),
-        ));
+        )
+            .into());
     }
 
     // Bind the linking to the authenticated PM user + their active org.
@@ -166,7 +213,8 @@ pub(crate) async fn oauth_token_exchange(
                 "INVALID_PLATFORM",
                 "Unsupported voice platform",
             )),
-        ));
+        )
+            .into());
     }
 
     // Story 98.1: Implement actual OAuth token exchange
@@ -203,10 +251,11 @@ pub(crate) async fn oauth_token_exchange(
             .exchange_code(voice_platform, &request.auth_code, &redirect_uri)
             .await
             .map_err(|e| {
+                // RFC 6749 §5.2: a provider grant rejection becomes
+                // `invalid_grant` (400); transport/parse faults become
+                // `server_error` (500). Upstream detail is logged, never sent.
                 voice_oauth_error_response(
-                    StatusCode::BAD_REQUEST,
-                    "OAUTH_EXCHANGE_FAILED",
-                    OAUTH_EXCHANGE_FAILED_MESSAGE,
+                    classify_voice_oauth_error(&e, OAUTH_EXCHANGE_FAILED_MESSAGE),
                     e,
                 )
             })?;
@@ -254,7 +303,8 @@ pub(crate) async fn oauth_token_exchange(
                 "OAUTH_NOT_CONFIGURED",
                 "Voice OAuth is not configured for this platform",
             )),
-        ));
+        )
+            .into());
     };
 
     // Device is bound to the authenticated PM user and their organization
@@ -375,7 +425,7 @@ pub(crate) async fn oauth_token_refresh(
     State(state): State<AppState>,
     auth: api_core::AuthUser,
     Json(request): Json<VoiceTokenRefreshRequest>,
-) -> Result<Json<VoiceTokenRefreshResult>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<VoiceTokenRefreshResult>, VoiceOAuthHandlerError> {
     use integrations::{decrypt_if_available, VoiceOAuthManager, VoicePlatform};
 
     // Throttle authenticated abuse: a valid principal must not be able to loop
@@ -392,7 +442,8 @@ pub(crate) async fn oauth_token_refresh(
                 "RATE_LIMITED",
                 "Too many token refresh attempts; try again later",
             )),
-        ));
+        )
+            .into());
     }
 
     // Find the device.
@@ -445,7 +496,8 @@ pub(crate) async fn oauth_token_refresh(
                 "FORBIDDEN",
                 "You do not have permission to refresh this device's tokens",
             )),
-        ));
+        )
+            .into());
     }
 
     // Check if device has refresh token
@@ -485,10 +537,11 @@ pub(crate) async fn oauth_token_refresh(
                 .refresh_token(voice_platform, &refresh_token)
                 .await
                 .map_err(|e| {
+                    // RFC 6749 §5.2: a rejected refresh token is an
+                    // `invalid_grant` (400) — not a 500. Transport/parse faults
+                    // map to `server_error` (500). Upstream detail is logged only.
                     voice_oauth_error_response(
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        "TOKEN_REFRESH_FAILED",
-                        OAUTH_REFRESH_FAILED_MESSAGE,
+                        classify_voice_oauth_error(&e, OAUTH_REFRESH_FAILED_MESSAGE),
                         e,
                     )
                 })?;
@@ -538,7 +591,8 @@ pub(crate) async fn oauth_token_refresh(
                     "OAUTH_NOT_CONFIGURED",
                     "Voice OAuth is not configured for this platform",
                 )),
-            ));
+            )
+                .into());
         };
 
     // Update the device tokens under the device's own org/user RLS context.

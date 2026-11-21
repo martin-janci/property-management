@@ -126,10 +126,29 @@ Source: `api-server/src/routes/voice_webhooks.rs`.
   Amazon/Google and are throttled per PM user by an in-process sliding-window
   limiter: **10 attempts / 900 s** (`VOICE_{REFRESH,EXCHANGE}_MAX_ATTEMPTS`,
   `VOICE_{REFRESH,EXCHANGE}_WINDOW`), `429` on breach.
-- **On refresh failure** the handler returns the non-leaking
-  `OAUTH_REFRESH_FAILED_MESSAGE` ("Token refresh failed") and logs the upstream
-  detail server-side. **No metric, no alert** — an upstream-provider outage or
-  revoked refresh token is invisible to monitoring.
+- **On upstream exchange/refresh failure** the handler returns an **RFC 6749
+  §5.2**-shaped OAuth error body (`{ "error": <code>, "error_description":
+  <static message> }`) built by `voice_oauth_error_response`
+  (`services/voice_oauth.rs`), and logs the upstream detail server-side only
+  (never echoed to the client — "oauth client error leak" regression). The code
+  and status are derived from the cause by `classify_voice_oauth_error` +
+  `oauth_error_status`:
+  | Upstream cause | `error` | HTTP status |
+  |----------------|---------|-------------|
+  | Provider rejected the grant (bad/expired/revoked auth code or refresh token) — `ExchangeFailed` / `RefreshFailed` | `invalid_grant` | 400 |
+  | Unsupported platform — `InvalidPlatform` | `invalid_request` | 400 |
+  | Transport failure, unparseable provider response, missing config — `Http` / `InvalidResponse` / `MissingConfig` | `server_error` | 500 |
+
+  The `error_description` carries only the static non-revealing client message
+  (`OAUTH_EXCHANGE_FAILED_MESSAGE` / `OAUTH_REFRESH_FAILED_MESSAGE`). This
+  replaces the earlier PPT `code`/`message` envelope (`OAUTH_EXCHANGE_FAILED` /
+  `TOKEN_REFRESH_FAILED`), and fixes the prior refresh-failure status (was a
+  blanket `500`; a rejected grant is now the spec-correct `400`). The contract
+  is pinned by the `voice_oauth_error_response_is_rfc6749_shaped_*`,
+  `oauth_error_status_follows_rfc6749`, and `classify_voice_oauth_error_*` unit
+  tests in `services/voice_oauth.rs`. **No metric, no alert** — an
+  upstream-provider outage or revoked refresh token is still invisible to
+  monitoring (gap G3).
 - Tokens are encrypted at rest (`encrypt_voice_token_pair`) with an indexed
   `access_token_hash`; not an observability concern but noted for completeness.
 

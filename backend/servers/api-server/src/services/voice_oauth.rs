@@ -22,8 +22,11 @@
 use axum::{http::StatusCode, Json};
 use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
+use db::models::OAuthError;
 use hmac::{Hmac, KeyInit, Mac};
-use integrations::{encrypt_optional_required, encrypt_required, CryptoError, IntegrationCrypto};
+use integrations::{
+    encrypt_optional_required, encrypt_required, CryptoError, IntegrationCrypto, VoiceOAuthError,
+};
 use sha2::Sha256;
 use sqlx::PgConnection;
 
@@ -46,21 +49,68 @@ pub(crate) const OAUTH_EXCHANGE_FAILED_MESSAGE: &str = "Authorization code excha
 /// policy as [`OAUTH_EXCHANGE_FAILED_MESSAGE`].
 pub(crate) const OAUTH_REFRESH_FAILED_MESSAGE: &str = "Token refresh failed";
 
-/// Build the client response for a failed upstream voice OAuth call (code
-/// exchange or token refresh). The upstream `detail` is logged server-side;
-/// callers pass a static, non-revealing `client_message` for the body.
-pub(crate) fn voice_oauth_error_response(
-    status: StatusCode,
-    code: &'static str,
+/// RFC 6749 §5.2 HTTP status for an OAuth 2.0 token-error code.
+///
+/// §5.2 fixes the response status by error code: `invalid_client` MAY be 401
+/// (we use 401); every other token-endpoint error code (`invalid_request`,
+/// `invalid_grant`, `unauthorized_client`, `unsupported_grant_type`,
+/// `invalid_scope`, `access_denied`) is 400. `server_error` /
+/// `temporarily_unavailable` are OAuth 2.0 error codes used for 5xx conditions
+/// on the exchange/refresh path and map to 500 / 503.
+pub(crate) fn oauth_error_status(error: &OAuthError) -> StatusCode {
+    match error.error.as_str() {
+        "invalid_client" => StatusCode::UNAUTHORIZED,
+        "server_error" => StatusCode::INTERNAL_SERVER_ERROR,
+        "temporarily_unavailable" => StatusCode::SERVICE_UNAVAILABLE,
+        _ => StatusCode::BAD_REQUEST,
+    }
+}
+
+/// Classify an upstream voice OAuth failure into an RFC 6749 §5.2 error.
+///
+/// The returned error's `error_description` is the static, non-revealing
+/// `client_message`; the raw provider detail carried by `err` (endpoints,
+/// client ids, bearer tokens) is never embedded — it is logged by
+/// [`voice_oauth_error_response`] only.
+///
+/// Mapping:
+/// - a provider **grant rejection** (bad/expired/revoked authorization code or
+///   refresh token) → `invalid_grant` (HTTP 400) — the grant is the problem;
+/// - an **unsupported platform** → `invalid_request` (HTTP 400);
+/// - a **transport failure**, an **unparseable provider response**, or **missing
+///   server-side configuration** → `server_error` (HTTP 500) — our-side faults.
+pub(crate) fn classify_voice_oauth_error(
+    err: &VoiceOAuthError,
     client_message: &'static str,
+) -> OAuthError {
+    match err {
+        VoiceOAuthError::ExchangeFailed(_) | VoiceOAuthError::RefreshFailed(_) => {
+            OAuthError::invalid_grant(client_message)
+        }
+        VoiceOAuthError::InvalidPlatform(_) => OAuthError::invalid_request(client_message),
+        VoiceOAuthError::Http(_)
+        | VoiceOAuthError::InvalidResponse(_)
+        | VoiceOAuthError::MissingConfig(_) => OAuthError::server_error(client_message),
+    }
+}
+
+/// Build the RFC 6749 §5.2 client response for a failed upstream voice OAuth
+/// call (authorization-code exchange or token refresh) on the Alexa/Google
+/// account-linking path.
+///
+/// The body is a spec-shaped OAuth error — `{ "error": <code>,
+/// "error_description": <static message> }` — NOT the PPT `code`/`message`
+/// envelope, and the HTTP status is derived from the error code per §5.2
+/// ([`oauth_error_status`]). The upstream `detail` (provider endpoints, client
+/// ids, raw transport errors) is logged server-side only and never reaches the
+/// caller (code-review: oauth client error leak). Callers build `error` with
+/// [`classify_voice_oauth_error`].
+pub(crate) fn voice_oauth_error_response(
+    error: OAuthError,
     detail: impl std::fmt::Display,
-) -> (StatusCode, Json<ErrorResponse>) {
-    // The upstream `detail` (provider endpoints, client ids, raw transport
-    // errors) is logged server-side only. The response body carries just the
-    // static `client_message` — never the detail (code-review: oauth client
-    // error leak).
-    tracing::error!(error = %detail, error_code = code, "voice OAuth upstream call failed");
-    (status, Json(ErrorResponse::new(code, client_message)))
+) -> (StatusCode, Json<OAuthError>) {
+    tracing::error!(error = %detail, error_code = %error.error, "voice OAuth upstream call failed");
+    (oauth_error_status(&error), Json(error))
 }
 
 /// Map a fail-closed encryption error to an HTTP 500.
@@ -439,7 +489,10 @@ mod tests {
             E::MissingConfig("ALEXA_CLIENT_ID".into()),
         ] {
             let classified = classify_voice_oauth_error(&server, OAUTH_REFRESH_FAILED_MESSAGE);
-            assert_eq!(classified.error, "server_error", "{server:?} -> server_error");
+            assert_eq!(
+                classified.error, "server_error",
+                "{server:?} -> server_error"
+            );
         }
 
         // Description is the static message, not the (potentially sensitive)
