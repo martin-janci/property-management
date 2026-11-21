@@ -167,20 +167,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "pm-integration-slug-client-propagation",
-      "action": "Confirm #3616 ListingSummary slug reaches OpenAPI/TypeSpec and @ppt/reality-api-client + KMP/iOS clients; document slug as always-populated and state detail-lookup identifier",
-      "owner_role": "pm-integration",
-      "priority": "high",
-      "dependency": "pm-qa",
-      "depends_on": [
-        "UNRESOLVED:pm-qa"
-      ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
       "id": "pm-integration-voice-oauth-rfc6749-shape",
       "action": "Verify sanitized voice_oauth_error_response bodies follow RFC 6749 §5.2 (error+error_description, correct status codes) on Alexa/Google account-linking path; contract test required",
       "owner_role": "pm-integration",

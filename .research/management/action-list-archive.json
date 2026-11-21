@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-21T06:29:53Z",
+  "archived_at": "2026-11-21T08:30:30Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -30458,6 +30458,27 @@
       "deadline": null,
       "source": "pm-analysis 2026-10-19",
       "first_open_at": "2026-10-19T04:00:00Z"
+    },
+    {
+      "id": "pm-integration-slug-client-propagation",
+      "action": "Confirm #3616 ListingSummary slug reaches OpenAPI/TypeSpec and @ppt/reality-api-client + KMP/iOS clients; document slug as always-populated and state detail-lookup identifier",
+      "owner_role": "pm-integration",
+      "priority": "high",
+      "dependency": "pm-qa",
+      "depends_on": [
+        "UNRESOLVED:pm-qa"
+      ],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19 | gc1-reconcile 2026-11-21T08:27:12Z",
+      "first_open_at": "2026-11-20T10:30:27Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3687,
+        "merged_at": "2026-11-21T06:42:26Z",
+        "at": "2026-11-21T08:27:12Z"
+      }
     },
     {
       "id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test",
