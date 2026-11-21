@@ -7964,6 +7964,28 @@
       "merge_attempted_at": "2026-11-15T12:32:02Z"
     },
     {
+      "task_id": "code-review-mobile-rn-list-search-placeholders-i18n",
+      "branch": "auto-impl/code-review-mobile-rn-list-search-placeh-7de00c99",
+      "status": "merged",
+      "claimed_at": "2026-11-21T20:29:25Z",
+      "last_updated": "2026-11-21T22:36:23Z",
+      "status_changed_at": "2026-11-21T22:36:23Z",
+      "pr_number": 3705,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3705",
+      "merged_at": "2026-11-21T22:36:23Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3705 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=RN search placeholders i18n (messages.searchPlaceholder x6 locales; reused announcements.searchPlaceholder); +2 i18n tests; VERIFY OK 965 tests green",
+      "reviewer_summary": "verdict=approve head_oid=525c558bacdab9daab4c7b042ecd5596a4ce2160 note=clean-rn-i18n-placeholder-fix-tests-ci-green",
+      "last_reviewed_oid": "525c558bacdab9daab4c7b042ecd5596a4ce2160",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T22:36:23Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-meter-photo-not-uploaded",
       "branch": "auto-impl/code-review-mobile-rn-meter-photo-not-up-968fa6bd",
       "status": "merged",
@@ -10421,6 +10443,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot-retry1",
+      "branch": "auto-impl/code-review-ppt-web-core-logout-purge-di-83ced42d",
+      "status": "merged",
+      "claimed_at": "2026-11-21T20:29:25Z",
+      "last_updated": "2026-11-21T22:36:23Z",
+      "status_changed_at": "2026-11-21T22:36:23Z",
+      "pr_number": 3706,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3706",
+      "merged_at": "2026-11-21T22:36:23Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3706 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=logout purges dispute-filing localStorage draft (disputes/leases/iot query caches already cleared on dev); verify green 13210 tests, TDD split",
+      "reviewer_summary": "verdict=approve head_oid=198bf9b11bba807471ca6727100fe5b7ff487f36 note=ppt-web logout purges dispute-filing localStorage draft (query roots already purged on dev); bounded helper reuses isLocalStorageAvailable; TDD; CI green",
+      "last_reviewed_oid": "198bf9b11bba807471ca6727100fe5b7ff487f36",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T22:36:23Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-logout-purge-notif-triggers",
       "branch": "auto-impl/code-review-ppt-web-core-logout-purge-no-27a65ecd",
       "status": "merged",
@@ -11872,6 +11916,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-bookfacility-silent-availability",
+      "branch": "auto-impl/code-review-ppt-web-ui-bookfacility-sile-b4d650b9",
+      "status": "merged",
+      "claimed_at": "2026-11-21T20:29:25Z",
+      "last_updated": "2026-11-21T22:36:23Z",
+      "status_changed_at": "2026-11-21T22:36:23Z",
+      "pr_number": 3707,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3707",
+      "merged_at": "2026-11-21T22:36:23Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3707 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=BookFacilityPage surfaces availability loading/error (was console.error-only); clears stale slots on failure + warning alert; i18n 6 locales; verify green 13212 tests, IG3 proven",
+      "reviewer_summary": "verdict=approve head_oid=c77452b0393ffd6eb02471f0e6a7a1f9d92ee4bb note=ppt-web-availability-error-state-clean-ci-green",
+      "last_reviewed_oid": "c77452b0393ffd6eb02471f0e6a7a1f9d92ee4bb",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T22:36:23Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-buildings-err-raw-i18n",
@@ -28831,6 +28897,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-reset-sprint-status-yaml-hardening-track-2026-11-21",
+      "branch": "auto-impl/pm-scrum-master-reset-sprint-status-yaml-01f4f4e9",
+      "status": "merged",
+      "claimed_at": "2026-11-21T18:29:01Z",
+      "last_updated": "2026-11-21T22:36:23Z",
+      "status_changed_at": "2026-11-21T22:36:23Z",
+      "pr_number": 3704,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3704",
+      "merged_at": "2026-11-21T22:36:23Z",
+      "specialist": null,
+      "implementer_summary": "[reconciled: PR #3704 opened by implementer]",
+      "reviewer_summary": "verdict=approve head_oid=3965690ceb1ce05f15266a1a39e8644676379e4a note=yaml-planning-artifact-clean-ci-green",
+      "last_reviewed_oid": "3965690ceb1ce05f15266a1a39e8644676379e4a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T22:36:23Z"
+    },
+    {
       "task_id": "pm-scrum-master-resolve-dispatcher-stall-3357-2026-11-21",
       "branch": "auto-impl/pm-scrum-master-resolve-dispatcher-stall-fb54c1a7",
       "status": "failed",
@@ -32828,5 +32916,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-21T20:42:20Z"
+  "archived_at": "2026-11-21T22:36:34Z"
 }

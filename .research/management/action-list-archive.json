@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-21T20:37:50Z",
+  "archived_at": "2026-11-21T22:35:22Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -13294,6 +13294,31 @@
         "commit": "894239a54dfc9060934e86b3cc6c5c73c3304c9e",
         "subject": "code-review-ppt-web-ui-invoice-vat-rate-payload-drift: normalize submitted invoice item.vatRate to UI-derived rate (#3202)",
         "at": "2026-10-31T18:30:02Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-vat-table-drift",
+      "action": "ppt web ui invoice vat table drift",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-21T22:24:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T18:26:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-24T08:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-21T22:24:09Z"
       }
     },
     {

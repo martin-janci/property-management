@@ -311,24 +311,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-invoice-vat-table-drift",
-      "action": "ppt web ui invoice vat table drift",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T18:26:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-24T08:40:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-native-confirm-dialogs",
       "action": "ppt web ui native confirm dialogs",
       "owner_role": "pm-tech-lead",
@@ -513,7 +495,7 @@
       "action": "api handlers summarize discards persist err",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d api-handlers score=2 vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -524,14 +506,15 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-08-23T05:00:00Z"
-      }
+      },
+      "last_updated": "2026-11-21T22:35:11Z"
     },
     {
       "id": "code-review-reality-server-drainer-mark-fail-redeliver",
       "action": "reality server drainer mark fail redeliver",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-server score=2 vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -542,7 +525,8 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-08-23T05:00:00Z"
-      }
+      },
+      "last_updated": "2026-11-21T22:35:11Z"
     },
     {
       "id": "pm-backend-address-mobile-native-stubs-2026-11-21",
@@ -725,6 +709,63 @@
       "depends_on": [],
       "first_open_at": "2026-11-21T18:26:24Z",
       "retry_of": "code-review-ppt-web-ui-registry-silent-mutation-fail",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-page-no-i18n-retry1",
+      "action": "ppt web ui registry page no i18n [retry 1/2 of failed code-review-ppt-web-ui-registry-page-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T22:25:02Z (retry_of=code-review-ppt-web-ui-registry-page-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T14:40:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T22:25:02Z",
+      "retry_of": "code-review-ppt-web-ui-registry-page-no-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-core-community-route-fully-stubbed-retry1",
+      "action": "ppt web core community route fully stubbed [retry 1/2 of failed code-review-ppt-web-core-community-route-fully-stubbed]",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-11-21T22:25:02Z (retry_of=code-review-ppt-web-core-community-route-fully-stubbed reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T16:43:38Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T22:25:02Z",
+      "retry_of": "code-review-ppt-web-core-community-route-fully-stubbed",
+      "retry_round": 1,
+      "last_updated": "2026-11-21T22:35:11Z"
+    },
+    {
+      "id": "code-review-ppt-web-core-orgprovider-unmemoized-retry1",
+      "action": "ppt web core orgprovider unmemoized [retry 1/2 of failed code-review-ppt-web-core-orgprovider-unmemoized]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T22:25:02Z (retry_of=code-review-ppt-web-core-orgprovider-unmemoized reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T20:45:16Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T22:25:02Z",
+      "retry_of": "code-review-ppt-web-core-orgprovider-unmemoized",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-csv-import-filepick-no-type-guard-retry1",
+      "action": "reality web csv import filepick no type guard [retry 1/2 of failed code-review-reality-web-csv-import-filepick-no-type-guard]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T22:25:02Z (retry_of=code-review-reality-web-csv-import-filepick-no-type-guard reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T20:45:16Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T22:25:02Z",
+      "retry_of": "code-review-reality-web-csv-import-filepick-no-type-guard",
       "retry_round": 1
     }
   ],
