@@ -14,6 +14,7 @@ use crate::{ChatCompletionRequest, ChatMessage, LlmClient, LlmError};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::sync::LazyLock;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::time::sleep;
@@ -651,6 +652,15 @@ impl WorkflowExecutor {
 // Helper Functions
 // =============================================================================
 
+/// Pattern matching `{{ variable }}` interpolation tokens.
+///
+/// Compiled once on first use instead of on every `interpolate_variables`
+/// call — this helper recurses over every string node of every workflow
+/// action config, so recompiling the (constant) regex per call was pure
+/// overhead on a workflow-execution hot path.
+static INTERPOLATION_RE: LazyLock<regex_lite::Regex> =
+    LazyLock::new(|| regex_lite::Regex::new(r"\{\{([^}]+)\}\}").unwrap());
+
 /// Interpolate context variables in a JSON value.
 /// Replaces {{variable}} patterns with values from context.
 fn interpolate_variables(value: &Value, context: &Value) -> Value {
@@ -659,8 +669,7 @@ fn interpolate_variables(value: &Value, context: &Value) -> Value {
             let mut result = s.clone();
 
             // Find all {{variable}} patterns
-            let re = regex_lite::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
-            for cap in re.captures_iter(s) {
+            for cap in INTERPOLATION_RE.captures_iter(s) {
                 let full_match = cap.get(0).unwrap().as_str();
                 let var_name = cap.get(1).unwrap().as_str().trim();
 
