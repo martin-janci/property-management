@@ -135,18 +135,18 @@
     {
       "task_id": "code-review-api-handlers-workflow-enable-silent-fail",
       "branch": "auto-impl/code-review-api-handlers-workflow-enable-c3723f52",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-21T12:33:50Z",
-      "last_updated": "2026-11-21T12:33:50Z",
-      "status_changed_at": "2026-11-21T12:33:50Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-21T13:31:33Z",
+      "status_changed_at": "2026-11-21T13:31:33Z",
+      "pr_number": 3698,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3698",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3698 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=import_workflow_template enable-update no longer discards Err/Ok(None) (db_error/internal_error + rls.release); IG3 static-guard regression test; 21 verify fails are DB-less-env only not the diff; draft pending backend.yml CI",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-21T13:04:34Z"
+  "generated": "2026-11-21T13:31:33Z"
 }
