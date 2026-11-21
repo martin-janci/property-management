@@ -5,9 +5,10 @@
  * These cover the two ends of the client/server contract that were broken:
  *
  * 1. URL builder — the client must connect to the canonical mounted path
- *    `/api/v1/users/me/notifications/ws` with the JWT as a `?token=` query
- *    param (the api-server reads `WsQuery.token`; browsers cannot set a WS
- *    `Authorization` header). A bare `/ws` 404s on upgrade.
+ *    `/api/v1/users/me/notifications/ws`. The JWT is carried in the
+ *    `Sec-WebSocket-Protocol` handshake subprotocol (browsers cannot set a WS
+ *    `Authorization` header) and must NEVER appear in the URL/query string,
+ *    where it would leak into access logs. A bare `/ws` 404s on upgrade.
  * 2. Message parser — the server emits the canonical `{ event, payload }`
  *    envelope (`WsEvent` in `ws_notifications.rs`). The client must map
  *    `event` -> internal `type` so subscribers fire on the real event names
@@ -41,6 +42,21 @@ describe('buildWebSocketUrl', () => {
 
   it('corrects a legacy /ws path on the base to the canonical path', () => {
     const url = new URL(buildWebSocketUrl('ws://localhost:8080/ws'));
+    expect(url.pathname).toBe(WS_NOTIFICATIONS_PATH);
+  });
+
+  it('strips a token (and any query/fragment) carried by a mis-configured base URL', () => {
+    // Defence-in-depth: the JWT travels in the handshake subprotocol, but a
+    // legacy / mis-configured `VITE_WS_URL` such as `ws://host/ws?token=<jwt>`
+    // must never survive into the connection URL — a query-string token leaks
+    // into api-server + proxy access logs. buildWebSocketUrl drops the entire
+    // query and fragment when normalising to the canonical path.
+    const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.sig';
+    const url = new URL(buildWebSocketUrl(`wss://app.example.com/ws?token=${jwt}&foo=bar#frag`));
+    expect(url.search).toBe('');
+    expect(url.hash).toBe('');
+    expect(url.searchParams.get('token')).toBeNull();
+    expect(url.toString()).not.toContain(jwt);
     expect(url.pathname).toBe(WS_NOTIFICATIONS_PATH);
   });
 
