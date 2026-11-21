@@ -315,7 +315,7 @@
       "action": "ppt web ui invoice vat table drift",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "open",
       "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=1 vector=bug)",
       "deadline": null,
       "dependency": null,
