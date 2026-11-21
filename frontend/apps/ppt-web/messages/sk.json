@@ -3622,7 +3622,8 @@
     "create": {
       "title": "Nová nájomná zmluva",
       "subtitle": "Pripravte novú nájomnú zmluvu pre nájomníka",
-      "back": "Späť na zmluvy"
+      "back": "Späť na zmluvy",
+      "failedToLoad": "Nepodarilo sa načítať možnosti jednotiek a nájomníkov"
     },
     "form": {
       "template": "Šablóna zmluvy",
@@ -3651,7 +3652,9 @@
         "endDateAfterStart": "Koniec nájmu musí byť po jeho začiatku",
         "rentAmountRequired": "Zadajte výšku nájomného",
         "paymentDayInvalid": "Deň splatnosti musí byť od 1 do 28"
-      }
+      },
+      "noUnits": "Nie sú dostupné žiadne jednotky. Pred vytvorením nájmu pridajte budovu s jednotkami.",
+      "noTenants": "Nie sú dostupní žiadni nájomníci. Najprv pozvite obyvateľov do svojej organizácie."
     },
     "payments": {
       "noPayments": "Žiadna história platieb",

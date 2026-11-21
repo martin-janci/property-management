@@ -24,6 +24,10 @@ interface CreateLeasePageProps {
   tenants: Tenant[];
   templates: LeaseTemplate[];
   isLoading?: boolean;
+  /** True when loading the unit / tenant / template pickers failed. */
+  isError?: boolean;
+  /** Retry the picker queries after a load failure. */
+  onRetry?: () => void;
   isSubmitting?: boolean;
   onSubmit: (data: CreateLeaseData) => void;
   onCancel: () => void;
@@ -34,6 +38,8 @@ export function CreateLeasePage({
   tenants,
   templates,
   isLoading,
+  isError,
+  onRetry,
   isSubmitting,
   onSubmit,
   onCancel,
@@ -68,17 +74,40 @@ export function CreateLeasePage({
         <p className="mt-1 text-sm text-gray-500">{t('leases.create.subtitle')}</p>
       </div>
 
-      {/* Form */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <LeaseForm
-          units={units}
-          tenants={tenants}
-          templates={templates}
-          isSubmitting={isSubmitting}
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-        />
-      </div>
+      {/* Error State — picker data failed to load */}
+      {isError ? (
+        <div
+          role="alert"
+          className="text-center py-12 border border-red-200 bg-red-50 rounded-lg text-red-700"
+        >
+          <p className="font-medium">
+            {t('leases.create.failedToLoad', {
+              defaultValue: 'Could not load the unit and tenant options',
+            })}
+          </p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-3 px-3 py-1 border border-red-300 rounded text-red-700 hover:bg-red-100"
+            >
+              {t('common.retry', { defaultValue: 'Retry' })}
+            </button>
+          )}
+        </div>
+      ) : (
+        /* Form */
+        <div className="bg-white rounded-lg shadow p-6">
+          <LeaseForm
+            units={units}
+            tenants={tenants}
+            templates={templates}
+            isSubmitting={isSubmitting}
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+          />
+        </div>
+      )}
     </div>
   );
 }

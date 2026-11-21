@@ -4896,7 +4896,8 @@
     "create": {
       "title": "Create New Lease",
       "subtitle": "Set up a new lease agreement for a tenant",
-      "back": "Back to Leases"
+      "back": "Back to Leases",
+      "failedToLoad": "Could not load the unit and tenant options"
     },
     "form": {
       "template": "Lease Template",
@@ -4925,7 +4926,9 @@
         "endDateAfterStart": "End date must be after start date",
         "rentAmountRequired": "Rent amount is required",
         "paymentDayInvalid": "Payment day must be between 1 and 28"
-      }
+      },
+      "noUnits": "No units available. Add a building with units before creating a lease.",
+      "noTenants": "No tenants available. Invite residents to your organization first."
     },
     "payments": {
       "noPayments": "No payment history",
