@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-21T04:28:42Z",
+  "archived_at": "2026-11-21T06:29:53Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -29958,6 +29958,25 @@
       "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
     },
     {
+      "id": "pm-backend-sweep-push-voice-rls-before-verify-ordering-2026-11-21",
+      "action": "Sweep the new push/ (post-#3659) and voice_webhooks/ (post-#3685) child modules for the RLS-before-verify ordering bug: webhook signature verification must precede the RlsConnection extractor so every real Alexa/Google body does not return 401",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21 | gc1-reconcile 2026-11-21T06:25:04Z",
+      "first_open_at": "2026-11-21T03:06:10Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-21T06:25:04Z"
+      }
+    },
+    {
       "id": "pm-backend-violations-add-evidence-authz-gap-3164",
       "action": "Gate violations add_evidence sub-resource with authz check — currently ungated allowing any authenticated user to attach evidence to any violation record (gh #3164)",
       "owner_role": "pm-backend",
@@ -30366,6 +30385,27 @@
         "merged_pr": 3139,
         "merged_at": "2026-10-22T16:41:47Z",
         "at": "2026-10-22T16:42:56Z"
+      }
+    },
+    {
+      "id": "pm-integration-compliance-400-spec",
+      "action": "Document compliance 400 behavior for negative limit/offset in TypeSpec/OpenAPI and decide: keep plain-text (StatusCode, String) or move to standard error envelope",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "pm-backend",
+      "depends_on": [
+        "UNRESOLVED:pm-backend"
+      ],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19 | gc1-reconcile 2026-11-21T06:25:04Z",
+      "first_open_at": "2026-11-20T10:30:27Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3688,
+        "merged_at": "2026-11-21T04:39:54Z",
+        "at": "2026-11-21T06:25:04Z"
       }
     },
     {
@@ -31557,6 +31597,27 @@
         "merged_pr": 3369,
         "merged_at": "2026-11-09T22:28:33Z",
         "at": "2026-11-09T22:40:58Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
+      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-security",
+      "depends_on": [
+        "UNRESOLVED:pm-security"
+      ],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-10-28 | gc1-reconcile 2026-11-21T06:25:04Z",
+      "first_open_at": "2026-10-28T11:00:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3690,
+        "merged_at": "2026-11-21T04:39:51Z",
+        "at": "2026-11-21T06:25:04Z"
       }
     },
     {

@@ -27921,6 +27921,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-integration-slug-client-propagation",
+      "branch": "auto-impl/pm-integration-slug-client-propagation-90b2d707",
+      "status": "merged",
+      "claimed_at": "2026-11-21T02:29:55Z",
+      "last_updated": "2026-11-21T06:43:27Z",
+      "status_changed_at": "2026-11-21T06:43:27Z",
+      "pr_number": 3687,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3687",
+      "merged_at": "2026-11-21T06:42:26Z",
+      "specialist": null,
+      "implementer_summary": "[reconciled: PR #3687 opened by implementer]",
+      "reviewer_summary": "verdict=approve head_oid=206a3006399ee251b527670ddca436eb752efd6b note=spotless-fixed-mobile-native-green;self-approval-blocked-posted-as-COMMENT",
+      "last_reviewed_oid": "206a3006399ee251b527670ddca436eb752efd6b",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-21T06:39:59Z"
+    },
+    {
       "task_id": "pm-qa-aml-dashboard-dialog-state-per-assessment-test",
       "branch": "auto-impl/pm-qa-aml-dashboard-dialog-state-per-ass-a07eb3b6",
       "status": "failed",
@@ -32366,5 +32388,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-21T04:41:58Z"
+  "archived_at": "2026-11-21T06:43:27Z"
 }

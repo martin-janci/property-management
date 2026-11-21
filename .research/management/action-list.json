@@ -90,20 +90,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
-      "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "pm-security",
-      "depends_on": [
-        "UNRESOLVED:pm-security"
-      ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-10-28",
-      "first_open_at": "2026-10-28T11:00:00Z"
-    },
-    {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
       "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
       "owner_role": "pm-backend",
@@ -202,20 +188,6 @@
       "dependency": "pm-security",
       "depends_on": [
         "UNRESOLVED:pm-security"
-      ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
-      "id": "pm-integration-compliance-400-spec",
-      "action": "Document compliance 400 behavior for negative limit/offset in TypeSpec/OpenAPI and decide: keep plain-text (StatusCode, String) or move to standard error envelope",
-      "owner_role": "pm-integration",
-      "priority": "low",
-      "dependency": "pm-backend",
-      "depends_on": [
-        "UNRESOLVED:pm-backend"
       ],
       "status": "open",
       "deadline": null,
@@ -799,18 +771,6 @@
         "vector": "bug",
         "generated": "2026-08-23T05:00:00Z"
       }
-    },
-    {
-      "id": "pm-backend-sweep-push-voice-rls-before-verify-ordering-2026-11-21",
-      "action": "Sweep the new push/ (post-#3659) and voice_webhooks/ (post-#3685) child modules for the RLS-before-verify ordering bug: webhook signature verification must precede the RlsConnection extractor so every real Alexa/Google body does not return 401",
-      "owner_role": "pm-backend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-21",
-      "first_open_at": "2026-11-21T03:06:10Z"
     },
     {
       "id": "pm-backend-unquarantine-release-248-tests-2026-11-21",
