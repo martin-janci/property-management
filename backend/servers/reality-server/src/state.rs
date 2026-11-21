@@ -825,6 +825,43 @@ impl PmApiClient {
     }
 }
 
+/// Request timeout (headers + full body) for the PM OAuth/SSO HTTP client —
+/// token exchange, userinfo, and introspection. This is the worst case a single
+/// SSO call can block a reality-server request: a hung or slow PM endpoint is
+/// abandoned after this long instead of blocking the caller indefinitely.
+/// Sensible default for a same-datacenter PM API.
+pub const PM_OAUTH_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
+
+/// Connect timeout for the PM OAuth/SSO HTTP client — a separate, tighter bound
+/// on just the TCP+TLS handshake, so an unreachable PM host fails fast rather
+/// than consuming the full request-timeout budget.
+pub const PM_OAUTH_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// Build the shared pooled HTTP client used for every PM OAuth/SSO outbound call
+/// (token exchange, userinfo, introspection), with bounded request + connect
+/// timeouts so a hung PM endpoint can never block an SSO request indefinitely.
+///
+/// A build failure (e.g. the TLS backend failing to initialize) is fatal: we
+/// `expect` rather than fall back to `reqwest::Client::default()`, which is a
+/// **timeout-less** client and would silently reintroduce the unbounded-hang
+/// bug this client exists to prevent. Mirrors `PmApiClient::new`'s fail-fast.
+pub fn build_pm_oauth_client() -> reqwest::Client {
+    build_pm_oauth_client_with(PM_OAUTH_REQUEST_TIMEOUT, PM_OAUTH_CONNECT_TIMEOUT)
+}
+
+/// [`build_pm_oauth_client`] with explicit timeouts — the seam the unit tests use
+/// to exercise the timeout behavior with a short bound instead of the default.
+pub fn build_pm_oauth_client_with(
+    request_timeout: Duration,
+    connect_timeout: Duration,
+) -> reqwest::Client {
+    reqwest::Client::builder()
+        .timeout(request_timeout)
+        .connect_timeout(connect_timeout)
+        .build()
+        .expect("Failed to build PM OAuth HTTP client")
+}
+
 /// Application state shared across all handlers.
 #[derive(Clone)]
 pub struct AppState {
@@ -968,15 +1005,12 @@ impl AppState {
 
         // Shared pooled HTTP client for the SSO OAuth calls (exchange /
         // userinfo / introspect). Built once here so the three handlers reuse a
-        // single connection pool and inherit bounded timeouts, rather than each
-        // spinning up a fresh, timeout-less `reqwest::Client::new()` per request.
-        // Mirrors the `.timeout()` + `.connect_timeout()` convention used by the
-        // integration clients (e.g. `booking::client`).
-        let pm_oauth_client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(15))
-            .connect_timeout(Duration::from_secs(5))
-            .build()
-            .unwrap_or_default();
+        // single connection pool and inherit bounded request + connect timeouts
+        // (`PM_OAUTH_REQUEST_TIMEOUT` / `PM_OAUTH_CONNECT_TIMEOUT`), rather than
+        // each spinning up a fresh, timeout-less `reqwest::Client::new()` per
+        // request. `build_pm_oauth_client` fails fast on a builder error instead
+        // of falling back to the timeout-less `reqwest::Client::default()`.
+        let pm_oauth_client = build_pm_oauth_client();
 
         // Epic 104.1: Health check cache with 30 second TTL
         let health_cache = HealthCheckCache::new(30);
@@ -1253,5 +1287,69 @@ mod sso_token_service_tests {
             "all still-live tokens must survive the eviction sweep"
         );
         assert_eq!(redeemed_second.unwrap().user_id, "second");
+    }
+}
+
+#[cfg(test)]
+mod pm_oauth_client_timeout_tests {
+    use super::{
+        build_pm_oauth_client, build_pm_oauth_client_with, PM_OAUTH_CONNECT_TIMEOUT,
+        PM_OAUTH_REQUEST_TIMEOUT,
+    };
+    use std::time::{Duration, Instant};
+
+    /// The default-configured SSO client must build successfully and the
+    /// documented defaults must be bounded and non-zero. A build failure used to
+    /// degrade silently to the timeout-less `reqwest::Client::default()` via
+    /// `.unwrap_or_default()`; `build_pm_oauth_client` now fails fast instead, and
+    /// this guards that the happy path still produces a client.
+    #[test]
+    fn default_sso_client_builds_with_bounded_timeouts() {
+        let _client = build_pm_oauth_client();
+        assert!(
+            PM_OAUTH_REQUEST_TIMEOUT > Duration::ZERO,
+            "request timeout must be a positive bound",
+        );
+        assert!(
+            PM_OAUTH_CONNECT_TIMEOUT > Duration::ZERO,
+            "connect timeout must be a positive bound",
+        );
+        assert!(
+            PM_OAUTH_CONNECT_TIMEOUT <= PM_OAUTH_REQUEST_TIMEOUT,
+            "connect bound should not exceed the overall request bound",
+        );
+    }
+
+    /// A PM endpoint that accepts the TCP connection but never answers must NOT
+    /// hang the SSO call forever: the request timeout has to fire and surface as
+    /// an error. Proves the client the SSO handlers share actually enforces a
+    /// bounded request timeout — the whole reason this client exists.
+    #[tokio::test]
+    async fn stalled_pm_endpoint_hits_request_timeout() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind stub");
+        let addr = listener.local_addr().expect("addr");
+        // Accept connections and hold them open without ever writing a response,
+        // so only a client-side timeout can end the request.
+        tokio::spawn(async move {
+            let mut held = Vec::new();
+            while let Ok((sock, _)) = listener.accept().await {
+                held.push(sock); // keep the socket alive; never reply
+            }
+        });
+
+        let timeout = Duration::from_millis(300);
+        let client = build_pm_oauth_client_with(timeout, timeout);
+        let start = Instant::now();
+        let result = client.get(format!("http://{addr}/")).send().await;
+        let elapsed = start.elapsed();
+
+        let err = result.expect_err("a stalled PM endpoint must surface as an error, not hang");
+        assert!(err.is_timeout(), "the error must be a timeout, got: {err}");
+        assert!(
+            elapsed < Duration::from_secs(5),
+            "the request must abort near the 300ms bound, not hang (took {elapsed:?})",
+        );
     }
 }
