@@ -94,6 +94,43 @@ async fn push_token_register_and_unregister(pool: PgPool) {
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
+async fn push_token_ios_maps_to_apns(pool: PgPool) {
+    // Regression (#3669): the APNs leg of the push-fanout surface. The existing
+    // happy-path test only exercises `android -> fcm`; the `ios`/`apns` app
+    // names must land in `device_push_tokens.platform = 'apns'`, which is the
+    // exact column the api-server push-fanout worker selects on to route a
+    // notification to APNs vs FCM. A regression in `transport_platform` (e.g. a
+    // push-fanout refactor collapsing the mapping) would silently break iOS
+    // delivery without this pin.
+    let user = seed_public_user(&pool, "apns").await;
+    let token = mint_token(user);
+    let app = app(pool.clone());
+
+    for platform in ["ios", "apns"] {
+        let ok = send_json(
+            &app,
+            Method::POST,
+            "/api/v1/users/me/push-tokens",
+            Some(&token),
+            json!({ "token": "apns-token-1", "platform": platform, "device_id": "iphone" }),
+        )
+        .await;
+        assert_eq!(ok, 200, "`{platform}` must register as an APNs token");
+    }
+
+    // Both app-name aliases resolve to the same transport, and registration is
+    // idempotent — exactly one `apns` row.
+    let (count, platform): (i64, String) =
+        sqlx::query_as("SELECT COUNT(*), MIN(platform) FROM device_push_tokens WHERE user_id = $1")
+            .bind(user)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(count, 1, "ios + apns aliases upsert a single token row");
+    assert_eq!(platform, "apns", "ios/apns must map to the apns transport");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn notification_preferences_default_then_saved(pool: PgPool) {
     let user = seed_public_user(&pool, "prefs").await;
     let other = seed_public_user(&pool, "prefs-other").await;
