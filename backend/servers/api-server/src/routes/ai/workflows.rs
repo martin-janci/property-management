@@ -723,9 +723,12 @@ async fn import_workflow_template(
         }
     }
 
-    // Enable if requested
+    // Enable if requested. The enable step mutates the workflow we just
+    // created, so a failure here means the handler would otherwise return
+    // `"enabled": true` for a workflow that is still disabled — surface it
+    // instead of silently discarding the result (mirrors the create path above).
     if req.enabled.unwrap_or(false) {
-        let _ = state
+        match state
             .workflow_repo
             .update(
                 &mut **rls.conn(),
@@ -740,7 +743,22 @@ async fn import_workflow_template(
                     enabled: Some(true),
                 },
             )
-            .await;
+            .await
+        {
+            Ok(Some(_)) => {}
+            Ok(None) => {
+                rls.release().await;
+                tracing::error!(
+                    workflow_id = %workflow.id,
+                    "Failed to enable imported workflow: update affected no rows"
+                );
+                return Err(internal_error("Failed to enable imported workflow"));
+            }
+            Err(e) => {
+                rls.release().await;
+                return Err(db_error("Failed to enable imported workflow", e));
+            }
+        }
     }
 
     rls.release().await;
@@ -861,6 +879,42 @@ mod tests {
                     "line {}: internal_error() must be called with a string \
                      literal, not a raw error value — route raw errors through \
                      db_error() so DB detail never reaches the client: {}",
+                    idx + 1,
+                    line.trim()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn enable_imported_workflow_does_not_silently_discard_errors() {
+        // Code-review finding (silent failure): the "Enable if requested" step in
+        // `import_workflow_template` discarded the result of `workflow_repo.update`
+        // with `let _ = state.workflow_repo.update(...)`. A DB error — or an
+        // `Ok(None)` no-rows-updated — was swallowed while the response still
+        // reported `"enabled": true` to the caller. The enable failure must be
+        // surfaced (release the RLS conn + opaque 500) like every other repo call
+        // in this handler. Source-level guard so the discard can't be
+        // reintroduced: no repository call result may be thrown away with a
+        // discarding `let _ = state...` binding.
+        let src = include_str!("workflows.rs");
+        let needle = "let _ = state";
+        for (idx, line) in src.lines().enumerate() {
+            // Strip line comments so the doc paragraph above doesn't self-match.
+            let code = line.split("//").next().unwrap_or("");
+            if let Some(pos) = code.find(needle) {
+                // Skip a match that sits inside a string literal (e.g. this
+                // test's own `needle` binding): an odd number of quotes before
+                // the match means we're inside one.
+                if code[..pos].matches('"').count() % 2 == 1 {
+                    continue;
+                }
+                // Message intentionally avoids the literal needle text so this
+                // panic string can't itself trip the guard on a future run.
+                panic!(
+                    "line {}: a repository call result is discarded with a bare \
+                     binding — handle the error (surface it) instead of \
+                     silently ignoring it: {}",
                     idx + 1,
                     line.trim()
                 );
