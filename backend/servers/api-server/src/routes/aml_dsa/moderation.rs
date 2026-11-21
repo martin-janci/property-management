@@ -305,6 +305,33 @@ pub(super) async fn assign_moderation_case(
 
     let assignee = req.moderator_id.unwrap_or(user.user_id);
 
+    // Org-scoped existence check FIRST. A case that belongs to another tenant —
+    // or one that genuinely doesn't exist — must surface as 404, the same as
+    // every other by-id handler here and matching `assign_violation`
+    // (gh-issue-3187) and `file_appeal` below. Running this before the
+    // assignee-membership gate below prevents a foreign-org case id from
+    // surfacing as a role-gate 403 (when the attacker also supplies a non-member
+    // assignee) instead of the uniform cross-tenant 404 the IDOR suite enforces,
+    // which would let a foreign case id be distinguished from an unknown one.
+    if state
+        .compliance_repo
+        .get_moderation_case(id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load moderation case: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to assign case".to_string(),
+            )
+        })?
+        .is_none()
+    {
+        return Err((
+            StatusCode::NOT_FOUND,
+            "Moderation case not found".to_string(),
+        ));
+    }
+
     // Validate that the target moderator belongs to the caller's org
     if assignee != user.user_id {
         let is_member = state
