@@ -271,56 +271,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-reality-web-report-page-hardcoded-sk-strings-retry1",
-      "action": "reality web report page hardcoded sk strings [retry 1/2 of failed code-review-reality-web-report-page-hardcoded-sk-strings]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-20T18:26:05Z (retry_of=code-review-reality-web-report-page-hardcoded-sk-strings reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T10:57:03Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T18:26:05Z",
-      "retry_of": "code-review-reality-web-report-page-hardcoded-sk-strings",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-mobile-rn-faults-screen-no-i18n",
-      "action": "mobile rn faults screen no i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d mobile-rn score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T18:26:06Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "refactor",
-        "generated": "2026-08-25T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-person-months-hardcoded-i18n",
-      "action": "mobile rn person months hardcoded i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d mobile-rn score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T18:26:06Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "refactor",
-        "generated": "2026-08-25T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-widget-settings-alerts-i18n",
       "action": "mobile rn widget settings alerts i18n",
       "owner_role": "pm-tech-lead",
@@ -733,6 +683,141 @@
       "deadline": null,
       "source": "pm-analysis 2026-11-21",
       "first_open_at": "2026-11-21T03:06:10Z"
+    },
+    {
+      "id": "code-review-api-core-worker-silent-requeue-drop",
+      "action": "push/worker.rs: Retry disposition silently drops job when Redis requeue fails (NOAUTH/LOADING/reset)",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-21T18:26:24Z (score=2 conf=high vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-fcm-2xx-parse-retry",
+      "action": "push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry — duplicate-delivery risk",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-21T18:26:24Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-api-core-push-db-err-leak",
+      "action": "push/combined.rs + apns.rs leak raw sqlx::Error display into NotificationError::PushFailed",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-21T18:26:24Z (score=1 conf=medium vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "security"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n-retry1",
+      "action": "reality web agency slug no i18n [retry 1/2 of failed code-review-reality-web-agency-slug-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-reality-web-agency-slug-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T22:35:44Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "retry_of": "code-review-reality-web-agency-slug-no-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-no-i18n-retry1",
+      "action": "reality web listing edit no i18n [retry 1/2 of failed code-review-reality-web-listing-edit-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-reality-web-listing-edit-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T22:35:44Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "retry_of": "code-review-reality-web-listing-edit-no-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-realtor-id-no-i18n-retry1",
+      "action": "reality web realtor id no i18n [retry 1/2 of failed code-review-reality-web-realtor-id-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-reality-web-realtor-id-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T22:35:44Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "retry_of": "code-review-reality-web-realtor-id-no-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-core-logout-purge-disputes-leases-iot-retry1",
+      "action": "ppt web core logout purge disputes leases iot [retry 1/2 of failed code-review-ppt-web-core-logout-purge-disputes-leases-iot]",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-ppt-web-core-logout-purge-disputes-leases-iot reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T22:36:12Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "retry_of": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-realtor-hub-analytics-i18n-retry1",
+      "action": "reality web realtor hub analytics i18n [retry 1/2 of failed code-review-reality-web-realtor-hub-analytics-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-reality-web-realtor-hub-analytics-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T04:42:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "retry_of": "code-review-reality-web-realtor-hub-analytics-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-fail-retry1",
+      "action": "ppt web ui registry silent mutation fail [retry 1/2 of failed code-review-ppt-web-ui-registry-silent-mutation-fail]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-ppt-web-ui-registry-silent-mutation-fail reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T10:40:49Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "retry_of": "code-review-ppt-web-ui-registry-silent-mutation-fail",
+      "retry_round": 1
     }
   ],
   "generated": "2026-11-21T03:06:10Z"
