@@ -601,6 +601,7 @@
     "backToList": "Nachrichten",
     "threadTitleFallback": "Unterhaltung",
     "composerPlaceholder": "Nachricht schreiben…",
+    "searchPlaceholder": "Nachrichten suchen…",
     "syncing": "Wird synchronisiert…",
     "authorYou": "Sie",
     "authorFallback": "Teilnehmer",

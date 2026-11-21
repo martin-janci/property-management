@@ -641,6 +641,7 @@
     "backToList": "Messages",
     "threadTitleFallback": "Conversation",
     "composerPlaceholder": "Write a message…",
+    "searchPlaceholder": "Search messages…",
     "syncing": "Syncing…",
     "authorYou": "You",
     "authorFallback": "Participant",
