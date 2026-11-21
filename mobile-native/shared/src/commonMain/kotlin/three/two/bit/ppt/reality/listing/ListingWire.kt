@@ -18,10 +18,10 @@ internal data class WireListingSummary(
     val id: String,
     val title: String,
     /**
-     * SEO slug `{slugified-title}-{uuid}` (#3616). The server always emits this;
-     * it is nullable here only so decoding tolerates older/empty payloads. The
-     * mapper falls back to [id] so the domain [ListingSummary.slug] is always
-     * populated. The trailing UUID is the detail-lookup identifier.
+     * SEO slug `{slugified-title}-{uuid}` (#3616). The server always emits this; it is nullable
+     * here only so decoding tolerates older/empty payloads. The mapper falls back to [id] so the
+     * domain [ListingSummary.slug] is always populated. The trailing UUID is the detail-lookup
+     * identifier.
      */
     val slug: String? = null,
     val description: String? = null,

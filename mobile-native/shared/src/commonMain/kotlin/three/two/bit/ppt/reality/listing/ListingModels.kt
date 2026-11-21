@@ -93,12 +93,11 @@ data class ListingSummary(
     val id: String,
     val title: String,
     /**
-     * SEO-friendly URL slug, `{slugified-title}-{uuid}` (#3616). Always populated
-     * for listings returned by the reality-server. The trailing UUID is the
-     * authoritative detail-lookup identifier: pass this value to
-     * [ListingRepository.getListingDetail] to open the listing (a bare UUID is
-     * also accepted for backward-compatible deep links). Defaults to [id] when
-     * the server omits it, so the field is never empty for server-sourced models.
+     * SEO-friendly URL slug, `{slugified-title}-{uuid}` (#3616). Always populated for listings
+     * returned by the reality-server. The trailing UUID is the authoritative detail-lookup
+     * identifier: pass this value to [ListingRepository.getListingDetail] to open the listing (a
+     * bare UUID is also accepted for backward-compatible deep links). Defaults to [id] when the
+     * server omits it, so the field is never empty for server-sourced models.
      */
     val slug: String = "",
     val type: ListingType,
