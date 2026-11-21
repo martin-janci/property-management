@@ -1,0 +1,63 @@
+name: Quarantine-age gate
+
+# Why this exists
+# ---------------
+# `ignore-reason-gate.yml` guarantees every Rust `#[ignore]` carries a *reason*.
+# A reason alone does not stop a quarantine from rotting: PR #3675 had to
+# release ~226 reason-only quarantined tests in one pass precisely because
+# nobody owned them and none had a deadline. This gate enforces the other half
+# of the contract (pm-backend 2026-11-21, release-248 burn-down):
+#
+#   Every `#[ignore]`d test MUST have an OWNER (a pm-* role) and a DEADLINE,
+#   and a quarantine whose deadline has passed FAILS CI until it is fixed,
+#   un-ignored, or re-triaged with a new deadline.
+#
+# Owner + deadline live either inline in the reason string
+# (`(owner=pm-backend; due=2027-02-19)`) or in the quarantine registry
+# (`.github/quarantine/registry.toml`), keyed by `<path>::<test-fn>`. The scan
+# is DB-free and fast: pure text via check-quarantine-age.py. A self-test job
+# exercises the parser + policy logic against fixtures so a future refactor
+# that breaks the detector is caught in CI, mirroring ignore-reason-gate.yml.
+#
+# Policy: docs/quarantine-policy.md.
+
+on:
+  pull_request:
+    paths:
+      - '**/*.rs'
+      - '.github/quarantine/registry.toml'
+      - '.github/workflows/quarantine-age-gate.yml'
+      - '.github/workflows/scripts/check-quarantine-age.py'
+  # Re-scan dev's tip on merge so a quarantine that ages out between PRs (its
+  # deadline simply passes with no new commit touching it) is caught promptly.
+  push:
+    branches: [dev]
+    paths:
+      - '**/*.rs'
+      - '.github/quarantine/registry.toml'
+      - '.github/workflows/quarantine-age-gate.yml'
+      - '.github/workflows/scripts/check-quarantine-age.py'
+  # Catch deadlines that pass while the branch is idle (no code change fires
+  # the path filters above). Daily at 06:00 UTC.
+  schedule:
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  quarantine-age-gate:
+    name: "Every #[ignore] must have an owner + an unexpired deadline"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Scan quarantined tests
+        run: python3 .github/workflows/scripts/check-quarantine-age.py
+
+  self-test:
+    name: Self-test — check-quarantine-age.py fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run fixture-based parser + policy tests
+        run: python3 .github/workflows/scripts/check-quarantine-age.py --self-test
