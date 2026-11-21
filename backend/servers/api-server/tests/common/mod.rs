@@ -314,6 +314,71 @@ impl TestApp {
         )
     }
 
+    /// Create a test application whose `AppState` has an in-memory e-signature
+    /// webhook dedupe store installed, returning the app plus the store handle.
+    ///
+    /// Mirrors [`with_oauth_state_store`](Self::with_oauth_state_store): instead
+    /// of a live Redis `SET NX`, the store is an in-process set with the same
+    /// first-claim semantics, so a test can POST a webhook, then POST a byte-for-
+    /// byte replay and drive the handler's dedupe path (`FirstDelivery` →
+    /// processed, `Duplicate` → 200 ack with no side effects) deterministically
+    /// in CI, which wires no Redis.
+    pub async fn with_webhook_dedupe_store(
+        pool: PgPool,
+    ) -> (
+        Self,
+        api_server::routes::signatures_webhook_dedupe::WebhookDedupeStore,
+    ) {
+        use api_server::services::{EmailService, JwtService};
+        use api_server::state::AppState;
+
+        let config = TestConfig::default();
+
+        // Seed JWT_SECRET / RUST_ENV exactly like `with_config` so bearer
+        // tokens validate and `TotpService::new` doesn't panic.
+        static TEST_ENV_ONCE: std::sync::Once = std::sync::Once::new();
+        TEST_ENV_ONCE.call_once(|| {
+            if std::env::var("JWT_SECRET").is_err() {
+                std::env::set_var("JWT_SECRET", &config.jwt_secret);
+            }
+            if std::env::var("RUST_ENV").is_err() {
+                std::env::set_var("RUST_ENV", "development");
+            }
+        });
+
+        let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
+        let jwt_service =
+            JwtService::new(&config.jwt_secret).expect("Failed to create JWT service for tests");
+        let tenant_cache = std::sync::Arc::new(api_core::middleware::TenantResolutionCache::new(
+            300, 30, 10_000,
+        ));
+        let tenant_rate_limiters =
+            std::sync::Arc::new(api_core::middleware::TenantRateLimiterSet::new());
+
+        let (state, store) = AppState::new(
+            pool.clone(),
+            email_service,
+            jwt_service,
+            tenant_cache,
+            tenant_rate_limiters,
+        )
+        .with_webhook_dedupe_store();
+
+        let router =
+            api_server::create_router(state).layer(axum::extract::connect_info::MockConnectInfo(
+                std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
+            ));
+
+        (
+            Self {
+                router,
+                pool,
+                config,
+            },
+            store,
+        )
+    }
+
     /// Execute a request against the test application.
     pub async fn execute(&self, request: Request<Body>) -> TestResponse {
         let response = self
