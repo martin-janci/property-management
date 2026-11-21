@@ -34,5 +34,12 @@ mod authorize;
 mod grants;
 #[path = "oauth_integration_tests/introspect_revoke.rs"]
 mod introspect_revoke;
-#[path = "oauth_integration_tests/token.rs"]
-mod token;
+
+// Token-endpoint flow — split by sub-flow (refresh rotation / grant validation /
+// Epic 10A provider security) so no single file grows back into a churn hotspot.
+#[path = "oauth_integration_tests/token_grant_validation.rs"]
+mod token_grant_validation;
+#[path = "oauth_integration_tests/token_provider_security.rs"]
+mod token_provider_security;
+#[path = "oauth_integration_tests/token_refresh_rotation.rs"]
+mod token_refresh_rotation;
