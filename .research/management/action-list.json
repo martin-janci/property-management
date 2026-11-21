@@ -293,24 +293,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "code-review-api-handlers-esign-webhook-replay",
-      "action": "api handlers esign webhook replay",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T22:25:12Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-26T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-hardcoded-button-labels",
       "action": "mobile rn hardcoded button labels",
       "owner_role": "pm-backend",
@@ -344,24 +326,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-26T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-workflow-regex-recompile",
-      "action": "api core workflow regex recompile",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T22:25:12Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-25T18:52:00Z"
       }
     },
     {
@@ -401,24 +365,6 @@
       }
     },
     {
-      "id": "code-review-search-drainer-alert-copy-no-i18n",
-      "action": "search drainer alert copy no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T22:25:12Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-25T09:30:00Z"
-      }
-    },
-    {
       "id": "pm-scrum-master-unblock-kmp-and-swagger-ui-egress-in-the-cloud-runner-2652-2-2026-11-20",
       "action": "Unblock KMP and swagger-ui egress in the cloud runner (#2652, #2966)",
       "owner_role": "pm-scrum-master",
@@ -431,42 +377,8 @@
       "first_open_at": "2026-11-20T03:06:10Z"
     },
     {
-      "id": "code-review-api-handlers-voice-webhook-auth-extractor",
-      "action": "voice_webhooks.rs alexa/google handlers run RlsConnection extractor BEFORE signature verification — 401 before any webhook body is read",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-20T10:37:58Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T10:37:58Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
       "action": "voice_webhooks.rs is a 5-run repeated-churn hotspot (3066 LoC, 5 runs_seen) — module boundaries needed",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-20T14:24:50Z (score=2 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "repeated-churn-backend-servers-api-server-src-services-push-fanout-rs",
-      "action": "push_fanout.rs is a 4-run repeated-churn hotspot (3038 LoC, 4 runs_seen) — split FCM/APNs adapters",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -497,48 +409,6 @@
         "score": 2,
         "vector": "test-gap"
       }
-    },
-    {
-      "id": "code-review-ppt-web-core-iot-ws-unbounded-reconnect-retry1",
-      "action": "ppt web core iot ws unbounded reconnect [retry 1/2 of failed code-review-ppt-web-core-iot-ws-unbounded-reconnect]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-ppt-web-core-iot-ws-unbounded-reconnect reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T22:39:06Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "retry_of": "code-review-ppt-web-core-iot-ws-unbounded-reconnect",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-ppt-web-ui-community-list-routes-empty-retry1",
-      "action": "ppt web ui community list routes empty [retry 1/2 of failed code-review-ppt-web-ui-community-list-routes-empty]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-ppt-web-ui-community-list-routes-empty reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T22:39:06Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "retry_of": "code-review-ppt-web-ui-community-list-routes-empty",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-ppt-web-ui-groupdetail-delete-noop-retry1",
-      "action": "ppt web ui groupdetail delete noop [retry 1/2 of failed code-review-ppt-web-ui-groupdetail-delete-noop]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-20T14:24:50Z (retry_of=code-review-ppt-web-ui-groupdetail-delete-noop reason=failed-no-pr cooldown_ok newest_failure=2026-11-12T22:39:06Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "retry_of": "code-review-ppt-web-ui-groupdetail-delete-noop",
-      "retry_round": 1
     },
     {
       "id": "code-review-ppt-web-core-ws-notifications-token-in-url-retry1",
@@ -882,24 +752,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-24T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-syndication-processor-unwired-stub",
-      "action": "api core syndication processor unwired stub",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d api-core score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-23T18:30:00Z"
       }
     },
     {

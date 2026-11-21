@@ -16640,7 +16640,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "commits 2026-11-19..20 (16 merged PRs window)",
         "state.hotspot_history"
@@ -16654,7 +16654,12 @@
       ],
       "created_at": "2026-11-20",
       "updated_at": "2026-11-20",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-21T02:23:44Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
@@ -16684,7 +16689,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-11-20 (api-handlers, churn-aligned)"
       ],
@@ -16699,7 +16704,12 @@
       ],
       "created_at": "2026-11-20",
       "updated_at": "2026-11-20",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-21T02:23:44Z",
+        "assignment_status": "merged",
+        "pr_number": 3683
+      }
     }
   ]
 }

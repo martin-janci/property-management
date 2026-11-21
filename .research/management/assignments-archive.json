@@ -5162,6 +5162,28 @@
       "merge_attempted_at": "2026-08-06T22:13:48Z"
     },
     {
+      "task_id": "code-review-api-core-workflow-notin-fail-open",
+      "branch": "auto-impl/code-review-api-core-workflow-notin-fail-0a87e793",
+      "status": "merged",
+      "claimed_at": "2026-11-20T20:27:30Z",
+      "last_updated": "2026-11-21T02:38:13Z",
+      "status_changed_at": "2026-11-21T02:38:13Z",
+      "pr_number": 3678,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3678",
+      "merged_at": "2026-11-21T02:37:39Z",
+      "specialist": null,
+      "implementer_summary": "[reconciled: PR #3678 opened by implementer]",
+      "reviewer_summary": "verdict=approve head_oid=2da373891646e901d090ba38a8fb163412411917 note=fail-closed In/NotIn non-array operand; batch seam isolates ConditionError; tests+CI green; posted as comment (self-approval blocked)",
+      "last_reviewed_oid": "2da373891646e901d090ba38a8fb163412411917",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T02:35:34Z"
+    },
+    {
       "task_id": "code-review-api-core-workflow-regex-recompile",
       "branch": "auto-impl/code-review-api-core-workflow-regex-reco-4580b3aa",
       "status": "merged",
@@ -28119,6 +28141,28 @@
       "merge_attempted_at": "2026-08-25T10:33:02Z"
     },
     {
+      "task_id": "pm-scrum-master-3612-supersede-check-2026-11-19",
+      "branch": "auto-impl/pm-scrum-master-3612-supersede-check-202-b83fb151",
+      "status": "failed",
+      "claimed_at": "2026-11-21T02:29:55Z",
+      "last_updated": "2026-11-21T02:38:13Z",
+      "status_changed_at": "2026-11-21T02:38:13Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend note=superseded: PR #3612 already merged into dev 2026-11-20; page/offset pagination fully present",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-add-digest-abandoned-at-column-2026-11-17",
       "branch": "auto-impl/pm-scrum-master-add-digest-abandoned-at-e544d71e",
       "status": "merged",
@@ -28235,6 +28279,28 @@
       "merge_attempted_at": "2026-11-17T10:35:45Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19",
+      "branch": "auto-impl/pm-scrum-master-listings-rs-merge-sequen-c745dfcd",
+      "status": "failed",
+      "claimed_at": "2026-11-21T02:29:55Z",
+      "last_updated": "2026-11-21T02:38:13Z",
+      "status_changed_at": "2026-11-21T02:38:13Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend note=#3617 and #3628 both already merged to dev 2026-11-19; sequencing moot, nothing to implement",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
@@ -29957,6 +30023,28 @@
       "merge_attempted_at": "2026-08-06T10:16:14Z"
     },
     {
+      "task_id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
+      "branch": "auto-impl/repeated-churn-backend-servers-api-serve-804c64c3",
+      "status": "merged",
+      "claimed_at": "2026-11-21T00:36:31Z",
+      "last_updated": "2026-11-21T02:40:30Z",
+      "status_changed_at": "2026-11-21T02:40:30Z",
+      "pr_number": 3686,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3686",
+      "merged_at": "2026-11-21T02:40:07Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3686 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=split voice_webhooks mod.rs -> handlers/oauth/verify submodules (behaviour-preserving; initial split landed via #3653); fmt+clippy clean, 801/802 tests pass (1 fail is pre-existing env-only SSRF test, identical blob SHA to dev); scope_drift expected (backend refactor under pm-tech-lead owner tag)",
+      "reviewer_summary": "verdict=approve head_oid=a8a047d656d15a779ba9ebb6f424f8691019f5b1 note=verbatim-module-split-ci-green-approved-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "a8a047d656d15a779ba9ebb6f424f8691019f5b1",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T02:40:02Z"
+    },
+    {
       "task_id": "repeated-churn-backend-servers-api-server-src-services-push-fanout-rs",
       "branch": "auto-impl/repeated-churn-backend-servers-api-serve-07fb2e17",
       "status": "failed",
@@ -29977,6 +30065,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
+      "branch": "auto-impl/repeated-churn-backend-servers-api-serve-41df4a81",
+      "status": "merged",
+      "claimed_at": "2026-11-21T00:36:31Z",
+      "last_updated": "2026-11-21T02:39:29Z",
+      "status_changed_at": "2026-11-21T02:39:29Z",
+      "pr_number": 3685,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3685",
+      "merged_at": "2026-11-21T02:39:15Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3685 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=oauth suite already split in #3658; extracted token.rs(1396LoC) into token_refresh_rotation/token_grant_validation/token_provider_security; 28 sqlx tests preserved; fmt+clippy+test --no-run green; DB tests deferred to CI",
+      "reviewer_summary": "verdict=approve head_oid=1f8a54a772054b8b19afc1d8d94fc8be2d429d51 note=test-only-split-28-tests-preserved-ci-green",
+      "last_reviewed_oid": "1f8a54a772054b8b19afc1d8d94fc8be2d429d51",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-21T02:39:03Z"
     },
     {
       "task_id": "repeated-churn-backend-servers-reality-server-src-routes-listings-rs",
@@ -32190,5 +32300,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-21T00:52:17Z"
+  "archived_at": "2026-11-21T02:40:47Z"
 }
