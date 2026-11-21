@@ -137,6 +137,11 @@ impl I18nResolver {
         let lang_id = locale.language_id();
 
         let mut bundle = FluentBundleGeneric::new_concurrent(vec![lang_id]);
+        // Server-rendered copy (emails, push, API messages) is concatenated and
+        // substring-matched downstream, so disable Fluent's default bidi
+        // isolation (U+2068/U+2069 around every placeable) which would otherwise
+        // inject invisible control characters into the output.
+        bundle.set_use_isolating(false);
         bundle.add_resource(resource).ok()?;
 
         Some(bundle)
@@ -171,13 +176,61 @@ impl I18nResolver {
         fluent_id.to_string()
     }
 
-    /// Format a message from a bundle.
+    /// Get a localized message, binding both string and integer arguments.
+    ///
+    /// Integer arguments are bound as Fluent numbers, so CLDR plural selectors
+    /// (`{ $count -> [one] … [few] … *[other] … }`) resolve to the correct
+    /// category for the target locale. Prefer this over [`get_with_args`]
+    /// whenever a message pluralizes on a count.
+    ///
+    /// Falls back to English if the message is not found in the requested locale.
+    pub fn get_with_plural_args(
+        &self,
+        locale: Locale,
+        key: MessageKey,
+        counts: &[(&str, i64)],
+        args: &[(&str, &str)],
+    ) -> String {
+        let fluent_id = key.as_fluent_id();
+
+        // Try requested locale first
+        if let Some(msg) = self.format_message_mixed(locale, fluent_id, counts, args) {
+            return msg;
+        }
+
+        // Fall back to English
+        if locale != Locale::En {
+            if let Some(msg) = self.format_message_mixed(Locale::En, fluent_id, counts, args) {
+                return msg;
+            }
+        }
+
+        // Last resort: return the message key
+        fluent_id.to_string()
+    }
+
+    /// Format a message from a bundle with string arguments only.
     fn format_message(&self, locale: Locale, id: &str, args: &[(&str, &str)]) -> Option<String> {
+        self.format_message_mixed(locale, id, &[], args)
+    }
+
+    /// Format a message from a bundle, binding integer `counts` as Fluent
+    /// numbers (for plural selection) and `args` as strings.
+    fn format_message_mixed(
+        &self,
+        locale: Locale,
+        id: &str,
+        counts: &[(&str, i64)],
+        args: &[(&str, &str)],
+    ) -> Option<String> {
         let bundle = self.bundles.get(&locale)?;
         let message = bundle.get_message(id)?;
         let pattern = message.value()?;
 
         let mut fluent_args = fluent_bundle::FluentArgs::new();
+        for (name, value) in counts {
+            fluent_args.set(*name, FluentValue::from(*value));
+        }
         for (name, value) in args {
             fluent_args.set(*name, FluentValue::from(*value));
         }
@@ -246,6 +299,45 @@ mod tests {
         // Slovak should work
         let msg_sk = resolver.get(Locale::Sk, MessageKey::ErrorGeneric);
         assert!(!msg_sk.is_empty());
+    }
+
+    #[test]
+    fn plural_args_select_cldr_category_and_render_number() {
+        let resolver = I18nResolver::new();
+
+        // English: `one` vs `other`, with the number substituted inline and no
+        // bidi-isolation control characters breaking the substring.
+        let one = resolver.get_with_plural_args(
+            Locale::En,
+            MessageKey::SearchAlertSubject,
+            &[("count", 1)],
+            &[("name", "My search")],
+        );
+        assert!(one.contains("1 new listing matches"), "{one}");
+
+        let many = resolver.get_with_plural_args(
+            Locale::En,
+            MessageKey::SearchAlertSubject,
+            &[("count", 5)],
+            &[("name", "My search")],
+        );
+        assert!(many.contains("5 new listings match"), "{many}");
+
+        // Slovak three-way CLDR buckets: one / few / other.
+        let sk_few = resolver.get_with_plural_args(
+            Locale::Sk,
+            MessageKey::SearchAlertSubject,
+            &[("count", 3)],
+            &[("name", "X")],
+        );
+        assert!(sk_few.contains("nové inzeráty"), "{sk_few}");
+        let sk_other = resolver.get_with_plural_args(
+            Locale::Sk,
+            MessageKey::SearchAlertSubject,
+            &[("count", 9)],
+            &[("name", "X")],
+        );
+        assert!(sk_other.contains("nových inzerátov"), "{sk_other}");
     }
 
     #[test]

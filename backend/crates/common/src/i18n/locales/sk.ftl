@@ -137,3 +137,16 @@ visitor-updated-success = Návštevník bol úspešne aktualizovaný.
 visitor-checked-in-success = Návštevník bol úspešne prihlásený.
 visitor-checked-out-success = Návštevník bol úspešne odhlásený.
 visitor-registration-cancelled = Registrácia návštevníka bola zrušená.
+
+# Saved-search alerts (reality-server drainer — BIT-139)
+# $count = number of new matching listings (>= 1), $name = saved-search name.
+search-alert-subject = { $count ->
+    [one] { $count } nový inzerát zodpovedá vášmu uloženému hľadaniu „{ $name }“
+    [few] { $count } nové inzeráty zodpovedajú vášmu uloženému hľadaniu „{ $name }“
+   *[other] { $count } nových inzerátov zodpovedajú vášmu uloženému hľadaniu „{ $name }“
+}
+search-alert-body = { $count ->
+    [one] Vaše uložené hľadanie „{ $name }“ má { $count } nový inzerát. Otvorte aplikáciu a zobrazte si ho.
+    [few] Vaše uložené hľadanie „{ $name }“ má { $count } nové inzeráty. Otvorte aplikáciu a zobrazte si ich.
+   *[other] Vaše uložené hľadanie „{ $name }“ má { $count } nových inzerátov. Otvorte aplikáciu a zobrazte si ich.
+}

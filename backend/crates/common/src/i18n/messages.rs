@@ -147,6 +147,10 @@ pub enum MessageKey {
     VisitorCheckedInSuccess,
     VisitorCheckedOutSuccess,
     VisitorRegistrationCancelled,
+
+    // Saved-search alerts (reality-server drainer)
+    SearchAlertSubject,
+    SearchAlertBody,
 }
 
 impl MessageKey {
@@ -290,6 +294,10 @@ impl MessageKey {
             Self::VisitorCheckedInSuccess => "visitor-checked-in-success",
             Self::VisitorCheckedOutSuccess => "visitor-checked-out-success",
             Self::VisitorRegistrationCancelled => "visitor-registration-cancelled",
+
+            // Saved-search alerts
+            Self::SearchAlertSubject => "search-alert-subject",
+            Self::SearchAlertBody => "search-alert-body",
         }
     }
 }
@@ -510,6 +518,8 @@ mod tests {
             MessageKey::VisitorCheckedInSuccess,
             MessageKey::VisitorCheckedOutSuccess,
             MessageKey::VisitorRegistrationCancelled,
+            MessageKey::SearchAlertSubject,
+            MessageKey::SearchAlertBody,
         ];
 
         let mut seen = std::collections::HashSet::new();
