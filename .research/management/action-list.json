@@ -237,34 +237,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19",
-      "action": "Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and #3628 (suggestions region seed); merge #3617 first (security-flavored)",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "pm-backend",
-      "depends_on": [
-        "UNRESOLVED:pm-backend"
-      ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
-      "id": "pm-scrum-master-3612-supersede-check-2026-11-19",
-      "action": "Decide fate of #3612 (paginate agency import history): #3610 fixed total; confirm if #3612 still adds page/offset or close as superseded",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "pm-backend",
-      "depends_on": [
-        "UNRESOLVED:pm-backend"
-      ],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
       "id": "pm-scrum-master-airbnb-env-leak-flake-2026-11-19",
       "action": "Fix env-var leak in tests/suites/airbnb_install_routes_tests.rs (set_var without cleanup) causing airbnb_oauth_routes_tests flake in parallel suite_1",
       "owner_role": "pm-scrum-master",
@@ -329,24 +301,6 @@
       }
     },
     {
-      "id": "code-review-api-core-workflow-notin-fail-open",
-      "action": "api core workflow notin fail open",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d api-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-19T22:25:12Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-25T18:52:00Z"
-      }
-    },
-    {
       "id": "code-review-search-drainer-stub-marks-delivered",
       "action": "search drainer stub marks delivered",
       "owner_role": "pm-backend",
@@ -375,40 +329,6 @@
       "deadline": null,
       "source": "pm-analysis 2026-11-20",
       "first_open_at": "2026-11-20T03:06:10Z"
-    },
-    {
-      "id": "repeated-churn-backend-servers-api-server-src-routes-voice-webhooks-rs",
-      "action": "voice_webhooks.rs is a 5-run repeated-churn hotspot (3066 LoC, 5 runs_seen) — module boundaries needed",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-20T14:24:50Z (score=2 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
-      "action": "oauth_integration_tests.rs is a repeated-churn hotspot (3427 LoC, runs_seen→2) — split by flow",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-20T14:24:50Z (score=2 conf=high vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T14:24:50Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
     },
     {
       "id": "code-review-ppt-web-core-ws-notifications-token-in-url-retry1",
