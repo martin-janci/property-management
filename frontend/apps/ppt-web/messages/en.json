@@ -8588,7 +8588,8 @@
       },
       "errors": {
         "requiredFields": "Please fill all required fields",
-        "invalidNumbers": "Quantity and unit price must be valid numbers"
+        "invalidNumbers": "Quantity and unit price must be valid numbers",
+        "noLineItems": "Add at least one line item with a description"
       }
     },
     "paymentMatching": {

@@ -7276,7 +7276,8 @@
       },
       "errors": {
         "requiredFields": "Wypełnij wszystkie wymagane pola",
-        "invalidNumbers": "Ilość i cena jednostkowa muszą być prawidłowymi liczbami"
+        "invalidNumbers": "Ilość i cena jednostkowa muszą być prawidłowymi liczbami",
+        "noLineItems": "Dodaj co najmniej jedną pozycję z opisem"
       }
     },
     "paymentMatching": {

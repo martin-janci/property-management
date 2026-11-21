@@ -7140,7 +7140,8 @@
       },
       "errors": {
         "requiredFields": "Töltse ki az összes kötelező mezőt",
-        "invalidNumbers": "A mennyiségnek és az egységárnak érvényes számnak kell lennie"
+        "invalidNumbers": "A mennyiségnek és az egységárnak érvényes számnak kell lennie",
+        "noLineItems": "Adjon hozzá legalább egy tételt leírással"
       }
     },
     "paymentMatching": {
