@@ -16,43 +16,23 @@ import { useSearchParams } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
+import {
+  type AuditEventsPage,
+  type AuditEventView,
+  buildAuditQuery,
+  HIGH_RISK_CAPABILITIES,
+  parseAuditPage,
+} from '../lib/auditApi';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type AuditRow = {
-  id: string;
-  occurred_at: string;
-  actor_email?: string;
-  actor_user_id?: string;
-  capability?: string;
-  target_kind?: 'user' | 'tenant' | 'capability';
-  target_slug?: string;
-  outcome?: 'success' | 'mfa_failed' | 'denied';
-  reason?: string;
-  ip?: string;
-  user_agent?: string;
-  mfa_recent_at_call?: string;
-  request?: { path?: string; headers?: Record<string, string>; body?: string };
-  principal_kind?: string;
-};
-
-type AuditResponse = {
-  items: AuditRow[];
-  next_cursor?: string;
-};
+type AuditRow = AuditEventView;
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const HIGH_RISK_CAPABILITIES = new Set([
-  'tenant_purge',
-  'principal_kind_escalate',
-  'grant_principal_kind_escalate',
-  'tenant_restore',
-]);
 
 const DATE_PRESETS = [
   { label: '15m', value: '15m' },
@@ -99,15 +79,7 @@ function buildQueryString(
   },
   cursor?: string
 ): string {
-  const params = new URLSearchParams();
-  if (filters.actor) params.set('actor', filters.actor);
-  if (filters.target) params.set('target', filters.target);
-  if (filters.capabilities.length) params.set('capability', filters.capabilities.join(','));
-  if (filters.severity !== 'all') params.set('severity', filters.severity);
-  if (filters.outcome !== 'all') params.set('outcome', filters.outcome);
-  if (filters.dateRange) params.set('range', filters.dateRange);
-  if (cursor) params.set('after', cursor);
-  return params.toString();
+  return buildAuditQuery(filters, cursor);
 }
 
 function parseMfaRemaining(row: AuditRow): string {
@@ -223,7 +195,16 @@ function SkeletonRows() {
 }
 
 /** Inline expanded row — full-width, spans all columns */
-function ExpandedRow({ row, onClose }: { row: AuditRow; onClose: () => void }) {
+function ExpandedRow({
+  row,
+  onClose,
+  onViewRelated,
+}: {
+  row: AuditRow;
+  onClose: () => void;
+  /** Narrow the list to events on the same target (or by the same actor). */
+  onViewRelated?: (row: AuditRow) => void;
+}) {
   const handleCopyCurl = useCallback(() => {
     const path = row.request?.path ?? '/unknown';
     const headers = row.request?.headers ?? {};
@@ -442,26 +423,29 @@ function ExpandedRow({ row, onClose }: { row: AuditRow; onClose: () => void }) {
               >
                 Copy as cURL
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  /* TODO: view related events */
-                }}
-                style={{
-                  padding: '5px 12px',
-                  fontSize: '0.8125rem',
-                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                  borderRadius: 6,
-                  background: 'var(--ppt-bg-surface, #fff)',
-                  color: 'var(--ppt-fg-primary)',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  opacity: 0.6,
-                }}
-                title="TODO — not yet implemented"
-              >
-                View related
-              </button>
+              {onViewRelated && (row.target_slug || row.actor_email || row.actor_user_id) && (
+                <button
+                  type="button"
+                  onClick={() => onViewRelated(row)}
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.8125rem',
+                    border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                    borderRadius: 6,
+                    background: 'var(--ppt-bg-surface, #fff)',
+                    color: 'var(--ppt-fg-primary)',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                  title={
+                    row.target_slug
+                      ? 'Show all events on this target'
+                      : 'Show all events by this actor'
+                  }
+                >
+                  View related
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}
@@ -846,9 +830,20 @@ const AuditPage: FC = () => {
     setExpandedId(null);
   }, []);
 
+  const handleViewRelated = useCallback(
+    (row: AuditRow) => {
+      handleFiltersChange(
+        row.target_slug
+          ? { ...FILTER_DEFAULTS, target: row.target_slug }
+          : { ...FILTER_DEFAULTS, actor: row.actor_email ?? row.actor_user_id ?? '' }
+      );
+    },
+    [handleFiltersChange]
+  );
+
   const qs = buildQueryString(filters, cursor);
 
-  const query = useQuery<AuditResponse>({
+  const query = useQuery<AuditEventsPage>({
     queryKey: ['admin', 'audit', filters, cursor],
     queryFn: async () => {
       const res = await fetch(`/api/v1/admin/audit${qs ? `?${qs}` : ''}`, {
@@ -858,7 +853,7 @@ const AuditPage: FC = () => {
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
-      return res.json() as Promise<AuditResponse>;
+      return parseAuditPage(await res.json());
     },
     staleTime: 30_000,
   });
@@ -1183,7 +1178,11 @@ const AuditPage: FC = () => {
                         </td>
                       </tr>
                       {expandedId === row.id && (
-                        <ExpandedRow row={row} onClose={() => setExpandedId(null)} />
+                        <ExpandedRow
+                          row={row}
+                          onClose={() => setExpandedId(null)}
+                          onViewRelated={handleViewRelated}
+                        />
                       )}
                     </Fragment>
                   ))

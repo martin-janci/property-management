@@ -522,7 +522,8 @@ async fn log_feature_event(
     responses(
         (status = 200, description = "Feature statistics", body = FeatureStatsResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
-        (status = 403, description = "Forbidden - requires admin", body = ErrorResponse)
+        (status = 403, description = "Forbidden - requires admin", body = ErrorResponse),
+        (status = 404, description = "Feature not found", body = ErrorResponse)
     ),
     security(("bearer_auth" = []))
 )]
@@ -552,6 +553,12 @@ async fn get_feature_stats(
         .get_feature_stats_for_org(feature_id, ctx.org_id, query.start_date, query.end_date)
         .await
         .map_err(|e| {
+            if matches!(e, sqlx::Error::RowNotFound) {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse::new("NOT_FOUND", "Feature not found")),
+                );
+            }
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(

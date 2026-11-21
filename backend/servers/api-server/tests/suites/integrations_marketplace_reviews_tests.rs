@@ -706,15 +706,20 @@ async fn log_feature_event_returns_200(pool: PgPool) {
 // ===========================================================================
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
-#[ignore = "seed_provider fails: marketplace providers table not seeded"]
 async fn get_feature_stats_returns_200(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let org_id = seed_org(&pool, "gfs").await;
     let user_id = seed_user(&pool, "gfs@test.local").await;
     seed_membership(&pool, org_id, user_id, "manager").await;
     let token = mint_user_token_with_org(user_id, "gfs@test.local", org_id);
-    let feature_id = Uuid::new_v4();
+    let feature_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO feature_flags (key, name) VALUES ('gfs_stats_test', 'GFS') RETURNING id",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("seed feature flag");
 
+    // A feature with no usage events yet: zero counts, not an error.
     let resp = app
         .get(&format!("/api/v1/features/analytics/{feature_id}/stats"))
         .bearer(&token)
@@ -727,6 +732,17 @@ async fn get_feature_stats_returns_200(pool: PgPool) {
         resp.status,
         resp.text()
     );
+
+    // An unknown feature id is 404, not a 500 "no rows" leak.
+    let resp = app
+        .get(&format!(
+            "/api/v1/features/analytics/{}/stats",
+            Uuid::new_v4()
+        ))
+        .bearer(&token)
+        .build();
+    let resp = app.execute(resp).await;
+    assert_eq!(resp.status, StatusCode::NOT_FOUND, "{}", resp.text());
 }
 
 // ===========================================================================

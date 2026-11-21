@@ -1221,3 +1221,40 @@ async fn responsible_party_completes_only_own_term(pool: PgPool) {
     assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
     assert!(!term_completed(&pool, f.resolution, "t-1").await);
 }
+
+/// The mediation case export carries every session with its attendance rows
+/// (it used to return `sessions: []` regardless).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn mediation_case_includes_sessions_with_attendance(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = seed_fixture(&pool, "mcase").await;
+    let party = sqlx::query_scalar::<_, Uuid>(
+        "SELECT id FROM dispute_parties WHERE dispute_id = $1 AND user_id = $2",
+    )
+    .bind(f.dispute)
+    .bind(f.user)
+    .fetch_one(&pool)
+    .await
+    .expect("party");
+    sqlx::query(
+        "INSERT INTO session_attendances (session_id, party_id, confirmed) VALUES ($1, $2, true)",
+    )
+    .bind(f.session)
+    .bind(party)
+    .execute(&pool)
+    .await
+    .expect("seed attendance");
+
+    let token = mint_token(f.user, f.org, "manager");
+    let uri = format!("/api/v1/disputes/{}/mediation-case", f.dispute);
+    let resp = call(&app, &token, f.org, Method::GET, &uri, None).await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body: Value = serde_json::from_str(&resp.text()).expect("json");
+    let sessions = body["sessions"].as_array().expect("sessions array");
+    assert_eq!(sessions.len(), 1, "{body}");
+    assert_eq!(sessions[0]["session"]["id"], json!(f.session.to_string()));
+    let attendance = sessions[0]["attendance"].as_array().expect("attendance");
+    assert_eq!(attendance.len(), 1);
+    assert_eq!(attendance[0]["party_id"], json!(party.to_string()));
+    assert_eq!(attendance[0]["confirmed"], json!(true));
+}
