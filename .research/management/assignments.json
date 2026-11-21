@@ -5,7 +5,7 @@
       "branch": "auto-impl/code-review-mobile-rn-hardcoded-button-l-f8069e2c",
       "status": "review",
       "claimed_at": "2026-11-20T20:27:30Z",
-      "last_updated": "2026-11-21T08:43:19Z",
+      "last_updated": "2026-11-21T12:36:33Z",
       "status_changed_at": "2026-11-20T22:25:11Z",
       "pr_number": 3677,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3677",
@@ -20,14 +20,14 @@
       "rebase_attempts": 2,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-11-21T06:34:06Z"
+      "merge_attempted_at": "2026-11-21T12:36:33Z"
     },
     {
       "task_id": "code-review-mobile-rn-raw-status-untranslated",
       "branch": "auto-impl/code-review-mobile-rn-raw-status-untrans-0178def7",
       "status": "review",
       "claimed_at": "2026-11-20T20:27:30Z",
-      "last_updated": "2026-11-21T08:43:19Z",
+      "last_updated": "2026-11-21T12:36:33Z",
       "status_changed_at": "2026-11-20T22:25:11Z",
       "pr_number": 3676,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3676",
@@ -42,7 +42,7 @@
       "rebase_attempts": 1,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": "2026-11-21T06:34:06Z"
+      "merge_attempted_at": "2026-11-21T12:36:33Z"
     },
     {
       "task_id": "code-review-ppt-web-core-ws-notifications-token-in-url-retry1",
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-21T12:33:50Z"
+  "generated": "2026-11-21T12:42:35Z"
 }
