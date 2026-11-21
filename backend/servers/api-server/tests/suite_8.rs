@@ -11,6 +11,8 @@ mod common;
 mod finance_r4_authz_tests;
 #[path = "suites/mobile_config_route_tests.rs"]
 mod mobile_config_route_tests;
+#[path = "suites/moderation_assign_cross_org_idor_tests.rs"]
+mod moderation_assign_cross_org_idor_tests;
 #[path = "suites/platform_r4_authz_tests.rs"]
 mod platform_r4_authz_tests;
 #[path = "suites/reports_export_org_scope_tests.rs"]
@@ -57,6 +59,8 @@ mod voice_oauth_exchange_auth_tests;
 mod voice_oauth_refresh_auth_tests;
 #[path = "suites/voice_oauth_token_encryption_roundtrip_tests.rs"]
 mod voice_oauth_token_encryption_roundtrip_tests;
+#[path = "suites/voice_webhook_signature_before_auth_tests.rs"]
+mod voice_webhook_signature_before_auth_tests;
 #[path = "suites/voting_behaviour_tests.rs"]
 mod voting_behaviour_tests;
 #[path = "suites/voting_happy_path_tests.rs"]

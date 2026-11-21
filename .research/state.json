@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-20T03:06:10Z",
-  "last_run_ms": 0,
-  "last_pr_seen": 3648,
-  "last_issue_seen": 3649,
-  "last_commit_sha": "4768a1c459733b54c9a33f091dae95c3a2141d6e",
+  "last_run_iso": "2026-11-21T03:06:30Z",
+  "last_run_ms": 1500000,
+  "last_pr_seen": 3686,
+  "last_issue_seen": 3666,
+  "last_commit_sha": "eefa6b050b916f9e06278cac53e436d24924eb88",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -63,8 +63,8 @@
       "recent_churn": 869
     },
     "backend/servers/api-server/src/services/push_fanout.rs": {
-      "runs_seen": 4,
-      "last_seen": "2026-11-20",
+      "runs_seen": 5,
+      "last_seen": "2026-11-21",
       "recent_churn": 3038
     },
     "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx": {
@@ -468,8 +468,8 @@
       "recent_churn": 106
     },
     "backend/servers/api-server/src/routes/voice_webhooks.rs": {
-      "runs_seen": 5,
-      "last_seen": "2026-11-20",
+      "runs_seen": 6,
+      "last_seen": "2026-11-21",
       "recent_churn": 3066
     },
     "backend/servers/api-server/tests/suites/voice_oauth_refresh_auth_tests.rs": {
@@ -478,9 +478,9 @@
       "recent_churn": 352
     },
     "backend/servers/api-server/tests/suites/oauth_integration_tests.rs": {
-      "runs_seen": 2,
-      "last_seen": "2026-11-20",
-      "recent_churn": 3427
+      "runs_seen": 3,
+      "last_seen": "2026-11-21",
+      "recent_churn": 3440
     },
     "backend/servers/api-server/src/services/quiet_hours_drain.rs": {
       "runs_seen": 1,
@@ -1512,12 +1512,17 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "dep-update-noise-pr-3668",
+    "dep-update-noise-pr-3636",
+    "code-review-api-core-worker-silent-requeue-drop",
+    "code-review-api-core-fcm-2xx-parse-retry",
+    "code-review-api-core-push-db-err-leak"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-11-20",
-    "api-core": "2026-11-17",
+    "api-core": "2026-11-21",
     "reality-server": "2026-11-16",
     "ppt-web-ui": "2026-11-08",
     "ppt-web-core": "2026-11-04",
@@ -1526,8 +1531,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 124,
-    "vectors_created": 564,
+    "runs": 125,
+    "vectors_created": 567,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1543,20 +1548,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-11-20",
-      "pm-backend": "2026-10-26",
+      "pm-backend": "2026-11-21",
       "pm-frontend": "2026-10-28",
       "pm-qa": "2026-11-09",
       "pm-devops": "2026-11-13",
       "pm-security": "2026-11-16",
       "pm-data": "2026-11-17",
       "pm-integration": "2026-11-19",
-      "pm-scrum-master": "2026-11-20"
+      "pm-scrum-master": "2026-11-21"
     }
   },
   "coverage_cursor": {
-    "next_index": 7
+    "next_index": 8
   }
 }

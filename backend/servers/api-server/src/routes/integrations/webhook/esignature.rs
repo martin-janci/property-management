@@ -12,6 +12,7 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
+use uuid::Uuid;
 
 use common::errors::ErrorResponse;
 use db::models::esignature_provider;
@@ -143,32 +144,16 @@ pub async fn esignature_webhook(
             }
         }
         esignature_provider::HELLOSIGN => {
-            let api_key = std::env::var("HELLOSIGN_API_KEY").unwrap_or_else(|_| String::new());
-            if api_key.is_empty() {
-                tracing::warn!("HELLOSIGN_API_KEY not configured");
-                return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "CONFIG_ERROR",
-                        "Webhook verification not configured",
-                    )),
-                ));
-            }
-
-            let event_time = payload.event_time.as_deref().unwrap_or("");
-            let event_type = payload.event_type.as_deref().unwrap_or("");
-            let event_hash = payload.event_hash.as_deref().unwrap_or("");
-
-            if !verify_hellosign_signature(&api_key, event_time, event_type, event_hash) {
-                tracing::warn!("Invalid HelloSign webhook signature");
-                return Err((
-                    StatusCode::UNAUTHORIZED,
-                    Json(ErrorResponse::new(
-                        "INVALID_SIGNATURE",
-                        "Invalid webhook signature",
-                    )),
-                ));
-            }
+            // HelloSign signature verification is DEFERRED to after the owning
+            // workflow is resolved from the envelope id (see the post-resolution
+            // block below). Unlike DocuSign/Adobe — which MAC the full request
+            // body (envelope id included) and can therefore be verified up front
+            // with an app-global secret — HelloSign's `event_hash` MACs only
+            // `event_time + event_type`. Verifying that with a single global key
+            // proves nothing about which tenant owns the envelope, so the same
+            // tuple is replayable across every tenant (#3666). We instead verify
+            // it against the per-organization HelloSign secret of the resolved
+            // workflow, binding the signature to the owning account.
         }
         _ => {
             tracing::warn!(provider = %provider, "Unknown e-signature provider");
@@ -240,6 +225,46 @@ pub async fn esignature_webhook(
             };
 
             if let Some(wf) = workflow {
+                // Account binding (#3666): verify the HelloSign signature with
+                // the per-ORGANIZATION secret of the resolved workflow, not a
+                // shared app-global key. HelloSign's `event_hash` MACs only
+                // `event_time + event_type` (the envelope id is unsigned), so a
+                // single valid tuple verified under one global key is otherwise
+                // valid for EVERY tenant's workflow of that event type — an
+                // attacker who captures one such tuple from their own HelloSign
+                // account can replay it against any victim org's envelope id and
+                // force that workflow to a terminal state. Verifying against the
+                // owning org's own secret makes a signature valid only for the
+                // account that actually owns the envelope. Fail closed when no
+                // per-tenant secret is configured — never fall back to a shared
+                // key that would reopen the cross-tenant replay. DocuSign/Adobe
+                // already bind the envelope (they MAC the full body), so they
+                // keep their up-front verification above and are skipped here.
+                if provider == esignature_provider::HELLOSIGN {
+                    let event_time = payload.event_time.as_deref().unwrap_or("");
+                    let event_hash = payload.event_hash.as_deref().unwrap_or("");
+                    let verified = hellosign_org_secret(wf.organization_id)
+                        .map(|secret| {
+                            verify_hellosign_signature(&secret, event_time, event_type, event_hash)
+                        })
+                        .unwrap_or(false);
+                    if !verified {
+                        tracing::warn!(
+                            envelope_id = %envelope_id,
+                            organization_id = %wf.organization_id,
+                            "HelloSign webhook signature not valid for the envelope's owning \
+                             account — rejecting (cross-tenant replay guard)"
+                        );
+                        return Err((
+                            StatusCode::UNAUTHORIZED,
+                            Json(ErrorResponse::new(
+                                "INVALID_SIGNATURE",
+                                "Invalid webhook signature",
+                            )),
+                        ));
+                    }
+                }
+
                 // Bind the envelope to the signature-verified provider before
                 // mutating anything. HelloSign's `event_hash` covers only
                 // `event_time + event_type`, so the `envelope_id` in the body
@@ -330,10 +355,58 @@ fn webhook_envelope_is_bound(
         && workflow_provider.eq_ignore_ascii_case(verified_provider)
 }
 
+/// Resolve the per-organization HelloSign webhook secret used to verify an
+/// inbound HelloSign notification for a specific tenant.
+///
+/// HelloSign signs its webhooks with an account API key and does **not** include
+/// the envelope id in the signed material, so verifying every tenant's webhook
+/// with one shared app-global key cannot tell one org's workflow apart from
+/// another's (#3666). Until durable per-connection secret storage lands — the
+/// prerequisite to remounting this surface; the `esignature_workflows` table
+/// itself ships in no migration today (PAP-122) — per-tenant HelloSign secrets
+/// are sourced from the `HELLOSIGN_WEBHOOK_SECRETS` env var: a JSON object
+/// mapping organization id to that org's HelloSign API key, e.g.
+/// `{"<org-uuid>":"<secret>"}`.
+///
+/// Returns `None` when no secret is configured for `organization_id`; the caller
+/// treats that as a hard rejection (fail closed) and never falls back to a
+/// shared key that would reopen the cross-tenant replay.
+fn hellosign_org_secret(organization_id: Uuid) -> Option<String> {
+    let raw = std::env::var("HELLOSIGN_WEBHOOK_SECRETS").ok()?;
+    lookup_hellosign_secret(&raw, organization_id)
+}
+
+/// Pure lookup of a per-organization HelloSign secret from the raw
+/// `HELLOSIGN_WEBHOOK_SECRETS` JSON map. Split out of [`hellosign_org_secret`]
+/// so the account-binding behaviour is unit-testable without touching process
+/// environment. Returns `None` for malformed JSON, a missing org entry, or an
+/// empty secret.
+fn lookup_hellosign_secret(secrets_json: &str, organization_id: Uuid) -> Option<String> {
+    let map: std::collections::HashMap<String, String> = serde_json::from_str(secrets_json).ok()?;
+    map.get(&organization_id.to_string())
+        .filter(|s| !s.is_empty())
+        .cloned()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::webhook_envelope_is_bound;
+    use super::{lookup_hellosign_secret, webhook_envelope_is_bound};
+    use crate::routes::integrations::sync::verify_hellosign_signature;
     use db::models::esignature_provider;
+    use hmac::{Hmac, KeyInit, Mac};
+    use sha2::Sha256;
+    use uuid::Uuid;
+
+    type HmacSha256 = Hmac<Sha256>;
+
+    /// Mint a HelloSign `event_hash` exactly the way HelloSign does: an
+    /// HMAC-SHA256 over `event_time + event_type` keyed by the account API key,
+    /// hex-encoded. Used to prove the cross-tenant account-binding guard.
+    fn mint_hellosign_hash(api_key: &str, event_time: &str, event_type: &str) -> String {
+        let mut mac = HmacSha256::new_from_slice(api_key.as_bytes()).expect("hmac key");
+        mac.update(format!("{}{}", event_time, event_type).as_bytes());
+        hex::encode(mac.finalize().into_bytes())
+    }
 
     #[test]
     fn verified_provider_may_act_on_its_own_workflow() {
@@ -373,5 +446,77 @@ mod tests {
     #[test]
     fn provider_match_is_case_insensitive() {
         assert!(webhook_envelope_is_bound("HelloSign", "env-1", "hellosign"));
+    }
+
+    // ---- #3666: per-account HelloSign secret binding ----
+
+    #[test]
+    fn lookup_returns_the_secret_for_the_requested_org() {
+        let org_a = Uuid::new_v4();
+        let org_b = Uuid::new_v4();
+        let json = format!(r#"{{"{}":"secret-a","{}":"secret-b"}}"#, org_a, org_b);
+        assert_eq!(
+            lookup_hellosign_secret(&json, org_a).as_deref(),
+            Some("secret-a")
+        );
+        assert_eq!(
+            lookup_hellosign_secret(&json, org_b).as_deref(),
+            Some("secret-b")
+        );
+    }
+
+    #[test]
+    fn lookup_is_none_for_unconfigured_org_malformed_json_or_empty_secret() {
+        let org = Uuid::new_v4();
+        let other = Uuid::new_v4();
+        // org has no entry
+        let json = format!(r#"{{"{}":"secret"}}"#, other);
+        assert!(lookup_hellosign_secret(&json, org).is_none());
+        // malformed JSON
+        assert!(lookup_hellosign_secret("not json", org).is_none());
+        // empty secret is treated as unconfigured (fail closed)
+        let empty = format!(r#"{{"{}":""}}"#, org);
+        assert!(lookup_hellosign_secret(&empty, org).is_none());
+    }
+
+    #[test]
+    fn signature_minted_with_tenant_a_key_is_rejected_against_tenant_b_envelope() {
+        // Core regression (#3666): HelloSign MACs only `event_time+event_type`
+        // and omits the envelope id, so a tuple captured from tenant A's own
+        // HelloSign account must NOT verify against a tenant B envelope once we
+        // bind verification to the owning account's per-org secret.
+        let org_a = Uuid::new_v4();
+        let org_b = Uuid::new_v4();
+        let secrets = format!(r#"{{"{}":"key-a","{}":"key-b"}}"#, org_a, org_b);
+
+        let event_time = "1700000000";
+        let event_type = "signature_request_all_signed";
+        // Attacker mints a valid tuple using THEIR account (org A) key.
+        let event_hash = mint_hellosign_hash("key-a", event_time, event_type);
+
+        // Replayed against org A's own envelope: verifies (legitimate path).
+        let secret_a = lookup_hellosign_secret(&secrets, org_a).expect("org a secret");
+        assert!(
+            verify_hellosign_signature(&secret_a, event_time, event_type, &event_hash),
+            "legitimate owner must still verify"
+        );
+
+        // Replayed against victim org B's envelope: the handler resolves org B,
+        // verifies with org B's secret, and the HMAC no longer matches.
+        let secret_b = lookup_hellosign_secret(&secrets, org_b).expect("org b secret");
+        assert!(
+            !verify_hellosign_signature(&secret_b, event_time, event_type, &event_hash),
+            "cross-tenant replay must be rejected under the owning account's key"
+        );
+    }
+
+    #[test]
+    fn unconfigured_org_fails_closed() {
+        // When no per-tenant secret is configured for the resolved org, the
+        // handler gets None and rejects — it must never fall back to a shared
+        // key that would reopen the cross-tenant replay.
+        let org = Uuid::new_v4();
+        let secrets = r#"{}"#;
+        assert!(lookup_hellosign_secret(secrets, org).is_none());
     }
 }

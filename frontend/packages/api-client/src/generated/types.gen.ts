@@ -4328,6 +4328,15 @@ export type ComplianceApiGetAuditLogsData = {
     url: '/api/v1/compliance/audit-logs';
 };
 
+export type ComplianceApiGetAuditLogsErrors = {
+    /**
+     * Bad Request with a plain-text body (legacy `(StatusCode, String)` handlers). The body is a human-readable message, e.g. `limit must not be negative: -1`.
+     */
+    400: string;
+};
+
+export type ComplianceApiGetAuditLogsError = ComplianceApiGetAuditLogsErrors[keyof ComplianceApiGetAuditLogsErrors];
+
 export type ComplianceApiGetAuditLogsResponses = {
     /**
      * Paginated response wrapper

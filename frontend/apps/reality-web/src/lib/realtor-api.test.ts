@@ -13,6 +13,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearSession, setSession } from './auth-token';
 import {
   createListing,
   getListing,
@@ -394,5 +395,51 @@ describe('realtor-api list helpers coerce malformed array fields', () => {
     const res = await getRealtorReviews('r1');
     expect(res.reviews).toEqual(reviews);
     expect(res.total).toBe(1);
+  });
+});
+
+// Regression: authenticated realtor endpoints must carry the form-login bearer
+// token. `request()` relied on `credentials: 'include'` only, which covers the
+// OAuth/SSO cookie flow but NOT the email/password login — that path keeps its
+// JWT in localStorage (`auth-token.ts`) and expects `Authorization: Bearer …`
+// to be attached, exactly as `auth-context.tsx` / `auth-api.ts` do. Without the
+// `getAuthHeader()` merge, every authenticated realtor call (own profile,
+// `my/listings` CRUD) went out anonymously and reality-server rejected it for
+// form-login users.
+describe('realtor-api attaches the form-login bearer token', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    vi.stubGlobal('fetch', fetchMock);
+    setSession({
+      token: 'jwt-abc',
+      user: { id: 'u1', email: 'eva@example.com', name: 'Eva' },
+      // Far-future expiry so getSession() doesn't treat it as stale.
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+  });
+
+  afterEach(() => {
+    clearSession();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('sends Authorization: Bearer on an authenticated request when a session is stored', async () => {
+    await listMyListings();
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer jwt-abc');
+    // Defaults are still present and not clobbered by the auth merge.
+    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+    expect(init.credentials).toBe('include');
+  });
+
+  it('keeps the bearer token on write mutations (createListing)', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 201, json: async () => ({ id: 'l1' }) });
+    await createListing(DRAFT);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer jwt-abc');
+    expect(init.method).toBe('POST');
   });
 });

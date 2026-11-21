@@ -14,6 +14,7 @@
  * correct query roots via `onEntityEvent`.
  */
 
+import { inboxKeys, notificationTriggerKeys } from '@ppt/api-client';
 import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { categoryToQueryKeys, eventToQueryKeys, WebSocketProvider } from './WebSocketContext';
@@ -104,17 +105,20 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     expect(queryKeys).toEqual(['messages']);
   });
 
-  it('invalidates the notifications root on a preference.updated frame', () => {
+  it('invalidates the live notification-triggers root on a preference.updated frame', () => {
     const onEntityEvent = vi.fn();
     const socket = mountProvider(onEntityEvent);
 
     socket.simulateServerEvent('preference.updated', { channel: 'push', enabled: false });
 
     expect(onEntityEvent).toHaveBeenCalledTimes(1);
-    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications']);
+    // Must be the live api-client root `notification-triggers`
+    // (`notificationTriggerKeys.all`), NOT the dead `notifications` factory root.
+    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notification-triggers']);
+    expect(onEntityEvent.mock.calls[0][1]).toEqual([...notificationTriggerKeys.all]);
   });
 
-  it('routes notification.created by payload.category to the notifications + entity roots', () => {
+  it('routes notification.created by payload.category to the inbox + entity roots', () => {
     const onEntityEvent = vi.fn();
     const socket = mountProvider(onEntityEvent);
 
@@ -127,17 +131,17 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     expect(onEntityEvent).toHaveBeenCalledTimes(1);
     const [eventType, queryKeys] = onEntityEvent.mock.calls[0];
     expect(eventType).toBe('notification.created');
-    expect(queryKeys).toEqual(['notifications', ...categoryToQueryKeys.faults]);
+    expect(queryKeys).toEqual(['notification-inbox', ...categoryToQueryKeys.faults]);
   });
 
-  it('falls back to the notifications root for an unknown notification category', () => {
+  it('falls back to the inbox root for an unknown notification category', () => {
     const onEntityEvent = vi.fn();
     const socket = mountProvider(onEntityEvent);
 
     socket.simulateServerEvent('notification.created', { category: 'not_a_real_category' });
 
     expect(onEntityEvent).toHaveBeenCalledTimes(1);
-    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications']);
+    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notification-inbox']);
   });
 
   // Regression: `categoryToQueryKeys` originally omitted the `community` and
@@ -154,7 +158,7 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     expect(onEntityEvent).toHaveBeenCalledTimes(1);
     const [eventType, queryKeys] = onEntityEvent.mock.calls[0];
     expect(eventType).toBe('notification.created');
-    expect(queryKeys).toEqual(['notifications', 'community']);
+    expect(queryKeys).toEqual(['notification-inbox', 'community']);
   });
 
   it('invalidates the system root on a notification.created system frame', () => {
@@ -164,7 +168,7 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     socket.simulateServerEvent('notification.created', { category: 'system' });
 
     expect(onEntityEvent).toHaveBeenCalledTimes(1);
-    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notifications', 'system']);
+    expect(onEntityEvent.mock.calls[0][1]).toEqual(['notification-inbox', 'system']);
   });
 
   // Regression (#votes-dead-invalidation): the `votes` category used to map to
@@ -183,8 +187,36 @@ describe('WebSocketContext — realtime event → query-key mapping', () => {
     const [eventType, queryKeys] = onEntityEvent.mock.calls[0];
     expect(eventType).toBe('notification.created');
     // Must be the live api-client root `voting`, NOT the dead `votes` root.
-    expect(queryKeys).toEqual(['notifications', 'voting']);
+    expect(queryKeys).toEqual(['notification-inbox', 'voting']);
     expect(categoryToQueryKeys.votes).toEqual(['voting']);
+  });
+
+  // Regression (#ws-query-invalidation-dead): the base root for the primary
+  // realtime event (`notification.created`) and its `preference.updated` sibling
+  // used to be the legacy local `queryKeys.notifications` factory root
+  // (`['notifications']`). NO live query is keyed under that root — the on-screen
+  // inbox + unread badge use `inboxKeys.all` (`['notification-inbox']`) and the
+  // preference view uses `notificationTriggerKeys.all` (`['notification-triggers']`),
+  // both in `@ppt/api-client`. So every realtime notification invalidated a dead
+  // root and the bell + inbox only refreshed on their 60s poll. The handler must
+  // target the live inbox root so `invalidateQueries({ queryKey: [root] })`
+  // actually prefix-matches the live queries.
+  it('targets the live inbox root (inboxKeys.all), never the dead notifications root', () => {
+    const onEntityEvent = vi.fn();
+    const socket = mountProvider(onEntityEvent);
+
+    socket.simulateServerEvent('notification.created', { category: 'announcements' });
+
+    expect(onEntityEvent).toHaveBeenCalledTimes(1);
+    const base = onEntityEvent.mock.calls[0][1][0];
+    // Bound to the live api-client source of truth.
+    expect(base).toBe(inboxKeys.all[0]);
+    expect(base).toBe('notification-inbox');
+    // The dead legacy root must never be emitted again.
+    expect(onEntityEvent.mock.calls[0][1]).not.toContain('notifications');
+    // The emitted base must prefix-match the live unread-badge query key so a
+    // root-level `invalidateQueries` refetches the NotificationBell count.
+    expect(inboxKeys.unread()[0]).toBe(base);
   });
 
   it('covers every NotificationCategory the api-server can emit', () => {

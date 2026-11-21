@@ -169,7 +169,12 @@
     "submitButtonOffline": "Speichern und später synchronisieren",
     "loadError": "Störungsmeldungen konnten nicht geladen werden",
     "emptyTitle": "Keine Störungsmeldungen gefunden",
-    "emptyText": "Alle Probleme wurden behoben"
+    "emptyText": "Alle Probleme wurden behoben",
+    "addButton": "+ Melden",
+    "filterAll": "Alle",
+    "filterOpen": "Offen",
+    "filterResolved": "Gelost",
+    "assignedTo": "Zugewiesen an:"
   },
   "news": {
     "backToList": "‹ Nachrichten",

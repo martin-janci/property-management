@@ -1,67 +1,63 @@
-# pm-scrum-master
+# pm-scrum-master — 2026-11-21
 
-<sub>Last ran: 2026-11-20</sub>
+<sub>Always-on delivery synthesis for Phase 1.6.</sub>
 
 ## Summary
 
-Sprint spine is fully done (6/6 epics, coverage.json 49/49 done, so no gap-driven stories remain). Delivery this run was a hardening wave: 16 merged code-review/churn PRs, mostly security. The pipeline is the constraint: dispatcher stalled (#3357), KMP/swagger egress unclaimable in cloud (#2652/#2966), and the sprint-status test_hardening_batch still lists open items.
+A big delivery wave: 32 PRs merged (#3650–#3686), with the three structural refactors pm-tech-lead escalated last run — push_fanout/voice_webhooks/oauth_integration_tests splits — all shipped in-window (#3659, #3685, #3686). Accounting MVP trio progressed (#3661 lifecycle + PAY-by-square QR closes #2555 / #2559). Issues #3649 + #3666 closed. Sprint spine (6/6 epics) remains done; delivery stays in continuous-hardening mode.
+
+## Shipped since last run (2026-11-20 → 2026-11-21)
+
+- #3659 — `push_fanout.rs` → `push/` module split (fcm/apns/adapter/worker/config)
+- #3685 — `voice_webhooks.rs` module split (verification + handler + parsers)
+- #3686 — `oauth_integration_tests.rs` split by flow (authorize/token/introspect-revoke/grants)
+- #3669 — reality-server portal auth fix + buyer inquiry threads + notification settings + agency dashboard
+- #3675 — feed delete + tenant application/forms 500 fixes + release 248 quarantined tests
+- #3660 — reality-portal client alignment
+- #3670 — reality-portal Authorization header fix
+- #3661 — accounting-server invoice sent/cancel lifecycle + PAY-by-square QR (closes #2555 / #2559)
+- #3666 — HelloSign webhook replay (issue closed)
+- #3649 — suggestions seed-city for region `de` resolves to Wien (issue closed)
+- Many code-review-* fix PRs across api-core, api-handlers, reality-web, mobile-rn
 
 ## Sprint progress
 
-- Sprint: Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth
-- Epics done: 6 / 6
-
-## Shipped since last run
-
-- #3647 shared per-hop SSRF redirect revalidation guard (reality-server import fetch)
-- #3648 bind HelloSign webhook envelope to verified provider
-- #3646 runtime 401 token refresh for generated API client (ppt-web)
-- #3645 guard SSO error_description decode against URIError
-- #3644 gate raw ErrorBoundary message behind DEV
-- #3643 handle useAgencyBranding fetch error (reality-web)
-- #3642 regression test for cross-tenant rental connection IDOR
-- #3641 remove dead unscoped rental IDOR-footgun repo methods
-- #3640 surface swallowed idempotency commit error
-- #3639 throttle vote reminders to ~5-min minimum
-- #3631 echo clamped limit in compliance audit-log pagination
-- #3630 WidgetSettingsScreen copy routed through i18n (mobile RN)
-- #3628 derive suggestions seed region from request (follow-up bug #3649: region de resolves to Wien)
-- #3632 / #3633 characterization tests for notification role-default JSONB and digest config parsing (churn hotspots)
-- #3638 backfill shipped-story KPI definitions
+- **Sprint:** Hardening & refactor track (post-sprint — Epic 6/7A/8A/10A/10B/9 all done)
+- **Epics done:** 6 of 6 (100%)
+- **Coverage upkeep this run:** epic-82 (iOS SwiftUI) — 5/5 stories done; `last_checked` advanced for all five, no status transitions.
 
 ## Blockers
 
-- **Dispatcher pipeline (#3357)** — 3 approved PRs blocked on non-mechanical conflicts; pipeline fully stalled (owner: `pm-tech-lead`)
-- **KMP/mobile-native backlog items (inquiries-response-contract, create-listing-not-wired, http-client-no-timeout, sso-error-body-unguarded)** — Gradle/KMP builds unavailable in cloud runner (#2652, #2966); claimable only ~9/72 (owner: `pm-devops`)
-- **Dependabot bumps #3634-#3637, #3441, #3635 (gradle wrapper)** — Open and unmerged; gradle/kotlinx bumps cannot be validated in cloud (owner: `pm-devops`)
+- **Dispatcher pipeline #3357** — 3 approved PRs still blocked on non-mechanical conflicts; the 32-PR merge wave did not drain it. Owner: `pm-tech-lead`.
+- **KMP / mobile-native backlog** (CreateListingScreen stub, InquiriesResponse contract, Ktor HttpTimeout, SSO error body) — Gradle/KMP builds unavailable in cloud runner (#2652, #2966); claimable still ≈9/72. Owner: `pm-devops`.
+- **Dependabot cargo-group bump #3668** — open, unmerged; needs rebase against post-split HEAD. Owner: `pm-devops`.
+- **6 open PRs** (#3668 dependabot, #3687/#3688 pm-integration drafts, #3676/#3677 mobile-rn i18n drafts, #3682 search-drainer) — drafts need promotion-or-close decisions. Owner: `pm-scrum-master`.
 
 ## Next actions
 
-- **[high]** Resolve dispatcher stall #3357: rebase or manually resolve the 3 approved conflicting PRs, merging security-flavored ones first — dep: pm-tech-lead — DoD: 3 approved PRs merged or re-queued; #3357 closed
-- **[high]** Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and merge before #3628 follow-up; fix #3649 so region de does not seed Wien — dep: pm-backend — DoD: #3617 merged; #3649 fixed or explicitly scoped
-- **[high]** Unblock KMP and swagger-ui egress in the cloud runner (#2652, #2966) — dep: pm-devops — DoD: KMP backlog items claimable; claimable ratio above buffer threshold
-- **[high]** Sweep violations mutation handlers (moderation.rs/aml_dsa.rs) for the 403-vs-404 cross-tenant contract (assign still returns 403 per #3187) — dep: pm-security — DoD: All violation mutation handlers return 404 cross-tenant; regression tests added
-- **[medium]** Reconcile sprint-status test_hardening_batch (items #480-#487 still marked open, batch in-progress) against GitHub issue state and close or defer — dep: none — DoD: Batch status done, or each open item has a deferral note
-- **[medium]** Triage churn hotspots (oauth_integration_tests.rs, voice_webhooks.rs runs_seen=5, push_fanout.rs runs_seen=4) into refactor or characterization backlog items; carry on #3650 (retry-after draft) and reality-web preview i18n items — dep: pm-tech-lead — DoD: Backlog items created for each hotspot; #3650 out of draft
+1. **[high · pm-backend]** Sweep the new `push/` and `voice_webhooks/` child modules for the RLS-before-verify ordering bug that survived the split — DoD: handler ordering audited; sig-fail + RLS-fail regression tests merged.
+2. **[high · pm-scrum-master]** Promote-or-close the 6 open PRs (#3668 rebase, #3687/#3688 drafts, #3676/#3677 mobile-rn i18n drafts, #3682 search-drainer) within 48h — DoD: each PR merged, closed, or has a dated owner + plan.
+3. **[high · pm-tech-lead]** Resolve dispatcher stall #3357 — same blockers as last run; the merge wave did not drain it — DoD: #3357 closed with the 3 blocked PRs merged/reassigned and an escalation path documented.
+4. **[high · pm-devops]** Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — DoD: cloud runner builds mobile-native/api-server; claimable backlog rebalances.
+5. **[medium · pm-tech-lead]** Reset sprint-status.yaml — current sprint goal is fully "done"; next sprint goal should explicitly name the hardening/refactor track (new modules under watch, release-248 quarantine burn-down, mobile-native backlog) — DoD: sprint-status.yaml has a current sprint name, goal, and in-progress items.
 
 ## Risks
 
-- **high/high** — Dispatcher stall (#3357) leaves approved PRs unmerged and review debt growing (stalled-review #3380 8d)  _mitigation:_ Manual conflict resolution; prioritize security PRs
-- **high/medium** — Cloud runner cannot build KMP or fetch swagger-ui, so mobile-native and some backend security work is unclaimable  _mitigation:_ Fix egress (#2652/#2966) or route such items to a local/self-hosted runner
-- **medium/medium** — Persistent churn hotspots (voice_webhooks.rs 5 runs, push_fanout.rs 4 runs) signal unstable design and rework  _mitigation:_ Dedicated refactor plus characterization tests before further feature edits
-- **medium/high** — Open cross-tenant 403-vs-404 inconsistency and IDOR-class patterns recurring (rental IDOR needed both test and dead-code removal)  _mitigation:_ Pattern audit across repos; add cross-tenant regression tests per route
-- **medium/low** — 6 open dependency bumps pile up (npm 25 updates, cargo 5, gradle wrapper, kotlinx-serialization) and may conflict with each other  _mitigation:_ Merge npm/cargo bumps after CI green; batch gradle bumps when KMP CI is available
+1. **[med/high]** Post-split modules (`push/`, `voice_webhooks/`, `oauth_integration_tests/`) are unproven under the next feature PR; a mechanical refactor + 32 landing PRs in one window is a lot of surface that hasn't been exercised end-to-end.  _Mitigation:_ freeze feature PRs on the new modules until a green integration run on `origin/dev` confirms no behavioural drift.
+2. **[high/high]** Dispatcher stall #3357 persists across merge windows — the pipeline cannot absorb non-mechanical conflicts and will eventually deadlock on any hot-file cluster.  _Mitigation:_ define a conflict-escalation policy with a human-in-the-loop path within 48h.
+3. **[med/med]** Open-PR drift (6 PRs incl. 4 drafts, 1 dependabot) + release-248 quarantine create accumulating review debt.  _Mitigation:_ promote-or-close sweep in 48h; quarantine-aging policy.
+4. **[high/med]** Mobile-native backlog items (4 open) are compiled-but-dead stubs — cloud runner cannot catch them because KMP builds are blocked (#2652).  _Mitigation:_ pair every mobile-native backlog item with a contract test running on `jvmTest`; prioritize #2652 fix.
+5. **[med/med]** 32 merged PRs in one window overloaded the per-PR reviewer; code-review coverage may have skipped items that would normally be caught.  _Mitigation:_ post-merge review sweep for the 32 PRs (`ppt-review-merged` on 24h window) to backfill findings.
 
 ## Open questions
 
-- Is the sprint goal (Epics 6/7A/8A/10A) still the active sprint, given every epic and coverage story is done? A new sprint definition or a scan for new stories is needed.
-- Which 3 approved PRs are blocked in #3357, and who owns the non-mechanical conflicts?
-- Are test_hardening_batch issues #480/#481/#482/#487 actually closed? Entries at lines 140/170/181 of sprint-status.yaml still read status: open, while story notes say gates are cleared.
-- Should the suggestions seed-city for region de (#3649) map to a German city, or is it a deliberate fallback?
-- Is #3616 ListingSummary slug propagated to OpenAPI and the generated reality-api-client and KMP/iOS clients?
+- Did all three splits (#3659/#3685/#3686) keep test coverage 1:1 or did any test get dropped?
+- Does #3661 fully close #2555 + #2559, and is #2558 still open?
+- Which of the 4 open drafts are ready to promote vs still blocked?
+- Did any of the 32 PRs skip the normal per-PR reviewer because of the merge-wave backlog?
 
 ## Decisions needed
 
-- Define the next sprint and goal, since coverage is 49/49 done and the current sprint is complete — owner: pm-product
-- Fund or approve runner egress changes for KMP and swagger-ui (#2652/#2966) versus deferring the mobile-native backlog — owner: pm-devops
-- Order of merge for listings.rs PRs (#3617 before #3628 follow-up) — owner: pm-tech-lead
+- Promote-or-close policy for drafts open >72h — owner: pm-scrum-master
+- Reviewer-slot allocation for large-scope PRs (accounting MVP learning) — owner: pm-tech-lead
+- Reset sprint-status.yaml with the next hardening-track sprint — owner: pm-tech-lead

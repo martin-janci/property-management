@@ -89,3 +89,18 @@ model InternalServerError {
   @statusCode statusCode: 500;
   @body body: ErrorResponse;
 }
+
+// Some legacy handlers return `(StatusCode, String)` (axum) rather than the
+// JSON `ErrorResponse` envelope, so their 400 body is a plain-text,
+// human-readable message with `Content-Type: text/plain`. This model documents
+// that existing shape as-is; new handlers should prefer `BadRequestError`
+// (JSON envelope). Converging the legacy plain-text handlers onto the envelope
+// is a separate, breaking change tracked outside this contract fix.
+@error
+@doc("Bad Request with a plain-text body (legacy `(StatusCode, String)` handlers). The body is a human-readable message, e.g. `limit must not be negative: -1`.")
+model PlainTextBadRequestError {
+  @statusCode statusCode: 400;
+
+  @doc("Human-readable error message, e.g. `offset must not be negative: -5`.")
+  @body body: string;
+}

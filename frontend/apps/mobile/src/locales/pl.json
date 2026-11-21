@@ -169,7 +169,12 @@
     "submitButtonOffline": "Zapisz i zsynchronizuj później",
     "loadError": "Nie można załadować usterek",
     "emptyTitle": "Nie znaleziono usterek",
-    "emptyText": "Wszystkie problemy zostały rozwiązane"
+    "emptyText": "Wszystkie problemy zostały rozwiązane",
+    "addButton": "+ Zglos",
+    "filterAll": "Wszystkie",
+    "filterOpen": "Otwarte",
+    "filterResolved": "Rozwiazane",
+    "assignedTo": "Przypisane do:"
   },
   "news": {
     "backToList": "‹ Aktualnosci",

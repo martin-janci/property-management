@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Property Management API
-  version: 0.0.0
+  version: 0.3.218
 tags:
   - name: Authentication
   - name: Organizations
@@ -2191,7 +2191,14 @@ paths:
   /api/v1/compliance/audit-logs:
     get:
       operationId: ComplianceApi_getAuditLogs
-      description: Get audit logs (admin)
+      description: |-
+        Get audit logs (admin).
+
+        Pagination (`limit`/`offset`) maps straight onto SQL `LIMIT`/`OFFSET`, which
+        PostgreSQL rejects when negative. The handler validates this up front and
+        returns `400 Bad Request` with a plain-text body (e.g.
+        `limit must not be negative: -1`) rather than letting the bad value surface
+        as a 500. An unrecognised `action` filter is rejected the same way.
       parameters:
         - name: Authorization
           in: header
@@ -2258,6 +2265,12 @@ paths:
                       - $ref: '#/components/schemas/Shared.PaginationMeta'
                     description: Pagination metadata
                 description: Paginated response wrapper
+        '400':
+          description: 'Bad Request with a plain-text body (legacy `(StatusCode, String)` handlers). The body is a human-readable message, e.g. `limit must not be negative: -1`.'
+          content:
+            text/plain:
+              schema:
+                type: string
       tags:
         - Compliance & GDPR
   /api/v1/compliance/consents:

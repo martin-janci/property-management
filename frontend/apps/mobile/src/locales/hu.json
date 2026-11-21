@@ -169,7 +169,12 @@
     "submitButtonOffline": "Mentés és szinkronizálás később",
     "loadError": "A hibabejelentések nem tölthetők be",
     "emptyTitle": "Nem található hibabejelentés",
-    "emptyText": "Minden probléma megoldva"
+    "emptyText": "Minden probléma megoldva",
+    "addButton": "+ Jelentes",
+    "filterAll": "Osszes",
+    "filterOpen": "Nyitott",
+    "filterResolved": "Megoldva",
+    "assignedTo": "Hozzarendelve:"
   },
   "news": {
     "backToList": "‹ Hirek",

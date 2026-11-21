@@ -62,6 +62,12 @@ export interface ListingAgent {
 export interface ListingSummary {
   id: string;
   title: string;
+  /**
+   * SEO-friendly URL slug, `{slugified-title}-{uuid}` (#3616). Always populated
+   * by reality-server. The trailing UUID is the authoritative detail-lookup
+   * identifier — use this value to build the listing detail route / fetch the
+   * detail (a bare UUID is also accepted for backward-compatible deep links).
+   */
   slug: string;
   propertyType: PropertyType;
   transactionType: TransactionType;

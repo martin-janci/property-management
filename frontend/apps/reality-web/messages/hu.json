@@ -1554,5 +1554,11 @@
     "errorCreateListing": "A hirdetés létrehozása nem sikerült. Kérjük, próbálja újra.",
     "errorMissingListingId": "Hiányzik a hirdetés azonosítója.",
     "errorLoadAnalytics": "Az elemzések betöltése sikertelen."
+  },
+  "states": {
+    "loading": "Betöltés…",
+    "errorTitle": "Valami elromlott",
+    "errorDescription": "Kérjük, próbálja újra. Ha a probléma továbbra is fennáll, forduljon az ügyfélszolgálathoz.",
+    "retry": "Újrapróbálás"
   }
 }

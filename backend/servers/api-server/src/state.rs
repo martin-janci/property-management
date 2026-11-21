@@ -450,6 +450,14 @@ pub struct AppState {
     /// (`ConsumeOutcome::Consumed` / `Rejected → 400 INVALID_STATE`) can be
     /// exercised at the handler level without a live Redis daemon.
     pub oauth_state_store: Option<crate::routes::integrations::oauth_state::OAuthStateStore>,
+    /// Test-only in-memory e-signature webhook dedupe store.
+    ///
+    /// `None` in production, where inbound-webhook replay dedupe runs against
+    /// Redis (`redis_client`, atomic `SET NX`). Installed by tests via
+    /// [`AppState::with_webhook_dedupe_store`] so the handler's replay-skip
+    /// branch (duplicate delivery → 200 ack, no side effects) can be exercised
+    /// without a live Redis daemon.
+    pub webhook_dedupe_store: Option<crate::routes::signatures_webhook_dedupe::WebhookDedupeStore>,
     // Epic 103: S3 Storage Service
     pub storage_service: Option<StorageService>,
     /// Epic 18 / Story 18.2 (#1687): provider-agnostic guest ID-document OCR
@@ -790,6 +798,10 @@ impl AppState {
             // Issue #2203: test-only OAuth state store (None in prod; Redis is
             // authoritative). Installed by tests via `with_oauth_state_store`.
             oauth_state_store: None,
+            // Test-only e-signature webhook dedupe store (None in prod; Redis
+            // `SET NX` is authoritative). Installed by tests via
+            // `with_webhook_dedupe_store`.
+            webhook_dedupe_store: None,
             // Epic 103: S3 Storage Service
             storage_service: None,
             // Story 18.2 (#1687): default guest ID-document OCR = not-configured
@@ -866,6 +878,25 @@ impl AppState {
     ) {
         let store = crate::routes::integrations::oauth_state::OAuthStateStore::new();
         self.oauth_state_store = Some(store.clone());
+        (self, store)
+    }
+
+    /// Install a test-only in-memory e-signature webhook dedupe store and return
+    /// its handle.
+    ///
+    /// Test-only: lets a CI integration test drive the inbound-webhook replay
+    /// path (`DedupeOutcome::FirstDelivery` on the first delivery of an event,
+    /// `Duplicate` on a replay) at the handler level without a live Redis. The
+    /// returned handle shares the same backing set as the one stored on the
+    /// state. `None` in production, where Redis `SET NX` is authoritative.
+    pub fn with_webhook_dedupe_store(
+        mut self,
+    ) -> (
+        Self,
+        crate::routes::signatures_webhook_dedupe::WebhookDedupeStore,
+    ) {
+        let store = crate::routes::signatures_webhook_dedupe::WebhookDedupeStore::new();
+        self.webhook_dedupe_store = Some(store.clone());
         (self, store)
     }
 

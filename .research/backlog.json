@@ -16517,7 +16517,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commits 2026-11-18..19 (listings.rs 2 touches, 201 line churn)"
       ],
@@ -16529,7 +16529,12 @@
       ],
       "created_at": "2026-11-19",
       "updated_at": "2026-11-19",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-21T00:26:30Z",
+        "assignment_status": "merged",
+        "pr_number": 3673
+      }
     },
     {
       "id": "code-review-reality-web-branding-query-unhandled-error",
@@ -16612,21 +16617,24 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commits 2026-11-19..20 (16 merged PRs window)",
-        "state.hotspot_history"
+        "state.hotspot_history",
+        "PR #3686",
+        "PR #3686 (voice_webhooks mod split)"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs — 3066 LoC churn this run (top-3 hotspot), hotspot_history.runs_seen 4 → 5 (prev last_seen 2026-09-20)",
         "pm-tech-lead 2026-11-20: 'Split routes/voice_webhooks.rs (3066 LoC, churned in 5 runs) into signature verification, an idempotent event handler and provider-specific parsers. Move business logic into services/.' — architectural pressure confirmed",
-        "Security-adjacent surface (webhook signature verification, replay) makes large-file edits high-review-cost"
+        "Security-adjacent surface (webhook signature verification, replay) makes large-file edits high-review-cost",
+        "resolved: backend/servers/api-server/src/routes/voice_webhooks.rs deleted this run (PR #3653 + PR #3686). Replaced by voice_webhooks/{mod,signature,parsers,oauth,handlers,verify}.rs — no file to churn. Evidence-gone (file deleted); PR body filename match."
       ],
       "files": [
         "backend/servers/api-server/src/routes/voice_webhooks.rs"
       ],
       "created_at": "2026-11-20",
-      "updated_at": "2026-11-20",
+      "updated_at": "2026-11-21",
       "plan": null
     },
     {
@@ -16635,7 +16643,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "dropped",
       "sources": [
         "commits 2026-11-19..20 (16 merged PRs window)",
         "state.hotspot_history"
@@ -16649,7 +16657,12 @@
       ],
       "created_at": "2026-11-20",
       "updated_at": "2026-11-20",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-21T02:23:44Z",
+        "assignment_status": "failed",
+        "pr_number": null
+      }
     },
     {
       "id": "repeated-churn-backend-servers-api-server-tests-suites-oauth-integration-tests-rs",
@@ -16657,20 +16670,22 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "commits 2026-11-19..20 (16 merged PRs window)",
-        "state.hotspot_history"
+        "state.hotspot_history",
+        "PR #3685"
       ],
       "evidence": [
         "backend/servers/api-server/tests/suites/oauth_integration_tests.rs — 3427 LoC churn this run (top-1 hotspot), hotspot_history.runs_seen 1 → 2 (prev last_seen 2026-08-22). Separate from the older `tests/oauth_integration_tests.rs` row (moved into `tests/suites/` subdir)",
-        "pm-tech-lead 2026-11-20: 'Split oauth_integration_tests.rs (3427 LoC) by flow: authorize, token, introspect/revoke, grants. Extract shared fixtures into a common module.' — heavier OAuth hardening work (#3639, #3640, #3641, #3642) keeps touching this single suite"
+        "pm-tech-lead 2026-11-20: 'Split oauth_integration_tests.rs (3427 LoC) by flow: authorize, token, introspect/revoke, grants. Extract shared fixtures into a common module.' — heavier OAuth hardening work (#3639, #3640, #3641, #3642) keeps touching this single suite",
+        "resolved: oauth_integration_tests.rs reduced to 45 LoC mod shim (PR #3658 split per-flow, PR #3685 further split token.rs into refresh-rotation / grant-validation / provider-security). Parent file no longer a churn hotspot."
       ],
       "files": [
         "backend/servers/api-server/tests/suites/oauth_integration_tests.rs"
       ],
       "created_at": "2026-11-20",
-      "updated_at": "2026-11-20",
+      "updated_at": "2026-11-21",
       "plan": null
     },
     {
@@ -16679,7 +16694,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-11-20 (api-handlers, churn-aligned)"
       ],
@@ -16694,6 +16709,75 @@
       ],
       "created_at": "2026-11-20",
       "updated_at": "2026-11-20",
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-21T02:23:44Z",
+        "assignment_status": "merged",
+        "pr_number": 3683
+      }
+    },
+    {
+      "id": "code-review-api-core-worker-silent-requeue-drop",
+      "title": "push/worker.rs: Retry disposition silently drops job when Redis requeue fails (NOAUTH/LOADING/reset)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push/worker.rs:264-287 — JobDisposition::Retry path drops the job silently when serde_json::to_string(&job) OR redis.queue_push fails. Only tracing::warn! \"job dropped\" fires; no durable backing, no deadletter, no retry-on-publish. This reintroduces the exact silent-loss failure mode the retry mechanism was added to close: a Redis blip during requeue permanently loses a push that just failed its first delivery attempt.",
+        "signal severity: medium; confidence: high"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push/worker.rs"
+      ],
+      "created_at": "2026-11-21",
+      "updated_at": "2026-11-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-fcm-2xx-parse-retry",
+      "title": "push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry — duplicate-delivery risk",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push/fcm.rs:636-660 — send_fcm_v1 treats resp.json::<FcmSendResponse>().await Err(parse_error) as (false, false) regardless of captured status. 2xx with unexpected body → success=false → ProviderOutcome::Failed(PushFailed) → is_transient_push_error → Retry, requeuing a message FCM already accepted. Duplicate-delivery window on parse edge cases (field renames, proxy rewrites, truncated reads).",
+        "signal severity: low; confidence: medium"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push/fcm.rs"
+      ],
+      "created_at": "2026-11-21",
+      "updated_at": "2026-11-21",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-push-db-err-leak",
+      "title": "push/combined.rs + apns.rs leak raw sqlx::Error display into NotificationError::PushFailed",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d)"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push/combined.rs:181-183 — NotificationError::PushFailed(format!(\"DB error fetching tokens: {e}\")) folds raw sqlx::Error display into fanout-worker log payload AND voice_command_history.error_message column. Pattern repeats at apns.rs:392-394. Sibling code (services/voice_oauth.rs::voice_oauth_error_response, services/oauth.rs::OAuthServiceError::DatabaseError) explicitly sanitises {e} — this path does not, risking schema/constraint leakage.",
+        "signal severity: low; confidence: medium"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push/combined.rs",
+        "backend/servers/api-server/src/services/push/apns.rs"
+      ],
+      "created_at": "2026-11-21",
+      "updated_at": "2026-11-21",
       "plan": null
     }
   ]
