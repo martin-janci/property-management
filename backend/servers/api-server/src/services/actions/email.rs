@@ -197,6 +197,36 @@ mod tests {
         );
     }
 
+    /// Regression (code-review: "api core email action stub drops mail").
+    ///
+    /// The executor used to log-and-return-success unconditionally, silently
+    /// dropping the mail and never surfacing a delivery failure. A recipient
+    /// that passes the cheap `contains('@')` guard but is not a valid mailbox
+    /// (`"broken@"`) must now reach the EmailService, fail address parsing, and
+    /// propagate as an `Err` — instead of being reported as a successful send.
+    #[tokio::test]
+    async fn test_email_executor_surfaces_delivery_failure() {
+        let executor = EmailExecutor::new();
+        let config = serde_json::json!({
+            "to": "broken@",
+            "subject": "Test",
+            "body": "Body"
+        });
+
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+
+        let result = executor.execute(&config, &context).await;
+        assert!(
+            result.is_err(),
+            "executor must surface delivery failures, not silently drop the mail"
+        );
+    }
+
     #[tokio::test]
     async fn test_email_executor_invalid_email() {
         let executor = EmailExecutor::new();
