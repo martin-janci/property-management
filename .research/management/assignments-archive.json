@@ -16458,6 +16458,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-reality-web-compare-button-i18n",
+      "branch": "auto-impl/code-review-reality-web-compare-button-i-88aeac19",
+      "status": "failed",
+      "claimed_at": "2026-11-22T12:28:22Z",
+      "last_updated": "2026-11-22T16:43:14Z",
+      "status_changed_at": "2026-11-22T16:43:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked note=no-op: finding already resolved on dev via ab98ecf (dup of comparison-i18n-gap); comparison.button.* keys + regression test present in all 6 locales; no diff/PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
       "branch": "auto-impl/code-review-reality-web-comparison-ctx-u-8c98eb27",
       "status": "failed",
@@ -16592,6 +16614,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-reality-web-comparison-tray-i18n",
+      "branch": "auto-impl/code-review-reality-web-comparison-tray-b48c3887",
+      "status": "failed",
+      "claimed_at": "2026-11-22T12:28:22Z",
+      "last_updated": "2026-11-22T16:43:14Z",
+      "status_changed_at": "2026-11-22T16:43:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked note=no-op: ComparisonTray already i18n on dev via ab98ecf (dup); comparison.tray.* keys in all 6 locales + regression test; no diff/PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-web-comparison-url-unvalidated-cast",
@@ -17240,6 +17284,28 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-web-listing-grid-empty-i18n",
+      "branch": "auto-impl/code-review-reality-web-listing-grid-emp-d025901d",
+      "status": "failed",
+      "claimed_at": "2026-11-22T12:28:22Z",
+      "last_updated": "2026-11-22T16:43:14Z",
+      "status_changed_at": "2026-11-22T16:43:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked note=no-op: ListingGrid empty/error states already i18n on dev via ab98ecf (dup); listings.* keys in all 6 locales + ListingGrid.test.tsx; no diff/PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
       "fix_rounds": 0,
       "merge_attempted_at": null
     },
@@ -33458,5 +33524,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T14:35:13Z"
+  "archived_at": "2026-11-22T16:43:14Z"
 }

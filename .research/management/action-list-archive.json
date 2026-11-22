@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-22T16:35:28Z",
+  "archived_at": "2026-11-22T16:43:14Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -16925,6 +16925,24 @@
       }
     },
     {
+      "id": "code-review-reality-web-compare-button-i18n",
+      "action": "[DUP: resolved by ab98ecf (comparison-i18n-gap); no remaining work] reality web compare button i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-23T10:30:00Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
       "action": "reality web comparison ctx unvalidated parse",
       "owner_role": "pm-backend",
@@ -17067,6 +17085,24 @@
         "commit": "8472a837f25cee6baa22a5f525473d11dddfed28",
         "subject": "code-review-reality-web-comparison-timer-leak: clear comparison auto-hide timers (#3513)",
         "at": "2026-11-14T14:23:51Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-tray-i18n",
+      "action": "[DUP: resolved by ab98ecf (comparison-i18n-gap); no remaining work] reality web comparison tray i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-23T10:30:00Z"
       }
     },
     {
@@ -17708,6 +17744,24 @@
         "merged_pr": 2888,
         "merged_at": "2026-08-30T08:22:43Z",
         "at": "2026-08-30T10:22:34Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-grid-empty-i18n",
+      "action": "[DUP: resolved by ab98ecf (comparison-i18n-gap); no remaining work] reality web listing grid empty i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-web score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-23T10:30:00Z"
       }
     },
     {

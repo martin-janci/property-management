@@ -279,60 +279,6 @@
       }
     },
     {
-      "id": "code-review-reality-web-compare-button-i18n",
-      "action": "reality web compare button i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-23T10:30:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-comparison-tray-i18n",
-      "action": "reality web comparison tray i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-23T10:30:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-listing-grid-empty-i18n",
-      "action": "reality web listing grid empty i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-23T10:30:00Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-summarize-discards-persist-err",
       "action": "api handlers summarize discards persist err",
       "owner_role": "pm-backend",
