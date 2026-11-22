@@ -1853,7 +1853,10 @@
         "cancelConfirm": "Zrušit tuto schůzku? Tuto akci nelze vrátit zpět.",
         "cancelledSuccess": "Schůzka zrušena",
         "cancelledMsg": "Schůzka byla zrušena.",
-        "cancelError": "Schůzku se nepodařilo zrušit"
+        "cancelError": "Schůzku se nepodařilo zrušit",
+        "loadError": "Relace se nepodařilo načíst.",
+        "loadErrorRetry": "Zkusit znovu",
+        "loadErrorRetrying": "Zkouším znovu…"
       },
       "timeline": {
         "icon": {

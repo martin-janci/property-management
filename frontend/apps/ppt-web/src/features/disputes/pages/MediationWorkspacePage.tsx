@@ -77,7 +77,13 @@ export function MediationWorkspacePage({
     refetch: refetchDispute,
     isFetching: disputeFetching,
   } = useDispute(disputeId);
-  const { data: sessions = [], isLoading: sessionsLoading } = useMediationSessions(disputeId);
+  const {
+    data: sessions = [],
+    isLoading: sessionsLoading,
+    isError: sessionsError,
+    isFetching: sessionsFetching,
+    refetch: refetchSessions,
+  } = useMediationSessions(disputeId);
 
   const resolveDispute = useResolveDispute(organizationId);
   const escalateDispute = useEscalateDispute(organizationId);
@@ -377,6 +383,9 @@ export function MediationWorkspacePage({
           <MediationSessionsPanel
             sessions={sessions}
             isLoading={sessionsLoading}
+            isError={sessionsError}
+            onRetry={() => refetchSessions()}
+            isRetrying={sessionsFetching}
             canManage={isActive && canManage}
             onSchedule={() => setSessionDialog(null)}
             onReschedule={(session) => setSessionDialog(session)}

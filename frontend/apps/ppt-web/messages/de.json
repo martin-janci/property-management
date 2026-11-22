@@ -1823,7 +1823,10 @@
         "cancelConfirm": "Diese Sitzung absagen? Dies kann nicht rückgängig gemacht werden.",
         "cancelledSuccess": "Sitzung abgesagt",
         "cancelledMsg": "Die Sitzung wurde abgesagt.",
-        "cancelError": "Sitzung konnte nicht abgesagt werden"
+        "cancelError": "Sitzung konnte nicht abgesagt werden",
+        "loadError": "Sitzungen konnten nicht geladen werden.",
+        "loadErrorRetry": "Erneut versuchen",
+        "loadErrorRetrying": "Wird wiederholt…"
       },
       "timeline": {
         "icon": {

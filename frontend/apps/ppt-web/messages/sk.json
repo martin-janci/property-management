@@ -1853,7 +1853,10 @@
         "cancelConfirm": "Zrušiť toto stretnutie? Túto akciu nie je možné vrátiť.",
         "cancelledSuccess": "Stretnutie zrušené",
         "cancelledMsg": "Stretnutie bolo zrušené.",
-        "cancelError": "Stretnutie sa nepodarilo zrušiť"
+        "cancelError": "Stretnutie sa nepodarilo zrušiť",
+        "loadError": "Reláce sa nepodarilo načítať.",
+        "loadErrorRetry": "Skúsiť znova",
+        "loadErrorRetrying": "Skúšam znova…"
       },
       "timeline": {
         "icon": {
