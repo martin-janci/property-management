@@ -6696,6 +6696,30 @@
       "merge_attempted_at": "2026-08-30T02:34:32Z"
     },
     {
+      "task_id": "code-review-api-handlers-upload-folderid-parse-swallow",
+      "branch": "auto-impl/code-review-api-handlers-upload-folderid-0e5254ee",
+      "status": "merged",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-11-22T18:36:18Z",
+      "last_updated": "2026-11-22T20:48:24Z",
+      "status_changed_at": "2026-11-22T20:48:24Z",
+      "pr_number": 3729,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3729",
+      "merged_at": "2026-11-22T20:45:43Z",
+      "last_reviewed_oid": "22ee95a84e1ecb909dfefcf8afdf38f0862492d6",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": "2026-11-22T20:43:43Z",
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": "pr=3729 status=partial->review specialist=rust-backend scope_drift=false code_reuse_warn=none note=folder_id parse-swallow fix+regression test; fmt+clippy green, IG3 proven vs local PG; full suite stalled on cargo-lock, draft opened, backend.yml CI authoritative (dispatcher resumed push+PR)",
+      "reviewer_summary": "verdict=approve head_oid=22ee95a84e1ecb909dfefcf8afdf38f0862492d6 note=clean-folderid-400-fix-ci-green"
+    },
+    {
       "task_id": "code-review-api-handlers-user-audit-logs-total-page-len",
       "branch": "auto-impl/code-review-api-handlers-user-audit-logs-f1685d11",
       "status": "merged",
@@ -15897,6 +15921,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-sso-sessions-unbounded-map",
+      "branch": "auto-impl/code-review-reality-server-sso-sessions-d9c28f4c",
+      "status": "merged",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-11-22T18:36:18Z",
+      "last_updated": "2026-11-22T20:48:24Z",
+      "status_changed_at": "2026-11-22T20:48:24Z",
+      "pr_number": 3730,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3730",
+      "merged_at": "2026-11-22T20:45:28Z",
+      "last_reviewed_oid": "23992c507fe8b9c49ccf52a88c6bfadacd5d81d4",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": "2026-11-22T20:43:43Z",
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": "pr=3730 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=capacity cap (MAX=50k) + oldest-first evict after TTL sweep on reality-server sso_sessions map; fmt+clippy+194 unit tests (4 new) green; 3 pre-existing sqlx::test integ tests need CI Postgres; draft PR",
+      "reviewer_summary": "verdict=approve head_oid=23992c507fe8b9c49ccf52a88c6bfadacd5d81d4 note=sso-session-capacity-cap-correct-ci-green-approved"
     },
     {
       "task_id": "code-review-reality-server-ssrf-ipv4-mapped-ipv6",
@@ -32640,6 +32688,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "screen-map-drift-pr-3700-ppt",
+      "branch": "auto-impl/screen-map-drift-pr-3700-ppt-da3b5ba3",
+      "status": "merged",
+      "specialist": "react-web",
+      "claimed_at": "2026-11-22T18:36:18Z",
+      "last_updated": "2026-11-22T20:48:24Z",
+      "status_changed_at": "2026-11-22T20:48:24Z",
+      "pr_number": 3728,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3728",
+      "merged_at": "2026-11-22T20:47:53Z",
+      "last_reviewed_oid": "fdcc70c109ed010781a671ea20b772104aecca9d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": "2026-11-22T20:43:43Z",
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": "pr=3728 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=reconciled docs/screens/ppt/lease-create.md with PR #3700 picker states; /screens validate 174 maps 0 err; docs-only",
+      "reviewer_summary": "verdict=approve head_oid=fdcc70c109ed010781a671ea20b772104aecca9d note=docs-only-screen-map-reconcile-validate-clean"
+    },
+    {
       "task_id": "sec-ammonia-supply-chain-audit-2026-07-23",
       "branch": "auto-impl/sec-ammonia-supply-chain-audit-2026-07-2-2c2292ea",
       "status": "failed",
@@ -33638,5 +33710,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T18:47:20Z"
+  "archived_at": "2026-11-22T20:48:43Z"
 }

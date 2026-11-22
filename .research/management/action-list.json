@@ -322,40 +322,6 @@
       "first_open_at": "2026-11-21T03:06:10Z"
     },
     {
-      "id": "code-review-api-core-worker-silent-requeue-drop",
-      "action": "push/worker.rs: Retry disposition silently drops job when Redis requeue fails (NOAUTH/LOADING/reset)",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-21T18:26:24Z (score=2 conf=high vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-21T18:26:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "code-review-api-core-fcm-2xx-parse-retry",
-      "action": "push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry — duplicate-delivery risk",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-21T18:26:24Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-21T18:26:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "code-review-api-core-push-db-err-leak",
       "action": "push/combined.rs + apns.rs leak raw sqlx::Error display into NotificationError::PushFailed",
       "owner_role": "pm-security",
@@ -840,6 +806,250 @@
         "plan": null,
         "score": 1,
         "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n-retry1",
+      "action": "ppt web ui editfaultpage no i18n [retry 1/2 of failed code-review-ppt-web-ui-editfaultpage-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-22T20:26:41Z (retry_of=code-review-ppt-web-ui-editfaultpage-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-15T14:38:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "retry_of": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-core-route-toasts-i18n-gap-retry1",
+      "action": "ppt web core route toasts i18n gap [retry 1/2 of failed code-review-ppt-web-core-route-toasts-i18n-gap]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-22T20:26:41Z (retry_of=code-review-ppt-web-core-route-toasts-i18n-gap reason=failed-no-pr cooldown_ok newest_failure=2026-11-15T14:39:47Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "retry_of": "code-review-ppt-web-core-route-toasts-i18n-gap",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
+      "action": "ppt web ui registry silent mutation errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T16:40:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
+      "action": "ppt web ui forms feature no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T14:34:41Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-building-detail-no-i18n",
+      "action": "ppt web ui building detail no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-22T14:34:41Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-inproc-ratelimit-not-distributed",
+      "action": "api handlers inproc ratelimit not distributed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-handlers score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-accounting-invoice-form-no-i18n",
+      "action": "ppt web ui accounting invoice form no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-guest-report-submission-no-i18n",
+      "action": "ppt web ui guest report submission no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-native-prompt-flow",
+      "action": "ppt web ui moderation native prompt flow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-no-token-expiry-check",
+      "action": "ppt web core authctx no token expiry check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-21T16:30:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
+      "action": "api handlers voice webhook rlsconn unreachable",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-handlers score=3 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-21T10:30:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rls-release-inconsistent",
+      "action": "api handlers voice webhook rls release inconsistent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-handlers score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-21T10:30:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-email-action-stub-drops-mail",
+      "action": "api core email action stub drops mail",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-core score=3 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-21T05:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-notif-action-stub-noop",
+      "action": "api core notif action stub noop",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-core score=3 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-21T05:00:00Z"
       }
     }
   ],
