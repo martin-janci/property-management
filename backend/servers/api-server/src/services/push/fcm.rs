@@ -99,6 +99,38 @@ impl FcmError {
     }
 }
 
+/// Classify an FCM HTTP v1 send result into `(delivered, token_expired)`.
+///
+/// `status_success` is whether the HTTP response status was 2xx. `parsed` is the
+/// body deserialized into [`FcmSendResponse`], or `None` when the body did not
+/// match that shape (serde parse error).
+///
+/// A 2xx status means FCM has already *accepted* the message for delivery, so a
+/// 2xx is treated as delivered even when the body does not parse — reporting it
+/// as a failed attempt makes the fanout worker requeue the job and re-deliver
+/// the push (duplicate). Only a non-2xx response (or a 2xx that parses with an
+/// explicit `error` block) counts as a failed attempt the caller may retry.
+fn classify_fcm_outcome(status_success: bool, parsed: Option<&FcmSendResponse>) -> (bool, bool) {
+    match parsed {
+        Some(resp) => {
+            if status_success && resp.error.is_none() {
+                (true, false)
+            } else {
+                let expired = resp
+                    .error
+                    .as_ref()
+                    .map(|e| e.indicates_stale_token())
+                    .unwrap_or(false);
+                (false, expired)
+            }
+        }
+        // Body did not parse into our shape. A 2xx has already been accepted by
+        // FCM, so retrying would re-deliver the push — treat it as delivered.
+        // A non-2xx unparseable body stays a failed (retryable) attempt.
+        None => (status_success, false),
+    }
+}
+
 // ============================================================================
 // FCM adapter configuration
 // ============================================================================
@@ -635,27 +667,37 @@ impl FcmHttpAdapter {
         let status = resp.status();
         match resp.json::<FcmSendResponse>().await {
             Ok(fcm_resp) => {
-                if status.is_success() && fcm_resp.error.is_none() {
-                    (true, false)
-                } else {
+                let (success, expired) = classify_fcm_outcome(status.is_success(), Some(&fcm_resp));
+                if !success {
                     let err = fcm_resp.error.as_ref();
                     let err_code = err.and_then(|e| e.log_code()).unwrap_or("UNKNOWN");
-                    let expired = err.map(|e| e.indicates_stale_token()).unwrap_or(false);
                     tracing::warn!(
                         fcm_status = %err_code,
                         token_expired = expired,
                         "[8A-3] FCM rejected message"
                     );
-                    (false, expired)
                 }
+                (success, expired)
             }
             Err(e) => {
-                tracing::warn!(
-                    http_status = %status,
-                    error = %e,
-                    "[8A-3] Failed to parse FCM HTTP v1 response"
-                );
-                (false, false)
+                let (success, expired) = classify_fcm_outcome(status.is_success(), None);
+                if success {
+                    // 2xx with a body we can't parse: FCM already accepted the
+                    // message, so retrying would re-deliver it. Treat as
+                    // delivered rather than a failed (retryable) attempt.
+                    tracing::warn!(
+                        http_status = %status,
+                        error = %e,
+                        "[8A-3] FCM returned 2xx with an unparseable body — treating as delivered (no retry)"
+                    );
+                } else {
+                    tracing::warn!(
+                        http_status = %status,
+                        error = %e,
+                        "[8A-3] Failed to parse FCM HTTP v1 response"
+                    );
+                }
+                (success, expired)
             }
         }
     }
@@ -889,6 +931,66 @@ mod tests {
         .to_string();
         let resp: FcmSendResponse = serde_json::from_str(&body).expect("parse FCM success body");
         assert!(resp.error.is_none());
+    }
+
+    // ------------------------------------------------------------------
+    // Outcome classification — a 2xx must never be retried on body-parse
+    // failure (duplicate-delivery guard)
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn classify_2xx_unparseable_body_is_delivered_not_retried() {
+        // FCM returned a 2xx — it has ALREADY accepted the message for
+        // delivery — but the body did not deserialize into FcmSendResponse
+        // (`parsed = None`). Reporting this as a failed attempt makes the
+        // fanout worker requeue the job (PushFailed is retryable), so FCM
+        // delivers the same push a second time. A 2xx must be treated as
+        // delivered regardless of body shape.
+        let (delivered, expired) = classify_fcm_outcome(true, None);
+        assert!(
+            delivered,
+            "a 2xx FCM response with an unparseable body must be treated as delivered (no retry)"
+        );
+        assert!(!expired, "an unparseable 2xx body must not evict the token");
+    }
+
+    #[test]
+    fn classify_non_2xx_unparseable_body_is_failed_attempt() {
+        // A non-2xx response whose body we cannot parse is a genuine failed
+        // attempt the caller may retry (transport / 5xx class). It must NOT be
+        // reported as delivered.
+        let (delivered, expired) = classify_fcm_outcome(false, None);
+        assert!(
+            !delivered,
+            "a non-2xx unparseable response is a failed (retryable) attempt, not delivered"
+        );
+        assert!(!expired);
+    }
+
+    #[test]
+    fn classify_2xx_success_body_is_delivered() {
+        let resp = FcmSendResponse {
+            name: Some("projects/p/messages/1".into()),
+            error: None,
+        };
+        assert_eq!(classify_fcm_outcome(true, Some(&resp)), (true, false));
+    }
+
+    #[test]
+    fn classify_rejection_with_unregistered_marks_stale() {
+        // A non-2xx rejection carrying UNREGISTERED → not delivered, and the
+        // token is flagged for eviction.
+        let resp = FcmSendResponse {
+            name: None,
+            error: Some(FcmError {
+                status: Some("NOT_FOUND".into()),
+                message: None,
+                details: vec![FcmErrorDetail {
+                    error_code: Some("UNREGISTERED".into()),
+                }],
+            }),
+        };
+        assert_eq!(classify_fcm_outcome(false, Some(&resp)), (false, true));
     }
 
     #[test]
