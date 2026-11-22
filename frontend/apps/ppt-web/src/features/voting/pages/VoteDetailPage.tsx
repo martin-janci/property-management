@@ -22,6 +22,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner, useToast } from '../../../components';
+import { usePromptDialog } from '../../../components/usePromptDialog';
 import { BallotQuestion, QuestionResults, QuorumTile, VoteStatusBadge } from '../components';
 import { QUORUM_TYPE_LABEL_KEYS } from '../types';
 
@@ -39,6 +40,7 @@ function formatDateTime(value: string | null, locale: string): string {
 export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
+  const { prompt, promptDialog } = usePromptDialog();
   const { data: vote, isLoading, error } = useVote(voteId);
   const { data: eligibility } = useVoteEligibility(voteId);
   const resultsEnabled = vote?.status === 'active' || vote?.status === 'closed';
@@ -139,8 +141,14 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
     }
   };
 
-  const handleCancel = () => {
-    const reason = window.prompt(t('voting.detail.cancelReasonPrompt'));
+  const handleCancel = async () => {
+    const reason = await prompt({
+      title: t('voting.detail.cancelVote'),
+      message: t('voting.detail.cancelReasonPrompt'),
+      confirmLabel: t('voting.detail.cancelVote'),
+      variant: 'danger',
+      multiline: true,
+    });
     if (!reason) return;
     void runAction(t('voting.detail.cancelDone'), t('voting.detail.cancelFailed'), () =>
       cancelVote.mutateAsync({ reason })
@@ -216,7 +224,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
             <button
               type="button"
               disabled={busy}
-              onClick={handleCancel}
+              onClick={() => void handleCancel()}
               className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
               {t('voting.detail.cancelVote')}
@@ -361,6 +369,7 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
           </button>
         </div>
       </div>
+      {promptDialog}
     </div>
   );
 }

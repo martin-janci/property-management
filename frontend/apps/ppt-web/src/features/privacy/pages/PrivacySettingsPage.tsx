@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { usePromptDialog } from '../../../components/usePromptDialog';
 import { useAuth } from '../../../contexts';
 import { gdprFetch } from '../gdprClient';
 
@@ -24,6 +25,7 @@ interface DataExportRequest {
 export function PrivacySettingsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { prompt, promptDialog } = usePromptDialog();
   const [settings, setSettings] = useState<PrivacySettings | null>(null);
   const [exportRequests, setExportRequests] = useState<DataExportRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +121,14 @@ export function PrivacySettingsPage() {
     // The backend (RequestDataDeletion) requires a `confirmation` string that
     // must match the account email — an empty body always 400s. Ask the user
     // to retype their email as the GDPR-grade confirmation step.
-    const confirmation = window.prompt(t('gdprPrivacy.deletion.confirmPrompt'));
+    const confirmation = await prompt({
+      title: t('gdprPrivacy.deletion.title'),
+      message: t('gdprPrivacy.deletion.confirmPrompt'),
+      confirmLabel: t('gdprPrivacy.deletion.request'),
+      variant: 'danger',
+      placeholder: user?.email ?? undefined,
+      inputLabel: t('gdprPrivacy.deletion.title'),
+    });
     if (!confirmation) {
       return;
     }
@@ -146,7 +155,7 @@ export function PrivacySettingsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : t('gdprPrivacy.deletion.requestFailed'));
     }
-  }, [user, t]);
+  }, [user, t, prompt]);
 
   if (loading) {
     return <div className="privacy-loading">{t('gdprPrivacy.loading')}</div>;
@@ -279,6 +288,7 @@ export function PrivacySettingsPage() {
           {t('gdprPrivacy.deletion.request')}
         </button>
       </section>
+      {promptDialog}
     </div>
   );
 }
