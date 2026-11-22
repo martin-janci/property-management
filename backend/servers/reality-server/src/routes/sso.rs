@@ -1599,6 +1599,101 @@ mod pending_session_prune_tests {
     }
 }
 
+// ============ Pending-session capacity-cap tests ============
+
+#[cfg(test)]
+mod pending_session_capacity_tests {
+    use super::{enforce_pending_sso_session_capacity, PendingSsoSession};
+    use std::collections::HashMap;
+
+    /// Build a session created `age_secs` seconds before `base` so tests can
+    /// order entries by age deterministically.
+    fn session_at(
+        base: chrono::DateTime<chrono::Utc>,
+        age_secs: i64,
+    ) -> PendingSsoSession {
+        PendingSsoSession {
+            code_verifier: "verifier".to_string(),
+            redirect_uri: None,
+            created_at: base - chrono::Duration::seconds(age_secs),
+        }
+    }
+
+    /// Below the cap, the capacity enforcement is a no-op — every live session
+    /// is kept (the TTL sweep is the only thing that removes entries here).
+    #[test]
+    fn under_capacity_keeps_all() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        for i in 0..2 {
+            sessions.insert(format!("s{i}"), session_at(now, i));
+        }
+
+        enforce_pending_sso_session_capacity(&mut sessions, 5);
+
+        assert_eq!(sessions.len(), 2, "below the cap nothing is evicted");
+    }
+
+    /// The core bound: a flood of *still-live* sessions (none TTL-expired) must
+    /// not grow the map past the cap. When the map is at the cap, enforcing it
+    /// leaves room for one more insert (reduces to `max - 1`) by evicting the
+    /// OLDEST entries, so the post-insert size can never exceed `max`.
+    #[test]
+    fn at_capacity_evicts_oldest_to_make_room() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        // 5 live sessions, distinct ages: s0 newest … s4 oldest.
+        for i in 0..5 {
+            sessions.insert(format!("s{i}"), session_at(now, i));
+        }
+
+        enforce_pending_sso_session_capacity(&mut sessions, 5);
+
+        // Reduced to max - 1 = 4 so the caller's next insert lands at <= max.
+        assert_eq!(sessions.len(), 4, "at the cap, make room for one insert");
+        // The single oldest (s4) must be the one evicted; the 4 newest survive.
+        assert!(!sessions.contains_key("s4"), "oldest session is evicted first");
+        for i in 0..4 {
+            assert!(
+                sessions.contains_key(&format!("s{i}")),
+                "newer session s{i} must survive capacity eviction"
+            );
+        }
+    }
+
+    /// Over the cap (e.g. a cap lowered at runtime, or many inserts raced the
+    /// lock) the oldest entries are evicted until `max - 1` remain.
+    #[test]
+    fn over_capacity_trims_to_room_for_one() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        for i in 0..10 {
+            sessions.insert(format!("s{i}"), session_at(now, i));
+        }
+
+        enforce_pending_sso_session_capacity(&mut sessions, 4);
+
+        assert_eq!(sessions.len(), 3, "trimmed to max - 1");
+        // The 3 newest (smallest age) survive: s0, s1, s2.
+        for i in 0..3 {
+            assert!(sessions.contains_key(&format!("s{i}")));
+        }
+        for i in 3..10 {
+            assert!(!sessions.contains_key(&format!("s{i}")));
+        }
+    }
+
+    /// A zero cap clears the map (defensive — no entry may be held).
+    #[test]
+    fn zero_cap_clears() {
+        let now = chrono::Utc::now();
+        let mut sessions = HashMap::new();
+        sessions.insert("s0".to_string(), session_at(now, 0));
+        enforce_pending_sso_session_capacity(&mut sessions, 0);
+        assert!(sessions.is_empty());
+    }
+}
+
 // ============ PM-role derivation security tests (#2249) ============
 
 #[cfg(test)]
