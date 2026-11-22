@@ -102,13 +102,26 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
       showToast({ type: 'error', title: t('voting.detail.selectUnitError') });
       return;
     }
-    const missing = vote.questions.filter((q) => q.is_required && answers[q.id] === undefined);
+    // Ranked questions display a default ordering (the declared option order)
+    // before the voter touches the reorder controls, but that visible default
+    // is only in the input's local view — it was never written into `answers`.
+    // Seed it here so the ballot the voter sees is the ballot that gets POSTed:
+    // without this, accepting the shown ranking either trips the required guard
+    // below (the ballot looks complete yet refuses to submit) or silently omits
+    // the ranking for an optional question.
+    const castAnswers: AnswerMap = { ...answers };
+    for (const q of vote.questions) {
+      if (q.question_type === 'ranked' && castAnswers[q.id] === undefined) {
+        castAnswers[q.id] = q.options.map((o) => o.id);
+      }
+    }
+    const missing = vote.questions.filter((q) => q.is_required && castAnswers[q.id] === undefined);
     if (missing.length > 0) {
       showToast({ type: 'error', title: t('voting.detail.answerRequiredError') });
       return;
     }
     try {
-      await castVote.mutateAsync({ unit_id: effectiveUnit, answers });
+      await castVote.mutateAsync({ unit_id: effectiveUnit, answers: castAnswers });
       showToast({
         type: 'success',
         title: t('voting.detail.ballotSubmittedTitle'),
