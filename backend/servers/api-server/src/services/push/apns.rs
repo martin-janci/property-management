@@ -402,14 +402,18 @@ impl PushTransport for ApnsHttpAdapter {
         let tokens = match self.token_repo.get_tokens_for_user(user_id).await {
             Ok(t) => t,
             Err(e) => {
+                // Keep the raw DB error (which can carry connection-string
+                // host/port/credentials) in the internal log only — never in the
+                // returned error, which is persisted verbatim to the delivery
+                // record via `into_failed(e.to_string())`.
                 tracing::error!(
                     user_id = %user_id,
                     error = %e,
                     "[8A-3] APNs: failed to fetch device tokens"
                 );
-                return Err(NotificationError::PushFailed(format!(
-                    "DB error fetching APNs tokens: {e}"
-                )));
+                return Err(NotificationError::PushFailed(
+                    "failed to fetch device tokens".to_string(),
+                ));
             }
         };
         self.deliver(user_id, &tokens, notification)
