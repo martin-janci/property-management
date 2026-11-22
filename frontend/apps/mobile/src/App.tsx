@@ -338,7 +338,7 @@ function MainApp() {
         />
         <NavButton
           icon="⋯"
-          label="More"
+          label={t('tabs.more')}
           isActive={
             currentScreen === 'More' ||
             currentScreen === 'Messages' ||

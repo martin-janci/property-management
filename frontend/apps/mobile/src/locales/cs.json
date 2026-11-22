@@ -26,7 +26,8 @@
     "faults": "Zavady",
     "news": "Zpravy",
     "vote": "Hlasovani",
-    "docs": "Dokumenty"
+    "docs": "Dokumenty",
+    "more": "Více"
   },
   "auth": {
     "login": "Prihlasit se",
@@ -730,6 +731,27 @@
     },
     "errors": {
       "unknownCommand": "Tomuto příkazu jsem nerozuměl. Zkuste říci „Report a fault“ nebo „Show announcements“."
+    }
+  },
+  "notifications": {
+    "title": "Oznámení",
+    "unreadCount": "{{count}} nepřečtených",
+    "loadError": "Oznámení se nepodařilo načíst",
+    "markAllRead": "Označit vše jako přečtené",
+    "emptyTitle": "Máte vše přečtené",
+    "emptyText": "Nová oznámení se zobrazí zde.",
+    "filters": {
+      "all": "Vše",
+      "fault": "Poruchy",
+      "announcement": "Oznámení",
+      "message": "Zprávy",
+      "vote": "Hlasování",
+      "meter": "Měřiče"
+    },
+    "time": {
+      "minutesAgo": "před {{count}} min",
+      "hoursAgo": "před {{count}} h",
+      "daysAgo": "před {{count}} d"
     }
   }
 }

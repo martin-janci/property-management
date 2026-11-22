@@ -20,6 +20,7 @@
 
 import type { InboxGroupWithNotifications, InboxResponse } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { EmptyState } from '../../components/states';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
@@ -48,13 +49,16 @@ const INBOX_BASE_PATH = '/api/v1/users/me/notification-preferences/granular';
  *  history, matching the previous screen behaviour (it showed read items too). */
 const INBOX_LIST_PATH = `${INBOX_BASE_PATH}/groups?includeRead=true&limit=50`;
 
-const CATEGORY_FILTERS: ReadonlyArray<{ value: 'all' | NotificationCategory; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'fault', label: 'Faults' },
-  { value: 'announcement', label: 'Announcements' },
-  { value: 'message', label: 'Messages' },
-  { value: 'vote', label: 'Voting' },
-  { value: 'meter', label: 'Meters' },
+/** Filter values rendered as chips. The visible label for each is resolved at
+ *  render time via `t('notifications.filters.<value>')` so it tracks the active
+ *  locale rather than the hardcoded English the chips used to carry. */
+const CATEGORY_FILTERS: ReadonlyArray<'all' | NotificationCategory> = [
+  'all',
+  'fault',
+  'announcement',
+  'message',
+  'vote',
+  'meter',
 ];
 
 /** Map a backend notification-group `entityType` onto the UI category enum.
@@ -110,23 +114,32 @@ function categoryIcon(category: NotificationCategory): string {
   }
 }
 
-function formatRelative(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 60) return `${Math.max(minutes, 1)}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return formatDate(iso, { month: 'short', day: 'numeric' });
-}
-
 interface NotificationsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | NotificationCategory>('all');
+
+  // Relative "time ago" label, localized. Lives inside the component so it can
+  // read `t`; absolute dates (>7d) still fall back to the locale-aware
+  // `formatDate` helper.
+  const relativeTime = useCallback(
+    (iso: string): string => {
+      const diffMs = Date.now() - new Date(iso).getTime();
+      const minutes = Math.floor(diffMs / 60_000);
+      if (minutes < 60) {
+        return t('notifications.time.minutesAgo', { count: Math.max(minutes, 1) });
+      }
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return t('notifications.time.hoursAgo', { count: hours });
+      const days = Math.floor(hours / 24);
+      if (days < 7) return t('notifications.time.daysAgo', { count: days });
+      return formatDate(iso, { month: 'short', day: 'numeric' });
+    },
+    [t]
+  );
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<InboxResponse>(
     ['notifications', 'inbox'],
@@ -173,21 +186,23 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Notifications</Text>
-        {unread > 0 && <Text style={s.headerSubtitle}>{unread} unread</Text>}
+        <Text style={s.headerTitle}>{t('notifications.title')}</Text>
+        {unread > 0 && (
+          <Text style={s.headerSubtitle}>{t('notifications.unreadCount', { count: unread })}</Text>
+        )}
       </View>
 
       <View style={s.filtersWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={s.filtersRow}>
-            {CATEGORY_FILTERS.map((option) => (
+            {CATEGORY_FILTERS.map((value) => (
               <Pressable
-                key={option.value}
-                style={[s.filterChip, filter === option.value && s.filterChipActive]}
-                onPress={() => setFilter(option.value)}
+                key={value}
+                style={[s.filterChip, filter === value && s.filterChipActive]}
+                onPress={() => setFilter(value)}
               >
-                <Text style={[s.filterText, filter === option.value && s.filterTextActive]}>
-                  {option.label}
+                <Text style={[s.filterText, filter === value && s.filterTextActive]}>
+                  {t(`notifications.filters.${value}`)}
                 </Text>
               </Pressable>
             ))}
@@ -201,29 +216,29 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
       >
         {isLoading ? (
           <View style={s.emptyState}>
-            <Text style={s.emptyTitle}>Loading…</Text>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
           </View>
         ) : error ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>⚠️</Text>
-            <Text style={s.emptyTitle}>Couldn't load notifications</Text>
+            <Text style={s.emptyTitle}>{t('notifications.loadError')}</Text>
             <Pressable onPress={() => void refetch()} style={styles.markAll}>
-              <Text style={styles.markAllText}>Try again</Text>
+              <Text style={styles.markAllText}>{t('common.tryAgain')}</Text>
             </Pressable>
           </View>
         ) : (
           <>
             {unread > 0 && (
               <Pressable onPress={markAllRead} disabled={markAll.isPending} style={styles.markAll}>
-                <Text style={styles.markAllText}>Mark all as read</Text>
+                <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
               </Pressable>
             )}
 
             {filtered.length === 0 ? (
               <EmptyState
                 icon="🔕"
-                title="You're all caught up"
-                description="New notifications will appear here."
+                title={t('notifications.emptyTitle')}
+                description={t('notifications.emptyText')}
               />
             ) : (
               filtered.map((notification) => (
@@ -237,7 +252,7 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
                     <Text style={[s.cardTitle, { marginLeft: 8 }]} numberOfLines={1}>
                       {notification.title}
                     </Text>
-                    <Text style={s.cardMeta}>{formatRelative(notification.receivedAt)}</Text>
+                    <Text style={s.cardMeta}>{relativeTime(notification.receivedAt)}</Text>
                   </View>
                   <Text style={s.cardBody} numberOfLines={2}>
                     {notification.body}
