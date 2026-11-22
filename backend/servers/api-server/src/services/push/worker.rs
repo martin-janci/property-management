@@ -383,6 +383,32 @@ impl PushFanoutWorker {
     }
 }
 
+/// Run an async fallible operation up to `max_attempts` times, sleeping between
+/// tries, and return the first `Ok` or the final `Err`.
+///
+/// The operation and the inter-attempt sleep are both injected so the
+/// bounded-retry policy is unit-testable without a live Redis (or real
+/// wall-clock sleeps). `sleep` is called with the 1-based number of the attempt
+/// that just failed, and only *between* attempts — never after the last one.
+async fn retry_bounded<T, E, Op, OpFut, Sleep, SleepFut>(
+    max_attempts: u32,
+    mut op: Op,
+    mut _sleep: Sleep,
+) -> Result<T, E>
+where
+    Op: FnMut() -> OpFut,
+    OpFut: std::future::Future<Output = Result<T, E>>,
+    Sleep: FnMut(u32) -> SleepFut,
+    SleepFut: std::future::Future<Output = ()>,
+{
+    // PRE-FIX STUB (models the silent-drop bug): a single attempt, no retry.
+    // The requeue `RPUSH` is tried exactly once and its error is returned
+    // as-is, so a transient Redis failure loses the job. Replaced by the real
+    // bounded-retry loop in the fix commit.
+    let _ = max_attempts;
+    op().await
+}
+
 /// Render the error side of a [`TransportResult`] for logging (`""` on `Ok`).
 fn display_err(result: &TransportResult) -> String {
     result
@@ -547,5 +573,109 @@ mod tests {
         let as_notification: Notification =
             serde_json::from_str(&payload).expect("parse requeued job as notification");
         assert_eq!(as_notification.id, notification.id);
+    }
+
+    // ------------------------------------------------------------------
+    // Bounded requeue-push retry
+    //
+    // Regression (code-review finding): when the Retry disposition's requeue
+    // `RPUSH` *itself* failed (NOAUTH mid-failover, LOADING on a restarting
+    // replica, connection reset), the worker logged a warn and dropped the
+    // job — the push was already BLPOP'd off the list, so it was silently
+    // lost. `retry_bounded` gives the requeue a bounded number of tries and
+    // surfaces the final error instead of swallowing it. These tests inject
+    // the op + sleep so the policy is pinned without a live Redis.
+    // ------------------------------------------------------------------
+
+    /// A first-try success returns `Ok` immediately and never sleeps/retries.
+    #[tokio::test]
+    async fn retry_bounded_returns_ok_without_retrying_on_first_success() {
+        use std::cell::Cell;
+        let calls = Cell::new(0u32);
+        let sleeps = Cell::new(0u32);
+        let r: Result<u64, &str> = retry_bounded(
+            3,
+            || {
+                calls.set(calls.get() + 1);
+                async { Ok(1u64) }
+            },
+            |_attempt| {
+                sleeps.set(sleeps.get() + 1);
+                async {}
+            },
+        )
+        .await;
+        assert_eq!(r, Ok(1));
+        assert_eq!(calls.get(), 1, "a first-try success must not retry");
+        assert_eq!(sleeps.get(), 0, "no sleep when there is nothing to retry");
+    }
+
+    /// A transient failure is retried (not dropped) and a later success is
+    /// returned — this is the core of the fix.
+    #[tokio::test]
+    async fn retry_bounded_retries_until_success() {
+        use std::cell::Cell;
+        let calls = Cell::new(0u32);
+        let sleeps = Cell::new(0u32);
+        // Fails twice (NOAUTH), then the connection recovers on the 3rd try.
+        let r: Result<u64, &str> = retry_bounded(
+            3,
+            || {
+                let n = calls.get() + 1;
+                calls.set(n);
+                async move {
+                    if n < 3 {
+                        Err("NOAUTH")
+                    } else {
+                        Ok(u64::from(n))
+                    }
+                }
+            },
+            |_attempt| {
+                sleeps.set(sleeps.get() + 1);
+                async {}
+            },
+        )
+        .await;
+        assert_eq!(
+            r,
+            Ok(3),
+            "the requeue push must be retried, not dropped on a transient error"
+        );
+        assert_eq!(calls.get(), 3);
+        assert_eq!(sleeps.get(), 2, "one sleep between each of the two retries");
+    }
+
+    /// When every attempt fails (Redis down for the whole tick), the final
+    /// error is surfaced to the caller rather than swallowed, after exactly
+    /// `max_attempts` tries.
+    #[tokio::test]
+    async fn retry_bounded_surfaces_error_after_exhausting_attempts() {
+        use std::cell::Cell;
+        let calls = Cell::new(0u32);
+        let sleeps = Cell::new(0u32);
+        let r: Result<u64, &str> = retry_bounded(
+            3,
+            || {
+                calls.set(calls.get() + 1);
+                async { Err("LOADING") }
+            },
+            |_attempt| {
+                sleeps.set(sleeps.get() + 1);
+                async {}
+            },
+        )
+        .await;
+        assert_eq!(
+            r,
+            Err("LOADING"),
+            "the final error must be surfaced, not silently swallowed"
+        );
+        assert_eq!(calls.get(), 3, "exactly max_attempts tries");
+        assert_eq!(
+            sleeps.get(),
+            2,
+            "sleeps happen only BETWEEN attempts, never after the last"
+        );
     }
 }
