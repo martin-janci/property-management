@@ -1555,3 +1555,80 @@ async fn test_upload_unsupported_type_error_body_lists_formats(pool: PgPool) {
 
     cleanup_test_user(&pool, &user.email).await;
 }
+
+// ============================================================================
+// T16: Malformed folder_id → 400 BAD_REQUEST (regression)
+//
+// Regression for a parse-swallow bug: the upload handler used
+// `text.parse::<Uuid>().ok()`, so a malformed folder_id silently became
+// `None` and the document was created at the org root instead of being
+// rejected. The field must now surface the parse failure as a 400 and
+// create NO document row.
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_malformed_folder_id_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    // Build a multipart body with an otherwise-valid upload but a folder_id
+    // that is not a UUID. `build_multipart` only accepts `Option<Uuid>`, so
+    // the malformed value is injected manually.
+    let boundary = format!("testboundary{}", Uuid::new_v4().simple());
+    let unique_title = format!("Bad Folder Doc {}", Uuid::new_v4().simple());
+    let mut body: Vec<u8> = Vec::new();
+    let file_header = format!(
+        "--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"invoice.pdf\"\r\nContent-Type: application/pdf\r\n\r\n"
+    );
+    body.extend_from_slice(file_header.as_bytes());
+    body.extend_from_slice(FAKE_PDF_BYTES);
+    body.extend_from_slice(b"\r\n");
+    body.extend_from_slice(
+        format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n{unique_title}\r\n\
+             --{boundary}\r\nContent-Disposition: form-data; name=\"category\"\r\n\r\ninvoices\r\n\
+             --{boundary}\r\nContent-Disposition: form-data; name=\"folder_id\"\r\n\r\nnot-a-uuid\r\n\
+             --{boundary}--\r\n"
+        )
+        .as_bytes(),
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={boundary}"),
+        )
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+    assert_eq!(
+        response.status,
+        StatusCode::BAD_REQUEST,
+        "malformed folder_id must be rejected with 400, got {}. Body: {}",
+        response.status,
+        response.text()
+    );
+
+    // The parse failure must be surfaced, not swallowed: no document row.
+    let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM documents WHERE title = $1")
+        .bind(&unique_title)
+        .fetch_one(&pool)
+        .await
+        .expect("count query");
+    assert_eq!(
+        count, 0,
+        "no document must be created when folder_id is malformed"
+    );
+
+    cleanup_test_user(&pool, &user.email).await;
+}
