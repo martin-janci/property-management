@@ -429,20 +429,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-ppt-web-ui-registry-silent-mutation-fail-retry1",
-      "action": "ppt web ui registry silent mutation fail [retry 1/2 of failed code-review-ppt-web-ui-registry-silent-mutation-fail]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-ppt-web-ui-registry-silent-mutation-fail reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T10:40:49Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-21T18:26:24Z",
-      "retry_of": "code-review-ppt-web-ui-registry-silent-mutation-fail",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-ppt-web-ui-registry-page-no-i18n-retry1",
       "action": "ppt web ui registry page no i18n [retry 1/2 of failed code-review-ppt-web-ui-registry-page-no-i18n]",
       "owner_role": "pm-backend",
@@ -626,24 +612,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-22T22:40:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
-      "action": "ppt web ui registry silent mutation errors",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-22T16:40:00Z"
       }
     },
     {

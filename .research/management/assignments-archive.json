@@ -14083,6 +14083,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-registry-silent-mutation-fail-retry1",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-silent-m-285a359c",
+      "status": "failed",
+      "specialist": null,
+      "claimed_at": "2026-11-22T18:36:18Z",
+      "last_updated": "2026-11-22T18:47:20Z",
+      "status_changed_at": "2026-11-22T18:47:20Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": "pr=none status=blocked stale-dup no-op: already-resolved on origin/dev by #3359 (RegistryPage.tsx showToast in 4 catch blocks + RegistryPage.toast.test.tsx verified); dev-reconcile missed it (fix landed under id registry-mutation-reland)",
+      "reviewer_summary": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-rentals-load-error-unhandled",
       "branch": "auto-impl/code-review-ppt-web-ui-rentals-load-erro-f79db5f2",
       "status": "merged",
@@ -33614,5 +33638,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T18:44:18Z"
+  "archived_at": "2026-11-22T18:47:20Z"
 }
