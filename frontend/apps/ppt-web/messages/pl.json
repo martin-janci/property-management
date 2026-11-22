@@ -1853,7 +1853,10 @@
         "cancelConfirm": "Anulować to spotkanie? Tej operacji nie można cofnąć.",
         "cancelledSuccess": "Spotkanie anulowane",
         "cancelledMsg": "Spotkanie zostało anulowane.",
-        "cancelError": "Nie udało się anulować spotkania"
+        "cancelError": "Nie udało się anulować spotkania",
+        "loadError": "Nie udało się wczytać sesji.",
+        "loadErrorRetry": "Spróbuj ponownie",
+        "loadErrorRetrying": "Ponawianie…"
       },
       "timeline": {
         "icon": {

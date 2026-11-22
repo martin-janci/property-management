@@ -1823,7 +1823,10 @@
         "cancelConfirm": "Lemondja ezt az ülést? Ez a művelet nem vonható vissza.",
         "cancelledSuccess": "Ülés lemondva",
         "cancelledMsg": "Az ülés lemondásra került.",
-        "cancelError": "Az ülés lemondása sikertelen"
+        "cancelError": "Az ülés lemondása sikertelen",
+        "loadError": "Az ülések betöltése sikertelen.",
+        "loadErrorRetry": "Újra",
+        "loadErrorRetrying": "Újrapróbálás…"
       },
       "timeline": {
         "icon": {

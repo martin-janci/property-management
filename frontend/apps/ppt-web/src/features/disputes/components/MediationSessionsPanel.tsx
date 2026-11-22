@@ -52,6 +52,11 @@ function sortSessions(sessions: MediationSession[]): MediationSession[] {
 export interface MediationSessionsPanelProps {
   sessions: MediationSession[];
   isLoading: boolean;
+  /** The sessions query failed to load. Surfaces an error state with retry. */
+  isError?: boolean;
+  /** Retry loading the sessions list (wired to the query's refetch). */
+  onRetry?: () => void;
+  isRetrying?: boolean;
   canManage: boolean;
   onSchedule: () => void;
   onReschedule: (session: MediationSession) => void;
@@ -61,6 +66,9 @@ export interface MediationSessionsPanelProps {
 export function MediationSessionsPanel({
   sessions,
   isLoading,
+  isError = false,
+  onRetry,
+  isRetrying = false,
   canManage,
   onSchedule,
   onReschedule,
@@ -99,6 +107,22 @@ export function MediationSessionsPanel({
       {isLoading ? (
         <div className="flex justify-center py-4">
           <Spinner size="sm" />
+        </div>
+      ) : isError ? (
+        <div role="alert" className="py-2 text-center">
+          <p className="text-xs text-red-600">{t('disputes.mediation.sessions.loadError')}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={isRetrying}
+              className="mt-1.5 text-xs font-medium text-violet-700 hover:text-violet-900 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isRetrying
+                ? t('disputes.mediation.sessions.loadErrorRetrying')
+                : t('disputes.mediation.sessions.loadErrorRetry')}
+            </button>
+          )}
         </div>
       ) : ordered.length === 0 ? (
         <p className="text-xs text-gray-400">{t('disputes.mediation.sessions.empty')}</p>

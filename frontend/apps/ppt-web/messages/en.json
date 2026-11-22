@@ -1823,7 +1823,10 @@
         "cancelConfirm": "Cancel this session? This cannot be undone.",
         "cancelledSuccess": "Session cancelled",
         "cancelledMsg": "The session has been cancelled.",
-        "cancelError": "Failed to cancel session"
+        "cancelError": "Failed to cancel session",
+        "loadError": "Could not load sessions.",
+        "loadErrorRetry": "Retry",
+        "loadErrorRetrying": "Retrying…"
       },
       "timeline": {
         "icon": {
