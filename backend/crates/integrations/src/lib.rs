@@ -119,10 +119,10 @@ pub use geocoding::{Coordinates, GeocodingError, GeocodingProvider, GeocodingSer
 // Story 64.1-64.4: LLM Integration
 // Story 97.1-97.4: Enhanced LLM Capabilities
 pub use llm::{
-    token_limits, BatchSentimentResult, ChatCompletionRequest, ChatCompletionResponse, ChatMessage,
-    ContextChunk, EmbeddingResult, EnhancedChatResult, LeaseGenerationInput, LeaseGenerationResult,
-    ListingDescriptionInput, ListingDescriptionResult, LlmClient, LlmConfig, LlmError,
-    SentimentResult, TenantAiConfig, TokenUsage,
+    token_limits, BatchSentimentResult, ChatChoice, ChatCompletionRequest, ChatCompletionResponse,
+    ChatMessage, ContextChunk, EmbeddingResult, EnhancedChatResult, LeaseGenerationInput,
+    LeaseGenerationResult, ListingDescriptionInput, ListingDescriptionResult, LlmClient, LlmConfig,
+    LlmError, SentimentResult, TenantAiConfig, TokenUsage,
 };
 
 // Story 84.5: Embedding provider abstraction for RAG

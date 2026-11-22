@@ -7,8 +7,8 @@
 //! - Announcement draft generation (Story 92.4)
 
 use integrations::{
-    ChatCompletionRequest, ChatMessage, LeaseGenerationInput, LeaseGenerationResult,
-    ListingDescriptionInput, LlmClient, LlmError,
+    ChatCompletionRequest, ChatCompletionResponse, ChatMessage, LeaseGenerationInput,
+    LeaseGenerationResult, ListingDescriptionInput, LlmClient, LlmError,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -34,6 +34,9 @@ pub enum DocumentGenerationError {
 
     #[error("Content extraction failed: {0}")]
     ContentExtractionFailed(String),
+
+    #[error("LLM returned an empty completion")]
+    EmptyCompletion,
 }
 
 /// Lease generation request for Story 92.1.
@@ -528,11 +531,7 @@ KEY POINTS:
             .chat(&self.default_provider, &llm_request)
             .await?;
 
-        let content = response
-            .choices
-            .first()
-            .map(|c| c.message.content.clone())
-            .unwrap_or_default();
+        let content = require_completion_content(&response)?;
 
         // Parse the response
         let (summary, key_points) = self.parse_summary_response(&content);
@@ -699,11 +698,7 @@ TONE: [Brief analysis of the tone used]
             .chat(&self.default_provider, &llm_request)
             .await?;
 
-        let content = response
-            .choices
-            .first()
-            .map(|c| c.message.content.clone())
-            .unwrap_or_default();
+        let content = require_completion_content(&response)?;
 
         let drafts = self.parse_announcement_drafts(&content);
 
@@ -942,6 +937,32 @@ fn truncate_head_tail(content: &str, char_limit: usize) -> String {
         &content[..head_end],
         &content[tail_start..]
     )
+}
+
+/// Extract the completion text from an LLM chat response, treating an empty
+/// `choices` array or blank/whitespace-only content as an explicit error.
+///
+/// A provider can return HTTP 200 with zero choices (content-filter block,
+/// truncated/streamed-away response) or a choice whose content is empty. The
+/// old `choices.first().map(...).unwrap_or_default()` laundered that into an
+/// empty `String`, which was then parsed and returned as a *successful* but
+/// blank document / draft set. Surfacing it as `EmptyCompletion` lets the
+/// request fail loudly (and be retried) instead of silently persisting a blank
+/// document.
+fn require_completion_content(
+    response: &ChatCompletionResponse,
+) -> Result<String, DocumentGenerationError> {
+    let content = response
+        .choices
+        .first()
+        .map(|c| c.message.content.clone())
+        .unwrap_or_default();
+
+    if content.trim().is_empty() {
+        return Err(DocumentGenerationError::EmptyCompletion);
+    }
+
+    Ok(content)
 }
 
 #[cfg(test)]
