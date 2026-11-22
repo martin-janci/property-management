@@ -26,7 +26,8 @@
     "faults": "Storungen",
     "news": "Nachrichten",
     "vote": "Abstimmung",
-    "docs": "Dokumente"
+    "docs": "Dokumente",
+    "more": "Mehr"
   },
   "auth": {
     "login": "Anmelden",
@@ -682,6 +683,27 @@
     },
     "errors": {
       "unknownCommand": "Ich habe diesen Befehl nicht verstanden. Sagen Sie z. B. „Report a fault“ oder „Show announcements“."
+    }
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "unreadCount": "{{count}} ungelesen",
+    "loadError": "Benachrichtigungen konnten nicht geladen werden",
+    "markAllRead": "Alle als gelesen markieren",
+    "emptyTitle": "Alles erledigt",
+    "emptyText": "Neue Benachrichtigungen erscheinen hier.",
+    "filters": {
+      "all": "Alle",
+      "fault": "Störungen",
+      "announcement": "Ankündigungen",
+      "message": "Nachrichten",
+      "vote": "Abstimmungen",
+      "meter": "Zähler"
+    },
+    "time": {
+      "minutesAgo": "vor {{count}} Min",
+      "hoursAgo": "vor {{count}} Std",
+      "daysAgo": "vor {{count}} T"
     }
   }
 }

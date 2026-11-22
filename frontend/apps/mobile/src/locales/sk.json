@@ -26,7 +26,8 @@
     "faults": "Poruchy",
     "news": "Spravy",
     "vote": "Hlasovanie",
-    "docs": "Dokumenty"
+    "docs": "Dokumenty",
+    "more": "Viac"
   },
   "auth": {
     "login": "Prihlasit sa",
@@ -730,6 +731,27 @@
     },
     "errors": {
       "unknownCommand": "Tomuto príkazu som nerozumel. Skúste povedať „Report a fault“ alebo „Show announcements“."
+    }
+  },
+  "notifications": {
+    "title": "Upozornenia",
+    "unreadCount": "{{count}} neprečítaných",
+    "loadError": "Upozornenia sa nepodarilo načítať",
+    "markAllRead": "Označiť všetky ako prečítané",
+    "emptyTitle": "Máte všetko prečítané",
+    "emptyText": "Nové upozornenia sa zobrazia tu.",
+    "filters": {
+      "all": "Všetky",
+      "fault": "Poruchy",
+      "announcement": "Oznamy",
+      "message": "Správy",
+      "vote": "Hlasovania",
+      "meter": "Merače"
+    },
+    "time": {
+      "minutesAgo": "pred {{count}} min",
+      "hoursAgo": "pred {{count}} h",
+      "daysAgo": "pred {{count}} d"
     }
   }
 }

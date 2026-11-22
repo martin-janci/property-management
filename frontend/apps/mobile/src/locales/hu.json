@@ -26,7 +26,8 @@
     "faults": "Hibak",
     "news": "Hirek",
     "vote": "Szavazas",
-    "docs": "Dokumentumok"
+    "docs": "Dokumentumok",
+    "more": "Több"
   },
   "auth": {
     "login": "Bejelentkezes",
@@ -682,6 +683,27 @@
     },
     "errors": {
       "unknownCommand": "Nem értettem ezt a parancsot. Próbáld mondani: „Report a fault” vagy „Show announcements”."
+    }
+  },
+  "notifications": {
+    "title": "Értesítések",
+    "unreadCount": "{{count}} olvasatlan",
+    "loadError": "Az értesítéseket nem sikerült betölteni",
+    "markAllRead": "Mindet olvasottnak jelöli",
+    "emptyTitle": "Mindent elolvasott",
+    "emptyText": "Az új értesítések itt jelennek meg.",
+    "filters": {
+      "all": "Mind",
+      "fault": "Hibák",
+      "announcement": "Közlemények",
+      "message": "Üzenetek",
+      "vote": "Szavazások",
+      "meter": "Mérők"
+    },
+    "time": {
+      "minutesAgo": "{{count}} perce",
+      "hoursAgo": "{{count}} órája",
+      "daysAgo": "{{count}} napja"
     }
   }
 }

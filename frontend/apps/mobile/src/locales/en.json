@@ -26,7 +26,8 @@
     "faults": "Faults",
     "news": "News",
     "vote": "Vote",
-    "docs": "Docs"
+    "docs": "Docs",
+    "more": "More"
   },
   "auth": {
     "login": "Login",
@@ -722,6 +723,27 @@
     },
     "errors": {
       "unknownCommand": "I didn't understand that command. Try saying “Report a fault” or “Show announcements”."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread",
+    "loadError": "Couldn't load notifications",
+    "markAllRead": "Mark all as read",
+    "emptyTitle": "You're all caught up",
+    "emptyText": "New notifications will appear here.",
+    "filters": {
+      "all": "All",
+      "fault": "Faults",
+      "announcement": "Announcements",
+      "message": "Messages",
+      "vote": "Voting",
+      "meter": "Meters"
+    },
+    "time": {
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     }
   }
 }

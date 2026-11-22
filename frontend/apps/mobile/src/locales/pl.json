@@ -26,7 +26,8 @@
     "faults": "Usterki",
     "news": "Aktualnosci",
     "vote": "Glosowanie",
-    "docs": "Dokumenty"
+    "docs": "Dokumenty",
+    "more": "Więcej"
   },
   "auth": {
     "login": "Zaloguj sie",
@@ -690,6 +691,27 @@
     },
     "errors": {
       "unknownCommand": "Nie zrozumiałem tego polecenia. Spróbuj powiedzieć „Report a fault” lub „Show announcements”."
+    }
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "unreadCount": "{{count}} nieprzeczytanych",
+    "loadError": "Nie udało się załadować powiadomień",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "emptyTitle": "Wszystko na bieżąco",
+    "emptyText": "Nowe powiadomienia pojawią się tutaj.",
+    "filters": {
+      "all": "Wszystkie",
+      "fault": "Usterki",
+      "announcement": "Ogłoszenia",
+      "message": "Wiadomości",
+      "vote": "Głosowania",
+      "meter": "Liczniki"
+    },
+    "time": {
+      "minutesAgo": "{{count}} min temu",
+      "hoursAgo": "{{count}} godz. temu",
+      "daysAgo": "{{count}} dni temu"
     }
   }
 }
