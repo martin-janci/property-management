@@ -6493,6 +6493,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-summarize-discards-persist-err",
+      "branch": "auto-impl/code-review-api-handlers-summarize-disca-5f603fbe",
+      "status": "merged",
+      "claimed_at": "2026-11-21T22:35:11Z",
+      "last_updated": "2026-11-22T00:41:09Z",
+      "status_changed_at": "2026-11-22T00:41:09Z",
+      "pr_number": 3708,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3708",
+      "merged_at": "2026-11-22T00:40:13Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3708 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=ai_summarize_document discarded update_summary Result via let _; now matches Result, logs+releases RLS+returns 500 PERSIST_ERROR; fmt+clippy green 807/808 (sole failure DNS-rebinding test proven pre-existing)",
+      "reviewer_summary": "verdict=approve head_oid=42430391f021fbbd9854c19214e624c9755f2061 note=correct-minimal-fix-persist-err-surfaced-rls-released-ci-green",
+      "last_reviewed_oid": "42430391f021fbbd9854c19214e624c9755f2061",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T00:40:55Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-api-handlers-suspend-cascade-silent-skip",
       "branch": "auto-impl/code-review-api-handlers-suspend-cascade-a7128686",
       "status": "merged",
@@ -12145,6 +12169,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-community-wired-nonfunctional",
+      "branch": "auto-impl/code-review-ppt-web-ui-community-wired-n-1d0f8ee5",
+      "status": "failed",
+      "claimed_at": "2026-11-22T00:32:53Z",
+      "last_updated": "2026-11-22T00:40:55Z",
+      "status_changed_at": "2026-11-22T00:40:55Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=frontend: already-resolved-on-dev (ppt-web community Epic 42 fully data-wired to real @ppt/api-client -> /api/v1/community/*; no no-op handlers remain). No PR. [stale signal]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-confirm-dialog-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-confirm-dialog-i1-b34929e9",
       "status": "merged",
@@ -12790,6 +12838,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-facilities-silent-load-errors",
+      "branch": "auto-impl/code-review-ppt-web-ui-facilities-silent-04984ceb",
+      "status": "failed",
+      "claimed_at": "2026-11-22T00:32:53Z",
+      "last_updated": "2026-11-22T00:40:55Z",
+      "status_changed_at": "2026-11-22T00:40:55Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=frontend: already-fixed-on-dev (FacilitiesPage surfaces load errors, regression test present; backlog code-review-ppt-web-ui-facilities-fetch-no-error-ui already done). No PR (empty diff). [stale signal generated 2026-08]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
@@ -16226,6 +16298,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-09-27T14:30:58Z"
+    },
+    {
+      "task_id": "code-review-reality-web-checksession-5xx-logout",
+      "branch": "auto-impl/code-review-reality-web-checksession-5xx-f310c5f0",
+      "status": "failed",
+      "claimed_at": "2026-11-22T00:32:53Z",
+      "last_updated": "2026-11-22T00:40:55Z",
+      "status_changed_at": "2026-11-22T00:40:55Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=pm-frontend: already-fixed-on-dev (auth-context.tsx gates clearStoredSession on 401/403, bails on 5xx; tests cover transient-500/network/401). No PR. [stale signal generated 2026-08]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-reality-web-comparison-ctx-unvalidated-parse",
@@ -32964,5 +33060,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-21T22:52:20Z"
+  "archived_at": "2026-11-22T00:44:47Z"
 }
