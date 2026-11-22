@@ -124,8 +124,10 @@ fn classify_fcm_outcome(status_success: bool, parsed: Option<&FcmSendResponse>) 
                 (false, expired)
             }
         }
-        // Body did not parse into our shape.
-        None => (false, false),
+        // Body did not parse into our shape. A 2xx has already been accepted by
+        // FCM, so retrying would re-deliver the push — treat it as delivered.
+        // A non-2xx unparseable body stays a failed (retryable) attempt.
+        None => (status_success, false),
     }
 }
 
