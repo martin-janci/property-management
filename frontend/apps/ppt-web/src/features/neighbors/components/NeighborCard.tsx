@@ -7,6 +7,7 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { NeighborView } from '../types';
 
 export interface NeighborCardProps {
@@ -96,7 +97,7 @@ export const NeighborCard: React.FC<NeighborCardProps> = ({
           <div className="neighbor-card-field">
             <span className="neighbor-card-label">{t('neighbors.moveInDate')}:</span>
             <span className="neighbor-card-value">
-              {new Date(neighbor.moveInDate).toLocaleDateString()}
+              {new Date(neighbor.moveInDate).toLocaleDateString(getActiveLocale())}
             </span>
           </div>
         )}

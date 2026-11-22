@@ -39,11 +39,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components';
 import { useAuth } from '../../../contexts';
+import { getActiveLocale } from '../../../lib/locale';
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(getActiveLocale());
 }
 
 /**

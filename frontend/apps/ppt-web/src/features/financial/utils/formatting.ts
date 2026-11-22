@@ -7,33 +7,17 @@
  * so a runtime language switch takes effect immediately.
  */
 
-import i18n from 'i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 /**
  * Returns the locale used for formatting: the active i18n language, then the
  * browser locale, then 'en-US'.
+ *
+ * @deprecated Use {@link getActiveLocale} from `lib/locale` directly. Retained
+ * as a thin re-export so existing financial imports keep working.
  */
 export function getUserLocale(): string {
-  if (i18n.language) {
-    return i18n.language;
-  }
-
-  if (typeof navigator !== 'undefined' && navigator.language) {
-    return navigator.language;
-  }
-
-  if (typeof Intl !== 'undefined' && typeof Intl.DateTimeFormat === 'function') {
-    try {
-      const resolved = new Intl.DateTimeFormat().resolvedOptions().locale;
-      if (resolved) {
-        return resolved;
-      }
-    } catch {
-      // Ignore and fall through to default
-    }
-  }
-
-  return 'en-US';
+  return getActiveLocale();
 }
 
 const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();

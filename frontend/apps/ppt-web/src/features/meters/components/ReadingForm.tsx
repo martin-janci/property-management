@@ -6,6 +6,7 @@
 
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { useOcrMeterReading } from '../hooks';
 import type { Meter, ReadingFormData } from '../types';
 import { type OcrCorrection, OcrPreviewCard, type OcrResult } from './OcrPreviewCard';
@@ -186,7 +187,7 @@ export function ReadingForm({
             <>
               <dt className="text-gray-500">{t('meters.lastReading')}</dt>
               <dd className="font-medium">
-                {meter.lastReadingValue.toLocaleString()} {meter.unit}
+                {meter.lastReadingValue.toLocaleString(getActiveLocale())} {meter.unit}
               </dd>
             </>
           )}
@@ -214,7 +215,8 @@ export function ReadingForm({
         {errors.value && <p className="mt-1 text-sm text-red-500">{errors.value}</p>}
         {consumption !== null && consumption >= 0 && (
           <p className="mt-1 text-sm text-gray-600">
-            {t('meters.form.consumption')}: {consumption.toLocaleString()} {meter.unit}
+            {t('meters.form.consumption')}: {consumption.toLocaleString(getActiveLocale())}{' '}
+            {meter.unit}
           </p>
         )}
       </div>

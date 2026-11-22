@@ -8,6 +8,7 @@
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { NeighborView, PrivacySettings } from '../types';
 import { DEFAULT_PRIVACY_SETTINGS, VISIBILITY_OPTIONS } from '../types';
 
@@ -359,7 +360,7 @@ export const NeighborDetailPage: React.FC<NeighborDetailPageProps> = ({
                       {t('neighbors.moveInDate')}:
                     </span>
                     <span className="neighbor-detail-page-contact-value">
-                      {new Date(neighbor.moveInDate).toLocaleDateString()}
+                      {new Date(neighbor.moveInDate).toLocaleDateString(getActiveLocale())}
                     </span>
                   </div>
                 )}

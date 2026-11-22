@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { LeasePayment, PaymentMethod } from '../types';
 
 export interface RecordPaymentFormData {
@@ -81,7 +82,7 @@ export function RecordPaymentModal({
         </h2>
         <p className="text-sm text-gray-500 mb-4">
           {t('leases.payments.recordModal.dueOn', {
-            date: new Date(payment.dueDate).toLocaleDateString(),
+            date: new Date(payment.dueDate).toLocaleDateString(getActiveLocale()),
           })}
         </p>
         <form onSubmit={handleSubmit} noValidate>

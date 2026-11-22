@@ -23,6 +23,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts';
+import { getActiveLocale } from '../../../lib/locale';
 
 /** Per-page size for the per-listing dashboard rows (matches the API default). */
 const PAGE_SIZE = 20;
@@ -42,7 +43,7 @@ function portalLabel(portal: string): string {
 function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString(getActiveLocale());
 }
 
 /** Tailwind classes + label for a listing's overall syndication health badge. */

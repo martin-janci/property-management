@@ -7,6 +7,7 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 export interface AmlThresholdsDisplay {
   transaction_threshold_eur: number;
@@ -32,13 +33,13 @@ export const AmlThresholdsSection: React.FC<AmlThresholdsSectionProps> = ({ thre
       <div className="aml-thresholds-grid">
         <div className="aml-threshold-card">
           <div className="aml-threshold-value">
-            {thresholds.transaction_threshold_eur.toLocaleString()} EUR
+            {thresholds.transaction_threshold_eur.toLocaleString(getActiveLocale())} EUR
           </div>
           <div className="aml-threshold-label">{t('aml.thresholds.transaction')}</div>
         </div>
         <div className="aml-threshold-card">
           <div className="aml-threshold-value">
-            {thresholds.cumulative_threshold_eur.toLocaleString()} EUR
+            {thresholds.cumulative_threshold_eur.toLocaleString(getActiveLocale())} EUR
           </div>
           <div className="aml-threshold-label">{t('aml.thresholds.cumulative')}</div>
         </div>

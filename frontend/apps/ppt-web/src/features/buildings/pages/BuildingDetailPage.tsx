@@ -11,6 +11,7 @@ import { isSafeImageUrl } from '@ppt/shared';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts';
+import { getActiveLocale } from '../../../lib/locale';
 import { isManagerRole } from '../../../routes/shared';
 import { BuildingLocationMap, UnitsSection } from '../components';
 import { useBuilding, useBuildingCommonAreas, useBuildingFloors } from '../hooks';
@@ -192,7 +193,7 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500">{t('buildings.detail.totalArea')}</p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {building.totalAreaM2.toLocaleString()} m²
+                  {building.totalAreaM2.toLocaleString(getActiveLocale())} m²
                 </p>
               </div>
             )}

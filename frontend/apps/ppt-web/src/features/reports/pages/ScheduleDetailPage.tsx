@@ -10,6 +10,7 @@
 import type { ReportExecution, ReportExecutionStatus, ReportSchedule } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { type ExecutionFilters, HistoryFilters } from '../components/HistoryFilters';
 
 // ============================================================================
@@ -80,7 +81,7 @@ function formatDuration(startedAt: string, completedAt?: string): string {
 }
 
 function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleDateString(undefined, {
+  return new Date(dateString).toLocaleDateString(getActiveLocale(), {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

@@ -6,6 +6,7 @@
 
 import type { FormSubmissionStatus, FormSubmissionSummary } from '@ppt/api-client';
 import { useState } from 'react';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface SubmissionListProps {
   submissions: FormSubmissionSummary[];
@@ -144,11 +145,11 @@ export function SubmissionList({
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(submission.submittedAt).toLocaleString()}
+                      {new Date(submission.submittedAt).toLocaleString(getActiveLocale())}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {submission.reviewedAt
-                        ? new Date(submission.reviewedAt).toLocaleString()
+                        ? new Date(submission.reviewedAt).toLocaleString(getActiveLocale())
                         : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

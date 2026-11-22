@@ -132,6 +132,7 @@ import type {
   ViolationWithDetails as UiViolationWithDetails,
 } from '../../features/leases/types';
 import { useOrganization } from '../../hooks/useOrganization';
+import { getActiveLocale } from '../../lib/locale';
 import { queryKeys } from '../../lib/queryKeys';
 import { isManagerRole, MANAGER_ROLES } from '../shared';
 
@@ -1136,9 +1137,12 @@ function LeaseDetailPageRoute() {
           unit: unitLabel,
           tenant: lease.tenant.name,
           date: termination
-            ? new Date(`${termination.effectiveDate}T00:00:00Z`).toLocaleDateString(undefined, {
-                timeZone: 'UTC',
-              })
+            ? new Date(`${termination.effectiveDate}T00:00:00Z`).toLocaleDateString(
+                getActiveLocale(),
+                {
+                  timeZone: 'UTC',
+                }
+              )
             : '',
         })}
         confirmLabel={t('leases.actions.terminate.confirm')}

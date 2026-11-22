@@ -6,6 +6,7 @@
 import type { SignatureRequestStatus } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { PaymentHistoryTable } from '../components/PaymentHistoryTable';
 import { RequestSignatureModal } from '../components/RequestSignatureModal';
 import { SignatureStatusBadge } from '../components/SignatureStatusBadge';
@@ -83,11 +84,11 @@ export function LeaseDetailPage({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getActiveLocale());
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(getActiveLocale(), {
       style: 'currency',
       currency,
     }).format(amount);

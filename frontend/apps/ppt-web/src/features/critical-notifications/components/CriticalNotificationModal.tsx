@@ -8,6 +8,7 @@
 import type { CriticalNotificationResponse } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface CriticalNotificationModalProps {
   notifications: CriticalNotificationResponse[];
@@ -36,7 +37,7 @@ export function CriticalNotificationModal({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
+    return new Date(dateString).toLocaleDateString(getActiveLocale(), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

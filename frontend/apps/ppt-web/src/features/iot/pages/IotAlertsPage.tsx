@@ -14,6 +14,7 @@
 import type { SensorAlert } from '@ppt/api-client';
 import { type JSX, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { SensorStatusBadge } from '../components';
 
 /** Alert lifecycle states the state filter can select. */
@@ -42,7 +43,7 @@ const SEVERITIES = ['critical', 'warning', 'info'];
 
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString(getActiveLocale());
 }
 
 /** Derive the lifecycle state of an alert for badge + filtering. */

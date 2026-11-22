@@ -15,6 +15,7 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAuthApi } from '../../auth/authApiClient';
 import '../styles/sessions.css';
+import { getActiveLocale } from '../../../lib/locale';
 
 /** Query key for the active-sessions list. */
 const SESSIONS_QUERY_KEY = ['auth', 'sessions'] as const;
@@ -45,7 +46,7 @@ function deviceLabel(session: SessionInfo, unknownLabel: string): string {
 function formatTimestamp(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return date.toLocaleString(getActiveLocale());
 }
 
 export const SessionsPage: React.FC = () => {

@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { MeterUnit } from '../types';
 
 interface DataPoint {
@@ -188,10 +189,10 @@ export function ReadingLineChart({
                 vectorEffect="non-scaling-stroke"
               >
                 <title>
-                  {formatDate(point.date)}: {point.value.toLocaleString()} {unit}
+                  {formatDate(point.date)}: {point.value.toLocaleString(getActiveLocale())} {unit}
                   {point.consumption !== undefined &&
                     point.consumption >= 0 &&
-                    `\n${t('meters.consumption')}: +${point.consumption.toLocaleString()} ${unit}`}
+                    `\n${t('meters.consumption')}: +${point.consumption.toLocaleString(getActiveLocale())} ${unit}`}
                 </title>
               </circle>
             </g>

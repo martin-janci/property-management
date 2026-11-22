@@ -5,6 +5,7 @@
 
 import type { CriticalNotificationResponse, CriticalNotificationStats } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { NotificationStatsCard } from '../components';
 
 interface CriticalNotificationDetailPageProps {
@@ -94,7 +95,7 @@ export function CriticalNotificationDetailPage({
                 <h1 className="text-2xl font-bold text-gray-900">{notification.title}</h1>
                 <p className="mt-1 text-sm text-gray-500">
                   {t('criticalNotifications.createdAt')}{' '}
-                  {new Date(notification.createdAt).toLocaleString()}
+                  {new Date(notification.createdAt).toLocaleString(getActiveLocale())}
                 </p>
               </div>
             </div>
@@ -130,7 +131,7 @@ export function CriticalNotificationDetailPage({
             </h2>
             <p className="text-sm text-green-800">
               {t('criticalNotifications.acknowledgedAt')}{' '}
-              {new Date(notification.acknowledgedAt).toLocaleString()}
+              {new Date(notification.acknowledgedAt).toLocaleString(getActiveLocale())}
             </p>
           </div>
         )}

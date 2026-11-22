@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 export type VerificationType =
   | 'business_registration'
@@ -192,7 +193,7 @@ export function VerificationStatusBadge({
         {verification.expiryDate && (
           <p className={`text-xs ${isExpiring ? 'text-orange-600' : 'text-gray-400'}`}>
             {t('marketplace.verificationBadge.expires')}:{' '}
-            {new Date(verification.expiryDate).toLocaleDateString()}
+            {new Date(verification.expiryDate).toLocaleDateString(getActiveLocale())}
             {isExpiring && ` (${t('marketplace.verificationBadge.soon')})`}
           </p>
         )}

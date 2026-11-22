@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { MaintenancePrediction } from '../types';
 
 function RiskBadge({ score }: { score: number }): JSX.Element {
@@ -60,7 +61,9 @@ export function PredictionsList({
                     <span className="text-xs text-gray-500">
                       {t('predictive.failureEta', {
                         defaultValue: 'Failure ~{{date}}',
-                        date: new Date(p.predictedFailureDate).toLocaleDateString(),
+                        date: new Date(p.predictedFailureDate).toLocaleDateString(
+                          getActiveLocale()
+                        ),
                       })}
                     </span>
                   )}
@@ -70,7 +73,7 @@ export function PredictionsList({
                   {t('predictive.confidenceMeta', {
                     defaultValue: 'Confidence {{pct}}% · {{date}}',
                     pct: Math.round(p.confidence * 100),
-                    date: new Date(p.createdAt).toLocaleDateString(),
+                    date: new Date(p.createdAt).toLocaleDateString(getActiveLocale()),
                   })}
                 </p>
               </div>

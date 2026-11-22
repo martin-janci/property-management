@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { ConsumptionChart } from '../components/ConsumptionChart';
 import { ReadingLineChart } from '../components/ReadingLineChart';
 import type { ConsumptionHistory, Meter, MeterReading } from '../types';
@@ -307,10 +308,10 @@ export function MeterDetailPage({
                             {new Date(reading.readingDate).toLocaleDateString(i18n.language)}
                           </td>
                           <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                            {reading.value.toLocaleString()} {meter.unit}
+                            {reading.value.toLocaleString(getActiveLocale())} {meter.unit}
                             {consumptionVal !== null && consumptionVal >= 0 && (
                               <span className="block text-xs text-gray-500">
-                                (+{consumptionVal.toLocaleString()})
+                                (+{consumptionVal.toLocaleString(getActiveLocale())})
                               </span>
                             )}
                           </td>
@@ -450,7 +451,7 @@ export function MeterDetailPage({
                 {t('meters.lastReading')}
               </h3>
               <p className="text-3xl font-bold text-blue-900">
-                {meter.lastReadingValue.toLocaleString()} {meter.unit}
+                {meter.lastReadingValue.toLocaleString(getActiveLocale())} {meter.unit}
               </p>
               {meter.lastReadingDate && (
                 <p className="text-sm text-blue-700 mt-1">

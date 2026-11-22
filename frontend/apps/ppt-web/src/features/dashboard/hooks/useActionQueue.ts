@@ -15,6 +15,7 @@ import {
 import { getMode, parseMode } from '@ppt/dev-panel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+import { getActiveLocale } from '../../../lib/locale';
 
 // Action item types
 export type ActionType =
@@ -174,7 +175,7 @@ export async function buildManagerQueue(): Promise<ActionQueueData> {
           title: booking.facility_name,
           description: [
             booking.user_name ?? booking.user_email,
-            Number.isNaN(when.getTime()) ? null : when.toLocaleString(),
+            Number.isNaN(when.getTime()) ? null : when.toLocaleString(getActiveLocale()),
             booking.building_name,
           ]
             .filter(Boolean)

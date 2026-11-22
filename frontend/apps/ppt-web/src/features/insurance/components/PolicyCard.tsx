@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { InsurancePolicy, PolicyStatus, PolicyType } from '../types';
 
 interface PolicyCardProps {
@@ -114,7 +115,7 @@ export function PolicyCard({ policy, onView, onEdit, onFileClaim }: PolicyCardPr
         <div>
           <span className="text-gray-500">{t('insurance.expires')}:</span>
           <p className={`font-medium ${isExpiringSoon ? 'text-orange-600' : ''}`}>
-            {new Date(policy.endDate).toLocaleDateString()}
+            {new Date(policy.endDate).toLocaleDateString(getActiveLocale())}
           </p>
         </div>
       </div>

@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { ViolationSeverity, ViolationStatus, ViolationWithDetails } from '../types';
 
 interface ViolationDetailPageProps {
@@ -56,12 +57,12 @@ export function ViolationDetailPage({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getActiveLocale());
   };
 
   const formatDateTime = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString(getActiveLocale());
   };
 
   const formatFileSize = (bytes: number) => {
