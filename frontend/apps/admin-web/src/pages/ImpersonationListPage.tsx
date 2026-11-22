@@ -4,7 +4,7 @@
  * Renders active impersonation sessions from
  * GET /api/v1/admin/impersonation/active (falls back to empty list on 404).
  *
- * Stop button calls DELETE /api/v1/admin/impersonation/{token_id}.
+ * Stop button calls DELETE /api/v1/admin/impersonation/{id}.
  * Gate: users_impersonate capability.
  */
 
@@ -15,16 +15,28 @@ import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
 
+/** Wire row of `GET /admin/impersonation/active` (`ActiveImpersonationRow`). */
 interface ActiveSession {
-  token_id: string;
+  /** Impersonation token id — the path param for `DELETE /impersonation/{id}`. */
+  id: string;
+  actor_user_id: string;
+  actor_email: string;
   target_user_id: string;
   target_email: string;
-  started_by: string;
+  started_at: string;
   expires_at: string;
+  reason?: string;
 }
 
 interface ActiveSessionsResponse {
   items: ActiveSession[];
+}
+
+/** The server returns a bare array; tolerate an `{ items }` wrapper too. */
+export function parseActiveSessions(
+  data: ActiveSession[] | { items?: ActiveSession[] }
+): ActiveSessionsResponse {
+  return { items: Array.isArray(data) ? data : (data.items ?? []) };
 }
 
 function formatDate(iso: string): string {
@@ -56,7 +68,7 @@ export default function ImpersonationListPage() {
       if (!res.ok) {
         throw new Error(`Failed to load impersonation sessions: ${res.status}`);
       }
-      return res.json() as Promise<ActiveSessionsResponse>;
+      return parseActiveSessions(await res.json());
     },
     staleTime: 15_000,
     retry: 1,
@@ -195,7 +207,7 @@ export default function ImpersonationListPage() {
                 </tr>
               )}
               {items.map((session) => (
-                <tr key={session.token_id}>
+                <tr key={session.id}>
                   <td
                     style={{
                       padding: '10px 14px',
@@ -210,7 +222,7 @@ export default function ImpersonationListPage() {
                       borderBottom: '1px solid var(--ppt-border-subtle, #f3f4f6)',
                     }}
                   >
-                    {session.started_by}
+                    {session.actor_email}
                   </td>
                   <td
                     style={{
@@ -231,7 +243,7 @@ export default function ImpersonationListPage() {
                       <button
                         type="button"
                         disabled={stopMutation.isPending}
-                        onClick={() => stopMutation.mutate(session.token_id)}
+                        onClick={() => stopMutation.mutate(session.id)}
                         style={{
                           padding: '4px 10px',
                           borderRadius: 8,

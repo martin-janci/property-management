@@ -100,18 +100,22 @@ function renderPage(opts: RenderOptions = {}) {
 // ---------------------------------------------------------------------------
 
 const SESSION_A = {
-  token_id: 'tok-aaaa',
+  id: 'tok-aaaa',
+  actor_user_id: 'admin-1',
+  actor_email: 'admin-a@example.com',
   target_user_id: 'user-1',
   target_email: 'target-a@example.com',
-  started_by: 'admin-a@example.com',
+  started_at: '2026-05-17T10:00:00Z',
   expires_at: '2026-05-17T11:00:00Z',
 };
 
 const SESSION_B = {
-  token_id: 'tok-bbbb',
+  id: 'tok-bbbb',
+  actor_user_id: 'admin-2',
+  actor_email: 'admin-b@example.com',
   target_user_id: 'user-2',
   target_email: 'target-b@example.com',
-  started_by: 'admin-b@example.com',
+  started_at: '2026-05-17T10:00:00Z',
   expires_at: '2026-05-17T12:30:00Z',
 };
 
@@ -137,7 +141,7 @@ describe('ImpersonationListPage', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ items: [SESSION_A, SESSION_B] }),
+      json: async () => [SESSION_A, SESSION_B],
     } as Response);
 
     renderPage();
@@ -206,7 +210,7 @@ describe('ImpersonationListPage', () => {
           json: async () => ({ items: [SESSION_A] }),
         } as Response;
       }
-      if (method === 'DELETE' && url.includes(`/admin/impersonation/${SESSION_A.token_id}`)) {
+      if (method === 'DELETE' && url.includes(`/admin/impersonation/${SESSION_A.id}`)) {
         return { ok: true, status: 204 } as Response;
       }
       return { ok: false, status: 404 } as Response;
@@ -223,7 +227,7 @@ describe('ImpersonationListPage', () => {
         .mock.calls.find(
           ([input, init]) =>
             (init as RequestInit)?.method === 'DELETE' &&
-            input.toString().includes(`/admin/impersonation/${SESSION_A.token_id}`)
+            input.toString().includes(`/admin/impersonation/${SESSION_A.id}`)
         );
       expect(deleteCall).toBeDefined();
     });

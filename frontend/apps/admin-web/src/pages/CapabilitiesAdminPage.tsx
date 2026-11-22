@@ -1025,7 +1025,13 @@ function GrantDrawer({ userId, token, onClose, onSuccess }: GrantDrawerProps) {
       if (token) headers.Authorization = `Bearer ${token}`;
 
       const body: Record<string, unknown> = { capability };
-      if (expiresAt) body.expires_at = expiresAt;
+      // `<input type="datetime-local">` yields a naive local time
+      // ("2026-11-22T10:30"); the server's `DateTime<Utc>` needs RFC 3339
+      // with an offset, so convert via the browser's local zone.
+      if (expiresAt) {
+        const d = new Date(expiresAt);
+        if (!Number.isNaN(d.getTime())) body.expires_at = d.toISOString();
+      }
       if (requiresReason && reason) body.reason = reason;
 
       const res = await fetch(`/api/v1/admin/capabilities/users/${userId}/grant`, {

@@ -94,9 +94,12 @@ export async function getAgency(agencyId: string, signal?: AbortSignal): Promise
  * MFA-gated server-side; the api-client's mfa_required interceptor
  * handles the challenge and retry transparently.
  */
-export async function suspendAgency(agencyId: string): Promise<void> {
+export async function suspendAgency(agencyId: string, reason: string): Promise<void> {
+  // The server requires `{ reason }` (recorded on the suspension + audit row);
+  // an empty body is rejected by the JSON extractor.
   await authenticatedFetchJson<void>(`${API_BASE}/agencies/${agencyId}/suspend`, {
     method: 'POST',
+    body: JSON.stringify({ reason }),
   });
 }
 
@@ -130,13 +133,15 @@ export async function registerOAuthClient(
 ): Promise<RegisterOAuthClientResponse> {
   return authenticatedFetchJson<RegisterOAuthClientResponse>(`${API_BASE}/oauth/clients`, {
     method: 'POST',
+    // `RegisterClientRequest` is `rename_all = "camelCase"` on the server
+    // (unlike the snake_case PATCH body below).
     body: JSON.stringify({
       name: request.name,
       description: request.description,
-      redirect_uris: request.redirectUris,
+      redirectUris: request.redirectUris,
       scopes: request.scopes,
-      is_confidential: request.isConfidential,
-      rotate_refresh_tokens: request.rotateRefreshTokens,
+      isConfidential: request.isConfidential,
+      rotateRefreshTokens: request.rotateRefreshTokens,
     }),
   });
 }
