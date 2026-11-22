@@ -95,17 +95,18 @@ function renderPage(opts: RenderOptions = {}) {
 // Fixtures
 // ---------------------------------------------------------------------------
 
+/** A row in the api-server wire shape (`audit_logs` + `actor_email`). */
 function makeRow(id: string, overrides: Record<string, unknown> = {}) {
   return {
     id,
-    occurred_at: '2026-05-17T10:30:00Z',
+    created_at: '2026-05-17T10:30:00Z',
+    user_id: `user-${id}`,
     actor_email: `actor-${id}@example.com`,
-    capability: 'audit_read',
-    target_kind: 'user' as const,
-    target_slug: `target-${id}`,
-    outcome: 'success' as const,
-    reason: `reason for ${id}`,
-    ip: '10.0.0.1',
+    action: 'resource_accessed',
+    resource_type: 'user',
+    resource_id: `target-${id}`,
+    details: { capability: 'audit_read', outcome: 'success', reason: `reason for ${id}` },
+    ip_address: '10.0.0.1',
     ...overrides,
   };
 }
@@ -277,7 +278,7 @@ describe('AuditPage', () => {
     await waitFor(() => {
       const url = lastAuditGetUrl();
       expect(url).toBeDefined();
-      expect(url).toContain('after=cursor-page-2');
+      expect(url).toContain('cursor=cursor-page-2');
     });
 
     // And the second page's row gets appended
@@ -367,5 +368,23 @@ describe('AuditPage', () => {
     await user.click(screen.getByRole('button', { name: /Export CSV/i }));
 
     await waitFor(() => expect(screen.getByText(/Export failed \(500\)/i)).toBeDefined());
+  });
+
+  // ------------------------------------------------------------------
+  // 9. "View related" narrows the list to the expanded row's target
+  // ------------------------------------------------------------------
+  it('filters by the row target when "View related" is clicked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [makeRow('a')] }),
+    } as Response);
+
+    renderPage();
+    await user.click(await screen.findByText('actor-a@example.com'));
+    await user.click(screen.getByRole('button', { name: 'View related' }));
+
+    await waitFor(() => expect(lastAuditGetUrl()).toContain('target=target-a'));
   });
 });

@@ -1412,13 +1412,20 @@ impl DisputeRepository {
             return Ok(None);
         };
 
-        let _sessions = self.list_sessions(dispute_id).await?;
+        let mut sessions = Vec::new();
+        for session in self.list_sessions(dispute_id).await? {
+            let attendance = self.list_attendance(session.id).await?;
+            sessions.push(MediationSessionWithAttendance {
+                session,
+                attendance,
+            });
+        }
         let submissions = self.list_submissions(dispute_id).await?;
         let resolutions = self.list_resolutions(dispute_id).await?;
 
         Ok(Some(MediationCase {
             dispute,
-            sessions: vec![], // TODO: Include attendance from _sessions
+            sessions,
             submissions,
             resolutions,
         }))

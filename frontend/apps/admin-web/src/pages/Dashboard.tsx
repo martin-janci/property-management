@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useMfaWindow } from '../components/MfaWindowChip';
 import { HelpTooltip } from '../features/help';
+import { type AuditEventView, buildAuditQuery, parseAuditPage } from '../lib/auditApi';
 
 // ---------------------------------------------------------------------------
 // Styles (injected once)
@@ -247,15 +248,7 @@ interface MetricsSummary {
   highRisk24h: number;
 }
 
-interface AuditEvent {
-  id: string;
-  actor_email: string;
-  capability: string;
-  target_slug: string;
-  severity: 'high' | 'medium' | 'low';
-  occurred_at: string;
-  outcome: string;
-}
+type AuditEvent = AuditEventView;
 
 interface ImpersonationSession {
   id: string;
@@ -297,31 +290,14 @@ async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary
 
 async function fetchHighRiskEvents(token: string | null): Promise<AuditEvent[]> {
   if (!token) return [];
-
-  // Try the server-side filtered endpoint first; fall back to client-side filtering.
   try {
-    const resp = await fetch('/api/v1/admin/audit?severity=high&after=24h&limit=10', {
+    const qs = buildAuditQuery({ severity: 'high', dateRange: '24h', limit: 10 });
+    const resp = await fetch(`/api/v1/admin/audit?${qs}`, {
       headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
     });
-    if (resp.ok) {
-      const data = (await resp.json()) as { items?: AuditEvent[] } | AuditEvent[];
-      const items = Array.isArray(data) ? data : (data.items ?? []);
-      return items.slice(0, 10);
-    }
-
-    // Fall back: fetch base audit log and client-filter
-    const fallback = await fetch('/api/v1/admin/audit?limit=50', {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
-    });
-    if (!fallback.ok) return [];
-    const fallbackData = (await fallback.json()) as { items?: AuditEvent[] } | AuditEvent[];
-    const allItems = Array.isArray(fallbackData) ? fallbackData : (fallbackData.items ?? []);
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-    return allItems
-      .filter((e) => e.severity === 'high' && new Date(e.occurred_at).getTime() > cutoff)
-      .slice(0, 10);
+    if (!resp.ok) return [];
+    return parseAuditPage(await resp.json()).items.slice(0, 10);
   } catch {
     return [];
   }
@@ -649,9 +625,13 @@ export function Dashboard() {
                   <div key={event.id} className="ppt-row">
                     <span className={severityDotClass(event.severity, idx)} aria-hidden="true" />
                     <span className="ppt-row__text">
-                      <span className="ppt-row__who">{event.actor_email}</span>
+                      <span className="ppt-row__who">
+                        {event.actor_email ?? event.actor_user_id ?? '—'}
+                      </span>
                       {' · '}
-                      <span className={pillColorClass(event.capability)}>{event.capability}</span>
+                      <span className={pillColorClass(event.capability ?? '')}>
+                        {event.capability}
+                      </span>
                       {t('admin.dashboard.highRisk.on', { defaultValue: ' on ' })}
                       <span className="ppt-row__target">{event.target_slug}</span>
                     </span>

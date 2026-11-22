@@ -11,6 +11,16 @@
 //!   `after` are provided, `since` wins.
 //! * `severity=high` — new: when set, restricts results to capabilities in
 //!   the platform-level high-risk list.
+//! * `range=<duration>` — alias for `after` (the admin console's date presets).
+//! * `actor=<uuid|text>` — a UUID matches `user_id`; any other text matches the
+//!   actor's email (case-insensitive substring).
+//! * `target=<uuid|text>` — a UUID matches `resource_id`; other text matches
+//!   `resource_type` or a `resource_id` prefix.
+//! * `capability=a,b` / `outcome=x` — match `details->>'capability'` /
+//!   `details->>'outcome'` written by `PgAuditWriter`.
+//! * `cursor=<rfc3339>_<uuid>` — keyset pagination: rows strictly older than
+//!   the given `(created_at, id)`. The JSON response's `next_cursor` is set
+//!   when a full page came back.
 
 use std::borrow::Cow;
 
@@ -177,12 +187,63 @@ pub struct AuditQuery {
     /// grant_principal_kind_escalate, tenant_restore.
     #[serde(default)]
     pub severity: Option<String>,
+    /// Alias for `after` used by the admin console's date presets.
+    #[serde(default)]
+    pub range: Option<String>,
+    /// Actor UUID or email fragment.
+    #[serde(default)]
+    pub actor: Option<String>,
+    /// Target UUID, resource type, or resource-id prefix.
+    #[serde(default)]
+    pub target: Option<String>,
+    /// Comma-separated capability names (`details->>'capability'`).
+    #[serde(default)]
+    pub capability: Option<String>,
+    /// Outcome (`details->>'outcome'`), e.g. `success`, `denied`.
+    #[serde(default)]
+    pub outcome: Option<String>,
+    /// Keyset cursor `<rfc3339>_<uuid>` from a previous `next_cursor`.
+    #[serde(default)]
+    pub cursor: Option<String>,
+}
+
+/// Parse a `<rfc3339>_<uuid>` keyset cursor.
+fn parse_cursor(s: &str) -> Option<(DateTime<Utc>, Uuid)> {
+    let (ts, id) = s.rsplit_once('_')?;
+    let ts = DateTime::parse_from_rfc3339(ts).ok()?.with_timezone(&Utc);
+    let id = Uuid::parse_str(id).ok()?;
+    Some((ts, id))
+}
+
+fn encode_cursor(row: &AuditRow) -> String {
+    format!(
+        "{}_{}",
+        row.created_at
+            .to_rfc3339_opts(chrono::SecondsFormat::Micros, true),
+        row.id
+    )
+}
+
+/// One page of the JSON audit listing.
+#[derive(Debug, Serialize)]
+pub struct AuditPage {
+    pub items: Vec<AuditRow>,
+    /// Pass back as `cursor` to fetch the next (older) page; absent on the
+    /// last page.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_cursor: Option<String>,
+}
+
+fn non_empty(v: &Option<String>) -> Option<&str> {
+    v.as_deref().map(str::trim).filter(|s| !s.is_empty())
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct AuditRow {
     pub id: Uuid,
     pub user_id: Option<Uuid>,
+    /// Email of `user_id` (LEFT JOIN users); `None` for system actors.
+    pub actor_email: Option<String>,
     pub action: String,
     pub resource_type: Option<String>,
     pub resource_id: Option<Uuid>,
@@ -201,10 +262,11 @@ async fn fetch_rows(
     limit: i64,
 ) -> Result<Vec<AuditRow>, sqlx::Error> {
     // Resolve the effective lower-bound timestamp.
-    // `since` wins over `after` when both are supplied.
+    // `since` wins over `after` / `range` when both are supplied.
+    let relative = non_empty(&q.after).or(non_empty(&q.range));
     let effective_since: Option<DateTime<Utc>> = if q.since.is_some() {
         q.since
-    } else if let Some(ref after_str) = q.after {
+    } else if let Some(after_str) = relative {
         parse_relative_duration(after_str)
             .map(|dur| Utc::now() - dur)
             .or_else(|| {
@@ -217,6 +279,25 @@ async fn fetch_rows(
 
     let high_severity = q.severity.as_deref() == Some("high");
 
+    // actor / target: a UUID is an exact id match, anything else is text.
+    let actor = non_empty(&q.actor);
+    let actor_id = q
+        .actor_id
+        .or_else(|| actor.and_then(|a| Uuid::parse_str(a).ok()));
+    let actor_text = actor.filter(|a| Uuid::parse_str(a).is_err());
+    let target = non_empty(&q.target);
+    let target_id = q
+        .target_id
+        .or_else(|| target.and_then(|t| Uuid::parse_str(t).ok()));
+    let target_text = target.filter(|t| Uuid::parse_str(t).is_err());
+    let capabilities: Option<Vec<String>> = non_empty(&q.capability).map(|c| {
+        c.split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect()
+    });
+    let cursor = non_empty(&q.cursor).and_then(parse_cursor);
+
     // Filter dynamically. We use a single SQL with `$N IS NULL OR …`
     // patterns rather than dynamic SQL — avoids string concat / injection.
     //
@@ -224,30 +305,44 @@ async fn fetch_rows(
     // array; when `$7` is FALSE the `= ANY(…)` clause is skipped entirely.
     sqlx::query_as::<_, AuditRow>(
         r#"
-        SELECT id, user_id, action::text AS action, resource_type, resource_id,
-               details, ip_address, user_agent, created_at
-        FROM audit_logs
-        WHERE ($1::uuid IS NULL OR user_id = $1)
-          AND ($2::text IS NULL OR action::text = $2)
-          AND ($3::text IS NULL OR resource_type = $3)
-          AND ($4::uuid IS NULL OR resource_id = $4)
-          AND ($5::timestamptz IS NULL OR created_at >= $5)
-          AND ($6::timestamptz IS NULL OR created_at <= $6)
-          AND (NOT $7 OR (action::text = 'resource_accessed'
-                          AND details->>'capability' = ANY($8)))
-        ORDER BY created_at DESC
+        SELECT a.id, a.user_id, u.email AS actor_email, a.action::text AS action,
+               a.resource_type, a.resource_id, a.details, a.ip_address, a.user_agent,
+               a.created_at
+        FROM audit_logs a
+        LEFT JOIN users u ON u.id = a.user_id
+        WHERE ($1::uuid IS NULL OR a.user_id = $1)
+          AND ($2::text IS NULL OR a.action::text = $2)
+          AND ($3::text IS NULL OR a.resource_type = $3)
+          AND ($4::uuid IS NULL OR a.resource_id = $4)
+          AND ($5::timestamptz IS NULL OR a.created_at >= $5)
+          AND ($6::timestamptz IS NULL OR a.created_at <= $6)
+          AND (NOT $7 OR (a.action::text = 'resource_accessed'
+                          AND a.details->>'capability' = ANY($8)))
+          AND ($10::text IS NULL OR u.email ILIKE '%' || $10 || '%')
+          AND ($11::text IS NULL OR a.resource_type = $11
+               OR a.resource_id::text ILIKE $11 || '%')
+          AND ($12::text[] IS NULL OR a.details->>'capability' = ANY($12))
+          AND ($13::text IS NULL OR a.details->>'outcome' = $13)
+          AND ($14::timestamptz IS NULL OR (a.created_at, a.id) < ($14, $15::uuid))
+        ORDER BY a.created_at DESC, a.id DESC
         LIMIT $9
         "#,
     )
-    .bind(q.actor_id)
+    .bind(actor_id)
     .bind(q.action.as_deref())
     .bind(q.target_type.as_deref())
-    .bind(q.target_id)
+    .bind(target_id)
     .bind(effective_since)
     .bind(q.until)
     .bind(high_severity)
     .bind(HIGH_RISK_CAPABILITIES)
     .bind(limit)
+    .bind(actor_text)
+    .bind(target_text)
+    .bind(capabilities)
+    .bind(non_empty(&q.outcome))
+    .bind(cursor.map(|(ts, _)| ts))
+    .bind(cursor.map(|(_, id)| id))
     .fetch_all(&state.db)
     .await
 }
@@ -257,12 +352,23 @@ async fn list_audit_events(
     _cap: RequireCapability,
     State(state): State<AppState>,
     Query(q): Query<AuditQuery>,
-) -> Result<Json<Vec<AuditRow>>, (StatusCode, String)> {
-    let limit = q.limit.unwrap_or(100).min(500) as i64;
+) -> Result<Json<AuditPage>, (StatusCode, String)> {
+    if non_empty(&q.cursor).is_some_and(|c| parse_cursor(c).is_none()) {
+        return Err((StatusCode::BAD_REQUEST, "invalid cursor".to_string()));
+    }
+    let limit = q.limit.unwrap_or(100).clamp(1, 500) as i64;
     let rows = fetch_rows(&state, &q, limit)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(rows))
+    let next_cursor = if rows.len() as i64 == limit {
+        rows.last().map(encode_cursor)
+    } else {
+        None
+    };
+    Ok(Json(AuditPage {
+        items: rows,
+        next_cursor,
+    }))
 }
 
 /// GET /admin/audit/csv
@@ -342,6 +448,27 @@ async fn export_csv(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cursor_round_trips() {
+        let row = AuditRow {
+            id: Uuid::new_v4(),
+            user_id: None,
+            actor_email: None,
+            action: "resource_accessed".into(),
+            resource_type: None,
+            resource_id: None,
+            details: None,
+            ip_address: None,
+            user_agent: None,
+            created_at: Utc::now(),
+        };
+        let (ts, id) = parse_cursor(&encode_cursor(&row)).expect("parses");
+        assert_eq!(id, row.id);
+        assert_eq!(ts.timestamp_micros(), row.created_at.timestamp_micros());
+        assert!(parse_cursor("garbage").is_none());
+        assert!(parse_cursor("2026-01-01T00:00:00Z_not-a-uuid").is_none());
+    }
 
     #[test]
     fn parse_duration_hours() {

@@ -190,6 +190,102 @@ async fn admin_audit_list_2xx(pool: PgPool) {
     get_2xx(&app, url, &token, "audit").await;
 }
 
+/// The audit viewer's filters and keyset paging: `actor` (email fragment),
+/// `capability`, `outcome`, `target`, and `cursor` → `next_cursor`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn admin_audit_list_filters_and_pages(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, _admin, granter) = authorized_admin(&pool, "auditf", "audit_read").await;
+    let target = Uuid::new_v4();
+    for (i, (cap, outcome)) in [
+        ("tenant_purge", "success"),
+        ("tenant_purge", "denied"),
+        ("audit_read", "success"),
+    ]
+    .iter()
+    .enumerate()
+    {
+        sqlx::query(
+            r#"INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details, created_at)
+               VALUES ($1, 'resource_accessed', 'tenant', $2,
+                       jsonb_build_object('capability', $3::text, 'outcome', $4::text),
+                       NOW() - make_interval(mins => $5))"#,
+        )
+        .bind(granter)
+        .bind(target)
+        .bind(cap)
+        .bind(outcome)
+        .bind(i as i32 + 1)
+        .execute(&pool)
+        .await
+        .expect("seed audit row");
+    }
+
+    let list = |qs: String| {
+        let app = &app;
+        let token = token.clone();
+        async move {
+            let resp = app
+                .get(&format!("/api/v1/admin/audit?{qs}"))
+                .bearer(&token)
+                .send()
+                .await;
+            assert!(
+                resp.status.is_success(),
+                "{qs}: {} {}",
+                resp.status,
+                resp.text()
+            );
+            resp.json_value()
+        }
+    };
+
+    // Filter by the granter's email fragment + target: exactly the 3 seeded rows.
+    let body = list(format!("actor=bit357-granter-auditf&target={target}")).await;
+    let items = body["items"].as_array().expect("items");
+    assert_eq!(items.len(), 3, "{body}");
+    assert!(items[0]["actor_email"]
+        .as_str()
+        .unwrap()
+        .starts_with("bit357-granter-auditf"));
+    assert!(body.get("next_cursor").is_none(), "{body}");
+
+    let body = list(format!(
+        "target={target}&capability=tenant_purge&outcome=denied"
+    ))
+    .await;
+    assert_eq!(body["items"].as_array().unwrap().len(), 1, "{body}");
+
+    // Page size 2 → a cursor, then the remaining row.
+    let body = list(format!("target={target}&limit=2")).await;
+    assert_eq!(body["items"].as_array().unwrap().len(), 2);
+    let cursor = body["next_cursor"]
+        .as_str()
+        .expect("next_cursor")
+        .to_string();
+    let first_ids: Vec<_> = body["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|r| r["id"].clone())
+        .collect();
+    let body = list(format!(
+        "target={target}&limit=2&cursor={}",
+        urlencoding::encode(&cursor)
+    ))
+    .await;
+    let rest = body["items"].as_array().unwrap();
+    assert_eq!(rest.len(), 1, "{body}");
+    assert!(!first_ids.contains(&rest[0]["id"]));
+
+    let resp = app
+        .get("/api/v1/admin/audit?cursor=nope")
+        .bearer(&token)
+        .send()
+        .await;
+    assert_eq!(resp.status.as_u16(), 400);
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn admin_audit_csv_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
