@@ -91,18 +91,18 @@
     {
       "task_id": "code-review-ppt-web-ui-date-number-formatters-no-locale",
       "branch": "auto-impl/code-review-ppt-web-ui-date-number-forma-5d373fbc",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-22T02:33:38Z",
-      "last_updated": "2026-11-22T02:33:38Z",
-      "status_changed_at": "2026-11-22T02:33:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-22T02:51:26Z",
+      "status_changed_at": "2026-11-22T02:51:26Z",
+      "pr_number": 3714,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3714",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3714 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=added lib/locale.ts#getActiveLocale threaded through 101 locale-less toLocale*/Intl call sites in 65 ppt-web files + de-duped financial getUserLocale; just verify OK (293 files/13216 tests, biome+typecheck clean); scope_drift=owner-hint-only (pure frontend/ppt-web diff)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -111,5 +111,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-22T02:45:25Z"
+  "generated": "2026-11-22T02:51:26Z"
 }
