@@ -243,6 +243,16 @@ mod tests {
             .expect("connect_lazy builds without connecting")
     }
 
+    /// A lazy pool with a short acquire timeout pointed at an unreachable
+    /// address: the first query fails fast with a connection error, so `send()`'s
+    /// device-token fetch exercises the DB-error path without a live Postgres.
+    fn failing_pool() -> DbPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(250))
+            .connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("connect_lazy builds without connecting")
+    }
+
     fn test_notification() -> Notification {
         Notification::new(
             Uuid::new_v4(),
@@ -348,6 +358,29 @@ mod tests {
             ProviderOutcome::Failed(NotificationError::PushFailed("apns down".into())),
         )
         .is_ok());
+    }
+
+    /// Security regression (code-review `push-db-err-leak`): when the single
+    /// device-token fetch fails, the push error path must carry a FIXED,
+    /// non-leaking message — never the raw `sqlx::Error` display, which can
+    /// expose the DB host/port/credentials from the connection string. The raw
+    /// error stays in the internal `tracing::error!` log only.
+    #[tokio::test]
+    async fn combined_db_fetch_error_message_does_not_leak_raw_db_error() {
+        let (fcm, apns) = fcm_only_configured();
+        let adapter = CombinedPushAdapter::new(failing_pool(), fcm, apns);
+
+        let result = adapter.send(Uuid::new_v4(), &test_notification()).await;
+
+        match result {
+            Err(NotificationError::PushFailed(msg)) => {
+                assert_eq!(
+                    msg, "failed to fetch device tokens",
+                    "DB fetch failure must map to a fixed non-leaking message, got {msg:?}"
+                );
+            }
+            other => panic!("expected PushFailed(non-leaking message), got {other:?}"),
+        }
     }
 
     #[test]
