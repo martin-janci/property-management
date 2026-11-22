@@ -781,25 +781,6 @@
       }
     },
     {
-      "id": "gh-issue-3711",
-      "action": "dispatcher: signals-promote promotes stale already-resolved findings (needs dev-truth guard) (Closes #3711)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-issue-ingest 2026-11-22T02:25:24Z (#3711)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T02:25:24Z",
-      "issue_ref": {
-        "number": 3711,
-        "url": "https://github.com/martin-janci/property-management/issues/3711",
-        "labels": [
-          "follow-up"
-        ]
-      }
-    },
-    {
       "id": "pm-scrum-master-land-the-2026-12-01-i18n-warn-error-lint-flip-burn-down-merg-2026-11-22",
       "action": "Land the 2026-12-01 i18n warn→error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
       "owner_role": "pm-scrum-master",
@@ -867,30 +848,6 @@
       "action": "Promote-or-close the 5 draft PRs (#3713 dispatcher dev-truth guard, #3714 ppt-web date/number locale, #3715 ppt-web native confirm dialogs, #3676/#3677 mobile-rn i18n)",
       "owner_role": "pm-scrum-master",
       "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
-      "id": "pm-frontend-burn-down-the-frontend-i18n-slice-10-code-review-i18n-retry1-2026-11-22",
-      "action": "Burn down the frontend-i18n slice (10+ `code-review-*-i18n-retry1` items + drafts #3676/#3677) before 2026-12-01 CI gate flip",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
-      "id": "pm-frontend-verify-the-authed-query-key-roots-logout-purge-pattern-from--2026-11-22",
-      "action": "Verify the `AUTHED_QUERY_KEY_ROOTS` logout-purge pattern from #3706 is comprehensive — audit every feature-group root query key, add a unit test that asserts the allow-list matches `useQuery({queryKey: [X, ...]})` call sites",
-      "owner_role": "pm-frontend",
-      "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",

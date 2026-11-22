@@ -28413,6 +28413,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-frontend-confirm-the-ws-token-in-url-strip-from-3696-covers-every-web-2026-11-22",
+      "branch": "auto-impl/pm-frontend-confirm-the-ws-token-in-url-f47eaca5",
+      "status": "merged",
+      "claimed_at": "2026-11-22T06:36:28Z",
+      "last_updated": "2026-11-22T08:41:00Z",
+      "status_changed_at": "2026-11-22T08:41:00Z",
+      "pr_number": 3719,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3719",
+      "merged_at": "2026-11-22T08:41:00Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=a8637805dbd5fab51fb0315c778b94f6b6da6c12 note=invariant-independently-verified-2-openers-both-token-stripped-ci-green",
+      "last_reviewed_oid": "a8637805dbd5fab51fb0315c778b94f6b6da6c12",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T08:40:30Z"
+    },
+    {
       "task_id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
       "branch": "auto-impl/pm-frontend-mobile-rn-lint-gates-adopt-2-12b5c544",
       "status": "merged",
@@ -29283,6 +29305,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-resolve-dispatcher-stall-3357-3-approved-prs-still-blocked-o-2026-11-22",
+      "branch": "auto-impl/pm-scrum-master-resolve-dispatcher-stall-fe31e098",
+      "status": "merged",
+      "claimed_at": "2026-11-22T06:36:28Z",
+      "last_updated": "2026-11-22T08:40:00Z",
+      "status_changed_at": "2026-11-22T08:40:00Z",
+      "pr_number": 3718,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3718",
+      "merged_at": "2026-11-22T08:40:00Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=9b89db9b86fdcf0d1951ba6e4fc9308d491dd4a4 note=i18n-locale-json-key-union-resolver-correct-tested-ci-green-approved-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "9b89db9b86fdcf0d1951ba6e4fc9308d491dd4a4",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T08:35:00Z"
     },
     {
       "task_id": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20",
@@ -33260,5 +33304,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T06:36:13Z"
+  "archived_at": "2026-11-22T08:37:35Z"
 }
