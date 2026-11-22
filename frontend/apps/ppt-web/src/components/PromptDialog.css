@@ -1,0 +1,52 @@
+/**
+ * Accessible Prompt Dialog Styles.
+ *
+ * Reuses the `.confirmation-dialog-*` layout/button classes (see
+ * ConfirmationDialog.css, imported alongside this file) and only adds the
+ * text-input styling the prompt variant needs.
+ */
+
+/* The prompt message often carries intentional line breaks (it replaces a
+ * native window.prompt() string), so preserve them. */
+.prompt-dialog-message {
+  white-space: pre-line;
+}
+
+.prompt-dialog-field {
+  margin: 0 0 1.5rem;
+}
+
+.prompt-dialog-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--ppt-fg-primary);
+  background-color: var(--ppt-bg-surface);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: 0.375rem;
+  box-sizing: border-box;
+}
+
+textarea.prompt-dialog-input {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.prompt-dialog-input:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
+  border-color: var(--ppt-color-primary);
+}
+
+.prompt-dialog-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .prompt-dialog-input {
+    border-width: 2px;
+  }
+}

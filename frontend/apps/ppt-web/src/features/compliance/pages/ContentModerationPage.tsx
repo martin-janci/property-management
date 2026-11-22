@@ -143,11 +143,11 @@ export const ContentModerationPage: React.FC = () => {
       assignCase.mutate(caseId, {
         onError: (err) => {
           console.error('Failed to assign case:', err);
-          alert(t('moderation.prompts.assignError'));
+          showToast({ type: 'error', title: t('moderation.prompts.assignError') });
         },
       });
     },
-    [assignCase, t]
+    [assignCase, showToast, t]
   );
 
   // Both moderation-decision mutations (take-action, decide-appeal) share the
