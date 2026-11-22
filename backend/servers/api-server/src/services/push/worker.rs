@@ -47,6 +47,24 @@ const MAX_JOBS_PER_TICK: usize = 256;
 /// attempt plus two retries.
 const MAX_PUSH_DELIVERY_ATTEMPTS: u32 = 3;
 
+/// Maximum attempts to push a job *back* onto the Redis queue when the requeue
+/// `RPUSH` itself fails transiently.
+///
+/// A job that reaches the requeue step has already been `BLPOP`'d off the list,
+/// so it exists only in memory — a single failed `RPUSH` (NOAUTH mid-failover,
+/// LOADING on a restarting replica, a dropped connection) would silently lose
+/// the push. Bounding the in-memory retry gives a transient Redis blip a few
+/// chances to recover without hot-looping when Redis is genuinely down; after
+/// this many attempts the failure is surfaced loudly instead of swallowed.
+const MAX_REQUEUE_PUSH_ATTEMPTS: u32 = 3;
+
+/// Fixed delay between requeue-push retries (see [`MAX_REQUEUE_PUSH_ATTEMPTS`]).
+///
+/// Short, because the failures it covers (connection reset, a brief `LOADING`)
+/// usually clear within one reconnect, and kept small so a dead Redis cannot
+/// stall the drain tick for long.
+const REQUEUE_PUSH_RETRY_DELAY: Duration = Duration::from_millis(100);
+
 /// A push job as it travels on [`PUSH_FANOUT_QUEUE_KEY`].
 ///
 /// Historically the queue payload was a bare JSON-serialized [`Notification`].
@@ -235,6 +253,7 @@ impl PushFanoutWorker {
         let redis = pubsub.client();
         let mut drained = 0usize;
         let mut requeued = 0usize;
+        let mut requeue_failed = 0usize;
 
         // Drain up to MAX_JOBS_PER_TICK jobs. BLPOP with a short timeout means
         // an empty queue ends the drain promptly and yields back to the ticker;
@@ -264,17 +283,32 @@ impl PushFanoutWorker {
             if let Some(job) = self.deliver_job(&payload).await {
                 match serde_json::to_string(&job) {
                     Ok(requeue_payload) => {
-                        if let Err(e) = redis
-                            .queue_push(PUSH_FANOUT_QUEUE_KEY, &requeue_payload)
-                            .await
-                        {
-                            tracing::warn!(
-                                error = %e,
-                                notification_id = %job.notification.id,
-                                "[8A-3] PushFanoutWorker: failed to requeue push job after transient failure — job dropped"
-                            );
-                        } else {
-                            requeued += 1;
+                        // The job has already been BLPOP'd off the list, so if
+                        // this RPUSH fails the push lives only in memory. A
+                        // single attempt would silently lose it on a transient
+                        // Redis error (NOAUTH mid-failover, LOADING on a
+                        // restarting replica, connection reset), so retry a
+                        // bounded number of times before giving up, and then
+                        // surface the loss loudly rather than dropping it on the
+                        // floor (code-review finding).
+                        let push_result = retry_bounded(
+                            MAX_REQUEUE_PUSH_ATTEMPTS,
+                            || redis.queue_push(PUSH_FANOUT_QUEUE_KEY, &requeue_payload),
+                            |_attempt| tokio::time::sleep(REQUEUE_PUSH_RETRY_DELAY),
+                        )
+                        .await;
+                        match push_result {
+                            Ok(_) => requeued += 1,
+                            Err(e) => {
+                                requeue_failed += 1;
+                                tracing::error!(
+                                    error = %e,
+                                    notification_id = %job.notification.id,
+                                    user_id = %job.notification.user_id,
+                                    attempts = MAX_REQUEUE_PUSH_ATTEMPTS,
+                                    "[8A-3] PushFanoutWorker: failed to requeue push job into Redis after bounded retries (NOAUTH/LOADING/connection reset?) — push may be lost; in-app notification remains the record of truth"
+                                );
+                            }
                         }
                     }
                     Err(e) => {
@@ -293,6 +327,7 @@ impl PushFanoutWorker {
             tracing::info!(
                 drained = drained,
                 requeued = requeued,
+                requeue_failed = requeue_failed,
                 "[8A-3] PushFanoutWorker drained push_fanout_queue"
             );
         }
@@ -393,7 +428,7 @@ impl PushFanoutWorker {
 async fn retry_bounded<T, E, Op, OpFut, Sleep, SleepFut>(
     max_attempts: u32,
     mut op: Op,
-    mut _sleep: Sleep,
+    mut sleep: Sleep,
 ) -> Result<T, E>
 where
     Op: FnMut() -> OpFut,
@@ -401,12 +436,21 @@ where
     Sleep: FnMut(u32) -> SleepFut,
     SleepFut: std::future::Future<Output = ()>,
 {
-    // PRE-FIX STUB (models the silent-drop bug): a single attempt, no retry.
-    // The requeue `RPUSH` is tried exactly once and its error is returned
-    // as-is, so a transient Redis failure loses the job. Replaced by the real
-    // bounded-retry loop in the fix commit.
-    let _ = max_attempts;
-    op().await
+    let max_attempts = max_attempts.max(1);
+    let mut attempt = 1u32;
+    loop {
+        match op().await {
+            Ok(value) => return Ok(value),
+            // Final attempt failed — surface the error to the caller rather
+            // than swallowing it (the pre-fix behaviour dropped the job here).
+            Err(e) if attempt >= max_attempts => return Err(e),
+            // Transient failure with attempts remaining — back off and retry.
+            Err(_) => {
+                sleep(attempt).await;
+                attempt += 1;
+            }
+        }
+    }
 }
 
 /// Render the error side of a [`TransportResult`] for logging (`""` on `Ok`).
