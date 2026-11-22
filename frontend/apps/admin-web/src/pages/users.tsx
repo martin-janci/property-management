@@ -226,13 +226,8 @@ const UsersPage: React.FC = () => {
     async (user: UserRow, reason: string) => {
       setImpersonatePending(true);
       setImpersonateError(undefined);
-      // NOTE: backend `StartBody` in
-      // `backend/servers/api-server/src/routes/admin/impersonation.rs` only
-      // deserializes `target_user_id`; the `reason` we collect from the
-      // operator is intentionally NOT in the request body to avoid sending
-      // a misleading field that the server silently drops. The reason is
-      // surfaced via the audit-log path that wraps this action server-side.
-      void reason;
+      // `StartBody` accepts an optional `reason`, which the server writes
+      // into the impersonation audit payload.
       try {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -240,7 +235,7 @@ const UsersPage: React.FC = () => {
           method: 'POST',
           headers,
           credentials: 'include',
-          body: JSON.stringify({ target_user_id: user.id }),
+          body: JSON.stringify({ target_user_id: user.id, reason }),
         });
         if (!res.ok) {
           const text = await res.text().catch(() => '');

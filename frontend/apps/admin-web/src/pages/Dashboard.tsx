@@ -250,18 +250,22 @@ interface MetricsSummary {
 
 type AuditEvent = AuditEventView;
 
+/** `GET /admin/impersonation/active` row (`ActiveImpersonationRow`). */
 interface ImpersonationSession {
   id: string;
-  operator_email: string;
+  actor_email: string;
   target_email: string;
-  target_id: string;
+  target_user_id: string;
   started_at: string;
   expires_at: string;
 }
 
+/** `GET /admin/memberships/merge-collisions` row (`MergeCollisionRow`). */
 interface MergeCollision {
-  id: string;
-  description: string;
+  email: string;
+  user_ids: string[];
+  organization_ids: string[];
+  organization_names: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -672,10 +676,10 @@ export function Dashboard() {
                     <div key={session.id} className="ppt-row">
                       <span className="ppt-dot ppt-dot--amber" aria-hidden="true" />
                       <span className="ppt-row__text">
-                        <span className="ppt-row__who">{session.operator_email}</span>
+                        <span className="ppt-row__who">{session.actor_email}</span>
                         {' → '}
                         <span className="ppt-row__target">
-                          {session.target_email || session.target_id}
+                          {session.target_email || session.target_user_id}
                         </span>
                         <br />
                         <span style={{ color: 'var(--ppt-fg-muted, #6b7280)', fontSize: '11px' }}>
@@ -719,9 +723,11 @@ export function Dashboard() {
               ) : (
                 <div className="ppt-row-list">
                   {mergeCollisions.map((collision) => (
-                    <div key={collision.id} className="ppt-row">
+                    <div key={collision.email} className="ppt-row">
                       <span className="ppt-dot ppt-dot--amber" aria-hidden="true" />
-                      <span className="ppt-row__text">{collision.description}</span>
+                      <span className="ppt-row__text">
+                        {collision.email} · {collision.organization_names.join(', ')}
+                      </span>
                       <button
                         type="button"
                         className="ppt-btn ppt-btn--tiny"

@@ -355,6 +355,45 @@ async fn platform_admin_announcement_update_2xx(pool: PgPool) {
     assert_2xx(&resp, "announcement_update");
 }
 
+/// `end_at` is tri-state on update: absent keeps it, `null` clears it.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn platform_admin_announcement_update_clears_end_at(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let token = authorized_admin_token(&pool, "annend", "site_settings_write").await;
+    let id = create_announcement(&app, &token).await;
+    let url = format!("/api/v1/platform-admin/announcements/{id}");
+
+    let end = chrono::Utc::now() + chrono::Duration::days(2);
+    let resp = app
+        .put(&url)
+        .bearer(&token)
+        .json(serde_json::json!({ "end_at": end }))
+        .send()
+        .await;
+    assert_2xx(&resp, "set end_at");
+    assert!(resp.json_value()["end_at"].is_string());
+
+    // Absent → unchanged.
+    let resp = app
+        .put(&url)
+        .bearer(&token)
+        .json(serde_json::json!({ "title": "still ends" }))
+        .send()
+        .await;
+    assert_2xx(&resp, "keep end_at");
+    assert!(resp.json_value()["end_at"].is_string());
+
+    // Explicit null → cleared.
+    let resp = app
+        .put(&url)
+        .bearer(&token)
+        .json(serde_json::json!({ "end_at": null }))
+        .send()
+        .await;
+    assert_2xx(&resp, "clear end_at");
+    assert!(resp.json_value()["end_at"].is_null(), "{}", resp.text());
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_admin_announcement_delete_2xx(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

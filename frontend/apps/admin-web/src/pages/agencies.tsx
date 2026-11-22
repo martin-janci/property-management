@@ -17,12 +17,15 @@ import { ResourceTable, type ResourceTableColumn } from '@ppt/admin-ui';
 import { type Agency, adminKeys, suspendAgency, useAgencies } from '@ppt/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
+import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
+
+const SUSPEND_REASON_MIN = 20;
 
 const AgenciesPage: React.FC = () => {
   const { t } = useTranslation();
@@ -30,6 +33,11 @@ const AgenciesPage: React.FC = () => {
   const { token } = useAdminAuth();
   const queryClient = useQueryClient();
   const query = useAgencies({ page: 1, page_size: 50 });
+  // Suspend needs a justification (`{ reason }` is required server-side).
+  const [suspendTarget, setSuspendTarget] = useState<Agency | null>(null);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [isSuspending, setIsSuspending] = useState(false);
+  const suspendReasonValid = useAuditReasonValid(suspendReason, SUSPEND_REASON_MIN);
 
   // Locale-aware date formatter for the created column. Falls back to the raw
   // ISO string if Intl can't parse it (defensive — backend always sends ISO).
@@ -72,9 +80,12 @@ const AgenciesPage: React.FC = () => {
   // example. The api-client's mfa_required interceptor handles the
   // challenge + retry, so this code only sees the final outcome.
   const handleSuspend = useCallback(
-    async (agency: Agency) => {
+    async (agency: Agency, reason: string) => {
+      setIsSuspending(true);
       try {
-        await suspendAgency(agency.id);
+        await suspendAgency(agency.id, reason);
+        setSuspendTarget(null);
+        setSuspendReason('');
         showToast({
           type: 'success',
           title: t('admin.agencies.toast.suspendedTitle'),
@@ -89,6 +100,8 @@ const AgenciesPage: React.FC = () => {
           title: t('admin.agencies.toast.suspendFailedTitle'),
           message,
         });
+      } finally {
+        setIsSuspending(false);
       }
     },
     [queryClient, showToast, t]
@@ -196,7 +209,8 @@ const AgenciesPage: React.FC = () => {
             // Real call — api-client interceptor opens the MFA modal on
             // 401 mfa_required and retries on success.
             onClick: (a) => {
-              void handleSuspend(a);
+              setSuspendReason('');
+              setSuspendTarget(a);
             },
           },
           {
@@ -211,6 +225,61 @@ const AgenciesPage: React.FC = () => {
           },
         ]}
       />
+      {suspendTarget && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="agency-suspend-title"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 480,
+              width: '100%',
+              background: 'var(--ppt-bg-surface, #fff)',
+              borderRadius: 12,
+              padding: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+          >
+            <h2 id="agency-suspend-title" style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+              {t('admin.agencies.suspendDialog.title', {
+                name: suspendTarget.name,
+                defaultValue: 'Suspend {{name}}?',
+              })}
+            </h2>
+            <AuditReasonPrompt
+              action="agency_suspend"
+              minLength={SUSPEND_REASON_MIN}
+              value={suspendReason}
+              onChange={setSuspendReason}
+              required
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button type="button" onClick={() => setSuspendTarget(null)} disabled={isSuspending}>
+                {t('admin.common.cancel', { defaultValue: 'Cancel' })}
+              </button>
+              <button
+                type="button"
+                disabled={!suspendReasonValid || isSuspending}
+                onClick={() => void handleSuspend(suspendTarget, suspendReason.trim())}
+              >
+                {t('admin.agencies.actions.suspend')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

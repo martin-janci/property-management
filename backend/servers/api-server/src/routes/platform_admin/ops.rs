@@ -370,9 +370,21 @@ pub struct UpdateAnnouncementRequest {
     pub message: Option<String>,
     pub severity: Option<String>,
     pub start_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// Absent = keep, `null` = clear, value = set.
+    #[serde(default, deserialize_with = "double_option")]
     pub end_at: Option<Option<chrono::DateTime<chrono::Utc>>>,
     pub is_dismissible: Option<bool>,
     pub requires_acknowledgment: Option<bool>,
+}
+
+/// Keep an explicit JSON `null` as `Some(None)` (clear) instead of letting
+/// serde collapse it into `None` (field absent → unchanged).
+fn double_option<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: serde::Deserializer<'de>,
+{
+    Option::<T>::deserialize(deserializer).map(Some)
 }
 
 /// Response for announcement creation.

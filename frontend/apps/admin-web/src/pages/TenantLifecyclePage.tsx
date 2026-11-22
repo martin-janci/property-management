@@ -34,15 +34,38 @@ export interface TenantInfo {
   lastExportSizeGb: number | null;
 }
 
-const DEMO_TENANT: TenantInfo = {
-  id: 'demo',
-  slug: 'dunajska-residences',
-  name: 'Dunajská Residences',
-  softDeletedAt: null, // Active tenant — set to e.g. new Date(Date.now() - 12 * 3600_000) to test cooldown
-  lastExportAt: new Date('2026-05-10T09:34:00Z'),
-  lastExportBy: 'martin@rlt.sk',
-  lastExportSizeGb: 2.3,
+/** No tenant loaded yet: every tenant-scoped action stays disabled. */
+const NO_TENANT: TenantInfo = {
+  id: '',
+  slug: '',
+  name: '—',
+  softDeletedAt: null,
+  lastExportAt: null,
+  lastExportBy: null,
+  lastExportSizeGb: null,
 };
+
+/**
+ * Resolve a tenant slug to its organization via
+ * `GET /api/v1/platform-admin/organizations?search=` (exact slug match).
+ * The server exposes no soft-delete / last-export metadata yet, so those
+ * stay unknown (null) and purge stays gated behind "not soft-deleted".
+ */
+export async function lookupTenantBySlug(
+  slug: string,
+  token: string | null
+): Promise<TenantInfo | null> {
+  const resp = await fetch(
+    `/api/v1/platform-admin/organizations?search=${encodeURIComponent(slug)}&page_size=100`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: 'include' }
+  );
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = (await resp.json()) as {
+    organizations?: { id: string; slug: string; name: string }[];
+  };
+  const org = (data.organizations ?? []).find((o) => o.slug === slug);
+  return org ? { ...NO_TENANT, id: org.id, slug: org.slug, name: org.name } : null;
+}
 
 // 24-hour cooldown in ms
 const PURGE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
@@ -607,7 +630,8 @@ export default function TenantLifecyclePage() {
   const canRestore = useCapability('tenant_restore');
 
   const [slugInput, setSlugInput] = useState('');
-  const [tenant, setTenant] = useState<TenantInfo>(DEMO_TENANT);
+  const [tenant, setTenant] = useState<TenantInfo>(NO_TENANT);
+  const [isLoadingTenant, setIsLoadingTenant] = useState(false);
 
   const [purgeWizardOpen, setPurgeWizardOpen] = useState(false);
   const [cooldownMs, setCooldownMs] = useState<number>(0);
@@ -664,11 +688,36 @@ export default function TenantLifecyclePage() {
   }, [tenant.id]);
 
   // Load tenant from slug input
-  const handleLoadTenant = useCallback(() => {
-    const slug = slugInput.trim() || DEMO_TENANT.slug;
-    setTenant({ ...DEMO_TENANT, slug, name: slug === DEMO_TENANT.slug ? DEMO_TENANT.name : slug });
+  const handleLoadTenant = useCallback(async () => {
+    const slug = slugInput.trim();
+    if (!slug) return;
     setPurgeWizardOpen(false);
-  }, [slugInput]);
+    setIsLoadingTenant(true);
+    try {
+      const found = await lookupTenantBySlug(slug, token);
+      setTenant(found ?? NO_TENANT);
+      if (!found) {
+        showToast({
+          type: 'error',
+          title: t('admin.tenantLifecycle.picker.notFound', {
+            slug,
+            defaultValue: 'No tenant with slug "{{slug}}"',
+          }),
+        });
+      }
+    } catch (err) {
+      setTenant(NO_TENANT);
+      showToast({
+        type: 'error',
+        title: t('admin.tenantLifecycle.picker.loadFailed', {
+          defaultValue: 'Could not load tenant',
+        }),
+        message: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setIsLoadingTenant(false);
+    }
+  }, [slugInput, token, showToast, t]);
 
   // Export action
   const handleExport = useCallback(async () => {
@@ -794,7 +843,7 @@ export default function TenantLifecyclePage() {
   // Purge button state
   const tenantSoftDeleted = tenant.softDeletedAt !== null;
   const cooldownActive = cooldownMs > 0;
-  const purgeButtonDisabled = !tenantSoftDeleted || cooldownActive;
+  const purgeButtonDisabled = !tenant.id || !tenantSoftDeleted || cooldownActive;
 
   const purgeButtonLabel = !tenantSoftDeleted
     ? t('admin.tenantLifecycle.purge.buttonNotSoftDeleted', {
@@ -817,14 +866,19 @@ export default function TenantLifecyclePage() {
         <input
           id="lc-slug-picker"
           type="text"
-          placeholder={DEMO_TENANT.slug}
+          placeholder="tenant-slug"
           value={slugInput}
           onChange={(e) => setSlugInput(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleLoadTenant();
           }}
         />
-        <button type="button" className="lc-btn lc-btn--ghost" onClick={handleLoadTenant}>
+        <button
+          type="button"
+          className="lc-btn lc-btn--ghost"
+          onClick={handleLoadTenant}
+          disabled={isLoadingTenant || !slugInput.trim()}
+        >
           {t('admin.tenantLifecycle.picker.load', { defaultValue: 'Load' })}
         </button>
       </div>
@@ -871,7 +925,7 @@ export default function TenantLifecyclePage() {
               type="button"
               className="lc-btn lc-btn--primary"
               onClick={handleExport}
-              disabled={isExporting}
+              disabled={isExporting || !tenant.id}
             >
               {isExporting && <span className="lc-spinner" aria-hidden="true" />}
               {isExporting

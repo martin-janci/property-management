@@ -92,7 +92,8 @@ impl SystemAnnouncementRepository {
                 message = COALESCE($3, message),
                 severity = COALESCE($4, severity),
                 start_at = COALESCE($5, start_at),
-                end_at = COALESCE($6, end_at),
+                -- `end_at` is tri-state: absent (keep), null (clear), value (set).
+                end_at = CASE WHEN $9 THEN $6 ELSE end_at END,
                 is_dismissible = COALESCE($7, is_dismissible),
                 requires_acknowledgment = COALESCE($8, requires_acknowledgment),
                 updated_at = NOW()
@@ -105,9 +106,10 @@ impl SystemAnnouncementRepository {
         .bind(message)
         .bind(severity)
         .bind(start_at)
-        .bind(end_at)
+        .bind(end_at.flatten())
         .bind(is_dismissible)
         .bind(requires_acknowledgment)
+        .bind(end_at.is_some())
         .fetch_optional(&self.pool)
         .await?;
 
