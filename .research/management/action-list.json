@@ -261,24 +261,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-native-confirm-dialogs",
-      "action": "ppt web ui native confirm dialogs",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=1 vector=i18n)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T18:26:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "i18n",
-        "generated": "2026-08-24T08:40:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-bookfacility-silent-availability",
       "action": "ppt web ui bookfacility silent availability",
       "owner_role": "pm-backend",
@@ -310,24 +292,6 @@
       "signal_ref": {
         "segment": "ppt-web-ui",
         "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-24T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-date-number-formatters-no-locale",
-      "action": "ppt web ui date number formatters no locale",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
         "vector": "bug",
         "generated": "2026-08-24T00:00:00Z"
       }
@@ -842,10 +806,11 @@
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z"
     },
     {
       "id": "pm-scrum-master-resolve-dispatcher-stall-3357-3-approved-prs-still-blocked-o-2026-11-22",
@@ -854,10 +819,11 @@
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z"
     },
     {
       "id": "pm-scrum-master-unblock-mobile-native-kmp-swagger-ui-egress-in-the-cloud-run-2026-11-22",
@@ -878,10 +844,11 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z"
     },
     {
       "id": "pm-scrum-master-triage-new-issue-3711-dispatcher-signals-promote-dev-truth-g-2026-11-22",
@@ -920,18 +887,6 @@
       "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
-      "id": "pm-frontend-promote-drafts-3714-ppt-web-date-number-locale-formatters-an-2026-11-22",
-      "action": "Promote drafts #3714 (ppt-web date/number locale formatters) and #3715 (ppt-web native confirm dialogs) to ready-for-review within 48h — both are from the 2026-11-19/20 action-list and are the only non-i18n frontend drafts in flight",
-      "owner_role": "pm-frontend",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
       "id": "pm-frontend-verify-the-authed-query-key-roots-logout-purge-pattern-from--2026-11-22",
       "action": "Verify the `AUTHED_QUERY_KEY_ROOTS` logout-purge pattern from #3706 is comprehensive — audit every feature-group root query key, add a unit test that asserts the allow-list matches `useQuery({queryKey: [X, ...]})` call sites",
       "owner_role": "pm-frontend",
@@ -950,10 +905,11 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z"
     },
     {
       "id": "pm-frontend-characterize-the-two-high-churn-frontend-files-this-week-acc-2026-11-22",
@@ -962,10 +918,11 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z"
     },
     {
       "id": "pm-frontend-confirm-the-ws-token-in-url-strip-from-3696-covers-every-web-2026-11-22",
@@ -974,10 +931,11 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "in-progress",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z"
     }
   ],
   "generated": "2026-11-22T03:06:30Z"

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-22T04:28:36Z",
+  "archived_at": "2026-11-22T06:36:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12694,6 +12694,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-date-number-formatters-no-locale",
+      "action": "ppt web ui date number formatters no locale",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d ppt-web-ui score=1 vector=bug) | dev-reconcile 2026-11-22T06:31:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-24T00:00:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "f0cb9432b0d9cf51fc0e64926fd1bbc8577e69e2",
+        "subject": "code-review-ppt-web-ui-date-number-formatters-no-locale: thread active i18n locale through ppt-web date/number formatters (#3714)",
+        "at": "2026-11-22T06:31:20Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-disableall-dialog-no-i18n",
       "action": "ppt web ui disableall dialog no i18n",
       "owner_role": "pm-backend",
@@ -13682,6 +13706,30 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-17T10:45:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-native-confirm-dialogs",
+      "action": "ppt web ui native confirm dialogs",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=1 vector=i18n) | dev-reconcile 2026-11-22T06:31:20Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T18:26:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-08-24T08:40:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "6ed3ad44da79308aeb7a47fffdff2aa95fa7ef55",
+        "subject": "code-review-ppt-web-ui-native-confirm-dialogs: replace native prompt()/alert() with in-app dialogs (#3715)",
+        "at": "2026-11-22T06:31:20Z"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-notif-settings-hardcoded-errors",
@@ -30815,6 +30863,25 @@
         "merged_pr": 3190,
         "merged_at": "2026-10-30T20:36:35Z",
         "at": "2026-10-30T20:46:08Z"
+      }
+    },
+    {
+      "id": "pm-frontend-promote-drafts-3714-ppt-web-date-number-locale-formatters-an-2026-11-22",
+      "action": "Promote drafts #3714 (ppt-web date/number locale formatters) and #3715 (ppt-web native confirm dialogs) to ready-for-review within 48h — both are from the 2026-11-19/20 action-list and are the only non-i18n frontend drafts in flight",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22 | gc1-reconcile 2026-11-22T06:31:20Z",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T06:31:20Z"
       }
     },
     {
