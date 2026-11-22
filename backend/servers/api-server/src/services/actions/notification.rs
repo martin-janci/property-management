@@ -6,6 +6,7 @@ use super::{ActionContext, ActionError, ActionExecutor, ActionResult};
 use async_trait::async_trait;
 use db::models::action_type;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 /// Notification channel types.
@@ -80,15 +81,70 @@ fn default_priority() -> i32 {
     3
 }
 
+/// A fully-resolved notification handed to a [`NotificationSink`] for delivery.
+///
+/// All template variables have already been substituted and the target has
+/// been resolved to concrete recipient identifiers, so a sink only has to
+/// deliver/enqueue.
+#[derive(Debug, Clone)]
+pub struct WorkflowNotification {
+    /// Notification title (templates already substituted).
+    pub title: String,
+    /// Notification message (templates already substituted).
+    pub message: String,
+    /// Resolved recipient identifiers (user ids / `role:`, `building:`, `org:` selectors).
+    pub targets: Vec<String>,
+    /// Delivery channel.
+    pub channel: NotificationChannel,
+    /// Priority level (1-5, 1 being highest).
+    pub priority: i32,
+    /// Optional action URL (templates already substituted).
+    pub action_url: Option<String>,
+    /// Optional category for grouping.
+    pub category: Option<String>,
+    /// Custom data to include.
+    pub data: serde_json::Value,
+}
+
+/// Sink that actually delivers (or enqueues) a workflow notification.
+///
+/// The executor is deliberately decoupled from any concrete notification
+/// service: production wires a sink backed by the notification pipeline, tests
+/// wire a recording sink. Keeping this a trait means the executor never has to
+/// pretend a notification was sent — if no sink is wired it refuses to report
+/// success (see [`NotificationExecutor::execute`]), consistent with the other
+/// action executors, which only return success after the work actually ran.
+#[async_trait]
+pub trait NotificationSink: Send + Sync {
+    /// Deliver or enqueue `notification`, returning the number of recipients
+    /// actually dispatched to. An `Err` is surfaced to the workflow engine as
+    /// an [`ActionError::ExternalServiceError`] (and is retried like any other
+    /// transient action failure).
+    async fn dispatch(&self, notification: &WorkflowNotification) -> Result<usize, String>;
+}
+
 /// Notification action executor.
+///
+/// Holds an optional [`NotificationSink`]. When a sink is wired the action
+/// dispatches/enqueues for real; when it is absent the action returns a real
+/// error rather than a silent success, so a mis-wired deployment surfaces the
+/// gap instead of claiming notifications were sent when they were not.
 pub struct NotificationExecutor {
-    // In production, this would hold the notification service
+    sink: Option<Arc<dyn NotificationSink>>,
 }
 
 impl NotificationExecutor {
-    /// Create a new notification executor.
+    /// Create a new notification executor with no dispatcher wired.
+    ///
+    /// Without a sink the executor refuses to report success — use
+    /// [`NotificationExecutor::with_sink`] to attach a real dispatcher.
     pub fn new() -> Self {
-        Self {}
+        Self { sink: None }
+    }
+
+    /// Create a notification executor backed by a concrete dispatcher.
+    pub fn with_sink(sink: Arc<dyn NotificationSink>) -> Self {
+        Self { sink: Some(sink) }
     }
 
     /// Parse and validate the notification configuration.
@@ -179,7 +235,6 @@ impl ActionExecutor for NotificationExecutor {
         // Resolve targets
         let targets = Self::resolve_target(&notif_config.target, context)?;
 
-        // Log the notification (in production, this would use NotificationService)
         tracing::info!(
             workflow_id = %context.workflow_id,
             execution_id = %context.execution_id,
@@ -190,8 +245,33 @@ impl ActionExecutor for NotificationExecutor {
             "Workflow sending notification"
         );
 
-        // In production, this would actually send notifications via the notification service
-        // notification_service.send_batch(&targets, &title, &message, channel, priority).await?
+        let notification = WorkflowNotification {
+            title: title.clone(),
+            message: message.clone(),
+            targets: targets.clone(),
+            channel: notif_config.channel.clone(),
+            priority: notif_config.priority,
+            action_url: action_url.clone(),
+            category: notif_config.category.clone(),
+            data: notif_config.data.clone(),
+        };
+
+        // Actually dispatch/enqueue via the wired sink. If no sink is
+        // configured, refuse to report success: a silent "sent" when nothing
+        // was delivered is the bug this executor used to have. This mirrors the
+        // other action executors, which only return success once the work ran.
+        let Some(sink) = self.sink.as_ref() else {
+            return Err(ActionError::ExternalServiceError(
+                "notification action has no dispatcher wired; refusing to report \
+                 a notification as sent without delivering it"
+                    .to_string(),
+            ));
+        };
+
+        let recipients = sink
+            .dispatch(&notification)
+            .await
+            .map_err(ActionError::ExternalServiceError)?;
 
         let duration_ms = start.elapsed().as_millis() as i32;
 
@@ -203,6 +283,8 @@ impl ActionExecutor for NotificationExecutor {
                 "channel": notif_config.channel.to_string(),
                 "priority": notif_config.priority,
                 "action_url": action_url,
+                "dispatched": true,
+                "recipients": recipients,
                 "sent_at": chrono::Utc::now().to_rfc3339()
             }),
             duration_ms,
@@ -239,10 +321,38 @@ impl ActionExecutor for NotificationExecutor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    /// Test sink that records every dispatched notification and reports one
+    /// recipient per resolved target.
+    #[derive(Default)]
+    struct RecordingSink {
+        dispatched: Mutex<Vec<WorkflowNotification>>,
+    }
+
+    #[async_trait]
+    impl NotificationSink for RecordingSink {
+        async fn dispatch(&self, notification: &WorkflowNotification) -> Result<usize, String> {
+            let count = notification.targets.len();
+            self.dispatched.lock().unwrap().push(notification.clone());
+            Ok(count)
+        }
+    }
+
+    /// Test sink that always fails, to exercise error propagation.
+    struct FailingSink;
+
+    #[async_trait]
+    impl NotificationSink for FailingSink {
+        async fn dispatch(&self, _notification: &WorkflowNotification) -> Result<usize, String> {
+            Err("downstream notification service unavailable".to_string())
+        }
+    }
 
     #[tokio::test]
     async fn test_notification_executor_success() {
-        let executor = NotificationExecutor::new();
+        let sink = Arc::new(RecordingSink::default());
+        let executor = NotificationExecutor::with_sink(sink.clone());
         let config = serde_json::json!({
             "title": "New Fault Reported",
             "message": "A new fault has been reported in your building",
@@ -263,6 +373,36 @@ mod tests {
             result.output.get("title").unwrap().as_str().unwrap(),
             "New Fault Reported"
         );
+        // The notification was actually handed to the sink, not silently dropped.
+        assert_eq!(
+            result.output.get("dispatched").unwrap().as_bool(),
+            Some(true)
+        );
+        let recorded = sink.dispatched.lock().unwrap();
+        assert_eq!(recorded.len(), 1);
+        assert_eq!(recorded[0].title, "New Fault Reported");
+        assert_eq!(recorded[0].targets, vec!["user-123".to_string()]);
+    }
+
+    #[tokio::test]
+    async fn test_notification_sink_error_propagates() {
+        // A dispatch failure must surface as an error, not a silent success.
+        let executor = NotificationExecutor::with_sink(Arc::new(FailingSink));
+        let config = serde_json::json!({
+            "title": "New Fault Reported",
+            "message": "A new fault has been reported in your building",
+            "target": {"user": "user-123"}
+        });
+
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+
+        let err = executor.execute(&config, &context).await.unwrap_err();
+        assert!(matches!(err, ActionError::ExternalServiceError(_)));
     }
 
     #[tokio::test]
@@ -295,7 +435,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_notification_with_dynamic_target() {
-        let executor = NotificationExecutor::new();
+        let executor = NotificationExecutor::with_sink(Arc::new(RecordingSink::default()));
         let config = serde_json::json!({
             "title": "Fault Update",
             "message": "Your fault has been updated",
@@ -319,7 +459,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_notification_building_target() {
-        let executor = NotificationExecutor::new();
+        let executor = NotificationExecutor::with_sink(Arc::new(RecordingSink::default()));
         let config = serde_json::json!({
             "title": "Building Announcement",
             "message": "Important update for all residents",
