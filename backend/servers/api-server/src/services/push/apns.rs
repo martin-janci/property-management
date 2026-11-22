@@ -469,7 +469,9 @@ mod tests {
     async fn apns_db_fetch_error_message_does_not_leak_raw_db_error() {
         let adapter = ApnsHttpAdapter::new(failing_pool(), configured_apns());
 
-        let result = adapter.send(Uuid::new_v4(), &apns_test_notification()).await;
+        let result = adapter
+            .send(Uuid::new_v4(), &apns_test_notification())
+            .await;
 
         match result {
             Err(NotificationError::PushFailed(msg)) => {
