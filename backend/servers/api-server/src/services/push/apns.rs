@@ -128,6 +128,24 @@ struct ApnsErrorBody {
     reason: Option<String>,
 }
 
+/// Decide whether an APNs rejection `reason` means the device token is stale
+/// and must be evicted from `device_push_tokens`.
+///
+/// This is the APNs counterpart to FCM's
+/// [`FcmV1Error::indicates_stale_token`](super::fcm) — kept as a small pure
+/// function so the "which rejection reasons evict the token" decision is
+/// unit-testable without a live APNs gateway, and so a future refactor that
+/// widens or narrows the matched set surfaces as a test diff.
+///
+/// Apple returns `BadDeviceToken` when the token is malformed / not valid for
+/// the topic+environment, and `Unregistered` (HTTP 410) when the app was
+/// uninstalled. Every other reason (throttling, payload-size, provider-token
+/// problems, transient server errors, or an unrecognised value) is treated as
+/// non-stale so a still-valid token is never evicted on a recoverable error.
+fn apns_reason_indicates_stale(reason: &str) -> bool {
+    matches!(reason, "BadDeviceToken" | "Unregistered")
+}
+
 /// A `PushTransport` implementation that delivers messages via APNs HTTP/2.
 ///
 /// The adapter:
@@ -245,7 +263,7 @@ impl ApnsHttpAdapter {
         match resp.json::<ApnsErrorBody>().await {
             Ok(err_body) => {
                 let reason = err_body.reason.as_deref().unwrap_or("UNKNOWN");
-                let expired = matches!(reason, "BadDeviceToken" | "Unregistered");
+                let expired = apns_reason_indicates_stale(reason);
                 tracing::warn!(
                     apns_reason = %reason,
                     http_status = %status,
@@ -504,5 +522,76 @@ mod tests {
             apns_base_url: None,
         };
         assert!(mint_apns_jwt(&config).is_none());
+    }
+
+    // ------------------------------------------------------------------
+    // Stale-token eviction decision (characterization — mirrors FCM's
+    // `indicates_stale_token`). Pins exactly which APNs rejection reasons
+    // evict a device token, so a refactor that widens or narrows the set
+    // surfaces as a failing test rather than silently dropping (or keeping)
+    // tokens in production.
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn apns_bad_device_token_reason_evicts() {
+        assert!(apns_reason_indicates_stale("BadDeviceToken"));
+    }
+
+    #[test]
+    fn apns_unregistered_reason_evicts() {
+        // HTTP 410 Gone — app uninstalled.
+        assert!(apns_reason_indicates_stale("Unregistered"));
+    }
+
+    #[test]
+    fn apns_recoverable_reasons_do_not_evict() {
+        // Throttling, payload-size, provider-token and transient-server errors
+        // must NOT evict a still-valid token — only a genuinely dead token is
+        // removed. Pinning the full non-stale set guards against a refactor
+        // accidentally treating a recoverable error as fatal.
+        for reason in [
+            "PayloadTooLarge",
+            "TooManyRequests",
+            "ExpiredProviderToken",
+            "InvalidProviderToken",
+            "MissingProviderToken",
+            "TopicDisallowed",
+            "BadTopic",
+            "DeviceTokenNotForTopic",
+            "InternalServerError",
+            "ServiceUnavailable",
+            "Shutdown",
+        ] {
+            assert!(
+                !apns_reason_indicates_stale(reason),
+                "{reason} is recoverable and must not evict the token"
+            );
+        }
+    }
+
+    #[test]
+    fn apns_unknown_or_empty_reason_does_not_evict() {
+        // The delivery path substitutes "UNKNOWN" when APNs returns no `reason`
+        // field; an unrecognised or empty reason must fail safe (keep token).
+        assert!(!apns_reason_indicates_stale("UNKNOWN"));
+        assert!(!apns_reason_indicates_stale(""));
+        assert!(!apns_reason_indicates_stale("baddevicetoken")); // case-sensitive
+    }
+
+    #[test]
+    fn apns_error_body_parses_reason_and_defaults_to_unknown() {
+        // Characterize the wire-shape parsing that feeds the eviction decision:
+        // a present `reason` is extracted verbatim and drives eviction, while a
+        // body with no `reason` degrades to the non-stale "UNKNOWN" sentinel.
+        let with_reason: ApnsErrorBody =
+            serde_json::from_str(r#"{"reason":"Unregistered"}"#).expect("parses");
+        let reason = with_reason.reason.as_deref().unwrap_or("UNKNOWN");
+        assert_eq!(reason, "Unregistered");
+        assert!(apns_reason_indicates_stale(reason));
+
+        let empty_body: ApnsErrorBody = serde_json::from_str("{}").expect("parses");
+        let reason = empty_body.reason.as_deref().unwrap_or("UNKNOWN");
+        assert_eq!(reason, "UNKNOWN");
+        assert!(!apns_reason_indicates_stale(reason));
     }
 }
