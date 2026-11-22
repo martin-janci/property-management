@@ -329,3 +329,200 @@ describe('AUTHED_QUERY_KEY_ROOTS logout-purge coverage', () => {
     expect(allowlist.size).toBe(AUTHED_QUERY_KEY_ROOTS.length);
   });
 });
+
+// ============================================================================
+// useQuery call-site coverage (the vector this task audits)
+// ============================================================================
+
+/**
+ * The checks above approach coverage from the *factory* side (every `*Keys`
+ * factory root must be allow-listed) and from the *inline-string* side (every
+ * `queryKey: ['literal', …]` root must be allow-listed). Both have a blind spot
+ * that a real `useQuery` call site can slip through:
+ *
+ *   `useQuery({ queryKey: SESSIONS_QUERY_KEY, … })`  // SessionsPage
+ *
+ * where `SESSIONS_QUERY_KEY = ['auth', 'sessions']` is a *module-level const*,
+ * not a string literal written at the call site and not a `*Keys` factory the
+ * page imports. The inline-string regex (`queryKey:\s*\[\s*['"]…`) never fires
+ * (there is no `[` after `queryKey:`), and no factory is imported, so this
+ * tenant-scoped `auth` cache is purged on logout *only because* a human
+ * remembered to add `'auth'` to the allow-list by hand — nothing enforced it.
+ *
+ * This block closes that gap by auditing the allow-list directly against the
+ * `useQuery` / `useInfiniteQuery` / `useSuspenseQuery` call sites in ppt-web
+ * production code: it extracts each call's `queryKey` first segment, *resolves*
+ * it to a root string (string literal → the literal; `*Keys`/`queryKeys.<group>`
+ * factory reference → the factory's `all[0]`; bare module const → the const's
+ * array literal, resolved recursively), and asserts the root is allow-listed.
+ * A root that cannot be resolved fails loudly so a new, unanalysable call-site
+ * shape forces the resolver (and a human) to extend coverage rather than
+ * silently passing.
+ *
+ * @see Issue #712 / PR #3706 — logout cache-purge allow-list
+ */
+
+/**
+ * Nested sub-factories that spread a parent factory's `all` and expose no `all`
+ * of their own (so `isKeyFactory` excludes them). Their root is derived from the
+ * parent factory at runtime — not hard-coded — so a parent-root rename can never
+ * leave a stale literal here.
+ */
+const nestedFactoryRoots: Record<string, string> = {
+  // `attachmentKeys.list(…)` → `[...messagingKeys.all, 'attachments', …]`
+  attachmentKeys: messagingKeys.all[0],
+};
+
+/**
+ * Every `*Keys` factory reachable from a ppt-web `useQuery` call site, keyed by
+ * the identifier the call site uses. Combines the central `queryKeys` groups'
+ * owners (resolved via the `queryKeys.<group>` branch below), the `@ppt/api-client`
+ * factories imported above, and the auto-discovered feature-local factories.
+ */
+const knownFactories: Record<string, unknown> = {
+  announcementKeys,
+  budgetKeys,
+  buildingKeys,
+  communityKeys,
+  complianceKeys,
+  disputeKeys,
+  esignatureKeys,
+  inboxKeys,
+  integrationKeys,
+  iotKeys,
+  layoutKeys,
+  leaseKeys,
+  membersKeys,
+  messagingKeys,
+  meterKeys,
+  mfaKeys,
+  myUnitsKeys,
+  notificationTriggerKeys,
+  oauthGrantKeys,
+  outageKeys,
+  personMonthKeys,
+  portfolioPerformanceKeys,
+  registryKeys,
+  reportKeys,
+  syndicationKeys,
+  templateKeys,
+  violationKeys,
+  votingKeys,
+  ...featureLocalFactories,
+};
+
+/**
+ * Resolve a dotted `queryKey` first-segment expression (e.g. `budgetKeys.list`,
+ * `queryKeys.accounting.invoices`, `SESSIONS_QUERY_KEY`) to its root string.
+ * `source` is the module the expression lives in, used to resolve bare consts.
+ * Returns `undefined` when the shape is not (yet) analysable.
+ */
+const resolveExprRoot = (source: string, expr: string, depth = 0): string | undefined => {
+  if (depth > 4) return undefined;
+  const head = expr.split('.')[0];
+
+  // `queryKeys.<group>.…` → queryKeys[group].all[0]
+  if (head === 'queryKeys') {
+    const group = expr.split('.')[1];
+    const factory = (queryKeys as Record<string, unknown>)[group];
+    return isKeyFactory(factory) ? factory.all[0] : undefined;
+  }
+
+  // Nested sub-factory without its own `all` (e.g. attachmentKeys).
+  if (head in nestedFactoryRoots) return nestedFactoryRoots[head];
+
+  // A known `*Keys` factory → its own `all[0]`.
+  const factory = knownFactories[head];
+  if (isKeyFactory(factory)) return factory.all[0];
+
+  // Otherwise treat `head` as a module-level const and resolve its definition.
+  return resolveConstRoot(source, head, depth);
+};
+
+/**
+ * Resolve a module-level `const <name> = …` whose value is a query-key array,
+ * returning its first-segment root. Handles `['literal', …]` directly and
+ * `[<ident>…]` / `<ident>…` by recursing through `resolveExprRoot`.
+ */
+const resolveConstRoot = (source: string, name: string, depth: number): string | undefined => {
+  const def = new RegExp(`\\bconst\\s+${name}\\b[^=]*=\\s*([\\s\\S]{0,160}?);`).exec(source);
+  if (!def) return undefined;
+  const rhs = def[1];
+  const literal = /^\s*\[\s*['"]([\w-]+)['"]/.exec(rhs);
+  if (literal) return literal[1];
+  const ident = /^\s*\[?\s*(?:\.\.\.\s*)?([A-Za-z_$][\w$.]*)/.exec(rhs);
+  if (ident) return resolveExprRoot(source, ident[1], depth + 1);
+  return undefined;
+};
+
+/**
+ * Finds each `useQuery` / `useInfiniteQuery` / `useSuspenseQuery` call and
+ * captures its `queryKey` first segment — either a string literal (group 2) or
+ * a factory/const expression (group 3). The bounded lazy gap stops the match at
+ * the call's own `queryKey`, and `[<(]` tolerates an explicit generic arg
+ * (`useQuery<T>({…})`) while never matching `useQueryClient(`.
+ */
+const USE_QUERY_SITE_RE =
+  /use(?:Infinite|Suspense)?Query\s*[<(][\s\S]{0,600}?queryKey:\s*\[?\s*(?:\.\.\.\s*)?(?:(['"])([\w-]+)\1|([A-Za-z_$][\w$.]*))/g;
+
+interface UseQuerySite {
+  file: string;
+  expr: string;
+  root: string | undefined;
+}
+
+const useQuerySites: UseQuerySite[] = [];
+for (const [path, source] of Object.entries(ppptWebSources)) {
+  if (/\.(test|spec)\.tsx?$/.test(path)) continue; // production modules only
+  for (const m of source.matchAll(USE_QUERY_SITE_RE)) {
+    const file = path.replace(/^\.\.\//, '');
+    if (m[2] !== undefined) {
+      useQuerySites.push({ file, expr: m[2], root: m[2] });
+    } else {
+      const expr = m[3];
+      useQuerySites.push({ file, expr, root: resolveExprRoot(source, expr) });
+    }
+  }
+}
+
+describe('AUTHED_QUERY_KEY_ROOTS vs. useQuery call sites', () => {
+  // Guard against a silently-empty scan (moved tree / broken glob / regex drift)
+  // vacuously passing with zero coverage — and anchor the exact blind-spot shape
+  // this audit targets: a bare module-const queryKey (SessionsPage) that neither
+  // the inline-string nor the factory-derived checks can see.
+  it('discovers useQuery call sites, including a bare module-const queryKey', () => {
+    expect(useQuerySites.length).toBeGreaterThan(0);
+    expect(
+      useQuerySites.some((s) => s.expr === 'SESSIONS_QUERY_KEY'),
+      'expected to find the SessionsPage `queryKey: SESSIONS_QUERY_KEY` call site — ' +
+        'the const-reference shape this audit exists to cover'
+    ).toBe(true);
+  });
+
+  // Every discovered call site must resolve to a concrete root. An unresolved
+  // site means a new queryKey shape the resolver can't analyse — extend the
+  // resolver (and, if its root is new, the allow-list) rather than let coverage
+  // silently lapse.
+  it('resolves every useQuery queryKey to a root', () => {
+    const unresolved = useQuerySites
+      .filter((s) => s.root === undefined)
+      .map((s) => `${s.file}: ${s.expr}`)
+      .sort();
+    expect(
+      unresolved,
+      'useQuery call sites whose queryKey root could not be resolved ' +
+        `(extend the resolver in queryKeys.test.ts): ${unresolved.join('; ')}`
+    ).toEqual([]);
+  });
+
+  // The core assertion: every resolvable root reached by a real useQuery call
+  // site is purged on logout. Deduped to unique roots so the row count tracks
+  // distinct caches, not call-site volume.
+  const resolvedRoots = [
+    ...new Set(useQuerySites.map((s) => s.root).filter((r): r is string => r !== undefined)),
+  ].sort();
+
+  it.each(resolvedRoots.map((root) => [root]))('purges useQuery root "%s" on logout', (root) => {
+    expect(allowlist).toContain(root);
+  });
+});
