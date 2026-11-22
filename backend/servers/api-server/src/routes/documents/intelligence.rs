@@ -820,10 +820,12 @@ KEY POINTS:
 
     let processing_time_ms = start_time.elapsed().as_millis() as u64;
 
-    // Store the summary in the document
+    // Store the summary in the document. A failed persist must be surfaced —
+    // returning the generated summary while the DB write silently failed would
+    // make the caller believe it was stored (code-review finding).
     let key_points_json = serde_json::to_value(&key_points).ok();
     let word_count = summary.split_whitespace().count() as i32;
-    let _ = state
+    if let Err(e) = state
         .document_repo
         .update_summary(
             id,
@@ -834,7 +836,18 @@ KEY POINTS:
             Some(word_count),
             Some(language),
         )
-        .await;
+        .await
+    {
+        tracing::error!("Failed to persist document summary for {}: {}", id, e);
+        rls.release().await;
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "PERSIST_ERROR",
+                "Summary was generated but could not be stored",
+            )),
+        ));
+    }
 
     tracing::info!(
         "Document {} summarized (tokens: {}, latency: {}ms)",
