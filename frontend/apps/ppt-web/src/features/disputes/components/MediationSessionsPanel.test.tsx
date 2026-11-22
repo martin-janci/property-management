@@ -26,6 +26,9 @@ vi.mock('react-i18next', () => ({
         'disputes.mediation.sessions.statusCompleted': 'Completed',
         'disputes.mediation.sessions.statusCancelled': 'Cancelled',
         'disputes.mediation.sessions.statusRescheduled': 'Rescheduled',
+        'disputes.mediation.sessions.loadError': 'Could not load sessions.',
+        'disputes.mediation.sessions.loadErrorRetry': 'Retry',
+        'disputes.mediation.sessions.loadErrorRetrying': 'Retrying…',
         'common.loading': 'Loading',
       };
       if (key === 'disputes.mediation.sessions.minutesShort') {
@@ -71,6 +74,42 @@ describe('MediationSessionsPanel', () => {
       />
     );
     expect(screen.getByText('No sessions scheduled yet.')).toBeInTheDocument();
+  });
+
+  it('surfaces the load error instead of a false empty state when the query fails', () => {
+    render(
+      <MediationSessionsPanel
+        sessions={[]}
+        isLoading={false}
+        isError
+        onRetry={noop}
+        canManage={false}
+        onSchedule={noop}
+        onReschedule={noop}
+        onCancel={noop}
+      />
+    );
+    // A failed load must NOT masquerade as "no sessions scheduled".
+    expect(screen.queryByText('No sessions scheduled yet.')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load sessions.');
+  });
+
+  it('fires onRetry when the error-state retry button is clicked', () => {
+    const onRetry = vi.fn();
+    render(
+      <MediationSessionsPanel
+        sessions={[]}
+        isLoading={false}
+        isError
+        onRetry={onRetry}
+        canManage={false}
+        onSchedule={noop}
+        onReschedule={noop}
+        onCancel={noop}
+      />
+    );
+    fireEvent.click(screen.getByText('Retry'));
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it('orders upcoming sessions before past sessions', () => {
