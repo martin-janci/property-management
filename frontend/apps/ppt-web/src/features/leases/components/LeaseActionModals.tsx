@@ -11,6 +11,7 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 // ============================================================================
 // Form data
@@ -372,7 +373,7 @@ export function RenewLeaseModal({
   const [errors, setErrors] = useState<{ endDate?: string; rent?: string; deposit?: string }>({});
 
   const termMonths = endDate > newStart ? termMonthsBetween(newStart, endDate) : 0;
-  const startLabel = new Date(`${newStart}T00:00:00Z`).toLocaleDateString(undefined, {
+  const startLabel = new Date(`${newStart}T00:00:00Z`).toLocaleDateString(getActiveLocale(), {
     timeZone: 'UTC',
   });
 

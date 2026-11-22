@@ -11,6 +11,7 @@
 import type { Sensor } from '@ppt/api-client';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { SensorStatusBadge } from '../components';
 
 export interface SensorListPageProps {
@@ -29,7 +30,7 @@ function formatTimestamp(value: string | null): string {
     return '—';
   }
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString(getActiveLocale());
 }
 
 export function SensorListPage({

@@ -1,5 +1,6 @@
 // Epic 144: Portfolio Performance Analytics - Metrics Summary Card Component
 import type React from 'react';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface MetricsSummaryCardProps {
   title: string;
@@ -40,7 +41,7 @@ export const MetricsSummaryCard: React.FC<MetricsSummaryCardProps> = ({
       case 'ratio':
         return `${val.toFixed(2)}x`;
       default:
-        return val.toLocaleString();
+        return val.toLocaleString(getActiveLocale());
     }
   };
 

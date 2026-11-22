@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { ViolationSeverity, ViolationStatus, ViolationSummary } from '../types';
 
 interface ViolationCardProps {
@@ -64,7 +65,7 @@ export function ViolationCard({ violation, onView, onResolve, onDispute }: Viola
   const canDispute = violation.status === 'open';
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getActiveLocale());
   };
 
   return (

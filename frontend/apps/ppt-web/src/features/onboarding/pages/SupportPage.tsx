@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { BugReportFormData, SupportTicket, SupportTicketPriority, SystemInfo } from '../types';
 import { getSystemInfo } from '../types';
 
@@ -517,7 +518,8 @@ function TicketCard({ ticket, onView }: TicketCardProps) {
           <h4 className="font-medium text-gray-900">{ticket.subject}</h4>
           <p className="text-sm text-gray-500 mt-1 line-clamp-1">{ticket.description}</p>
           <p className="text-xs text-gray-400 mt-2">
-            {t('help.support.created')}: {new Date(ticket.createdAt).toLocaleDateString()}
+            {t('help.support.created')}:{' '}
+            {new Date(ticket.createdAt).toLocaleDateString(getActiveLocale())}
           </p>
         </div>
         <button

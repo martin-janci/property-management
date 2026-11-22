@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { MeterReading, ValidationResult } from '../types';
 
 interface ReadingValidationCardProps {
@@ -89,11 +90,12 @@ export function ReadingValidationCard({
               {t('meters.serialNumber')}: {reading.meterSerialNumber}
             </p>
             <p className="text-2xl font-bold text-gray-900">
-              {reading.value.toLocaleString()} {reading.meterUnit}
+              {reading.value.toLocaleString(getActiveLocale())} {reading.meterUnit}
             </p>
             {consumption !== null && (
               <p className="text-sm text-gray-600">
-                {t('meters.consumption')}: {consumption.toLocaleString()} {reading.meterUnit}
+                {t('meters.consumption')}: {consumption.toLocaleString(getActiveLocale())}{' '}
+                {reading.meterUnit}
               </p>
             )}
           </div>
@@ -152,7 +154,7 @@ export function ReadingValidationCard({
         <div className="mt-3 p-3 bg-blue-50 rounded-lg">
           <p className="text-sm font-medium text-blue-800">{t('meters.correctedValue')}:</p>
           <p className="text-sm text-blue-700">
-            {reading.correctedValue.toLocaleString()} {reading.meterUnit}
+            {reading.correctedValue.toLocaleString(getActiveLocale())} {reading.meterUnit}
           </p>
         </div>
       )}

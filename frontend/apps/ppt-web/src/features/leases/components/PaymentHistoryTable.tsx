@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { LeasePayment, PaymentStatus } from '../types';
 
 interface PaymentHistoryTableProps {
@@ -29,11 +30,11 @@ export function PaymentHistoryTable({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getActiveLocale());
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(getActiveLocale(), {
       style: 'currency',
       currency,
     }).format(amount);

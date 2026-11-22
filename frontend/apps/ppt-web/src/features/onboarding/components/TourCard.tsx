@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { OnboardingTour, UserOnboardingProgress } from '../types';
 import { calculateTourProgress, getTourDisplayStatus } from '../types';
 
@@ -82,14 +83,14 @@ export function TourCard({ tour, progress, onStart, onResume, onView, onReset }:
           {progress?.startedAt && (
             <p className="mt-2 text-xs text-gray-400">
               {t('onboarding.startedAt', {
-                date: new Date(progress.startedAt).toLocaleDateString(),
+                date: new Date(progress.startedAt).toLocaleDateString(getActiveLocale()),
               })}
             </p>
           )}
           {progress?.completedAt && (
             <p className="text-xs text-gray-400">
               {t('onboarding.completedAt', {
-                date: new Date(progress.completedAt).toLocaleDateString(),
+                date: new Date(progress.completedAt).toLocaleDateString(getActiveLocale()),
               })}
             </p>
           )}

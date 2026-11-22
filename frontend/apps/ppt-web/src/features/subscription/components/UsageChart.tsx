@@ -3,6 +3,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { UsageMetricType, UsageSummary } from '../types';
 
 interface UsageChartProps {
@@ -52,7 +53,7 @@ function formatUsageValue(value: number, metricType: UsageMetricType): string {
       return `${(value / 1000).toFixed(1)}K`;
     }
   }
-  return value.toLocaleString();
+  return value.toLocaleString(getActiveLocale());
 }
 
 function UsageMetricItem({ summary }: { summary: UsageSummary }) {
@@ -152,8 +153,8 @@ export function UsageChart({ usageSummaries, className = '' }: UsageChartProps) 
         {periodStart && periodEnd && (
           <p className="text-sm text-gray-500 mt-1">
             {t('subscription.usage.period', {
-              start: new Date(periodStart).toLocaleDateString(),
-              end: new Date(periodEnd).toLocaleDateString(),
+              start: new Date(periodStart).toLocaleDateString(getActiveLocale()),
+              end: new Date(periodEnd).toLocaleDateString(getActiveLocale()),
             })}
           </p>
         )}

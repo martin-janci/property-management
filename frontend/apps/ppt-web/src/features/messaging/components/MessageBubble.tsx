@@ -6,6 +6,7 @@
 
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { Message } from '../types';
 import { MessageAttachments } from './MessageAttachments';
 
@@ -35,7 +36,7 @@ function formatDate(dateString: string): string {
   if (date.toDateString() === yesterday.toDateString()) {
     return 'Yesterday';
   }
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(getActiveLocale(), {
     weekday: 'long',
     month: 'short',
     day: 'numeric',

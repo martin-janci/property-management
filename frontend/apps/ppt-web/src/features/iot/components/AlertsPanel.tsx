@@ -5,6 +5,7 @@
 import type { SensorAlert } from '@ppt/api-client';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { SensorStatusBadge } from './SensorStatusBadge';
 
 export interface AlertsPanelProps {
@@ -17,7 +18,7 @@ export interface AlertsPanelProps {
 
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString(getActiveLocale());
 }
 
 export function AlertsPanel({

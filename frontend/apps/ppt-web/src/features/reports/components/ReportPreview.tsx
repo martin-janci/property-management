@@ -3,6 +3,7 @@
  */
 
 import type { ReportField, ReportResult } from '@ppt/api-client';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface ReportPreviewProps {
   result: ReportResult | null;
@@ -111,7 +112,7 @@ export function ReportPreview({ result, fields, isLoading, error }: ReportPrevie
           </p>
         </div>
         <span className="text-xs text-gray-400">
-          Generated: {new Date(result.generated_at).toLocaleString()}
+          Generated: {new Date(result.generated_at).toLocaleString(getActiveLocale())}
         </span>
       </div>
 

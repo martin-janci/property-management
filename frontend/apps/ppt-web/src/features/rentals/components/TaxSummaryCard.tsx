@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { TaxSummary } from '../types';
 
 interface TaxSummaryCardProps {
@@ -16,7 +17,7 @@ interface TaxSummaryCardProps {
 }
 
 function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(getActiveLocale(), {
     style: 'currency',
     currency,
   }).format(amount);

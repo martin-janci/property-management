@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { VideoTutorial, VideoTutorialCategory } from '../types';
 import { formatVideoDuration } from '../types';
 
@@ -252,7 +253,7 @@ function VideoCard({ video, onClick }: VideoCardProps) {
         <p className="text-sm text-gray-500 mt-1 line-clamp-2">{video.description}</p>
         {video.viewCount !== undefined && (
           <p className="text-xs text-gray-400 mt-2">
-            {video.viewCount.toLocaleString()} {t('help.tutorials.views')}
+            {video.viewCount.toLocaleString(getActiveLocale())} {t('help.tutorials.views')}
           </p>
         )}
       </div>
@@ -321,7 +322,7 @@ function FeaturedVideoCard({ video, onClick }: FeaturedVideoCardProps) {
             <span>{formatVideoDuration(video.duration)}</span>
             {video.viewCount !== undefined && (
               <span>
-                {video.viewCount.toLocaleString()} {t('help.tutorials.views')}
+                {video.viewCount.toLocaleString(getActiveLocale())} {t('help.tutorials.views')}
               </span>
             )}
           </div>

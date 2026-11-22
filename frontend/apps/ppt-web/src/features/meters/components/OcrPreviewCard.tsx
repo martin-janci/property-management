@@ -8,6 +8,7 @@
 
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 /** OCR detection result from backend */
 export interface OcrResult {
@@ -162,7 +163,7 @@ export function OcrPreviewCard({
             </div>
           ) : (
             <p className="text-3xl font-bold text-gray-900">
-              {ocrResult.extractedValue.toLocaleString()} {meterUnit}
+              {ocrResult.extractedValue.toLocaleString(getActiveLocale())} {meterUnit}
             </p>
           )}
         </div>
@@ -202,10 +203,12 @@ export function OcrPreviewCard({
         {lastReadingValue !== undefined && valueDiff !== null && valueDiff >= 0 && (
           <div className="text-sm text-gray-600 text-center">
             <p>
-              {t('meters.ocr.lastReading')}: {lastReadingValue.toLocaleString()} {meterUnit}
+              {t('meters.ocr.lastReading')}: {lastReadingValue.toLocaleString(getActiveLocale())}{' '}
+              {meterUnit}
             </p>
             <p className="text-green-600 font-medium">
-              {t('meters.ocr.consumption')}: +{valueDiff.toLocaleString()} {meterUnit}
+              {t('meters.ocr.consumption')}: +{valueDiff.toLocaleString(getActiveLocale())}{' '}
+              {meterUnit}
             </p>
           </div>
         )}

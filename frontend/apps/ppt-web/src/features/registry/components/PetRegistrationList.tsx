@@ -7,6 +7,7 @@
 import type { PetRegistrationWithDetails, RegistryStatus } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface PetRegistrationListProps {
   registrations: PetRegistrationWithDetails[];
@@ -219,7 +220,7 @@ export function PetRegistrationList({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(reg.submittedAt).toLocaleDateString()}
+                    {new Date(reg.submittedAt).toLocaleDateString(getActiveLocale())}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">

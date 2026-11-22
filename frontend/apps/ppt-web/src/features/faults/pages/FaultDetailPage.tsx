@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfirmDialog } from '../../../components/useConfirmDialog';
+import { getActiveLocale } from '../../../lib/locale';
 import type { FaultCategory, FaultPriority, FaultStatus } from '../components/FaultCard';
 import { FaultTimeline, type TimelineEntry } from '../components/FaultTimeline';
 import { type TriageData, TriageFaultDialog } from '../components/TriageFaultDialog';
@@ -441,7 +442,9 @@ export function FaultDetailPage({
               </div>
               <div>
                 <dt className="text-gray-500">{t('faults.reportedOn')}</dt>
-                <dd className="font-medium">{new Date(fault.createdAt).toLocaleString()}</dd>
+                <dd className="font-medium">
+                  {new Date(fault.createdAt).toLocaleString(getActiveLocale())}
+                </dd>
               </div>
               {fault.assignedToName && (
                 <div>
@@ -453,14 +456,16 @@ export function FaultDetailPage({
                 <div>
                   <dt className="text-gray-500">{t('faults.scheduled')}</dt>
                   <dd className="font-medium">
-                    {new Date(fault.scheduledDate).toLocaleDateString()}
+                    {new Date(fault.scheduledDate).toLocaleDateString(getActiveLocale())}
                   </dd>
                 </div>
               )}
               {fault.resolvedAt && (
                 <div>
                   <dt className="text-gray-500">{t('faults.resolvedOn')}</dt>
-                  <dd className="font-medium">{new Date(fault.resolvedAt).toLocaleString()}</dd>
+                  <dd className="font-medium">
+                    {new Date(fault.resolvedAt).toLocaleString(getActiveLocale())}
+                  </dd>
                 </div>
               )}
               {fault.rating && (

@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { CreateTemplateData, LeaseTemplate } from '../types';
 
 interface TemplatesPageProps {
@@ -158,7 +159,7 @@ export function TemplatesPage({
 
   const formatCurrency = (amount?: number, currency?: string) => {
     if (!amount) return '-';
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(getActiveLocale(), {
       style: 'currency',
       currency: currency || 'EUR',
     }).format(amount);

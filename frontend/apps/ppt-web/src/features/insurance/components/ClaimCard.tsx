@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { ClaimStatus, ClaimType, InsuranceClaim } from '../types';
 
 interface ClaimCardProps {
@@ -99,7 +100,7 @@ export function ClaimCard({ claim, onView }: ClaimCardProps) {
         <div>
           <span className="text-gray-500">{t('insurance.incidentDate')}:</span>
           <p className="font-medium">
-            {new Date(claim.incidentDate).toLocaleDateString()}
+            {new Date(claim.incidentDate).toLocaleDateString(getActiveLocale())}
             <span className="text-gray-400 text-xs ml-1">
               ({daysSinceIncident} {t('insurance.daysAgo')})
             </span>
@@ -107,7 +108,9 @@ export function ClaimCard({ claim, onView }: ClaimCardProps) {
         </div>
         <div>
           <span className="text-gray-500">{t('insurance.reportedDate')}:</span>
-          <p className="font-medium">{new Date(claim.reportedDate).toLocaleDateString()}</p>
+          <p className="font-medium">
+            {new Date(claim.reportedDate).toLocaleDateString(getActiveLocale())}
+          </p>
         </div>
         {claim.claimAmount && (
           <div>

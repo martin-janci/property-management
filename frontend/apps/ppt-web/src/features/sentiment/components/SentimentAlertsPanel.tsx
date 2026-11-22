@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { SentimentAlert } from '../types';
 
 /** Known alert-type enum values, mapped to translation keys under `sentiment.alertType.*`. */
@@ -55,7 +56,7 @@ export function SentimentAlertsPanel({
                     defaultValue: 'Score {{score}} · threshold {{threshold}} · {{date}}',
                     score: alert.currentSentiment.toFixed(2),
                     threshold: alert.thresholdBreached.toFixed(2),
-                    date: new Date(alert.createdAt).toLocaleDateString(),
+                    date: new Date(alert.createdAt).toLocaleDateString(getActiveLocale()),
                   })}
                 </p>
               </div>

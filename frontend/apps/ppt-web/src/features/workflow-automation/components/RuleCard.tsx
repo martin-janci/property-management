@@ -7,6 +7,7 @@
 
 import type { AutomationRule } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface RuleCardProps {
   rule: AutomationRule;
@@ -132,7 +133,7 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
               <div>
                 <span className="text-gray-400">{t('automation.ruleCard.lastRun')}</span>{' '}
                 <span className="font-medium text-gray-700">
-                  {new Date(rule.executionStats.lastRunAt).toLocaleDateString()}
+                  {new Date(rule.executionStats.lastRunAt).toLocaleDateString(getActiveLocale())}
                 </span>
               </div>
             )}

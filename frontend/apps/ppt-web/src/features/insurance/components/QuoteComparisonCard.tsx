@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { InsuranceQuote } from '../types';
 
 interface QuoteComparisonCardProps {
@@ -199,7 +200,8 @@ export function QuoteComparisonCard({
 
       {/* Valid Until */}
       <p className="mt-4 text-xs text-gray-400 text-center">
-        {t('insurance.quotes.validUntil')}: {new Date(quote.validUntil).toLocaleDateString()}
+        {t('insurance.quotes.validUntil')}:{' '}
+        {new Date(quote.validUntil).toLocaleDateString(getActiveLocale())}
       </p>
 
       {/* Select Button */}

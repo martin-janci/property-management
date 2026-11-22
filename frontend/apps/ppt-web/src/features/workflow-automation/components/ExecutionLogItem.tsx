@@ -8,6 +8,7 @@
 import type { ExecutionLog } from '@ppt/api-client';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface ExecutionLogItemProps {
   log: ExecutionLog;
@@ -62,7 +63,7 @@ function formatTimestamp(date: string, t: TFunction): string {
   if (diff < 604800000)
     return t('automation.execution.daysAgo', { count: Math.floor(diff / 86400000) });
 
-  return d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(getActiveLocale(), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',

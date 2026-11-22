@@ -26,6 +26,8 @@ export {
   parseApiError,
   type ValidationDetail,
 } from './errorHandler';
+// Active-locale resolution for Intl.* / toLocale* formatting
+export { getActiveLocale } from './locale';
 // Query Keys
 export {
   type AnnouncementFilters,

@@ -12,6 +12,7 @@ import type { CommentWithAuthor } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './AnnouncementComments.css';
+import { getActiveLocale } from '../../../lib/locale';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -104,7 +105,7 @@ function CommentItem({
   };
 
   const authorInitial = comment.authorName.charAt(0).toUpperCase();
-  const formattedDate = new Date(comment.createdAt).toLocaleDateString(undefined, {
+  const formattedDate = new Date(comment.createdAt).toLocaleDateString(getActiveLocale(), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

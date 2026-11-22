@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { ApplicationStatus, ApplicationSummary } from '../types';
 
 interface ApplicationCardProps {
@@ -32,7 +33,7 @@ export function ApplicationCard({ application, onView, onReview }: ApplicationCa
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getActiveLocale());
   };
 
   return (

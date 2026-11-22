@@ -7,6 +7,7 @@
 
 import type { ExecutionLog } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 interface ExecutionDetailsModalProps {
   log: ExecutionLog;
@@ -116,7 +117,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
                 {t('automation.execution.started')}
               </p>
               <p className="text-sm font-medium text-gray-900 mt-1">
-                {new Date(log.startedAt).toLocaleString()}
+                {new Date(log.startedAt).toLocaleString(getActiveLocale())}
               </p>
             </div>
             {log.completedAt && (
@@ -125,7 +126,7 @@ export function ExecutionDetailsModal({ log, onClose, onRetry }: ExecutionDetail
                   {t('automation.execution.completed')}
                 </p>
                 <p className="text-sm font-medium text-gray-900 mt-1">
-                  {new Date(log.completedAt).toLocaleString()}
+                  {new Date(log.completedAt).toLocaleString(getActiveLocale())}
                 </p>
               </div>
             )}

@@ -5,6 +5,7 @@
 
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { EditReadingFormData, Meter, MeterReading } from '../types';
 
 interface EditReadingPageProps {
@@ -147,7 +148,7 @@ export function EditReadingPage({
               {t('meters.edit.previousValue')}
             </h3>
             <p className="text-2xl font-bold text-amber-900">
-              {reading.value.toLocaleString()} {meter.unit}
+              {reading.value.toLocaleString(getActiveLocale())} {meter.unit}
             </p>
             <p className="text-sm text-amber-700 mt-1">
               {t('meters.edit.recordedOn')}{' '}
@@ -178,7 +179,7 @@ export function EditReadingPage({
                 className={`mt-1 text-sm ${valueDifference > 0 ? 'text-green-600' : 'text-red-600'}`}
               >
                 {t('meters.edit.difference')}: {valueDifference > 0 ? '+' : ''}
-                {valueDifference.toLocaleString()} {meter.unit}
+                {valueDifference.toLocaleString(getActiveLocale())} {meter.unit}
               </p>
             )}
           </div>

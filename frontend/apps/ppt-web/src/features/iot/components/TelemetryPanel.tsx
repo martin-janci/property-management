@@ -4,6 +4,7 @@
 import type { Sensor, SensorReading } from '@ppt/api-client';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 export interface TelemetryPanelProps {
   sensor: Sensor | null;
@@ -13,7 +14,7 @@ export interface TelemetryPanelProps {
 
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString(getActiveLocale());
 }
 
 export function TelemetryPanel({ sensor, readings, isLoading }: TelemetryPanelProps): JSX.Element {

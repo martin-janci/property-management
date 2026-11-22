@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { LeaseStatus, LeaseSummary } from '../types';
 import { SignatureStatusBadge } from './SignatureStatusBadge';
 
@@ -31,11 +32,11 @@ export function LeaseCard({ lease, onView, onRenew, onTerminate }: LeaseCardProp
   const canTerminate = lease.status === 'active' || lease.status === 'expiring_soon';
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString(getActiveLocale());
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(getActiveLocale(), {
       style: 'currency',
       currency,
     }).format(amount);

@@ -4,6 +4,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type {
   InsuranceClaim,
   InsurancePolicy,
@@ -202,8 +203,8 @@ export function PolicyDetailPage({
               <div>
                 <p className="text-sm text-gray-500">{t('insurance.policyPeriod')}</p>
                 <p className="font-medium">
-                  {new Date(policy.startDate).toLocaleDateString()} -{' '}
-                  {new Date(policy.endDate).toLocaleDateString()}
+                  {new Date(policy.startDate).toLocaleDateString(getActiveLocale())} -{' '}
+                  {new Date(policy.endDate).toLocaleDateString(getActiveLocale())}
                 </p>
               </div>
             </div>
@@ -281,7 +282,7 @@ export function PolicyDetailPage({
                       <p className="font-medium">{doc.filename}</p>
                       <p className="text-sm text-gray-500">
                         {formatFileSize(doc.sizeBytes)} -{' '}
-                        {new Date(doc.uploadedAt).toLocaleDateString()}
+                        {new Date(doc.uploadedAt).toLocaleDateString(getActiveLocale())}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -338,7 +339,7 @@ export function PolicyDetailPage({
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
                         {t('insurance.incidentDate')}:{' '}
-                        {new Date(claim.incidentDate).toLocaleDateString()}
+                        {new Date(claim.incidentDate).toLocaleDateString(getActiveLocale())}
                         {claim.claimAmount && (
                           <span> - {formatCurrency(claim.claimAmount, claim.currency)}</span>
                         )}
@@ -378,11 +379,15 @@ export function PolicyDetailPage({
               )}
               <div>
                 <dt className="text-gray-500">{t('insurance.createdAt')}</dt>
-                <dd className="font-medium">{new Date(policy.createdAt).toLocaleDateString()}</dd>
+                <dd className="font-medium">
+                  {new Date(policy.createdAt).toLocaleDateString(getActiveLocale())}
+                </dd>
               </div>
               <div>
                 <dt className="text-gray-500">{t('insurance.lastUpdated')}</dt>
-                <dd className="font-medium">{new Date(policy.updatedAt).toLocaleDateString()}</dd>
+                <dd className="font-medium">
+                  {new Date(policy.updatedAt).toLocaleDateString(getActiveLocale())}
+                </dd>
               </div>
             </dl>
           </div>
@@ -411,7 +416,7 @@ export function PolicyDetailPage({
                           {reminder.message}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(reminder.reminderDate).toLocaleDateString()}
+                          {new Date(reminder.reminderDate).toLocaleDateString(getActiveLocale())}
                         </p>
                       </div>
                       {!reminder.isCompleted && (

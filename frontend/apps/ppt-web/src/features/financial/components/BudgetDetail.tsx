@@ -15,6 +15,7 @@
 import type { Budget, BudgetCategory, BudgetItem, BudgetSummary } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import { BUDGET_STATUS_STYLES } from '../utils/constants';
 import { formatCurrency } from '../utils/formatting';
 
@@ -398,7 +399,7 @@ export function BudgetDetail({
               {budget.approvedAt && (
                 <p className="mt-1 text-sm text-gray-500">
                   {t('financial.budgetPages.detail.approvedOn', {
-                    date: new Date(budget.approvedAt).toLocaleDateString(),
+                    date: new Date(budget.approvedAt).toLocaleDateString(getActiveLocale()),
                   })}
                 </p>
               )}

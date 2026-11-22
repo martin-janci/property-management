@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 export interface PersonMonth {
   id: string;
@@ -83,7 +84,7 @@ export function PersonMonthCard({ personMonth, onEdit, onView, onDelete }: Perso
             )}
             <p className="mt-2 text-xs text-gray-400">
               {t('personMonths.lastUpdated')}:{' '}
-              {new Date(personMonth.updatedAt).toLocaleDateString()}
+              {new Date(personMonth.updatedAt).toLocaleDateString(getActiveLocale())}
             </p>
           </div>
         </div>

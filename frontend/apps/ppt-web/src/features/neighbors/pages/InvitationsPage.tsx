@@ -8,6 +8,7 @@
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { Invitation, InvitationStatus } from '../types';
 
 export interface InvitationsPageProps {
@@ -68,7 +69,7 @@ export const InvitationsPage: React.FC<InvitationsPageProps> = ({
   }, []);
 
   const formatDate = useCallback((dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
+    return new Date(dateString).toLocaleDateString(getActiveLocale(), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

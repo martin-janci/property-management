@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 import type { HelpAnnouncement, HelpTopic } from '../types';
 
 export interface HelpCenterPageProps {
@@ -302,7 +303,7 @@ function AnnouncementCard({ announcement }: AnnouncementCardProps) {
         <h3 className="font-medium">{announcement.title}</h3>
         <p className="text-sm mt-1 opacity-80">{announcement.content}</p>
         <p className="text-xs mt-2 opacity-60">
-          {new Date(announcement.publishedAt).toLocaleDateString()}
+          {new Date(announcement.publishedAt).toLocaleDateString(getActiveLocale())}
         </p>
       </div>
       {announcement.link && (

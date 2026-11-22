@@ -6,6 +6,7 @@
 import type { CriticalNotificationResponse } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getActiveLocale } from '../../../lib/locale';
 
 export interface CriticalNotificationsPageProps {
   notifications: CriticalNotificationResponse[];
@@ -161,11 +162,11 @@ export function CriticalNotificationsPage({
                   </div>
                   <p className="mt-1 text-sm text-gray-600 line-clamp-2">{notification.message}</p>
                   <div className="mt-2 text-xs text-gray-500">
-                    {new Date(notification.createdAt).toLocaleString()}
+                    {new Date(notification.createdAt).toLocaleString(getActiveLocale())}
                     {notification.acknowledgedAt && (
                       <span className="ml-2">
                         {t('criticalNotifications.acknowledgedAt')}{' '}
-                        {new Date(notification.acknowledgedAt).toLocaleString()}
+                        {new Date(notification.acknowledgedAt).toLocaleString(getActiveLocale())}
                       </span>
                     )}
                   </div>
