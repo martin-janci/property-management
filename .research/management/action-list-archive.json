@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-21T22:52:37Z",
+  "archived_at": "2026-11-22T02:33:54Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12421,6 +12421,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-community-wired-nonfunctional",
+      "action": "ppt web ui community wired nonfunctional",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=3 vector=bug) | gc1-reconcile 2026-11-22T02:24:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-23T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T02:24:51Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-confirm-dialog-i18n",
       "action": "ppt-web ConfirmationDialog hardcodes 'Processing...' loading text with no i18n / prop escape hatch",
       "owner_role": "pm-backend",
@@ -13097,6 +13122,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-15T04:24:10Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-facilities-silent-load-errors",
+      "action": "ppt web ui facilities silent load errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-22T02:24:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T18:26:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-24T06:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T02:24:51Z"
       }
     },
     {
@@ -16705,6 +16755,31 @@
         "merged_pr": 2993,
         "merged_at": "2026-09-27T14:30:58Z",
         "at": "2026-09-27T16:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-checksession-5xx-logout",
+      "action": "reality web checksession 5xx logout",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-22T02:24:51Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T18:26:06Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-24T10:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T02:24:51Z"
       }
     },
     {
