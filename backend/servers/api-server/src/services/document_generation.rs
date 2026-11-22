@@ -7,8 +7,8 @@
 //! - Announcement draft generation (Story 92.4)
 
 use integrations::{
-    ChatCompletionRequest, ChatMessage, LeaseGenerationInput, LeaseGenerationResult,
-    ListingDescriptionInput, LlmClient, LlmError,
+    ChatCompletionRequest, ChatCompletionResponse, ChatMessage, LeaseGenerationInput,
+    LeaseGenerationResult, ListingDescriptionInput, LlmClient, LlmError,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -34,6 +34,9 @@ pub enum DocumentGenerationError {
 
     #[error("Content extraction failed: {0}")]
     ContentExtractionFailed(String),
+
+    #[error("LLM returned an empty completion")]
+    EmptyCompletion,
 }
 
 /// Lease generation request for Story 92.1.
@@ -528,11 +531,7 @@ KEY POINTS:
             .chat(&self.default_provider, &llm_request)
             .await?;
 
-        let content = response
-            .choices
-            .first()
-            .map(|c| c.message.content.clone())
-            .unwrap_or_default();
+        let content = require_completion_content(&response)?;
 
         // Parse the response
         let (summary, key_points) = self.parse_summary_response(&content);
@@ -699,11 +698,7 @@ TONE: [Brief analysis of the tone used]
             .chat(&self.default_provider, &llm_request)
             .await?;
 
-        let content = response
-            .choices
-            .first()
-            .map(|c| c.message.content.clone())
-            .unwrap_or_default();
+        let content = require_completion_content(&response)?;
 
         let drafts = self.parse_announcement_drafts(&content);
 
@@ -944,6 +939,32 @@ fn truncate_head_tail(content: &str, char_limit: usize) -> String {
     )
 }
 
+/// Extract the completion text from an LLM chat response, treating an empty
+/// `choices` array or blank/whitespace-only content as an explicit error.
+///
+/// A provider can return HTTP 200 with zero choices (content-filter block,
+/// truncated/streamed-away response) or a choice whose content is empty. The
+/// old `choices.first().map(...).unwrap_or_default()` laundered that into an
+/// empty `String`, which was then parsed and returned as a *successful* but
+/// blank document / draft set. Surfacing it as `EmptyCompletion` lets the
+/// request fail loudly (and be retried) instead of silently persisting a blank
+/// document.
+fn require_completion_content(
+    response: &ChatCompletionResponse,
+) -> Result<String, DocumentGenerationError> {
+    let content = response
+        .choices
+        .first()
+        .map(|c| c.message.content.clone())
+        .unwrap_or_default();
+
+    if content.trim().is_empty() {
+        return Err(DocumentGenerationError::EmptyCompletion);
+    }
+
+    Ok(content)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1056,6 +1077,61 @@ TONE: Direct and clear"#;
         let (head, tail) = body.split_once("\n\n[...]\n\n").expect("delimiter present");
         assert!(!head.is_empty() && content.starts_with(head));
         assert!(!tail.is_empty() && content.ends_with(tail));
+    }
+
+    fn response_with(content: Option<&str>) -> ChatCompletionResponse {
+        use integrations::{ChatChoice, TokenUsage};
+        ChatCompletionResponse {
+            id: "resp-1".to_string(),
+            model: "test-model".to_string(),
+            choices: match content {
+                Some(c) => vec![ChatChoice {
+                    index: 0,
+                    message: ChatMessage {
+                        role: "assistant".to_string(),
+                        content: c.to_string(),
+                    },
+                    finish_reason: Some("stop".to_string()),
+                }],
+                None => vec![],
+            },
+            usage: TokenUsage {
+                prompt_tokens: 1,
+                completion_tokens: 0,
+                total_tokens: 1,
+            },
+        }
+    }
+
+    #[test]
+    fn test_require_completion_content_empty_choices_errors() {
+        // Provider returned HTTP 200 with zero choices (content-filter block /
+        // truncated response). This must be a loud error, not a blank document.
+        let response = response_with(None);
+        let result = require_completion_content(&response);
+        assert!(matches!(
+            result,
+            Err(DocumentGenerationError::EmptyCompletion)
+        ));
+    }
+
+    #[test]
+    fn test_require_completion_content_blank_content_errors() {
+        // A single choice whose content is whitespace-only must also be
+        // rejected rather than parsed into a blank summary/draft.
+        let response = response_with(Some("   \n\t  "));
+        let result = require_completion_content(&response);
+        assert!(matches!(
+            result,
+            Err(DocumentGenerationError::EmptyCompletion)
+        ));
+    }
+
+    #[test]
+    fn test_require_completion_content_valid_passes_through() {
+        let response = response_with(Some("SUMMARY: all good"));
+        let result = require_completion_content(&response);
+        assert_eq!(result.unwrap(), "SUMMARY: all good");
     }
 
     #[test]
