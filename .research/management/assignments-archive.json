@@ -13308,6 +13308,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-mediation-sessions-swallowed-error",
+      "branch": "auto-impl/code-review-ppt-web-ui-mediation-session-d1fc607b",
+      "status": "merged",
+      "claimed_at": "2026-11-22T12:28:22Z",
+      "last_updated": "2026-11-22T14:35:02Z",
+      "status_changed_at": "2026-11-22T14:35:02Z",
+      "pr_number": 3723,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3723",
+      "merged_at": "2026-11-22T14:34:16Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=fb783d8ee76f6e681357d88777aade489d19a48c note=clean-targeted-fix-surfaces-swallowed-load-error-self-approval-blocked-posted-as-comment",
+      "last_reviewed_oid": "fb783d8ee76f6e681357d88777aade489d19a48c",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T14:35:02Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-meters-dates-no-locale",
       "branch": "auto-impl/code-review-ppt-web-ui-meters-dates-no-l-18bbf3d4",
       "status": "merged",
@@ -33436,5 +33458,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T10:37:56Z"
+  "archived_at": "2026-11-22T14:35:13Z"
 }

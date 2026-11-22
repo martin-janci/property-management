@@ -832,30 +832,6 @@
       "last_updated": "2026-11-22T06:36:28Z"
     },
     {
-      "id": "pm-scrum-master-triage-new-issue-3711-dispatcher-signals-promote-dev-truth-g-2026-11-22",
-      "action": "Triage new issue #3711 (dispatcher signals-promote dev-truth guard follow-up) into the dispatcher-reliability track",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
-      "id": "pm-scrum-master-promote-or-close-the-5-draft-prs-3713-dispatcher-dev-truth-g-2026-11-22",
-      "action": "Promote-or-close the 5 draft PRs (#3713 dispatcher dev-truth guard, #3714 ppt-web date/number locale, #3715 ppt-web native confirm dialogs, #3676/#3677 mobile-rn i18n)",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
       "id": "pm-frontend-close-out-the-carried-wire-the-button-but-not-the-post-patte-2026-11-22",
       "action": "Close out the carried 'wire-the-button-but-not-the-POST' pattern: audit `ReportFaultScreen.tsx` (RN), reality-web `/sell` wizard Publish, and `VoteDetailPage` ranked-ballot submit — the 2026-10-28 run flagged 3; #3700 and #3707 are the pattern but only for ppt-web empty-states",
       "owner_role": "pm-frontend",
@@ -893,6 +869,108 @@
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z",
       "last_updated": "2026-11-22T06:36:28Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-leases-dispute-unreachable",
+      "action": "ppt-web ViolationDetailPage tenant dispute branch is wrapped in MANAGER_ROLES ProtectedRoute — dead for its audience",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3695-reality",
+      "action": "screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "screen-map-drift-pr-3700-ppt",
+      "action": "screen-map drift: PR #3700 changed ppt-web routes/groups/leases.tsx without touching docs/screens/ppt/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-voice-oauth-rs",
+      "action": "Churn hotspot: voice_oauth.rs — 240 LoC in PR #3689 (RFC 6749 §5.2 OAuth error bodies)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-components-accountinginvoicedetail-tsx",
+      "action": "Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-float-status",
+      "action": "ppt-web AccountingInvoiceDetail classifies paid/partial via JS float + 0.005 epsilon on decimal strings",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
     }
   ],
   "generated": "2026-11-22T03:06:30Z"

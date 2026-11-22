@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-22T08:37:35Z",
+  "archived_at": "2026-11-22T14:35:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -31827,6 +31827,25 @@
       }
     },
     {
+      "id": "pm-scrum-master-promote-or-close-the-5-draft-prs-3713-dispatcher-dev-truth-g-2026-11-22",
+      "action": "Promote-or-close the 5 draft PRs (#3713 dispatcher dev-truth guard, #3714 ppt-web date/number locale, #3715 ppt-web native confirm dialogs, #3676/#3677 mobile-rn i18n)",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22 | gc1-reconcile 2026-11-22T14:29:02Z",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T14:29:02Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-reconcile-sprint-status-test-hardening-batch-items-480-487-s-2026-11-20",
       "action": "Reconcile sprint-status test_hardening_batch (items #480-#487 still marked open, batch in-progress) against GitHub issue state and close or defer",
       "owner_role": "pm-scrum-master",
@@ -32326,6 +32345,25 @@
         "merged_pr": 3656,
         "merged_at": "2026-11-20T10:37:06Z",
         "at": "2026-11-20T10:37:13Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-triage-new-issue-3711-dispatcher-signals-promote-dev-truth-g-2026-11-22",
+      "action": "Triage new issue #3711 (dispatcher signals-promote dev-truth guard follow-up) into the dispatcher-reliability track",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22 | gc1-reconcile 2026-11-22T14:29:02Z",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T14:29:02Z"
       }
     },
     {
