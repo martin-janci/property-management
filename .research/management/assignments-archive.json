@@ -28395,6 +28395,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-frontend-promote-drafts-3714-ppt-web-date-number-locale-formatters-an-2026-11-22",
+      "branch": "auto-impl/pm-frontend-promote-drafts-3714-ppt-web-60c623ba",
+      "status": "failed",
+      "claimed_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T04:40:56Z",
+      "status_changed_at": "2026-11-22T04:40:56Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=none scope_drift=false code_reuse_warn=none note=process-directive-handled-by-dispatcher-merge-flow; both #3714/#3715 are open drafts with real code already present — nothing to implement; no branch/PR opened",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-frontend-reality-web-listing-page-ssr-crash-2026-10-28",
       "branch": "auto-impl/pm-frontend-reality-web-listing-page-ssr-fe5ee39c",
       "status": "failed",
@@ -33128,5 +33150,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T02:45:25Z"
+  "archived_at": "2026-11-22T04:41:06Z"
 }
