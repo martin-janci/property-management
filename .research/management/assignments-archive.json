@@ -3891,6 +3891,30 @@
       "merge_attempted_at": "2026-11-17T00:27:55Z"
     },
     {
+      "task_id": "code-review-api-core-docgen-empty-llm-blank-doc",
+      "branch": "auto-impl/code-review-api-core-docgen-empty-llm-bl-e329b760",
+      "status": "merged",
+      "claimed_at": "2026-11-22T00:32:53Z",
+      "last_updated": "2026-11-22T02:44:14Z",
+      "status_changed_at": "2026-11-22T02:44:14Z",
+      "pr_number": 3712,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3712",
+      "merged_at": "2026-11-22T02:43:08Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3712 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=docgen empty-LLM-completion now errors (DocumentGenerationError::EmptyCompletion + require_completion_content helper, both summarize+announcement call sites); IG3 two-commit split; fmt/clippy clean; 11 unit tests pass; sole gate failure pre-existing SSRF test in untouched api_call.rs",
+      "reviewer_summary": "verdict=approve head_oid=ddb2eeec9aa4e51d9ccc91050ad0a5a0bebabe05 note=clean-targeted-fix-empty-llm-completion-tests-green-posted-as-comment-self-approve-blocked",
+      "last_reviewed_oid": "ddb2eeec9aa4e51d9ccc91050ad0a5a0bebabe05",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T02:41:19Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-api-core-docgen-summarize-char-boundary-panic",
       "branch": "auto-impl/code-review-api-core-docgen-summarize-ch-aa7486bf",
       "status": "merged",
@@ -12504,6 +12528,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-document-hooks-hardcoded-sk",
+      "branch": "auto-impl/code-review-ppt-web-ui-document-hooks-ha-8beb02ed",
+      "status": "failed",
+      "claimed_at": "2026-11-22T02:33:38Z",
+      "last_updated": "2026-11-22T02:41:19Z",
+      "status_changed_at": "2026-11-22T02:41:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=stale finding: ppt-web document hooks already fully i18n'd; no change needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
       "branch": "auto-impl/code-review-ppt-web-ui-documents-toast-h-b3cc3091",
       "status": "merged",
@@ -16027,6 +16073,28 @@
       "status": "merged",
       "status_changed_at": "2026-10-25T14:25:27Z",
       "task_id": "code-review-reality-web-agency-page-i18n-gap"
+    },
+    {
+      "task_id": "code-review-reality-web-agency-slug-i18n",
+      "branch": "auto-impl/code-review-reality-web-agency-slug-i18n-55d372c0",
+      "status": "failed",
+      "claimed_at": "2026-11-22T02:33:38Z",
+      "last_updated": "2026-11-22T02:44:14Z",
+      "status_changed_at": "2026-11-22T02:44:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=none status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=STALE finding no-op: agency/[slug]/page.tsx already fully i18n'd at dev HEAD with per-locale guard test; no PR",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-web-agency-slug-no-i18n",
@@ -33060,5 +33128,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T00:44:47Z"
+  "archived_at": "2026-11-22T02:45:25Z"
 }
