@@ -77,8 +77,11 @@ pub(crate) fn oauth_error_status(error: &OAuthError) -> StatusCode {
 /// - a provider **grant rejection** (bad/expired/revoked authorization code or
 ///   refresh token) → `invalid_grant` (HTTP 400) — the grant is the problem;
 /// - an **unsupported platform** → `invalid_request` (HTTP 400);
-/// - a **transport failure**, an **unparseable provider response**, or **missing
-///   server-side configuration** → `server_error` (HTTP 500) — our-side faults.
+/// - a **transport failure** reaching the provider (DNS, connect, timeout) →
+///   `temporarily_unavailable` (HTTP 503) — a *transient* upstream-availability
+///   problem the voice platform should retry, not a permanent fault;
+/// - an **unparseable provider response** or **missing server-side
+///   configuration** → `server_error` (HTTP 500) — our-side faults.
 pub(crate) fn classify_voice_oauth_error(
     err: &VoiceOAuthError,
     client_message: &'static str,
@@ -88,9 +91,19 @@ pub(crate) fn classify_voice_oauth_error(
             OAuthError::invalid_grant(client_message)
         }
         VoiceOAuthError::InvalidPlatform(_) => OAuthError::invalid_request(client_message),
-        VoiceOAuthError::Http(_)
-        | VoiceOAuthError::InvalidResponse(_)
-        | VoiceOAuthError::MissingConfig(_) => OAuthError::server_error(client_message),
+        // A transport-level failure is transient: surface RFC 6749 §5.2's
+        // `temporarily_unavailable` (HTTP 503, see `oauth_error_status`) so the
+        // caller retries instead of treating it as a permanent `server_error`.
+        // `OAuthError` has no constructor for this code — it is the only 5xx
+        // code not minted elsewhere — so it is built directly here.
+        VoiceOAuthError::Http(_) => OAuthError {
+            error: "temporarily_unavailable".to_string(),
+            error_description: Some(client_message.to_string()),
+            error_uri: None,
+        },
+        VoiceOAuthError::InvalidResponse(_) | VoiceOAuthError::MissingConfig(_) => {
+            OAuthError::server_error(client_message)
+        }
     }
 }
 
@@ -526,7 +539,8 @@ mod tests {
             .build()
             .expect_err("a relative URL must produce a reqwest::Error");
 
-        let classified = classify_voice_oauth_error(&E::Http(http_err), OAUTH_REFRESH_FAILED_MESSAGE);
+        let classified =
+            classify_voice_oauth_error(&E::Http(http_err), OAUTH_REFRESH_FAILED_MESSAGE);
         assert_eq!(
             classified.error, "temporarily_unavailable",
             "a transient transport failure must map to temporarily_unavailable"

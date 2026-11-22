@@ -252,7 +252,8 @@ pub(crate) async fn oauth_token_exchange(
             .await
             .map_err(|e| {
                 // RFC 6749 §5.2: a provider grant rejection becomes
-                // `invalid_grant` (400); transport/parse faults become
+                // `invalid_grant` (400); a transient transport failure becomes
+                // `temporarily_unavailable` (503); parse/config faults become
                 // `server_error` (500). Upstream detail is logged, never sent.
                 voice_oauth_error_response(
                     classify_voice_oauth_error(&e, OAUTH_EXCHANGE_FAILED_MESSAGE),
@@ -538,8 +539,10 @@ pub(crate) async fn oauth_token_refresh(
                 .await
                 .map_err(|e| {
                     // RFC 6749 §5.2: a rejected refresh token is an
-                    // `invalid_grant` (400) — not a 500. Transport/parse faults
-                    // map to `server_error` (500). Upstream detail is logged only.
+                    // `invalid_grant` (400) — not a 500. A transient transport
+                    // failure maps to `temporarily_unavailable` (503);
+                    // parse/config faults map to `server_error` (500). Upstream
+                    // detail is logged only.
                     voice_oauth_error_response(
                         classify_voice_oauth_error(&e, OAUTH_REFRESH_FAILED_MESSAGE),
                         e,
