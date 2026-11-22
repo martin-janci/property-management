@@ -1058,6 +1058,61 @@ TONE: Direct and clear"#;
         assert!(!tail.is_empty() && content.ends_with(tail));
     }
 
+    fn response_with(content: Option<&str>) -> ChatCompletionResponse {
+        use integrations::{ChatChoice, TokenUsage};
+        ChatCompletionResponse {
+            id: "resp-1".to_string(),
+            model: "test-model".to_string(),
+            choices: match content {
+                Some(c) => vec![ChatChoice {
+                    index: 0,
+                    message: ChatMessage {
+                        role: "assistant".to_string(),
+                        content: c.to_string(),
+                    },
+                    finish_reason: Some("stop".to_string()),
+                }],
+                None => vec![],
+            },
+            usage: TokenUsage {
+                prompt_tokens: 1,
+                completion_tokens: 0,
+                total_tokens: 1,
+            },
+        }
+    }
+
+    #[test]
+    fn test_require_completion_content_empty_choices_errors() {
+        // Provider returned HTTP 200 with zero choices (content-filter block /
+        // truncated response). This must be a loud error, not a blank document.
+        let response = response_with(None);
+        let result = require_completion_content(&response);
+        assert!(matches!(
+            result,
+            Err(DocumentGenerationError::EmptyCompletion)
+        ));
+    }
+
+    #[test]
+    fn test_require_completion_content_blank_content_errors() {
+        // A single choice whose content is whitespace-only must also be
+        // rejected rather than parsed into a blank summary/draft.
+        let response = response_with(Some("   \n\t  "));
+        let result = require_completion_content(&response);
+        assert!(matches!(
+            result,
+            Err(DocumentGenerationError::EmptyCompletion)
+        ));
+    }
+
+    #[test]
+    fn test_require_completion_content_valid_passes_through() {
+        let response = response_with(Some("SUMMARY: all good"));
+        let result = require_completion_content(&response);
+        assert_eq!(result.unwrap(), "SUMMARY: all good");
+    }
+
     #[test]
     fn test_char_boundary_helpers_align() {
         let s = "áéíóú"; // each char is 2 bytes: boundaries at 0,2,4,6,8,10
