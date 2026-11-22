@@ -47,16 +47,16 @@
     {
       "task_id": "code-review-api-core-push-db-err-leak",
       "branch": "auto-impl/code-review-api-core-push-db-err-leak-dcbc1d34",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-11-22T18:36:18Z",
-      "last_updated": "2026-11-22T18:36:18Z",
-      "status_changed_at": "2026-11-22T18:36:18Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-22T19:30:20Z",
+      "status_changed_at": "2026-11-22T19:30:20Z",
+      "pr_number": 3731,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3731",
       "merged_at": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -65,7 +65,7 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=3731 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=static \"failed to fetch device tokens\" at both fetch-error sites (combined.rs+apns.rs); raw sqlx::Error kept to tracing only (closes leak into delivery record); 2-commit TDD; fmt+clippy+push tests green; sole verify fail is unrelated env SSRF test; scope_drift=true intended (pm-security areas omit push/*)",
       "reviewer_summary": null
     },
     {
@@ -119,16 +119,16 @@
     {
       "task_id": "screen-map-drift-pr-3700-ppt",
       "branch": "auto-impl/screen-map-drift-pr-3700-ppt-da3b5ba3",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-11-22T18:36:18Z",
-      "last_updated": "2026-11-22T18:36:18Z",
-      "status_changed_at": "2026-11-22T18:36:18Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-22T19:30:20Z",
+      "status_changed_at": "2026-11-22T19:30:20Z",
+      "pr_number": 3728,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3728",
       "merged_at": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -137,9 +137,9 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=3728 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=reconciled docs/screens/ppt/lease-create.md with PR #3700 picker states; /screens validate 174 maps 0 err; docs-only",
       "reviewer_summary": null
     }
   ],
-  "generated": "2026-11-22T19:25:39Z"
+  "generated": "2026-11-22T19:30:20Z"
 }
