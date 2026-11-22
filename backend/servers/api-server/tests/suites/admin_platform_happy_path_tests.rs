@@ -589,3 +589,27 @@ async fn platform_admin_support_user_activity_2xx(pool: PgPool) {
     let url = format!("/api/v1/platform-admin/support/users/{granter}/activity");
     get_2xx(&app, &url, &token, "su_activity").await;
 }
+
+/// An operator holding `memberships_revoke` can list the roster of a tenant
+/// they are not a member of; without the capability it is 403.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn admin_org_members_roster_for_foreign_tenant(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, _admin, granter) = authorized_admin(&pool, "roster", "memberships_revoke").await;
+    let org = seed_org(&pool, "roster").await;
+    crate::common::seed_membership(&pool, org, granter, "manager").await;
+
+    let url = format!("/api/v1/admin/memberships/organizations/{org}/members");
+    let resp = app.get(&url).bearer(&token).send().await;
+    assert!(resp.status.is_success(), "{} {}", resp.status, resp.text());
+    let body = resp.json_value();
+    assert_eq!(body["total"], serde_json::json!(1), "{body}");
+    assert_eq!(
+        body["members"][0]["user_id"],
+        serde_json::json!(granter.to_string())
+    );
+
+    let other = authorized_admin_token(&pool, "roster-no", "audit_read").await;
+    let resp = app.get(&url).bearer(&other).send().await;
+    assert_eq!(resp.status.as_u16(), 403, "{}", resp.text());
+}

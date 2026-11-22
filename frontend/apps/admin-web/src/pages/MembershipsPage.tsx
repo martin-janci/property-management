@@ -76,17 +76,19 @@ export default function MembershipsPage() {
       if (!loadedOrgId) return { items: [], total: 0 };
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
-      // The admin memberships router only exposes invite/accept/revoke (no
-      // list endpoint). Use the organizations router which returns the
-      // member roster with role + identity info.
-      const res = await fetch(`/api/v1/organizations/${encodeURIComponent(loadedOrgId)}/members`, {
-        headers,
-        credentials: 'include',
-      });
+      // Operator roster endpoint: gated by the platform `memberships_revoke`
+      // capability, so it works for tenants the operator is not a member of.
+      const res = await fetch(
+        `/api/v1/admin/memberships/organizations/${encodeURIComponent(loadedOrgId)}/members`,
+        {
+          headers,
+          credentials: 'include',
+        }
+      );
       if (!res.ok) {
         if (res.status === 404) {
           console.warn(
-            `GET /api/v1/organizations/${loadedOrgId}/members returned 404 — org may not exist`
+            `GET /api/v1/admin/memberships/organizations/${loadedOrgId}/members returned 404`
           );
           return { items: [], total: 0 };
         }
