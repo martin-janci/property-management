@@ -71,16 +71,16 @@
     {
       "task_id": "code-review-api-handlers-upload-folderid-parse-swallow",
       "branch": "auto-impl/code-review-api-handlers-upload-folderid-0e5254ee",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-11-22T18:36:18Z",
-      "last_updated": "2026-11-22T18:36:18Z",
-      "status_changed_at": "2026-11-22T18:36:18Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-22T19:24:34Z",
+      "status_changed_at": "2026-11-22T19:24:34Z",
+      "pr_number": 3729,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3729",
       "merged_at": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -89,7 +89,7 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=3729 status=partial->review specialist=rust-backend scope_drift=false code_reuse_warn=none note=folder_id parse-swallow fix+regression test; fmt+clippy green, IG3 proven vs local PG; full suite stalled on cargo-lock, draft opened, backend.yml CI authoritative (dispatcher resumed push+PR)",
       "reviewer_summary": null
     },
     {
@@ -141,5 +141,5 @@
       "reviewer_summary": null
     }
   ],
-  "generated": "2026-11-22T18:47:20Z"
+  "generated": "2026-11-22T19:24:34Z"
 }
