@@ -83,9 +83,16 @@ JSON
 JSON
 }
 
+# Dev-truth guard inputs default to FAIL-OPEN + OFFLINE: an empty dev-log file
+# (so `git log` is never invoked) and a non-existent coverage file (=> no
+# done-story exclusion). Individual cases override COVERAGE_FILE / DEV_LOG_FILE.
+EMPTY_DEVLOG="$TMP/empty-devlog.txt"
+: > "$EMPTY_DEVLOG"
 run() {
   SIGNALS_PROMOTE_NOW="$NOW" ACTION_LIST="$AL" ASSIGN="$ASG" ASSIGN_ARCHIVE="$ASGA" \
     BACKLOG_FILE="$BL" SIGNALS_GLOB="$SIGDIR/*tier1d*.json" GATE_SCRIPT="$GATE" \
+    COVERAGE_FILE="${COVERAGE_FILE:-$TMP/no-such-coverage.json}" \
+    DEV_LOG_FILE="${DEV_LOG_FILE:-$EMPTY_DEVLOG}" \
     BUFFER_FLOOR="${BUFFER_FLOOR:-10}" BUFFER_TARGET="${BUFFER_TARGET:-12}" BUFFER_CEIL="${BUFFER_CEIL:-20}" \
     SIGNALS_PROMOTE_CAP="${SIGNALS_PROMOTE_CAP:-12}" \
     bash "$SCRIPT" "$@"
@@ -166,6 +173,57 @@ rm -f "$SIGDIR"/*.json
 if OUT=$(run --apply 2>&1); then
   echo "$OUT" | grep -q "no signal files" && ok "empty signal sink exits cleanly (no source)" || bad "empty sink unexpected: $OUT"
 else bad "empty signal sink aborted: $OUT"; fi
+
+# --- 12. DEV-TRUTH (b): a finding whose fix already landed on dev is excluded ---
+# A commit subject on dev with the anchored "<id>:" prefix proves the SSO fix
+# shipped out-of-band — it must NOT be re-promoted, while a sibling finding whose
+# id has NO landing still promotes.
+seed
+DEVLOG="$TMP/devlog-landed.txt"
+cat > "$DEVLOG" <<'TXT'
+code-review-reality-server-sso-err-leak: harden SSO callback error path (#9001)
+chore(research): dispatcher pre-spawn claim mentions code-review-reality-server-price-mode-unvalidated in body
+TXT
+DEV_LOG_FILE="$DEVLOG" run --apply >/dev/null 2>&1
+P="$(promoted)"
+echo "$P" | grep -q "code-review-reality-server-sso-err-leak" \
+  && bad "dev-landed finding wrongly promoted (dev-truth guard b failed)" \
+  || ok "dev-truth (b): landed '<id>:' subject excludes the finding (issue #3711)"
+# The price-mode id appears only INSIDE a chore body (not as a subject prefix) —
+# it must still promote (anchored join, never a loose body grep).
+echo "$P" | grep -q "code-review-reality-server-price-mode-unvalidated" \
+  && ok "dev-truth (b): body-only mention does NOT exclude (anchored join)" \
+  || bad "body-mention finding wrongly excluded (loose grep?)"
+
+# --- 13. DEV-TRUTH (a): a finding stem matching a coverage done-story excluded ---
+seed
+COV="$TMP/coverage.json"
+cat > "$COV" <<'JSON'
+{"generated":"2026-11-09","stories":[
+  {"id":"code-review-api-core-digest-worker-no-replica-claim","title":"digest worker","status":"done"},
+  {"id":"code-review-reality-server-sso-err-leak","title":"sso","status":"in-progress"}
+]}
+JSON
+COVERAGE_FILE="$COV" run --apply >/dev/null 2>&1
+P="$(promoted)"
+echo "$P" | grep -q "code-review-api-core-digest-worker-no-replica-claim" \
+  && bad "coverage-done finding wrongly promoted (dev-truth guard a failed)" \
+  || ok "dev-truth (a): coverage done-story excludes the finding (issue #3711)"
+# A story that is NOT done (in-progress) must not exclude its finding.
+echo "$P" | grep -q "code-review-reality-server-sso-err-leak" \
+  && ok "dev-truth (a): non-done coverage story does NOT exclude" \
+  || bad "in-progress coverage story wrongly excluded its finding"
+
+# --- 14. fail-open: missing coverage + unreadable dev-log => no exclusion ---
+# Point both guards at non-existent paths; the landable findings must still
+# promote (additive, never aborts).
+seed
+COVERAGE_FILE="$TMP/definitely-absent.json" DEV_LOG_FILE="$TMP/definitely-absent.txt" \
+  run --apply >/dev/null 2>&1
+P="$(promoted)"
+echo "$P" | grep -q "code-review-reality-server-sso-err-leak" \
+  && ok "fail-open: missing guard inputs degrade to no exclusion" \
+  || bad "missing guard inputs suppressed promotion (not fail-open)"
 
 echo
 if [ "$FAIL" = "0" ]; then echo "==> signals-promote smoke test PASSED"; exit 0
