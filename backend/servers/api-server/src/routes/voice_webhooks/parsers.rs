@@ -260,6 +260,54 @@ mod tests {
         );
     }
 
+    // --- extract_alexa_command_text: defensive fallbacks (characterization) --
+    //
+    // Pin the slot-extraction fallbacks so a future refactor of the nested
+    // `slots -> FaultDescription -> value -> as_str` lookup surfaces as a diff.
+    // These edges (slot object without a `value`, a non-string `value`, a
+    // wrong slot name, and an empty intent name) are not exercised by the
+    // happy-path tests above.
+
+    #[test]
+    fn command_text_fault_defaults_when_slot_present_but_no_value() {
+        // The FaultDescription slot exists but carries no `value` key — the
+        // lookup must fall back to the "a fault" placeholder, not panic.
+        let slots = serde_json::json!({ "FaultDescription": { "confirmationStatus": "NONE" } });
+        assert_eq!(
+            extract_alexa_command_text(&intent("ReportFaultIntent", Some(slots))),
+            "report a fault with a fault"
+        );
+    }
+
+    #[test]
+    fn command_text_fault_defaults_when_value_is_not_a_string() {
+        // A non-string `value` (e.g. a number) fails the `as_str()` coercion and
+        // must fall back to the placeholder rather than stringifying the JSON.
+        let slots = serde_json::json!({ "FaultDescription": { "value": 42 } });
+        assert_eq!(
+            extract_alexa_command_text(&intent("ReportFaultIntent", Some(slots))),
+            "report a fault with a fault"
+        );
+    }
+
+    #[test]
+    fn command_text_fault_defaults_when_wrong_slot_name() {
+        // Only the `FaultDescription` slot is read; any other slot name is
+        // ignored and the placeholder is used.
+        let slots = serde_json::json!({ "SomeOtherSlot": { "value": "ignored" } });
+        assert_eq!(
+            extract_alexa_command_text(&intent("ReportFaultIntent", Some(slots))),
+            "report a fault with a fault"
+        );
+    }
+
+    #[test]
+    fn command_text_empty_intent_name_passes_through_verbatim() {
+        // An empty intent name matches no built-in arm and is returned as-is
+        // (the `_ => intent.name.clone()` fall-through), not coerced to a word.
+        assert_eq!(extract_alexa_command_text(&intent("", None)), "");
+    }
+
     // --- Alexa response builders ----------------------------------------
 
     #[test]
