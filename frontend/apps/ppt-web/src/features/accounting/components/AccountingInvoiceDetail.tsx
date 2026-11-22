@@ -23,18 +23,44 @@ import {
 const PAYABLE_STATUSES = new Set(['issued', 'sent', 'overdue', 'partially_paid']);
 
 /**
+ * Decimal money string (or number) → integer cents, so amounts compare exactly
+ * instead of through JS-float arithmetic. Rounds half-up at the hundredths
+ * place; well-formed 2-dp money round-trips unchanged. Returns `NaN` for input
+ * that is not a decimal number.
+ */
+export function toCents(value: string | number): number {
+  const str = (typeof value === 'number' ? value.toString() : value).trim();
+  const match = /^(-?)(\d*)(?:\.(\d+))?$/.exec(str);
+  if (!match || (match[2] === '' && match[3] === undefined)) return Number.NaN;
+  const [, sign, whole, frac = ''] = match;
+  const cents =
+    Number(whole || '0') * 100 +
+    Number(frac.slice(0, 2).padEnd(2, '0')) +
+    ((frac[2] ?? '') >= '5' ? 1 : 0);
+  return sign === '-' ? -cents : cents;
+}
+
+/** Integer cents → fixed 2-dp decimal string (same shape as `Number.toFixed(2)`). */
+function centsToDecimalString(cents: number): string {
+  const abs = Math.abs(cents);
+  return `${cents < 0 ? '-' : ''}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
+}
+
+/**
  * Status + paid amount after recording `amount` on top of what is already paid.
- * Fully covered → `paid`; otherwise `partially_paid`.
+ * Amounts are summed and compared as integer cents so the paid/partially_paid
+ * split is exact — no JS-float sum, no `toFixed` rounding, no epsilon. Fully
+ * covered → `paid`; otherwise `partially_paid`.
  */
 export function paymentUpdate(
   invoice: Pick<AccountingInvoice, 'total_amount' | 'paid_amount'>,
   amount: number
 ): AccountingUpdateInvoiceRequest {
-  const paid = Number(invoice.paid_amount ?? 0) + amount;
-  const total = Number(invoice.total_amount ?? 0);
+  const paidCents = toCents(invoice.paid_amount ?? 0) + toCents(amount);
+  const totalCents = toCents(invoice.total_amount ?? 0);
   return {
-    paid_amount: paid.toFixed(2),
-    status: paid + 0.005 >= total ? 'paid' : 'partially_paid',
+    paid_amount: centsToDecimalString(paidCents),
+    status: paidCents >= totalCents ? 'paid' : 'partially_paid',
   };
 }
 
