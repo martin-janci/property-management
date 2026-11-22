@@ -25,6 +25,21 @@ use crate::state::AppState;
 /// [`prune_expired_sso_sessions`]) can never drift apart.
 const PENDING_SSO_SESSION_TTL_MINUTES: i64 = 10;
 
+/// Hard cap on the number of pending PKCE SSO login sessions held in memory.
+///
+/// The TTL sweep in [`prune_expired_sso_sessions`] bounds the map to sessions
+/// created within the TTL window, but a burst of `/login` requests *within*
+/// that window are all still "live" and so survive the sweep — the map could
+/// still grow to one entry per request across a full TTL window (an attacker
+/// hammering `/login` is a memory-DoS vector). This cap closes that gap: once
+/// the map is full, minting a new session first evicts the oldest entries (see
+/// [`enforce_pending_sso_session_capacity`]) so the map can never exceed this
+/// many entries regardless of request rate. Mirrors the bounded per-IP
+/// rate-limiter maps (`INQUIRY_RATE_LIMIT_MAX_IPS`) already used in this
+/// server. ~50k `PendingSsoSession` entries is only a few MB, well above any
+/// legitimate concurrent-login volume.
+const MAX_PENDING_SSO_SESSIONS: usize = 50_000;
+
 /// Create SSO router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -118,6 +133,12 @@ pub async fn sso_login(
     // never-completed logins — see prune_expired_sso_sessions.
     let mut sessions = state.sso_sessions.lock().await;
     prune_expired_sso_sessions(&mut sessions, chrono::Utc::now());
+    // Capacity cap (defense in depth over the TTL sweep): a flood of /login
+    // requests within the TTL window are all still live, so the sweep above
+    // evicts none of them. Enforce a hard cap so such a burst can never grow
+    // the map without bound — the oldest pending sessions are evicted to make
+    // room for this insert.
+    enforce_pending_sso_session_capacity(&mut sessions, MAX_PENDING_SSO_SESSIONS);
     sessions.insert(
         session_id.clone(),
         PendingSsoSession {
@@ -223,6 +244,51 @@ fn prune_expired_sso_sessions(
 ) {
     let ttl = chrono::Duration::minutes(PENDING_SSO_SESSION_TTL_MINUTES);
     sessions.retain(|_, s| now - s.created_at <= ttl);
+}
+
+/// Evict the oldest pending sessions so the map holds at most `max` entries —
+/// a capacity cap complementing the TTL sweep in
+/// [`prune_expired_sso_sessions`].
+///
+/// Robustness / DoS hardening: the TTL sweep only removes sessions older than
+/// [`PENDING_SSO_SESSION_TTL_MINUTES`]. A burst of `/login` requests *within*
+/// that window produces entries that are all still live, so the sweep evicts
+/// none of them and the map could still grow one entry per request. This cap
+/// bounds the map regardless of request rate.
+///
+/// Called on the mint path (`sso_login`) *after* the sweep and *before* the
+/// insert, so it reduces the map to at most `max - 1` entries, leaving room for
+/// the caller's about-to-be-inserted session without the post-insert size
+/// exceeding `max`. Eviction is oldest-first (by `created_at`): the oldest
+/// pending sessions are the closest to TTL expiry and the least likely to still
+/// complete their callback, so dropping them is the least disruptive choice. A
+/// `max` of 0 clears the map (defensive — no pending session may be held).
+fn enforce_pending_sso_session_capacity(
+    sessions: &mut std::collections::HashMap<String, PendingSsoSession>,
+    max: usize,
+) {
+    if max == 0 {
+        sessions.clear();
+        return;
+    }
+    // Reduce to at most `max - 1` so the caller's next insert lands at <= max.
+    let target = max - 1;
+    if sessions.len() <= target {
+        return;
+    }
+
+    // Order keys oldest-first and drop the excess. Collecting + sorting is
+    // O(n log n) but only runs on the rare over-capacity mint, and the map is
+    // bounded to `max` entries by construction.
+    let mut by_age: Vec<(chrono::DateTime<chrono::Utc>, String)> = sessions
+        .iter()
+        .map(|(k, s)| (s.created_at, k.clone()))
+        .collect();
+    by_age.sort_by_key(|a| a.0); // oldest first
+    let evict = sessions.len() - target;
+    for (_, key) in by_age.into_iter().take(evict) {
+        sessions.remove(&key);
+    }
 }
 
 /// SSO callback query parameters.
@@ -1608,10 +1674,7 @@ mod pending_session_capacity_tests {
 
     /// Build a session created `age_secs` seconds before `base` so tests can
     /// order entries by age deterministically.
-    fn session_at(
-        base: chrono::DateTime<chrono::Utc>,
-        age_secs: i64,
-    ) -> PendingSsoSession {
+    fn session_at(base: chrono::DateTime<chrono::Utc>, age_secs: i64) -> PendingSsoSession {
         PendingSsoSession {
             code_verifier: "verifier".to_string(),
             redirect_uri: None,
@@ -1652,7 +1715,10 @@ mod pending_session_capacity_tests {
         // Reduced to max - 1 = 4 so the caller's next insert lands at <= max.
         assert_eq!(sessions.len(), 4, "at the cap, make room for one insert");
         // The single oldest (s4) must be the one evicted; the 4 newest survive.
-        assert!(!sessions.contains_key("s4"), "oldest session is evicted first");
+        assert!(
+            !sessions.contains_key("s4"),
+            "oldest session is evicted first"
+        );
         for i in 0..4 {
             assert!(
                 sessions.contains_key(&format!("s{i}")),
