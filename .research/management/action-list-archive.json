@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-22T18:35:47Z",
+  "archived_at": "2026-11-22T18:44:18Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -16637,6 +16637,21 @@
         "merged_at": null,
         "at": "2026-11-14T00:28:40Z"
       }
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-no-i18n-retry1",
+      "action": "reality web agency slug no i18n [retry 1/2 of failed code-review-reality-web-agency-slug-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-reality-web-agency-slug-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T22:35:44Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "retry_of": "code-review-reality-web-agency-slug-no-i18n",
+      "retry_round": 1,
+      "dev_reconciled": "already-on-dev noop (implementer empty-diff); work landed under prior id"
     },
     {
       "id": "code-review-reality-web-agent-contact-no-persist",

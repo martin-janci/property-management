@@ -16229,6 +16229,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-reality-web-agency-slug-no-i18n-retry1",
+      "branch": "auto-impl/code-review-reality-web-agency-slug-no-i-5a939135",
+      "status": "failed",
+      "specialist": null,
+      "claimed_at": "2026-11-22T18:36:18Z",
+      "last_updated": "2026-11-22T18:44:18Z",
+      "status_changed_at": "2026-11-22T18:44:18Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": false,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null,
+      "implementer_summary": "pr=none status=done specialist=nextjs-web scope_drift=false code_reuse_warn=none note=already-on-dev no-op: agency/[slug] fully i18n on dev (superseded by prior landing); empty diff, nothing to ship",
+      "reviewer_summary": null
+    },
+    {
       "task_id": "code-review-reality-web-agent-contact-no-persist",
       "branch": "auto-impl/code-review-reality-web-agent-contact-no-e4dd0e2a",
       "status": "merged",
@@ -33590,5 +33614,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T18:35:47Z"
+  "archived_at": "2026-11-22T18:44:18Z"
 }

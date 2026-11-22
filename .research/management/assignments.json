@@ -117,30 +117,6 @@
       "reviewer_summary": null
     },
     {
-      "task_id": "code-review-reality-web-agency-slug-no-i18n-retry1",
-      "branch": "auto-impl/code-review-reality-web-agency-slug-no-i-5a939135",
-      "status": "in-progress",
-      "specialist": null,
-      "claimed_at": "2026-11-22T18:36:18Z",
-      "last_updated": "2026-11-22T18:36:18Z",
-      "status_changed_at": "2026-11-22T18:36:18Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "fix_rounds": 0,
-      "reclaim_attempts": 0,
-      "merge_attempted_at": null,
-      "quarantined_at": null,
-      "quarantine_reason": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
-    },
-    {
       "task_id": "code-review-ppt-web-ui-registry-silent-mutation-fail-retry1",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-silent-m-285a359c",
       "status": "in-progress",
@@ -189,5 +165,5 @@
       "reviewer_summary": null
     }
   ],
-  "generated": "2026-11-22T18:37:17Z"
+  "generated": "2026-11-22T18:44:18Z"
 }
