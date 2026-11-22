@@ -2038,7 +2038,15 @@ async fn upload_document(
                     )
                 })?;
                 if !text.is_empty() {
-                    folder_id = text.parse::<Uuid>().ok();
+                    folder_id = Some(text.parse::<Uuid>().map_err(|e| {
+                        (
+                            StatusCode::BAD_REQUEST,
+                            Json(ErrorResponse::new(
+                                "BAD_REQUEST",
+                                format!("Invalid folder_id: {e}"),
+                            )),
+                        )
+                    })?);
                 }
             }
             // Unknown fields (e.g. building_id sent by frontend) are drained
