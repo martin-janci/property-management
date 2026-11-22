@@ -234,6 +234,32 @@ If merge fails, inspect `git diff --name-only --diff-filter=U`. **Auto-resolve o
 | `VERSION` | Always take base (CI manages this) |
 | Any `*.lock` / `*.lockfile` we know how to regenerate | Take base, regenerate |
 | `mobile-native/gradle.properties` (version line only) | Take base |
+| i18n locale JSON — `frontend/apps/*/src/locales/*.json`, `frontend/apps/*/messages/*.json`, `**/i18n/**/*.json` | **Key-union three-way merge** — run `scripts/merge-locale-json.py --git <path>` (see below). Resolves the recurring "two PRs add different keys to the same bundle" conflict (#3357); refuses (exit 2) only on a genuine same-key-divergent change. |
+
+### i18n locale-JSON key-union resolver (`merge-locale-json.py`)
+
+The common non-mechanical conflict that dead-ends Phase 5.6 is two PRs adding
+*different* keys to the same locale bundle — the union of both sides, which git
+flags as a whole-object conflict. For each conflicted locale path, run the
+structural three-way merger instead of aborting:
+
+```bash
+# Inside the conflicted merge, for each UU locale path:
+python3 .claude/skills/ppt-pr-merge/scripts/merge-locale-json.py --git "$p"
+rc=$?
+case "$rc" in
+  0) git add "$p" ;;                 # key-union resolved — stage it
+  2) echo "genuine locale conflict in $p"; git merge --abort; … ;;  # abort, same as any real conflict
+  *) echo "resolver error in $p";     git merge --abort; … ;;
+esac
+```
+
+It merges by key-union with deterministic ordering (base order preserved, then
+ours-only, then theirs-only keys; `--sort-keys` for strict alphabetical),
+preserves non-ASCII (sk/cs/de) verbatim, and **never silently picks a winner**:
+a key both sides changed to different values, or an object-vs-scalar mismatch,
+exits `2` and is handled exactly like any other real code conflict (abort). Run
+`scripts/test-merge-locale-json.sh` after touching the resolver.
 
 **Anything else (real code conflicts)** → abort:
 
