@@ -507,6 +507,43 @@ mod tests {
         );
     }
 
+    /// RFC 6749 §5.2: a transport-level failure reaching the upstream provider
+    /// (DNS, connect, timeout — `VoiceOAuthError::Http`) is a *transient*
+    /// availability problem, so it classifies to `temporarily_unavailable`
+    /// (HTTP 503) — signalling the voice platform (Alexa/Google) to retry —
+    /// rather than `server_error` (500), which implies a permanent internal
+    /// fault. This also exercises the otherwise-unreachable 503 arm of
+    /// `oauth_error_status`. Genuinely our-side faults (`InvalidResponse`,
+    /// `MissingConfig`) stay `server_error` (500).
+    #[test]
+    fn transport_failure_classifies_as_temporarily_unavailable() {
+        use integrations::VoiceOAuthError as E;
+
+        // A relative URL (no base) yields a real `reqwest::Error` synchronously
+        // via `RequestBuilder::build` — no network I/O, no runtime needed.
+        let http_err = reqwest::Client::new()
+            .get("/relative-url-without-base")
+            .build()
+            .expect_err("a relative URL must produce a reqwest::Error");
+
+        let classified = classify_voice_oauth_error(&E::Http(http_err), OAUTH_REFRESH_FAILED_MESSAGE);
+        assert_eq!(
+            classified.error, "temporarily_unavailable",
+            "a transient transport failure must map to temporarily_unavailable"
+        );
+        assert_eq!(
+            oauth_error_status(&classified),
+            StatusCode::SERVICE_UNAVAILABLE,
+            "temporarily_unavailable must surface as HTTP 503"
+        );
+        // The sanitized description stays the static client message, never the
+        // (potentially sensitive) transport detail.
+        assert_eq!(
+            classified.error_description.as_deref(),
+            Some(OAUTH_REFRESH_FAILED_MESSAGE)
+        );
+    }
+
     // --- voice OAuth simulated-token fallback gate (#890) ---------------
 
     #[test]
