@@ -1,63 +1,36 @@
-# pm-scrum-master — 2026-11-21
+# pm-scrum-master — 2026-11-22
 
-<sub>Always-on delivery synthesis for Phase 1.6.</sub>
+_Phase 1.6 — static, read-only. Cloud routine run._
 
 ## Summary
 
-A big delivery wave: 32 PRs merged (#3650–#3686), with the three structural refactors pm-tech-lead escalated last run — push_fanout/voice_webhooks/oauth_integration_tests splits — all shipped in-window (#3659, #3685, #3686). Accounting MVP trio progressed (#3661 lifecycle + PAY-by-square QR closes #2555 / #2559). Issues #3649 + #3666 closed. Sprint spine (6/6 epics) remains done; delivery stays in continuous-hardening mode.
-
-## Shipped since last run (2026-11-20 → 2026-11-21)
-
-- #3659 — `push_fanout.rs` → `push/` module split (fcm/apns/adapter/worker/config)
-- #3685 — `voice_webhooks.rs` module split (verification + handler + parsers)
-- #3686 — `oauth_integration_tests.rs` split by flow (authorize/token/introspect-revoke/grants)
-- #3669 — reality-server portal auth fix + buyer inquiry threads + notification settings + agency dashboard
-- #3675 — feed delete + tenant application/forms 500 fixes + release 248 quarantined tests
-- #3660 — reality-portal client alignment
-- #3670 — reality-portal Authorization header fix
-- #3661 — accounting-server invoice sent/cancel lifecycle + PAY-by-square QR (closes #2555 / #2559)
-- #3666 — HelloSign webhook replay (issue closed)
-- #3649 — suggestions seed-city for region `de` resolves to Wien (issue closed)
-- Many code-review-* fix PRs across api-core, api-handlers, reality-web, mobile-rn
-
-## Sprint progress
-
-- **Sprint:** Hardening & refactor track (post-sprint — Epic 6/7A/8A/10A/10B/9 all done)
-- **Epics done:** 6 of 6 (100%)
-- **Coverage upkeep this run:** epic-82 (iOS SwiftUI) — 5/5 stories done; `last_checked` advanced for all five, no status transitions.
-
-## Blockers
-
-- **Dispatcher pipeline #3357** — 3 approved PRs still blocked on non-mechanical conflicts; the 32-PR merge wave did not drain it. Owner: `pm-tech-lead`.
-- **KMP / mobile-native backlog** (CreateListingScreen stub, InquiriesResponse contract, Ktor HttpTimeout, SSO error body) — Gradle/KMP builds unavailable in cloud runner (#2652, #2966); claimable still ≈9/72. Owner: `pm-devops`.
-- **Dependabot cargo-group bump #3668** — open, unmerged; needs rebase against post-split HEAD. Owner: `pm-devops`.
-- **6 open PRs** (#3668 dependabot, #3687/#3688 pm-integration drafts, #3676/#3677 mobile-rn i18n drafts, #3682 search-drainer) — drafts need promotion-or-close decisions. Owner: `pm-scrum-master`.
+26 PRs merged in-window (#3687-#3712) — a frontend-heavy wave (WS token-leak, invoice empty-items, admin console contract, logout cache purge, 2 i18n i18n drafts landed) plus three pm-integration/pm-scrum-master follow-ups from the 2026-11-21 action list. Delivery sprint remains `done` (hardening track active); 5 drafts open, 1 new follow-up issue (#3711) filed.
 
 ## Next actions
 
-1. **[high · pm-backend]** Sweep the new `push/` and `voice_webhooks/` child modules for the RLS-before-verify ordering bug that survived the split — DoD: handler ordering audited; sig-fail + RLS-fail regression tests merged.
-2. **[high · pm-scrum-master]** Promote-or-close the 6 open PRs (#3668 rebase, #3687/#3688 drafts, #3676/#3677 mobile-rn i18n drafts, #3682 search-drainer) within 48h — DoD: each PR merged, closed, or has a dated owner + plan.
-3. **[high · pm-tech-lead]** Resolve dispatcher stall #3357 — same blockers as last run; the merge wave did not drain it — DoD: #3357 closed with the 3 blocked PRs merged/reassigned and an escalation path documented.
-4. **[high · pm-devops]** Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — DoD: cloud runner builds mobile-native/api-server; claimable backlog rebalances.
-5. **[medium · pm-tech-lead]** Reset sprint-status.yaml — current sprint goal is fully "done"; next sprint goal should explicitly name the hardening/refactor track (new modules under watch, release-248 quarantine burn-down, mobile-native backlog) — DoD: sprint-status.yaml has a current sprint name, goal, and in-progress items.
+| Priority | Action | Dependency | Definition of done |
+|---|---|---|---|
+| high | Land the 2026-12-01 i18n warn→error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days | pm-frontend | frontend/apps/mobile no-hardcoded-strings = 0 warnings on dev; lint flipped warn→error without CI break |
+| high | Resolve dispatcher stall #3357 — 3 approved PRs still blocked on non-mechanical conflicts across TWO merge waves (32 + 26 PRs) | pm-tech-lead | #3357 closed; dispatcher backlog claimable > 20/72 |
+| high | Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable | pm-devops | cloud runner can `./gradlew build` KMP targets; backend compiles with swagger-ui dist |
+| medium | Characterize the post-split push/ + voice_webhooks/ + oauth_integration_tests/ child modules (watch-* in current_sprint) and promote to specific refactor tasks | pm-backend | each watch-* item either has a concrete split task or is closed as sized-OK |
+| medium | Triage new issue #3711 (dispatcher signals-promote dev-truth guard follow-up) into the dispatcher-reliability track | pm-tech-lead | #3711 has an owner, a plan, and lands or closes within one sprint-week |
+| medium | Promote-or-close the 5 draft PRs (#3713 dispatcher dev-truth guard, #3714 ppt-web date/number locale, #3715 ppt-web native confirm dialogs, #3676/#3677 mobile-rn i18n) | pm-scrum-master | each draft is merged, converted to ready-for-review, or closed with a note |
 
 ## Risks
 
-1. **[med/high]** Post-split modules (`push/`, `voice_webhooks/`, `oauth_integration_tests/`) are unproven under the next feature PR; a mechanical refactor + 32 landing PRs in one window is a lot of surface that hasn't been exercised end-to-end.  _Mitigation:_ freeze feature PRs on the new modules until a green integration run on `origin/dev` confirms no behavioural drift.
-2. **[high/high]** Dispatcher stall #3357 persists across merge windows — the pipeline cannot absorb non-mechanical conflicts and will eventually deadlock on any hot-file cluster.  _Mitigation:_ define a conflict-escalation policy with a human-in-the-loop path within 48h.
-3. **[med/med]** Open-PR drift (6 PRs incl. 4 drafts, 1 dependabot) + release-248 quarantine create accumulating review debt.  _Mitigation:_ promote-or-close sweep in 48h; quarantine-aging policy.
-4. **[high/med]** Mobile-native backlog items (4 open) are compiled-but-dead stubs — cloud runner cannot catch them because KMP builds are blocked (#2652).  _Mitigation:_ pair every mobile-native backlog item with a contract test running on `jvmTest`; prioritize #2652 fix.
-5. **[med/med]** 32 merged PRs in one window overloaded the per-PR reviewer; code-review coverage may have skipped items that would normally be caught.  _Mitigation:_ post-merge review sweep for the 32 PRs (`ppt-review-merged` on 24h window) to backfill findings.
+| Prob | Impact | Risk | Mitigation |
+|---|---|---|---|
+| high | high | The 2026-12-01 mobile i18n lint flip (warn→error) is 9 days out and there are still 10+ open `code-review-*-i18n-retry1` items plus 2 open draft i18n PRs — CI will break the moment the flip lands if any slip | Daily burn-down count on the i18n action-list slice; promote drafts aggressively; pre-flip gate: `pnpm --filter mobile lint --no-warn` must exit 0 on dev for 48h |
+| high | medium | Dispatcher stall #3357 persisting across two merge waves (58 + 26 = 84 PRs) suggests the blocker is not merge-wave dilution — likely a conflict pattern the rebaser cannot auto-resolve | Human-driven review of the 3 blocked PRs; publish a rebase-pattern note; treat remaining instances as `rebase-poisoned` and close/reopen |
+| medium | medium | 5 open drafts + new issue #3711 means the dispatcher pipeline still has latent mass; another day without draft-close policy creates a PR-review starvation signal | 72h draft-close policy decision from 2026-11-21 (DEC) must be landed as a dispatcher-reconcile rule |
 
 ## Open questions
 
-- Did all three splits (#3659/#3685/#3686) keep test coverage 1:1 or did any test get dropped?
-- Does #3661 fully close #2555 + #2559, and is #2558 still open?
-- Which of the 4 open drafts are ready to promote vs still blocked?
-- Did any of the 32 PRs skip the normal per-PR reviewer because of the merge-wave backlog?
+- Should the dispatcher 'promote-or-close drafts >72h' rule be a hard gate (auto-close) or a soft signal (Telegram alert)?
+- Can the 2026-12-01 i18n lint flip slip by one sprint if any of the 10+ retry1 items fail CI on the flip day?
 
 ## Decisions needed
 
-- Promote-or-close policy for drafts open >72h — owner: pm-scrum-master
-- Reviewer-slot allocation for large-scope PRs (accounting MVP learning) — owner: pm-tech-lead
-- Reset sprint-status.yaml with the next hardening-track sprint — owner: pm-tech-lead
+- Harden or soften the 72h draft close policy — owner: pm-scrum-master
+- Decide whether to defer or hold the 2026-12-01 mobile i18n lint flip — owner: pm-frontend + pm-qa

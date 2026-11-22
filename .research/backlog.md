@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-21 03:24 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-22 04:17 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -48,6 +48,9 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs` (+2) | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | test-gap | screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` (+1) | PR #3695 | 2026-11-22 | open | — |
+| 2 | test-gap | screen-map drift: PR #3700 changed ppt-web routes/groups/leases.tsx without touching docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/leases.tsx` (+1) | PR #3700 | 2026-11-22 | open | — |
+| 2 | bug | ppt-web ViolationDetailPage tenant dispute branch is wrapped in MANAGER_ROLES ProtectedRoute — dead for its audience | `frontend/apps/ppt-web/src/routes/groups/leases.tsx` (+1) | Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend) | 2026-11-22 | open | — |
 | 2 | refactor | voice_webhooks.rs is a 5-run repeated-churn hotspot (3066 LoC, 5 runs_seen) — module boundaries needed | `backend/servers/api-server/src/routes/voice_webhooks.rs` | commits 2026-11-19..20 (16 merged PRs window) (+3) | 2026-11-21 | done | — |
 | 2 | test-gap | oauth_integration_tests.rs is a repeated-churn hotspot (3427 LoC, runs_seen→2) — split by flow | `backend/servers/api-server/tests/suites/oauth_integration_tests.rs` | commits 2026-11-19..20 (16 merged PRs window) (+2) | 2026-11-21 | done | — |
 | 2 | bug | push/worker.rs: Retry disposition silently drops job when Redis requeue fails (NOAUTH/LOADING/reset) | `backend/servers/api-server/src/services/push/worker.rs` | rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d) | 2026-11-21 | open | — |
@@ -288,6 +291,9 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs` (+2) | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs` (+4) | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | Churn hotspot: voice_oauth.rs — 240 LoC in PR #3689 (RFC 6749 §5.2 OAuth error bodies) | `backend/servers/api-server/src/services/voice_oauth.rs` | PR #3689 | 2026-11-22 | open | — |
+| 1 | refactor | Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix) | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx` | PR #3703 | 2026-11-22 | open | — |
+| 1 | bug | ppt-web AccountingInvoiceDetail classifies paid/partial via JS float + 0.005 epsilon on decimal strings | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx` | Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend) | 2026-11-22 | open | — |
 | 1 | bug | push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry — duplicate-delivery risk | `backend/servers/api-server/src/services/push/fcm.rs` | rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d) | 2026-11-21 | open | — |
 | 1 | security | push/combined.rs + apns.rs leak raw sqlx::Error display into NotificationError::PushFailed | `backend/servers/api-server/src/services/push/combined.rs` (+1) | rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d) | 2026-11-21 | open | — |
 | 1 | dx | Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision | `frontend/apps/reality-web/src/app/[locale]/dashboard/analytics/page.tsx` | PR #3380 (+1) | 2026-11-20 | done | — |

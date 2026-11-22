@@ -155,3 +155,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-11-21, pm-backend):** Reviewer-slot rotation for large-scope feature PRs — the accounting MVP trio (#2555/#2559 just closed via #3661) sat 110+ days on reviewer starvation; capture the learning in policy. Owner: pm-tech-lead.
 - **NEW (2026-11-21, pm-scrum-master):** Promote-or-close policy for drafts open >72h — 4 drafts (#3687/#3688, #3676/#3677) + dependabot #3668 + search-drainer #3682 form a 6-PR open overhang this run. Owner: pm-scrum-master.
 - **NEW (2026-11-21, pm-scrum-master):** Reset `_bmad-output/implementation-artifacts/sprint-status.yaml` with the next hardening-track sprint goal — the current sprint is fully 'done' and no longer reflects the work being merged (refactor splits, review follow-ups, churn characterization). Owner: pm-tech-lead.
+
+---
+
+## Decisions logged 2026-11-22 (Phase 1.6 — pm-scrum-master + pm-frontend)
+
+- **NEW (2026-11-22, pm-scrum-master):** Harden or soften the 72h draft close policy — owner: pm-scrum-master
+- **NEW (2026-11-22, pm-scrum-master):** Decide whether to defer or hold the 2026-12-01 mobile i18n lint flip — owner: pm-frontend + pm-qa
+- **NEW (2026-11-22, pm-frontend):** Whether to defer the 2026-12-01 mobile i18n lint flip by one sprint if burn-down is incomplete on 2026-11-29 — owner: pm-frontend + pm-qa
+- **NEW (2026-11-22, pm-frontend):** Whether every form Submit handler needs an MSW e2e-smoke assertion before merge (carried from 2026-10-28, still unresolved) — owner: pm-qa + pm-tech-lead

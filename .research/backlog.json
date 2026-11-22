@@ -16779,6 +16779,129 @@
       "created_at": "2026-11-21",
       "updated_at": "2026-11-21",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-voice-oauth-rs",
+      "title": "Churn hotspot: voice_oauth.rs — 240 LoC in PR #3689 (RFC 6749 §5.2 OAuth error bodies)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3689"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_oauth.rs — 240 LoC churn this run (top-1 non-test raw hotspot). Post-split child file of the voice_webhooks/ refactor. PR #3689 landed RFC 6749 §5.2 error-body shaping."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/voice_oauth.rs"
+      ],
+      "created_at": "2026-11-22",
+      "updated_at": "2026-11-22",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-components-accountinginvoicedetail-tsx",
+      "title": "Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3703"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx — 237 LoC churn this run (top-2 non-test raw hotspot). Driven by accounting-server/typespec wire-format alignment (#3691 + #3703)."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx"
+      ],
+      "created_at": "2026-11-22",
+      "updated_at": "2026-11-22",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3695-reality",
+      "title": "screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3695"
+      ],
+      "evidence": [
+        "PR #3695 touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx (route file) without any docs/screens/reality/*.md update. Flagged by routine Phase 1 heuristic — treat as review candidate; basename slug may not match a screen doc."
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-11-22",
+      "updated_at": "2026-11-22",
+      "plan": null
+    },
+    {
+      "id": "screen-map-drift-pr-3700-ppt",
+      "title": "screen-map drift: PR #3700 changed ppt-web routes/groups/leases.tsx without touching docs/screens/ppt/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3700"
+      ],
+      "evidence": [
+        "PR #3700 touched frontend/apps/ppt-web/src/routes/groups/leases.tsx (ppt-web route) without any docs/screens/ppt/*.md update. Flagged by routine Phase 1 heuristic — treat as review candidate."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+        "docs/screens/ppt/"
+      ],
+      "created_at": "2026-11-22",
+      "updated_at": "2026-11-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-leases-dispute-unreachable",
+      "title": "ppt-web ViolationDetailPage tenant dispute branch is wrapped in MANAGER_ROLES ProtectedRoute — dead for its audience",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx:1636-1766 and :1891-1897 — ViolationDetailPageRoute implements a tenant/resident dispute branch (isTenant={!isManager}, handleDispute wired to useCreateViolationAppeal) and comments it as 'other members (tenants/residents) can dispute (files an appeal)', but the Route wraps it in <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>. MANAGER_ROLES (frontend/apps/ppt-web/src/routes/shared.tsx:36-42) is manager/org_admin/super_admin/technical_manager/property_manager only, so no tenant can reach the page — the dispute path and its UI are dead for their intended audience. Either widen requiredRoles or drop the tenant branch."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+        "frontend/apps/ppt-web/src/routes/shared.tsx"
+      ],
+      "created_at": "2026-11-22",
+      "updated_at": "2026-11-22",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-float-status",
+      "title": "ppt-web AccountingInvoiceDetail classifies paid/partial via JS float + 0.005 epsilon on decimal strings",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend)"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx:29-39 — paymentUpdate converts invoice.paid_amount/total_amount (backend decimal strings) to JS Number, adds amount, then classifies status with `paid + 0.005 >= total ? 'paid' : 'partially_paid'`. The 0.005 tolerance papers over binary-float rounding; large totals / many fractional-cent payments can misclassify. Compare in decimal-string arithmetic or let the server return the final status."
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx"
+      ],
+      "created_at": "2026-11-22",
+      "updated_at": "2026-11-22",
+      "plan": null
     }
   ]
 }

@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-22",
+  "run_start_iso": "2026-11-22T04:17:22Z",
+  "run_lag_hours": 25,
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/voice_oauth.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-21..22",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/voice_oauth.rs — 240 LoC churn this run (top-1 non-test raw hotspot). Driven by PR #3689 (RFC 6749 §5.2 voice OAuth error-body shaping + contract test). File is a post-split child of the voice_webhooks refactor; this is its first appearance in hotspot_history."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-21..22",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx — 237 LoC churn this run (top-2 non-test raw hotspot). Driven by the accounting MVP close-out — PR #3691 (accounting-server OpenAPI sync) + PR #3703 (ppt-web wire-format alignment). First appearance in hotspot_history."
+      ]
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/reality-web/src/app/[locale]/report/page.tsx",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-21..22",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/reality-web/src/app/[locale]/report/page.tsx — 216 LoC churn this run (top-3 non-test raw hotspot). Driven by PR #3695 (/report attachments functional via evidence links). hotspot_history.runs_seen 1 → 2; signal id already in seen_signals (cumulative type), score_delta not re-applied."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3695-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3695",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3695 (code-review-reality-web-report-attachments-disabled-3017-retry1) touched frontend/apps/reality-web/src/app/[locale]/report/page.tsx (reality-web route) without any docs/screens/reality/*.md update. Heuristic flag — route basename may not map 1:1 to a screen doc slug; treat as review candidate, not a promotable plan."
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-3700-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #3700",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #3700 (code-review-ppt-web-core-create-lease-empty-pickers-retry1) touched frontend/apps/ppt-web/src/routes/groups/leases.tsx (ppt-web route) without any docs/screens/ppt/*.md update. Heuristic flag — the leases.tsx file aggregates many nested routes; treat as review candidate, not a promotable plan."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-leases-dispute-unreachable",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend)",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "file": "frontend/apps/ppt-web/src/routes/groups/leases.tsx",
+      "line": "1636-1766, 1891-1897",
+      "evidence": [
+        "ViolationDetailPageRoute implements a tenant/resident dispute branch (isTenant={!isManager}, handleDispute wired to useCreateViolationAppeal) and comments it 'other members (tenants/residents) can dispute (files an appeal)', but the Route is wrapped in <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>. MANAGER_ROLES (frontend/apps/ppt-web/src/routes/shared.tsx:36-42) is manager/org_admin/super_admin/technical_manager/property_manager only, so no tenant can reach the page — the dispute path and its UI are dead for their intended audience. Either widen requiredRoles or drop the tenant branch."
+      ]
+    },
+    {
+      "id": "code-review-ppt-web-ui-invoice-float-status",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend)",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "file": "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx",
+      "line": "29-39",
+      "evidence": [
+        "paymentUpdate converts invoice.paid_amount / total_amount (backend decimal strings) to JS Number, adds amount, then classifies status with `paid + 0.005 >= total ? 'paid' : 'partially_paid'`. The 0.005 tolerance papers over binary-float rounding rather than fixing it; for invoices with many fractional-cent payments or large totals, repeated partial payments can misclassify. Compare in decimal-string arithmetic (match the sqlx Decimal flow server-side) or let the server return the final status."
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no eligible candidate — screen-map-drift signals landed at score 2 (below ≥3 floor); no stalled-review or fixme-in-merged-code signal this run",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/<today>.md && head -1 matches '# <today>'", "observed": "pass", "expected": "pass" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged vs HEAD state.json", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq [.items[].id] unique check", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq non-cumulative signal-id double-count check", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq [.items[] | select(.score > 8)] | length == 0 + decay check (no open items >14d this run)", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "n/a — no new plans/<slug>.md added this run", "observed": "n/a", "expected": "n/a" },
+    { "goal": "G7", "passed": true, "command": "count of new plans in staged diff", "observed": "0", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secret-scan grep on staged diff (minus baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md /tmp/backlog.regen.md", "observed": "match", "expected": "match" },
+    { "goal": "G11", "passed": true, "command": "n/a — no phases failed this run", "observed": "n/a", "expected": "n/a" },
+    { "goal": "G12", "passed": true, "command": "all prior-run plan slugs still present as active or archived", "observed": "true", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "git ls-files _archive now (24) >= HEAD (24)", "observed": "24 >= 24", "expected": ">=" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md", "observed": "match", "expected": "match" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty + no history collision", "observed": "0 actions", "expected": "within caps" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid + pm_cursor in [0,7] + coverage_cursor advanced (8→9)", "observed": "pm=3 cov=9 epics=13", "expected": "advanced" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram bot-token value in staged added lines", "observed": "0", "expected": "0" }
+  ]
+}

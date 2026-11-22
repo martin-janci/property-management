@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-21T03:06:30Z",
+  "last_run_iso": "2026-11-22T04:17:22Z",
   "last_run_ms": 1500000,
-  "last_pr_seen": 3686,
-  "last_issue_seen": 3666,
-  "last_commit_sha": "eefa6b050b916f9e06278cac53e436d24924eb88",
+  "last_pr_seen": 3712,
+  "last_issue_seen": 3711,
+  "last_commit_sha": "131df20a5c3ed5e52a04086d23bef86ae00c4136",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -558,9 +558,9 @@
       "recent_churn": 1
     },
     "frontend/apps/reality-web/src/app/[locale]/report/page.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-10-03",
-      "recent_churn": 1
+      "runs_seen": 2,
+      "last_seen": "2026-11-22",
+      "recent_churn": 216
     },
     "frontend/apps/reality-web/src/components/home/FeaturedListings.tsx": {
       "runs_seen": 1,
@@ -761,6 +761,16 @@
       "runs_seen": 1,
       "last_seen": "2026-11-18",
       "recent_churn": 3
+    },
+    "backend/servers/api-server/src/services/voice_oauth.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-22",
+      "recent_churn": 240
+    },
+    "frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-22",
+      "recent_churn": 237
     }
   },
   "seen_signals": [
@@ -1517,22 +1527,28 @@
     "dep-update-noise-pr-3636",
     "code-review-api-core-worker-silent-requeue-drop",
     "code-review-api-core-fcm-2xx-parse-retry",
-    "code-review-api-core-push-db-err-leak"
+    "code-review-api-core-push-db-err-leak",
+    "churn-hotspot-backend/servers/api-server/src/services/voice_oauth.rs",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx",
+    "screen-map-drift-pr-3695-reality",
+    "screen-map-drift-pr-3700-ppt",
+    "code-review-ppt-web-ui-leases-dispute-unreachable",
+    "code-review-ppt-web-ui-invoice-float-status"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-11-20",
     "api-core": "2026-11-21",
     "reality-server": "2026-11-16",
-    "ppt-web-ui": "2026-11-08",
+    "ppt-web-ui": "2026-11-22",
     "ppt-web-core": "2026-11-04",
     "reality-web": "2026-11-19",
     "mobile-rn": "2026-11-15",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 125,
-    "vectors_created": 567,
+    "runs": 126,
+    "vectors_created": 573,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1548,20 +1564,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 2,
+    "next_index": 3,
     "role_last_run": {
       "pm-tech-lead": "2026-11-20",
       "pm-backend": "2026-11-21",
-      "pm-frontend": "2026-10-28",
+      "pm-frontend": "2026-11-22",
       "pm-qa": "2026-11-09",
       "pm-devops": "2026-11-13",
       "pm-security": "2026-11-16",
       "pm-data": "2026-11-17",
       "pm-integration": "2026-11-19",
-      "pm-scrum-master": "2026-11-21"
+      "pm-scrum-master": "2026-11-22"
     }
   },
   "coverage_cursor": {
-    "next_index": 8
+    "next_index": 9
   }
 }
