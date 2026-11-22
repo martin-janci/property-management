@@ -3,6 +3,7 @@
 //! Sends emails as part of workflow execution.
 
 use super::{ActionContext, ActionError, ActionExecutor, ActionResult};
+use crate::services::email::EmailService;
 use async_trait::async_trait;
 use db::models::action_type;
 use serde::{Deserialize, Serialize};
@@ -34,15 +35,42 @@ pub struct EmailConfig {
 }
 
 /// Email action executor.
+///
+/// Delivers workflow "send_email" actions through the shared [`EmailService`],
+/// which sends via SMTP in production and degrades to logging when SMTP is
+/// unconfigured. Delivery failures are surfaced to the caller as
+/// [`ActionError`] so the workflow step is recorded as failed and retried —
+/// the executor never silently drops the mail.
 pub struct EmailExecutor {
-    // In production, this would hold the email service
-    // For now, we'll log the email details
+    email_service: EmailService,
+}
+
+/// Build an [`EmailService`] from the same environment variables used to
+/// configure the application's primary email service (`EMAIL_ENABLED`,
+/// `APP_BASE_URL`, plus the `SMTP_*` family read by `EmailService::new`).
+/// Falls back to logging mode when SMTP/email is not configured.
+fn email_service_from_env() -> EmailService {
+    let enabled = std::env::var("EMAIL_ENABLED")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+    let base_url =
+        std::env::var("APP_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+    EmailService::new(base_url, enabled)
 }
 
 impl EmailExecutor {
-    /// Create a new email executor.
+    /// Create a new email executor backed by an environment-configured
+    /// [`EmailService`].
     pub fn new() -> Self {
-        Self {}
+        Self {
+            email_service: email_service_from_env(),
+        }
+    }
+
+    /// Create an email executor backed by a specific [`EmailService`] (used by
+    /// callers that already hold a configured service, and by tests).
+    pub fn with_email_service(email_service: EmailService) -> Self {
+        Self { email_service }
     }
 
     /// Parse and validate the email configuration.
@@ -73,9 +101,9 @@ impl ActionExecutor for EmailExecutor {
         // Substitute template variables
         let to = context.substitute_template(&email_config.to);
         let subject = context.substitute_template(&email_config.subject);
-        let _body = context.substitute_template(&email_config.body);
+        let body = context.substitute_template(&email_config.body);
 
-        // Validate email address
+        // Cheap guard before handing off to the transport.
         if !to.contains('@') {
             return Err(ActionError::ConfigurationError(format!(
                 "Invalid email address: {}",
@@ -83,7 +111,6 @@ impl ActionExecutor for EmailExecutor {
             )));
         }
 
-        // Log the email for now (in production, this would actually send via EmailService)
         tracing::info!(
             workflow_id = %context.workflow_id,
             execution_id = %context.execution_id,
@@ -93,11 +120,31 @@ impl ActionExecutor for EmailExecutor {
             "Workflow sending email"
         );
 
-        // Simulate email sending (in production, integrate with EmailService)
-        // The actual integration would look like:
-        // email_service.send_template_email(&to, &template, template_data).await?
-        //
-        // For now, we consider the action successful
+        // Actually deliver the mail through the shared EmailService. Previously
+        // this executor logged and returned success unconditionally, silently
+        // dropping the message (code-review finding). It now sends via SMTP in
+        // production (logging fallback in development) and surfaces any delivery
+        // failure as an ActionError, consistent with the other action executors.
+        let send_result = if let Some(ref template) = email_config.template {
+            self.email_service
+                .send_template_email(&to, template, email_config.template_data.clone())
+                .await
+        } else {
+            self.email_service
+                .send_action_email(
+                    &to,
+                    &email_config.cc,
+                    &email_config.bcc,
+                    &subject,
+                    &body,
+                    email_config.html,
+                )
+                .await
+        };
+
+        send_result.map_err(|e| {
+            ActionError::ExternalServiceError(format!("Failed to send email to {}: {}", to, e))
+        })?;
 
         let duration_ms = start.elapsed().as_millis() as i32;
 
