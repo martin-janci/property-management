@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
-      "action": "KMP realtor SSO error-body parsing is unguarded \u2014 crashes on non-JSON response",
+      "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -195,21 +195,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "pm-scrum-master-3630-widgetsettings-i18n-merge-2026-11-19",
-      "action": "Land #3630 (mobile WidgetSettings i18n) after CI; remaining no-hardcoded-strings warnings must drain before 2026-12-01 lint flip",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "pm-frontend",
-      "depends_on": [
-        "UNRESOLVED:pm-frontend"
-      ],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z",
-      "resolution": "resolved by PR #3699 mobile-rn WidgetSettings i18n (2026-11-21)"
-    },
-    {
       "id": "code-review-mobile-rn-hardcoded-button-labels",
       "action": "mobile rn hardcoded button labels",
       "owner_role": "pm-backend",
@@ -273,24 +258,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-24T21:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-agency-slug-i18n",
-      "action": "reality web agency slug i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T18:26:06Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-24T10:40:00Z"
       }
     },
     {
@@ -364,43 +331,6 @@
         "vector": "bug",
         "generated": "2026-08-24T00:00:00Z"
       }
-    },
-    {
-      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-sk",
-      "action": "ppt web ui document hooks hardcoded sk",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-24T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-docgen-empty-llm-blank-doc",
-      "action": "api core docgen empty llm blank doc",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "done",
-      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-20T22:27:28Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-23T18:30:00Z"
-      },
-      "resolution": "resolved by PR #3712 (2026-11-22)"
     },
     {
       "id": "code-review-reality-web-compare-button-i18n",
@@ -501,7 +431,7 @@
     },
     {
       "id": "pm-scrum-master-unblock-kmp-swagger-ui-egress-2652-2966-2026-11-21",
-      "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) \u2014 claimable still \u22489/72",
+      "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — claimable still ≈9/72",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
@@ -530,7 +460,7 @@
     },
     {
       "id": "code-review-api-core-fcm-2xx-parse-retry",
-      "action": "push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry \u2014 duplicate-delivery risk",
+      "action": "push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry — duplicate-delivery risk",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -907,36 +837,39 @@
     },
     {
       "id": "pm-scrum-master-land-the-2026-12-01-i18n-warn-error-lint-flip-burn-down-merg-2026-11-22",
-      "action": "Land the 2026-12-01 i18n warn\u2192error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
+      "action": "Land the 2026-12-01 i18n warn→error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-scrum-master-resolve-dispatcher-stall-3357-3-approved-prs-still-blocked-o-2026-11-22",
-      "action": "Resolve dispatcher stall #3357 \u2014 3 approved PRs still blocked on non-mechanical conflicts across TWO merge waves (32 + 26 PRs)",
+      "action": "Resolve dispatcher stall #3357 — 3 approved PRs still blocked on non-mechanical conflicts across TWO merge waves (32 + 26 PRs)",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-scrum-master-unblock-mobile-native-kmp-swagger-ui-egress-in-the-cloud-run-2026-11-22",
-      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) \u2014 4 KMP backlog items still structurally unclaimable",
+      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-scrum-master-characterize-the-post-split-push-voice-webhooks-oauth-integr-2026-11-22",
@@ -947,7 +880,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-scrum-master-triage-new-issue-3711-dispatcher-signals-promote-dev-truth-g-2026-11-22",
@@ -958,7 +892,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-scrum-master-promote-or-close-the-5-draft-prs-3713-dispatcher-dev-truth-g-2026-11-22",
@@ -969,7 +904,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-frontend-burn-down-the-frontend-i18n-slice-10-code-review-i18n-retry1-2026-11-22",
@@ -980,62 +916,68 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-frontend-promote-drafts-3714-ppt-web-date-number-locale-formatters-an-2026-11-22",
-      "action": "Promote drafts #3714 (ppt-web date/number locale formatters) and #3715 (ppt-web native confirm dialogs) to ready-for-review within 48h \u2014 both are from the 2026-11-19/20 action-list and are the only non-i18n frontend drafts in flight",
+      "action": "Promote drafts #3714 (ppt-web date/number locale formatters) and #3715 (ppt-web native confirm dialogs) to ready-for-review within 48h — both are from the 2026-11-19/20 action-list and are the only non-i18n frontend drafts in flight",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-frontend-verify-the-authed-query-key-roots-logout-purge-pattern-from--2026-11-22",
-      "action": "Verify the `AUTHED_QUERY_KEY_ROOTS` logout-purge pattern from #3706 is comprehensive \u2014 audit every feature-group root query key, add a unit test that asserts the allow-list matches `useQuery({queryKey: [X, ...]})` call sites",
+      "action": "Verify the `AUTHED_QUERY_KEY_ROOTS` logout-purge pattern from #3706 is comprehensive — audit every feature-group root query key, add a unit test that asserts the allow-list matches `useQuery({queryKey: [X, ...]})` call sites",
       "owner_role": "pm-frontend",
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-frontend-close-out-the-carried-wire-the-button-but-not-the-post-patte-2026-11-22",
-      "action": "Close out the carried 'wire-the-button-but-not-the-POST' pattern: audit `ReportFaultScreen.tsx` (RN), reality-web `/sell` wizard Publish, and `VoteDetailPage` ranked-ballot submit \u2014 the 2026-10-28 run flagged 3; #3700 and #3707 are the pattern but only for ppt-web empty-states",
+      "action": "Close out the carried 'wire-the-button-but-not-the-POST' pattern: audit `ReportFaultScreen.tsx` (RN), reality-web `/sell` wizard Publish, and `VoteDetailPage` ranked-ballot submit — the 2026-10-28 run flagged 3; #3700 and #3707 are the pattern but only for ppt-web empty-states",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-frontend-characterize-the-two-high-churn-frontend-files-this-week-acc-2026-11-22",
-      "action": "Characterize the two high-churn frontend files this week (AccountingInvoiceDetail.tsx, reality-web report/page.tsx, leases.tsx) \u2014 if each is >800 lines and touched by >3 different PRs in-window, flag as a watch-* module for the hardening sprint",
+      "action": "Characterize the two high-churn frontend files this week (AccountingInvoiceDetail.tsx, reality-web report/page.tsx, leases.tsx) — if each is >800 lines and touched by >3 different PRs in-window, flag as a watch-* module for the hardening sprint",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
       "id": "pm-frontend-confirm-the-ws-token-in-url-strip-from-3696-covers-every-web-2026-11-22",
-      "action": "Confirm the WS token-in-URL strip from #3696 covers every WebSocket opener on ppt-web (not just notifications) \u2014 search for `new WebSocket(` call sites and assert no `?token=`",
+      "action": "Confirm the WS token-in-URL strip from #3696 covers every WebSocket opener on ppt-web (not just notifications) — search for `new WebSocket(` call sites and assert no `?token=`",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-22"
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z"
     }
   ],
   "generated": "2026-11-22T03:06:30Z"

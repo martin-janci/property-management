@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-22T02:33:54Z",
+  "archived_at": "2026-11-22T04:28:36Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3895,6 +3895,25 @@
         "merged_at": null,
         "at": "2026-11-18T22:25:50Z"
       }
+    },
+    {
+      "id": "code-review-api-core-docgen-empty-llm-blank-doc",
+      "action": "api core docgen empty llm blank doc",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-23T18:30:00Z"
+      },
+      "resolution": "resolved by PR #3712 (2026-11-22)"
     },
     {
       "id": "code-review-api-core-docgen-summarize-char-boundary-panic",
@@ -12774,6 +12793,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-document-hooks-hardcoded-sk",
+      "action": "ppt web ui document hooks hardcoded sk",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-22T04:23:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T22:27:28Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-24T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T04:23:41Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-documents-toast-hardcoded-mixed-locale",
       "action": "ppt web ui documents toast hardcoded mixed locale",
       "owner_role": "pm-tech-lead",
@@ -16469,6 +16513,31 @@
         "commit": "a87545209076ea9be641cae70cfa7fdb587d718d",
         "subject": "code-review-reality-web-agency-page-i18n-gap: wire agency profile copy through next-intl (#3155)",
         "at": "2026-10-25T14:25:47Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-agency-slug-i18n",
+      "action": "reality web agency slug i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-22T04:23:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-20T18:26:06Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-24T10:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-22T04:23:41Z"
       }
     },
     {
@@ -31442,6 +31511,21 @@
         "merged_at": null,
         "at": "2026-11-21T04:25:03Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-3630-widgetsettings-i18n-merge-2026-11-19",
+      "action": "Land #3630 (mobile WidgetSettings i18n) after CI; remaining no-hardcoded-strings warnings must drain before 2026-12-01 lint flip",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "depends_on": [
+        "UNRESOLVED:pm-frontend"
+      ],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19",
+      "first_open_at": "2026-11-20T10:30:27Z",
+      "resolution": "resolved by PR #3699 mobile-rn WidgetSettings i18n (2026-11-21)"
     },
     {
       "id": "pm-scrum-master-add-digest-abandoned-at-column-2026-11-17",
