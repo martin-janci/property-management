@@ -16722,7 +16722,7 @@
       "vector": "bug",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d)"
       ],
@@ -16735,7 +16735,12 @@
       ],
       "created_at": "2026-11-21",
       "updated_at": "2026-11-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-22T18:31:04Z",
+        "assignment_status": "merged",
+        "pr_number": 3726
+      }
     },
     {
       "id": "code-review-api-core-fcm-2xx-parse-retry",
@@ -16743,7 +16748,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d)"
       ],
@@ -16756,7 +16761,12 @@
       ],
       "created_at": "2026-11-21",
       "updated_at": "2026-11-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-22T18:31:04Z",
+        "assignment_status": "merged",
+        "pr_number": 3725
+      }
     },
     {
       "id": "code-review-api-core-push-db-err-leak",

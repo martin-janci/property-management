@@ -3937,6 +3937,28 @@
       "merge_attempted_at": "2026-08-30T04:33:36Z"
     },
     {
+      "task_id": "code-review-api-core-fcm-2xx-parse-retry",
+      "branch": "auto-impl/code-review-api-core-fcm-2xx-parse-retry-b45a6c1d",
+      "status": "merged",
+      "claimed_at": "2026-11-22T12:28:22Z",
+      "last_updated": "2026-11-22T18:30:17Z",
+      "status_changed_at": "2026-11-22T18:30:17Z",
+      "pr_number": 3725,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3725",
+      "merged_at": "2026-11-22T18:27:20Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=e855bcc70e0e6aaf8c45a9b209ea52cd98a62922 note=fcm-2xx-parse-retry-fix-clean-approved-as-comment-self-approval-blocked",
+      "last_reviewed_oid": "e855bcc70e0e6aaf8c45a9b209ea52cd98a62922",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T18:30:17Z"
+    },
+    {
       "task_id": "code-review-api-core-fcm-legacy-dead-endpoint",
       "branch": "auto-impl/code-review-api-core-fcm-legacy-dead-end-441ead3c",
       "status": "merged",
@@ -5092,6 +5114,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": "2026-11-19T14:40:45Z"
+    },
+    {
+      "task_id": "code-review-api-core-worker-silent-requeue-drop",
+      "branch": "auto-impl/code-review-api-core-worker-silent-reque-cbda483e",
+      "status": "merged",
+      "claimed_at": "2026-11-22T16:21:45Z",
+      "last_updated": "2026-11-22T18:30:17Z",
+      "status_changed_at": "2026-11-22T18:30:17Z",
+      "pr_number": 3726,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3726",
+      "merged_at": "2026-11-22T18:29:24Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3726 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=bounded requeue-retry + error-surface for failed Redis RPUSH in push fanout worker; fmt+clippy clean, push tests green (3 new); 1 unrelated proxy-env test red (api_call dns-rebind), CI no-proxy green",
+      "reviewer_summary": "verdict=approve head_oid=45b25c8ca90d3dbbb68b8a0d7266fe09892869b3 note=bounded-requeue-retry+error-surface fixes silent-drop; 3 new tests; check+test green (cargo-deny non-required); GH self-approve blocked so review not posted",
+      "last_reviewed_oid": "45b25c8ca90d3dbbb68b8a0d7266fe09892869b3",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T18:30:17Z"
     },
     {
       "task_id": "code-review-api-core-workflow-cond-parse-failopen",
@@ -28157,6 +28201,28 @@
       "merge_attempted_at": "2026-07-24T00:21:04Z"
     },
     {
+      "task_id": "pm-backend-characterize-postsplit-modules-under-watch-2026-11-21",
+      "branch": "auto-impl/pm-backend-characterize-postsplit-module-aa2c5b7a",
+      "status": "merged",
+      "claimed_at": "2026-11-22T12:28:22Z",
+      "last_updated": "2026-11-22T18:30:17Z",
+      "status_changed_at": "2026-11-22T18:30:17Z",
+      "pr_number": 3724,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3724",
+      "merged_at": "2026-11-22T18:27:17Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=6dfe058692a24dc938201c7eedc4dbeaa05a883c note=test-only-characterization-apns-stale-token+alexa-parsers-behaviour-preserving-ci-green-except-unrelated-cargo-deny-advisory-drift-self-approve-blocked-comment",
+      "last_reviewed_oid": "6dfe058692a24dc938201c7eedc4dbeaa05a883c",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-22T18:30:17Z"
+    },
+    {
       "task_id": "pm-backend-finish-accounting-mvp-trio-2558-2026-11-21",
       "branch": "auto-impl/pm-backend-finish-accounting-mvp-trio-25-3d70d768",
       "status": "merged",
@@ -33524,5 +33590,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-22T16:43:14Z"
+  "archived_at": "2026-11-22T18:35:47Z"
 }

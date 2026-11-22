@@ -310,18 +310,6 @@
       "first_open_at": "2026-11-21T03:06:10Z"
     },
     {
-      "id": "pm-backend-characterize-postsplit-modules-under-watch-2026-11-21",
-      "action": "Characterize the post-split push/ and voice_webhooks/ child modules in sprint-status and coverage; the new file footprint should move to a 'done, under watch' bucket for the next 2 runs so regressions surface",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-21",
-      "first_open_at": "2026-11-21T03:06:10Z"
-    },
-    {
       "id": "pm-scrum-master-unblock-kmp-swagger-ui-egress-2652-2966-2026-11-21",
       "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — claimable still ≈9/72",
       "owner_role": "pm-scrum-master",

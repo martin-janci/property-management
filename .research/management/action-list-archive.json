@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-22T16:43:14Z",
+  "archived_at": "2026-11-22T18:35:47Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -30533,6 +30533,24 @@
       },
       "last_updated": "2026-07-23T14:34:52.019013Z",
       "inprogress_reconciled": "assignment=merged @2026-08-01T04:08:40Z"
+    },
+    {
+      "id": "pm-backend-characterize-postsplit-modules-under-watch-2026-11-21",
+      "action": "Characterize the post-split push/ and voice_webhooks/ child modules in sprint-status and coverage; the new file footprint should move to a 'done, under watch' bucket for the next 2 runs so regressions surface",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-21 | dev-reconcile 2026-11-22T18:31:04Z",
+      "first_open_at": "2026-11-21T03:06:10Z",
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "0b89906151da6fb38d8cb42e4379a9736d3836e9",
+        "subject": "pm-backend-characterize-postsplit-modules-under-watch-2026-11-21: characterize push/apns + voice_webhooks/parsers (#3724)",
+        "at": "2026-11-22T18:31:04Z"
+      }
     },
     {
       "id": "pm-backend-finish-accounting-mvp-trio-2558-2026-11-21",
