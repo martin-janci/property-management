@@ -1892,10 +1892,18 @@ export function leaseRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Auth-only (not role-gated): the violation detail hosts both audiences —
+          a manager resolves the violation, the cited tenant disputes it (files an
+          appeal). `ViolationDetailPageRoute` gates those actions in-page
+          (`isManager` → resolve, `!isManager` → dispute), so role-gating the
+          route to MANAGER_ROLES would make the dispute flow dead for its only
+          audience. Mirrors `/faults/:faultId` (shared reporter/manager detail);
+          an anonymous deep-link still redirects to /login with the return URL
+          captured (code-review `…leases-dispute-unreachable`). */}
       <Route
         path="/leases/violations/:violationId"
         element={
-          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
+          <ProtectedRoute>
             <ViolationDetailPageRoute />
           </ProtectedRoute>
         }
