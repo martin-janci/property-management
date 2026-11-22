@@ -40,6 +40,19 @@
 #   signals that fell through every other crack — exactly the orphaned remainder
 #   issue #3357 describes.
 #
+# Dev-truth guard (never promote an already-resolved finding, issue #3711):
+#
+#   A code-review finding can sit in the signal sink long after its fix lands on
+#   dev out-of-band (fixed under a different branch/PR, or as a side effect of
+#   another task). Promoting it mints a claimable row whose implementer finds the
+#   work already done — an empty-diff no-op that burns a subagent and inflates the
+#   claimable metric. This script excludes such signals using the SAME two
+#   dev-truth joins as retry-remint.sh / dev-reconcile.sh, both FAIL-OPEN (a
+#   missing file or unreachable remote degrades to "no exclusion", never aborts):
+#     (a) coverage.json stories with status="done" (stem-keyed), and
+#     (b) an anchored "<id>:" commit-subject prefix on origin/dev (the squash-
+#         merge join convention — never a loose body grep).
+#
 # Bounded + additive + fail-closed (mirrors backlog-refill.sh):
 #   - Buffer-gated: only fires when honest claimable < BUFFER_FLOOR; promotes up
 #     to BUFFER_TARGET; never lifts honest claimable above BUFFER_CEIL.
@@ -57,19 +70,29 @@
 #   ./.research/signals-promote.sh                 # dry-run: print promote set
 #   ./.research/signals-promote.sh --apply         # promote in place
 #   SIGNALS_GLOB=… ACTION_LIST=… ASSIGN=… ASSIGN_ARCHIVE=… BACKLOG_FILE=… \
+#     COVERAGE_FILE=… BASE=… DEV_LOG_FILE=… DEV_LOG_MAX=… \
 #     BUFFER_FLOOR=… BUFFER_TARGET=… BUFFER_CEIL=… SIGNALS_PROMOTE_CAP=… \
 #     SIGNALS_PROMOTE_NOW=… GATE_SCRIPT=… ./.research/signals-promote.sh [--apply]
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$HERE/.." && pwd)"
 
 ACTION_LIST="${ACTION_LIST:-.research/management/action-list.json}"
 ASSIGN="${ASSIGN:-.research/management/assignments.json}"
 ASSIGN_ARCHIVE="${ASSIGN_ARCHIVE:-.research/management/assignments-archive.json}"
 BACKLOG_FILE="${BACKLOG_FILE:-.research/backlog.json}"
+COVERAGE_FILE="${COVERAGE_FILE:-.research/management/coverage.json}"
 SIGNALS_GLOB="${SIGNALS_GLOB:-.research/signals/*tier1d*.json}"
 GATE_SCRIPT="${GATE_SCRIPT:-$HERE/mobile-native-gate.sh}"
+
+# Dev-truth guard inputs (issue #3711 — mirror dev-reconcile.sh / retry-remint.sh):
+#   BASE          — integration branch whose landed commit subjects prove a fix shipped.
+#   DEV_LOG_FILE  — offline injection (one commit subject per line). Unset => `git log`.
+#   DEV_LOG_MAX   — how many recent subjects to scan when reading from git.
+BASE="${BASE:-origin/dev}"
+DEV_LOG_MAX="${DEV_LOG_MAX:-300}"
 
 BUFFER_FLOOR="${BUFFER_FLOOR:-36}"
 BUFFER_TARGET="${BUFFER_TARGET:-72}"
@@ -154,9 +177,39 @@ fi
 POOL_FILE=$(mktemp)
 ASSIGN_IDS_FILE=$(mktemp)
 BACKLOG_IDS_FILE=$(mktemp)
-trap 'rm -f "$POOL_FILE" "$ASSIGN_IDS_FILE" "$BACKLOG_IDS_FILE"' EXIT
+COV_DONE_FILE=$(mktemp)
+DEV_SUBJECTS_FILE=$(mktemp)
+trap 'rm -f "$POOL_FILE" "$ASSIGN_IDS_FILE" "$BACKLOG_IDS_FILE" "$COV_DONE_FILE" "$DEV_SUBJECTS_FILE"' EXIT
 printf '%s' "$ASSIGN_IDS"  > "$ASSIGN_IDS_FILE"
 printf '%s' "$BACKLOG_IDS" > "$BACKLOG_IDS_FILE"
+
+# ---- dev-truth guard (issue #3711): never promote an already-resolved finding -
+# A code-review finding whose FIX has already landed on origin/dev must not be
+# re-minted as a claimable action-list row — the implementer that claimed it would
+# find the work already done (an empty-diff / already-landed no-op, wasting a
+# subagent and polluting the claimable metric). Mirrors the two dev-truth joins
+# used by retry-remint.sh / dev-reconcile.sh, both FAIL-OPEN (a missing file or an
+# unreachable remote degrades to "no exclusion" — additive, never aborts):
+#
+#   (a) coverage-done: a story id in coverage.json with status="done". Keyed by
+#       stem so a finding whose stem matches a shipped story is excluded.
+#   (b) dev-log subject-prefix: a commit on $BASE whose SUBJECT begins with an
+#       anchored "<id>:" prefix (up to the first colon, no spaces) — the exact
+#       squash-merge join convention dev-reconcile.sh uses, never a loose body
+#       grep, so a dispatcher chore commit merely LISTING an id never matches.
+if [ -f "$COVERAGE_FILE" ]; then
+  jq '[ .stories[]? | select(.status=="done") | .id ]' "$COVERAGE_FILE" \
+    > "$COV_DONE_FILE" 2>/dev/null || echo '[]' > "$COV_DONE_FILE"
+else
+  echo '[]' > "$COV_DONE_FILE"
+fi
+
+if [ -n "${DEV_LOG_FILE:-}" ]; then
+  DEV_SUBJECTS=$(cat "$DEV_LOG_FILE" 2>/dev/null || true)
+else
+  DEV_SUBJECTS=$(git -C "$REPO_ROOT" log "$BASE" --format=%s -"$DEV_LOG_MAX" 2>/dev/null || true)
+fi
+printf '%s\n' "$DEV_SUBJECTS" | jq -R . | jq -s . > "$DEV_SUBJECTS_FILE"
 
 jq -s '
   [ .[]
@@ -185,6 +238,8 @@ CANDIDATES=$(jq -n \
   --slurpfile al "$ACTION_LIST" \
   --slurpfile aids "$ASSIGN_IDS_FILE" \
   --slurpfile blids "$BACKLOG_IDS_FILE" \
+  --slurpfile covdone "$COV_DONE_FILE" \
+  --slurpfile devsubj "$DEV_SUBJECTS_FILE" \
   --arg now "$NOW" '
   def stem: sub("-(impl|fix|v2|retry|followup|wip)[0-9]*$";"");
   def prio(score; conf):
@@ -211,6 +266,13 @@ CANDIDATES=$(jq -n \
   | ($aids  | map(stem) | unique) as $a_stems
   | ($blids | unique)          as $bl_ids
   | ($blids | map(stem) | unique) as $bl_stems
+  # Dev-truth guard (issue #3711) — already-resolved findings:
+  #   (a) coverage.json stories already done (stem-keyed), and
+  #   (b) anchored "<id>:" subject prefixes on origin/dev, stemmed — same join
+  #       convention as dev-reconcile.sh (prefix has no spaces, so a chore commit
+  #       merely MENTIONING an id never matches). Both empty => no exclusion.
+  | ($covdone[0] | map(stem) | unique) as $cov_done_stems
+  | ([ $devsubj[0][] | capture("^(?<p>[^:\\s]+):") | .p | stem ] | unique) as $dev_landed_stems
 
   | [ $pool[]
       | select((.id | IN($al_ids[])) | not)
@@ -219,6 +281,9 @@ CANDIDATES=$(jq -n \
       | select((.id | stem | IN($a_stems[])) | not)
       | select((.id | IN($bl_ids[])) | not)
       | select((.id | stem | IN($bl_stems[])) | not)
+      # dev-truth: fix already shipped on dev (coverage-done or landed commit).
+      | select((.id | stem | IN($cov_done_stems[])) | not)
+      | select((.id | stem | IN($dev_landed_stems[])) | not)
     ]
   # Collapse intra-pool duplicate ids (same finding written by multiple runs):
   # keep the highest-scoring occurrence.
