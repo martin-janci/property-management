@@ -55,6 +55,81 @@ pub fn router() -> Router<AppState> {
             "/memberships/merge-collisions",
             get(merge_collisions).layer(require_capability(Capability::MembershipsGrant)),
         )
+        // Operator roster of ANY tenant (the org-scoped
+        // `/organizations/{id}/members` requires the caller to be a member).
+        .route(
+            "/memberships/organizations/{org_id}/members",
+            get(list_org_members).layer(require_capability(Capability::MembershipsRevoke)),
+        )
+}
+
+// ====================================================================
+// Organization roster (operator view)
+// ====================================================================
+
+/// GET /admin/memberships/organizations/{org_id}/members
+///
+/// Same response shape as `GET /organizations/{id}/members`, but gated by the
+/// platform `MembershipsRevoke` capability instead of org membership, so an
+/// operator can inspect (and then revoke from) any tenant. Every read is
+/// audited with the organization as target.
+async fn list_org_members(
+    _cap: RequireCapability,
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    headers: HeaderMap,
+    Path(org_id): Path<Uuid>,
+) -> Result<Json<crate::routes::organizations::ListMembersResponse>, (StatusCode, String)> {
+    use crate::routes::organizations::{ListMembersResponse, MemberResponse};
+
+    let (rows, total) = state
+        .org_member_repo
+        .list_org_members(org_id, 0, 500, None)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let members = rows
+        .into_iter()
+        .map(|m| {
+            let role_name = match (m.role_id, m.role_name.as_deref()) {
+                (Some(_), Some(name)) => name.to_string(),
+                (Some(_), None) => "Unknown".to_string(),
+                (None, _) => "No Role".to_string(),
+            };
+            MemberResponse {
+                user_id: m.user_id,
+                name: m.user_name,
+                email: m.user_email,
+                role_id: m.role_id,
+                role_name,
+                role_type: m.role_type,
+                joined_at: m.joined_at.map(|dt| dt.to_rfc3339()),
+            }
+        })
+        .collect();
+
+    let ip = super::audit_ip_from_headers(&headers);
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    if let Err(e) = audit
+        .record(
+            Some(auth.user_id),
+            Capability::MembershipsRevoke,
+            AuditOutcome::Allowed,
+            Some("organization_members"),
+            Some(org_id),
+            None,
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, "audit write for memberships roster failed");
+    }
+
+    Ok(Json(ListMembersResponse { members, total }))
 }
 
 // ====================================================================
