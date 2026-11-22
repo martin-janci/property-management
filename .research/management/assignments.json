@@ -47,18 +47,18 @@
     {
       "task_id": "code-review-api-core-docgen-empty-llm-blank-doc",
       "branch": "auto-impl/code-review-api-core-docgen-empty-llm-bl-e329b760",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-22T00:32:53Z",
-      "last_updated": "2026-11-22T00:32:53Z",
-      "status_changed_at": "2026-11-22T00:32:53Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-22T01:37:44Z",
+      "status_changed_at": "2026-11-22T01:37:44Z",
+      "pr_number": 3712,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3712",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3712 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=docgen empty-LLM-completion now errors (DocumentGenerationError::EmptyCompletion + require_completion_content helper, both summarize+announcement call sites); IG3 two-commit split; fmt/clippy clean; 11 unit tests pass; sole gate failure pre-existing SSRF test in untouched api_call.rs",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -69,5 +69,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-22T00:44:47Z"
+  "generated": "2026-11-22T01:37:44Z"
 }
