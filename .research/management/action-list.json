@@ -437,42 +437,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-reality-server-sso-sessions-unbounded-map",
-      "action": "reality server sso sessions unbounded map",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-23T05:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-upload-folderid-parse-swallow",
-      "action": "api handlers upload folderid parse swallow",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d api-handlers score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-23T05:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-url-validator-cgnat-gap",
       "action": "reality server url validator cgnat gap",
       "owner_role": "pm-backend",
@@ -726,23 +690,6 @@
     {
       "id": "screen-map-drift-pr-3695-reality",
       "action": "screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T14:30:08Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "screen-map-drift-pr-3700-ppt",
-      "action": "screen-map drift: PR #3700 changed ppt-web routes/groups/leases.tsx without touching docs/screens/ppt/",
       "owner_role": "pm-qa",
       "priority": "low",
       "status": "open",

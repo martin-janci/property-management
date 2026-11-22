@@ -16857,7 +16857,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3700"
       ],
@@ -16870,7 +16870,12 @@
       ],
       "created_at": "2026-11-22",
       "updated_at": "2026-11-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-22T22:25:06Z",
+        "assignment_status": "merged",
+        "pr_number": 3728
+      }
     },
     {
       "id": "code-review-ppt-web-ui-leases-dispute-unreachable",
