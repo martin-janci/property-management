@@ -681,4 +681,43 @@ mod tests {
         assert!(!voice_exchange_attempt_allowed(user_a));
         assert!(voice_exchange_attempt_allowed(user_b));
     }
+
+    // --- oauth refresh rate limiting (#2769) ----------------------------
+    //
+    // `voice_refresh_attempt_allowed` guards `oauth_token_refresh` (the
+    // per-user amplification throttle that returns 429 "Too many refresh
+    // attempts"). It is the sibling of the exchange limiter above and was
+    // previously the only one of the pair with no direct unit coverage, even
+    // though it rotates the upstream OAuth token and makes a live call to
+    // Amazon/Google on every allowed attempt. These two tests pin the same
+    // throttle-after-max and per-principal-isolation contract for it.
+
+    #[test]
+    fn refresh_rate_limiter_throttles_after_max_attempts() {
+        // Fresh principal => isolated bucket in the process-global limiter.
+        let user_id = Uuid::new_v4();
+        for i in 0..VOICE_REFRESH_MAX_ATTEMPTS {
+            assert!(
+                voice_refresh_attempt_allowed(user_id),
+                "attempt {i} within the window should be allowed"
+            );
+        }
+        // One past the limit within the same window is throttled.
+        assert!(
+            !voice_refresh_attempt_allowed(user_id),
+            "attempt beyond VOICE_REFRESH_MAX_ATTEMPTS should be throttled"
+        );
+    }
+
+    #[test]
+    fn refresh_rate_limiter_isolates_per_user() {
+        let user_a = Uuid::new_v4();
+        let user_b = Uuid::new_v4();
+        for _ in 0..VOICE_REFRESH_MAX_ATTEMPTS {
+            assert!(voice_refresh_attempt_allowed(user_a));
+        }
+        // user_a is now throttled, but a distinct principal is unaffected.
+        assert!(!voice_refresh_attempt_allowed(user_a));
+        assert!(voice_refresh_attempt_allowed(user_b));
+    }
 }
