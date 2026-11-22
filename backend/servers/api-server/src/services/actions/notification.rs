@@ -266,6 +266,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_notification_without_sink_errors() {
+        // Regression (code-review: api-core notif action stub noop): with no
+        // dispatcher wired, the executor must surface a real error instead of
+        // silently reporting the notification as sent. Before the fix this
+        // returned Ok(ActionResult::success(..)) — a silent no-op.
+        let executor = NotificationExecutor::new();
+        let config = serde_json::json!({
+            "title": "New Fault Reported",
+            "message": "A new fault has been reported in your building",
+            "target": {"user": "user-123"},
+            "priority": 2
+        });
+
+        let context = ActionContext::new(
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            uuid::Uuid::new_v4(),
+            serde_json::json!({}),
+        );
+
+        let result = executor.execute(&config, &context).await;
+        assert!(
+            result.is_err(),
+            "executor with no sink must not report success without dispatching"
+        );
+    }
+
+    #[tokio::test]
     async fn test_notification_with_dynamic_target() {
         let executor = NotificationExecutor::new();
         let config = serde_json::json!({
