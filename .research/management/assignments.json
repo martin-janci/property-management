@@ -69,18 +69,18 @@
     {
       "task_id": "code-review-ppt-web-ui-native-confirm-dialogs",
       "branch": "auto-impl/code-review-ppt-web-ui-native-confirm-di-4bbd8825",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-22T02:33:38Z",
-      "last_updated": "2026-11-22T02:33:38Z",
-      "status_changed_at": "2026-11-22T02:33:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-22T02:52:57Z",
+      "status_changed_at": "2026-11-22T02:52:57Z",
+      "pr_number": 3715,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3715",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3715 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=replaced alert()->Toast + 2x window.prompt()->new usePromptDialog/PromptDialog (focus-trapped a11y i18n, mirrors existing confirm pattern); +5 tests; VERIFY OK 9c7ed354 (293 files/13218 tests, biome+typecheck clean)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -111,5 +111,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-22T02:51:26Z"
+  "generated": "2026-11-22T02:52:57Z"
 }
