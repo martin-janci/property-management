@@ -35,8 +35,10 @@ jest.mock('../config/api', () => ({
 }));
 
 const mockedGetItem = SecureStore.getItemAsync as jest.Mock;
+const mockedSetItem = SecureStore.setItemAsync as jest.Mock;
 
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
+const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
 
 /** Prime the SecureStore mock so `getAccessToken()` returns `token`. */
 function primeToken(token: string | null): void {
@@ -237,6 +239,129 @@ describe('apiRequest', () => {
 
     expect(result).toBeUndefined();
     expect(json).not.toHaveBeenCalled();
+  });
+});
+
+describe('apiRequest — 401 token refresh', () => {
+  let fetchMock: jest.Mock;
+  let originalFetch: typeof globalThis.fetch;
+
+  function fakeResponse(opts: { status?: number; ok?: boolean; json?: () => Promise<unknown> }) {
+    const status = opts.status ?? 200;
+    return {
+      ok: opts.ok ?? (status >= 200 && status < 300),
+      status,
+      json: opts.json ?? (async () => ({})),
+    };
+  }
+
+  /**
+   * Back the SecureStore mock with mutable in-memory token slots so a refresh
+   * that writes new tokens is reflected by the next `getItemAsync` read (the
+   * retried request must pick up the fresh bearer).
+   */
+  function primeTokenStore(initial: { access: string | null; refresh: string | null }): {
+    access: string | null;
+    refresh: string | null;
+  } {
+    const store = { ...initial };
+    mockedGetItem.mockImplementation(async (key: string) => {
+      if (key === ACCESS_TOKEN_KEY) return store.access;
+      if (key === REFRESH_TOKEN_KEY) return store.refresh;
+      return null;
+    });
+    mockedSetItem.mockImplementation(async (key: string, value: string) => {
+      if (key === ACCESS_TOKEN_KEY) store.access = value;
+      if (key === REFRESH_TOKEN_KEY) store.refresh = value;
+    });
+    return store;
+  }
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    fetchMock = jest.fn();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('refreshes the token and retries once on a 401, then succeeds with the fresh bearer', async () => {
+    const freshAccess = makeJwt({ sub: 'u-1', tenant_id: 'org-42' });
+    primeTokenStore({
+      access: makeJwt({ sub: 'u-1', tenant_id: 'org-42', exp: 1 }),
+      refresh: 'refresh-abc',
+    });
+    fetchMock
+      .mockResolvedValueOnce(
+        fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'token expired' }) })
+      )
+      .mockResolvedValueOnce(
+        fakeResponse({
+          json: async () => ({ accessToken: freshAccess, refreshToken: 'refresh-def' }),
+        })
+      )
+      .mockResolvedValueOnce(fakeResponse({ json: async () => ({ ok: true }) }));
+
+    const result = await apiRequest<{ ok: boolean }>('/api/v1/outages');
+
+    expect(result).toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    // The refresh hit the refresh endpoint with the stored refresh token.
+    expect(fetchMock.mock.calls[1][0]).toBe('https://api.mocked/api/v1/auth/refresh');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ refreshToken: 'refresh-abc' });
+    // The rotated tokens were persisted...
+    expect(mockedSetItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, freshAccess);
+    expect(mockedSetItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'refresh-def');
+    // ...and the retried request carried the fresh bearer.
+    const retryHeaders = fetchMock.mock.calls[2][1].headers as Record<string, string>;
+    expect(retryHeaders.Authorization).toBe(`Bearer ${freshAccess}`);
+  });
+
+  it('surfaces the 401 without retrying when no refresh token is stored', async () => {
+    primeTokenStore({ access: makeJwt({ tenant_id: 'org-42' }), refresh: null });
+    fetchMock.mockResolvedValueOnce(
+      fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'Unauthorized' }) })
+    );
+
+    await expect(apiRequest('/api/v1/me')).rejects.toThrow('Unauthorized');
+    // One request, no refresh attempt (nothing to refresh with).
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces the original 401 when the refresh endpoint itself fails', async () => {
+    primeTokenStore({ access: makeJwt({ tenant_id: 'org-42' }), refresh: 'refresh-abc' });
+    fetchMock
+      .mockResolvedValueOnce(
+        fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'token expired' }) })
+      )
+      .mockResolvedValueOnce(
+        fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'refresh rejected' }) })
+      );
+
+    await expect(apiRequest('/api/v1/me')).rejects.toThrow('token expired');
+    // Resource + refresh, then it gives up (no infinite retry).
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries at most once — a second 401 after a successful refresh is surfaced', async () => {
+    primeTokenStore({ access: makeJwt({ tenant_id: 'org-42' }), refresh: 'refresh-abc' });
+    fetchMock
+      .mockResolvedValueOnce(
+        fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'token expired' }) })
+      )
+      .mockResolvedValueOnce(
+        fakeResponse({
+          json: async () => ({ accessToken: makeJwt({ tenant_id: 'org-42' }), refreshToken: 'r2' }),
+        })
+      )
+      .mockResolvedValueOnce(
+        fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'still unauthorized' }) })
+      );
+
+    await expect(apiRequest('/api/v1/me')).rejects.toThrow('still unauthorized');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
 
