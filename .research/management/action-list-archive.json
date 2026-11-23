@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T04:39:45Z",
+  "archived_at": "2026-11-23T06:41:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -31404,6 +31404,54 @@
       }
     },
     {
+      "id": "pm-frontend-characterize-the-two-high-churn-frontend-files-this-week-acc-2026-11-22",
+      "action": "Characterize the two high-churn frontend files this week (AccountingInvoiceDetail.tsx, reality-web report/page.tsx, leases.tsx) — if each is >800 lines and touched by >3 different PRs in-window, flag as a watch-* module for the hardening sprint",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3720 merged 2026-11-22 — pin application-list URL helpers in high-churn leases.tsx"
+      ]
+    },
+    {
+      "id": "pm-frontend-close-out-the-carried-wire-the-button-but-not-the-post-patte-2026-11-22",
+      "action": "Close out the carried 'wire-the-button-but-not-the-POST' pattern: audit `ReportFaultScreen.tsx` (RN), reality-web `/sell` wizard Publish, and `VoteDetailPage` ranked-ballot submit — the 2026-10-28 run flagged 3; #3700 and #3707 are the pattern but only for ppt-web empty-states",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3721 merged 2026-11-22 — POST the displayed default ranking for untouched ranked ballots"
+      ]
+    },
+    {
+      "id": "pm-frontend-confirm-the-ws-token-in-url-strip-from-3696-covers-every-web-2026-11-22",
+      "action": "Confirm the WS token-in-URL strip from #3696 covers every WebSocket opener on ppt-web (not just notifications) — search for `new WebSocket(` call sites and assert no `?token=`",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3719 merged 2026-11-22 — guard WS token-in-URL strip covers every ppt-web opener"
+      ]
+    },
+    {
       "id": "pm-frontend-mobile-rn-lint-gates-adopt-2026-10-28",
       "action": "Adopt eslint-plugin-react-hooks + i18next/no-literal-string in frontend/apps/mobile (blocking, warn-only for one sprint) — closes the chronic class-of-defect behind the carried mobile-rn lint-gap risk (ranked-ballot + i18n fallback bugs still open 83 days later)",
       "owner_role": "pm-frontend",
@@ -32224,6 +32272,22 @@
       }
     },
     {
+      "id": "pm-scrum-master-characterize-the-post-split-push-voice-webhooks-oauth-integr-2026-11-22",
+      "action": "Characterize the post-split push/ + voice_webhooks/ + oauth_integration_tests/ child modules (watch-* in current_sprint) and promote to specific refactor tasks",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3722 merged 2026-11-22 — cover voice OAuth refresh rate limiter (#2769)"
+      ]
+    },
+    {
       "id": "pm-scrum-master-coverage-scan-refresh-2026-11-16",
       "action": "Run a coverage scan to refresh coverage.json and project-state.md (both dated 2026-11-13), and confirm that epic rollups and coverage are still 100% done.",
       "owner_role": "pm-scrum-master",
@@ -32479,6 +32543,22 @@
         "merged_at": null,
         "at": "2026-11-21T20:25:54Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-3-approved-prs-still-blocked-o-2026-11-22",
+      "action": "Resolve dispatcher stall #3357 — 3 approved PRs still blocked on non-mechanical conflicts across TWO merge waves (32 + 26 PRs)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-22",
+      "first_open_at": "2026-11-22T04:28:21Z",
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3718 merged 2026-11-22 — key-union resolver for i18n locale-JSON merge conflicts"
+      ]
     },
     {
       "id": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20",

@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
-      "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
+      "action": "KMP realtor SSO error-body parsing is unguarded \u2014 crashes on non-JSON response",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -311,7 +311,7 @@
     },
     {
       "id": "pm-scrum-master-unblock-kmp-swagger-ui-egress-2652-2966-2026-11-21",
-      "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — claimable still ≈9/72",
+      "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) \u2014 claimable still \u22489/72",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
@@ -495,7 +495,7 @@
     },
     {
       "id": "pm-scrum-master-land-the-2026-12-01-i18n-warn-error-lint-flip-burn-down-merg-2026-11-22",
-      "action": "Land the 2026-12-01 i18n warn→error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
+      "action": "Land the 2026-12-01 i18n warn\u2192error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
@@ -507,24 +507,8 @@
       "last_updated": "2026-11-22T06:36:28Z"
     },
     {
-      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-3-approved-prs-still-blocked-o-2026-11-22",
-      "action": "Resolve dispatcher stall #3357 — 3 approved PRs still blocked on non-mechanical conflicts across TWO merge waves (32 + 26 PRs)",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z",
-      "evidence": [
-        "resolved: PR #3718 merged 2026-11-22 — key-union resolver for i18n locale-JSON merge conflicts"
-      ]
-    },
-    {
       "id": "pm-scrum-master-unblock-mobile-native-kmp-swagger-ui-egress-in-the-cloud-run-2026-11-22",
-      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable",
+      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) \u2014 4 KMP backlog items still structurally unclaimable",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
@@ -533,70 +517,6 @@
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
-      "id": "pm-scrum-master-characterize-the-post-split-push-voice-webhooks-oauth-integr-2026-11-22",
-      "action": "Characterize the post-split push/ + voice_webhooks/ + oauth_integration_tests/ child modules (watch-* in current_sprint) and promote to specific refactor tasks",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z",
-      "evidence": [
-        "resolved: PR #3722 merged 2026-11-22 — cover voice OAuth refresh rate limiter (#2769)"
-      ]
-    },
-    {
-      "id": "pm-frontend-close-out-the-carried-wire-the-button-but-not-the-post-patte-2026-11-22",
-      "action": "Close out the carried 'wire-the-button-but-not-the-POST' pattern: audit `ReportFaultScreen.tsx` (RN), reality-web `/sell` wizard Publish, and `VoteDetailPage` ranked-ballot submit — the 2026-10-28 run flagged 3; #3700 and #3707 are the pattern but only for ppt-web empty-states",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z",
-      "evidence": [
-        "resolved: PR #3721 merged 2026-11-22 — POST the displayed default ranking for untouched ranked ballots"
-      ]
-    },
-    {
-      "id": "pm-frontend-characterize-the-two-high-churn-frontend-files-this-week-acc-2026-11-22",
-      "action": "Characterize the two high-churn frontend files this week (AccountingInvoiceDetail.tsx, reality-web report/page.tsx, leases.tsx) — if each is >800 lines and touched by >3 different PRs in-window, flag as a watch-* module for the hardening sprint",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z",
-      "evidence": [
-        "resolved: PR #3720 merged 2026-11-22 — pin application-list URL helpers in high-churn leases.tsx"
-      ]
-    },
-    {
-      "id": "pm-frontend-confirm-the-ws-token-in-url-strip-from-3696-covers-every-web-2026-11-22",
-      "action": "Confirm the WS token-in-URL strip from #3696 covers every WebSocket opener on ppt-web (not just notifications) — search for `new WebSocket(` call sites and assert no `?token=`",
-      "owner_role": "pm-frontend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-22",
-      "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z",
-      "evidence": [
-        "resolved: PR #3719 merged 2026-11-22 — guard WS token-in-URL strip covers every ppt-web opener"
-      ]
     },
     {
       "id": "screen-map-drift-pr-3695-reality",
@@ -617,7 +537,7 @@
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-components-accountinginvoicedetail-tsx",
-      "action": "Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix)",
+      "action": "Churn hotspot: AccountingInvoiceDetail.tsx \u2014 237 LoC in PR #3703 (wire-format fix)",
       "owner_role": "pm-tech-lead",
       "priority": "low",
       "status": "open",
@@ -1054,7 +974,7 @@
     },
     {
       "id": "pm-qa-test-shadow-debt-fcm-worker-push-2026-11-23",
-      "action": "Add regression tests covering the 2xx-FCM-delivered + worker-requeue-drop + push-db-err-leak fixes (#3725/#3726/#3731). All three are single-file source-only PRs that shipped behavioral changes without test diffs — the push service now has three untested fixes in-flight.",
+      "action": "Add regression tests covering the 2xx-FCM-delivered + worker-requeue-drop + push-db-err-leak fixes (#3725/#3726/#3731). All three are single-file source-only PRs that shipped behavioral changes without test diffs \u2014 the push service now has three untested fixes in-flight.",
       "owner_role": "pm-qa",
       "priority": "medium",
       "dependency": "none",
@@ -1065,7 +985,7 @@
     },
     {
       "id": "pm-qa-no-test-diff-sweep-rate-2026-11-23",
-      "action": "Audit this weeks no-test-diff PRs (#3714 30 files, #3718 3 files, #3724 characterize, #3728 screen-doc) and classify each as docs-only, inline-#[cfg(test)], or real test-gap — the current 50% no-test-diff rate on merged PRs needs a legitimate explanation or a corrective gate.",
+      "action": "Audit this weeks no-test-diff PRs (#3714 30 files, #3718 3 files, #3724 characterize, #3728 screen-doc) and classify each as docs-only, inline-#[cfg(test)], or real test-gap \u2014 the current 50% no-test-diff rate on merged PRs needs a legitimate explanation or a corrective gate.",
       "owner_role": "pm-qa",
       "priority": "low",
       "dependency": "none",
@@ -1076,22 +996,26 @@
     },
     {
       "id": "pm-scrum-master-i18n-flip-countdown-8d-2026-11-23",
-      "action": "i18n warn→error flip is 2026-12-01 (8 days). Promote-or-close drafts #3740/#3741 (reality-web locale), #3739 (realtor/[id] parity), #3742 (ppt-web Registry Rules i18n), #3676 (mobile-rn raw status). Any slip past 2026-11-29 forces a formal defer.",
+      "action": "i18n warn\u2192error flip is 2026-12-01 (8 days). Promote-or-close drafts #3740/#3741 (reality-web locale), #3739 (realtor/[id] parity), #3742 (ppt-web Registry Rules i18n), #3676 (mobile-rn raw status). Any slip past 2026-11-29 forces a formal defer.",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "pm-frontend",
-      "depends_on": [],
+      "depends_on": [
+        "UNRESOLVED:pm-frontend"
+      ],
       "status": "open",
       "deadline": "2026-12-01",
       "source": "2026-11-23 pm-analysis"
     },
     {
       "id": "pm-scrum-master-draft-3676-mobile-rn-raw-status-untranslated-2026-11-23",
-      "action": "Draft #3676 (code-review-mobile-rn-raw-status-untranslated) is NOT draft but open with updatedAt 2026-11-22 — 22h stale. Nudge author or promote to ready-for-review.",
+      "action": "Draft #3676 (code-review-mobile-rn-raw-status-untranslated) is NOT draft but open with updatedAt 2026-11-22 \u2014 22h stale. Nudge author or promote to ready-for-review.",
       "owner_role": "pm-scrum-master",
       "priority": "medium",
       "dependency": "pm-frontend",
-      "depends_on": [],
+      "depends_on": [
+        "UNRESOLVED:pm-frontend"
+      ],
       "status": "open",
       "deadline": null,
       "source": "2026-11-23 pm-analysis"
