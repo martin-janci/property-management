@@ -64,6 +64,21 @@ export function paymentUpdate(
   };
 }
 
+/**
+ * Amount still owed on an invoice as a fixed 2-dp decimal string, computed in
+ * integer cents (clamped at zero so an overpaid invoice shows `0.00`). Mirrors
+ * `paymentUpdate`'s cents arithmetic so the "remaining" figure shown and the
+ * pre-filled payment default never drift from the paid/total amounts by a
+ * JS-float epsilon or a `toFixed` rounding difference. Non-numeric wire data
+ * falls back to `0.00`, matching `formatAmount`.
+ */
+export function remainingAmount(
+  invoice: Pick<AccountingInvoice, 'total_amount' | 'paid_amount'>
+): string {
+  const remainingCents = toCents(invoice.total_amount ?? 0) - toCents(invoice.paid_amount ?? 0);
+  return centsToDecimalString(Number.isFinite(remainingCents) ? Math.max(0, remainingCents) : 0);
+}
+
 interface AccountingInvoiceDetailProps {
   invoice: AccountingInvoice;
   items: AccountingInvoiceItem[];
@@ -84,11 +99,8 @@ export function AccountingInvoiceDetail({
   onBack,
 }: AccountingInvoiceDetailProps) {
   const { t, i18n } = useTranslation();
-  const remaining = Math.max(
-    0,
-    Number(invoice.total_amount ?? 0) - Number(invoice.paid_amount ?? 0)
-  );
-  const [payment, setPayment] = useState(remaining.toFixed(2));
+  const remaining = remainingAmount(invoice);
+  const [payment, setPayment] = useState(remaining);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const contactName = contacts.find((c) => c.id === invoice.contact_id)?.name ?? '—';
