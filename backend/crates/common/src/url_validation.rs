@@ -420,6 +420,15 @@ fn check_ipv4(ip: std::net::Ipv4Addr) -> Result<(), String> {
     if o[0] == 100 && (o[1] & 0xc0) == 0x40 {
         return Err("100.64.0.0/10 (CGNAT)".into());
     }
+    if o[0] == 192 && o[1] == 0 && o[2] == 0 {
+        // RFC 6890 IETF-protocol-assignments block — not globally routable.
+        // Distinct from 192.0.2.0/24 (TEST-NET-1) handled just below.
+        return Err("192.0.0.0/24 (IETF protocol assignments)".into());
+    }
+    if o[0] == 198 && (o[1] == 18 || o[1] == 19) {
+        // RFC 2544 benchmarking range 198.18.0.0/15 (both /16 halves).
+        return Err("198.18.0.0/15 (benchmarking)".into());
+    }
     if (o[0] == 192 && o[1] == 0 && o[2] == 2)
         || (o[0] == 198 && o[1] == 51 && o[2] == 100)
         || (o[0] == 203 && o[1] == 0 && o[2] == 113)
@@ -594,6 +603,41 @@ mod tests {
             validate_external_url("https://100.64.0.1/"),
             Err(UrlValidationError::PrivateOrReservedIp(_))
         ));
+    }
+
+    /// Regression (code-review-reality-server-url-validator-cgnat-gap): the
+    /// IPv4 reserved-range allowlist omitted `192.0.0.0/24` (RFC 6890 IETF
+    /// protocol assignments — a non-globally-routable block, distinct from the
+    /// already-covered `192.0.2.0/24` TEST-NET-1). Before the fix `192.0.0.1`
+    /// fell through to `Ok` and passed the static SSRF check.
+    #[test]
+    fn rejects_ietf_protocol_assignments_192_0_0_0() {
+        assert!(matches!(
+            validate_external_url("https://192.0.0.1/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+        // Neighbouring 192.0.1.0/24 is public and must still pass (the /24
+        // boundary is exact, not a broad 192.0.0.0/16 reject).
+        assert!(validate_external_url("https://192.0.1.1/").is_ok());
+    }
+
+    /// Regression (code-review-reality-server-url-validator-cgnat-gap): the
+    /// IPv4 reserved-range allowlist omitted `198.18.0.0/15` (RFC 2544
+    /// benchmarking — routable to internal benchmark infra on some networks).
+    /// Covers both halves of the `/15` (`198.18` and `198.19`).
+    #[test]
+    fn rejects_benchmarking_198_18_0_0() {
+        assert!(matches!(
+            validate_external_url("https://198.18.0.1/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+        assert!(matches!(
+            validate_external_url("https://198.19.255.254/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+        // Adjacent public addresses just outside the /15 must still pass.
+        assert!(validate_external_url("https://198.17.0.1/").is_ok());
+        assert!(validate_external_url("https://198.20.0.1/").is_ok());
     }
 
     #[test]
