@@ -361,24 +361,6 @@
       "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
-      "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
-      "action": "ppt web ui registry silent mutation errors",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-22T16:40:00Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-inproc-ratelimit-not-distributed",
       "action": "api handlers inproc ratelimit not distributed",
       "owner_role": "pm-backend",
@@ -430,24 +412,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-21T10:30:00Z"
-      }
-    },
-    {
-      "id": "code-review-api-core-voice-contact-mgr-fake-email",
-      "action": "api core voice contact mgr fake email",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-21T05:00:00Z"
       }
     },
     {

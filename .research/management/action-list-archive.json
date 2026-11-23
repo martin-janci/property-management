@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T20:29:09Z",
+  "archived_at": "2026-11-23T22:29:12Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5172,6 +5172,31 @@
         "commit": "6d9928fc4d9479d3f075c85ffcade7aa7bea871a",
         "subject": "code-review-api-core-voice-contact-manager-placeholder-email: voice contact-manager surfaces the org's real contact email (#3511)",
         "at": "2026-11-14T08:31:11Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-voice-contact-mgr-fake-email",
+      "action": "api core voice contact mgr fake email",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-23T22:24:13Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T04:28:04Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-21T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T22:24:13Z"
       }
     },
     {
