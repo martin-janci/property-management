@@ -1749,6 +1749,52 @@ mod pending_session_capacity_tests {
         }
     }
 
+    /// Regression (issue #3738): at a realistic cap, hitting capacity must trim
+    /// a *batch* down to a low-water mark (`max - max/8`), not a single entry.
+    ///
+    /// The old implementation evicted down to exactly `max - 1`, so once the map
+    /// sat at the cap *every* subsequent mint re-ran a full O(n·log n) sort +
+    /// all-keys clone under the lock — the pathological case during a `/login`
+    /// flood. Trimming a batch means the expensive scan runs only once per
+    /// ~`max/8` inserts (the cheap `len <= target` early-return handles the rest),
+    /// giving amortized O(1) per mint. This test pins the batch (>1) eviction so
+    /// the per-mint regression can't silently return.
+    #[test]
+    fn at_capacity_trims_a_batch_for_amortization() {
+        let now = chrono::Utc::now();
+        let max = 64usize;
+        let mut sessions = HashMap::new();
+        // Fill exactly to the cap with distinct ages: s0 newest … s63 oldest.
+        for i in 0..max {
+            sessions.insert(format!("s{i}"), session_at(now, i as i64));
+        }
+
+        enforce_pending_sso_session_capacity(&mut sessions, max);
+
+        // batch = max/8 = 8 → low_water = (max - 1) - (batch - 1) = max - batch.
+        let batch = max / 8;
+        let low_water = max - batch;
+        assert_eq!(
+            sessions.len(),
+            low_water,
+            "hitting the cap trims a batch down to the low-water mark, not one entry"
+        );
+        assert!(batch > 1, "the batch must be >1 so a later mint can insert without re-scanning");
+        // The `batch` oldest (largest age) are the ones evicted; the rest survive.
+        for i in 0..low_water {
+            assert!(
+                sessions.contains_key(&format!("s{i}")),
+                "newer session s{i} must survive the batch trim"
+            );
+        }
+        for i in low_water..max {
+            assert!(
+                !sessions.contains_key(&format!("s{i}")),
+                "oldest session s{i} must be evicted in the batch"
+            );
+        }
+    }
+
     /// A zero cap clears the map (defensive — no entry may be held).
     #[test]
     fn zero_cap_clears() {
