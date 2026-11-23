@@ -22,11 +22,12 @@
 import { type UseQueryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import * as SecureStore from 'expo-secure-store';
 import { getApiBaseUrl } from '../config/api';
-import { resolveTenantId } from '../utils/session';
+import { readTokenPair, resolveTenantId } from '../utils/session';
 
 export { getTenantId };
 
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
+const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
 
 /** Read the current bearer token without forcing a re-render. */
 async function getAccessToken(): Promise<string | null> {
@@ -35,6 +36,59 @@ async function getAccessToken(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * In-flight refresh, shared across concurrent 401s.
+ *
+ * Several queries can 401 at once when a short-lived access token lapses;
+ * without this, each would POST `/auth/refresh` independently, racing to rotate
+ * the refresh token (and, since the server one-time-uses it, invalidating one
+ * another). Collapsing them onto a single promise means one refresh serves
+ * every waiter, then the slot is cleared so the next lapse refreshes again.
+ */
+let inFlightRefresh: Promise<string | null> | null = null;
+
+/**
+ * Exchange the stored refresh token for a fresh access token on a 401.
+ *
+ * Returns the new access token (also persisted, together with the rotated
+ * refresh token) or `null` when refresh isn't possible — no stored refresh
+ * token, a non-OK `/auth/refresh` response, an unparseable body, or a keystore
+ * error. On `null` the caller surfaces the original 401; tearing the session
+ * down (logout + cache clear) stays `AuthContext`'s responsibility, driven off
+ * that surfaced error / the next auth-gate evaluation.
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  if (inFlightRefresh) return inFlightRefresh;
+
+  const run = (async (): Promise<string | null> => {
+    try {
+      const storedRefreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      if (!storedRefreshToken) return null;
+
+      const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
+      });
+      if (!response.ok) return null;
+
+      const tokens = readTokenPair(await response.json().catch(() => null));
+      if (!tokens) return null;
+
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, tokens.accessToken);
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refreshToken);
+      return tokens.accessToken;
+    } catch {
+      return null;
+    }
+  })();
+
+  inFlightRefresh = run.finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
 }
 
 /** Pull the tenant id from the current access token, or null if missing. */
@@ -49,11 +103,30 @@ interface RequestOptions {
   headers?: Record<string, string>;
 }
 
-/** Send an authenticated JSON request to the api-server. */
+/**
+ * Send an authenticated JSON request to the api-server.
+ *
+ * On a 401 (an expired/invalid access token) the request transparently
+ * refreshes the token once and retries, so a lapsed bearer no longer leaves the
+ * user stuck on a failed screen. The retry is capped at one attempt
+ * (`allowRefresh` guards against a refresh→retry→401 loop), and the refresh
+ * itself is single-flighted across concurrent requests (see
+ * `refreshAccessToken`). When refresh can't recover the session the original
+ * 401 is surfaced unchanged.
+ */
 export async function apiRequest<T>(
   path: string,
   init: Omit<RequestInit, 'body'> & { body?: unknown } = {},
   options: RequestOptions = {}
+): Promise<T> {
+  return requestWithRefresh<T>(path, init, options, true);
+}
+
+async function requestWithRefresh<T>(
+  path: string,
+  init: Omit<RequestInit, 'body'> & { body?: unknown },
+  options: RequestOptions,
+  allowRefresh: boolean
 ): Promise<T> {
   const accessToken = await getAccessToken();
   const tenantId = await getTenantId();
@@ -77,6 +150,16 @@ export async function apiRequest<T>(
     signal: options.signal,
     body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
   });
+
+  // Expired/invalid bearer: refresh once and retry with the fresh token. We
+  // skip this when the caller sent no token at all (an anonymous request that
+  // legitimately 401s has nothing to refresh) and on the already-retried pass.
+  if (response.status === 401 && allowRefresh && accessToken) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      return requestWithRefresh<T>(path, init, options, false);
+    }
+  }
 
   if (!response.ok) {
     let message = `HTTP ${response.status}`;

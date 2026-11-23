@@ -172,9 +172,11 @@ describe('apiRequest', () => {
     expect(url).toBe('https://api.test/v1/outages');
   });
 
-  it('still sends an expired token (no exp check) — documents the current contract', async () => {
-    // There is no `exp` check in the module and no 401→refresh→retry here
-    // (refresh is AuthContext's job), so an expired token is sent as-is.
+  it('sends the stored token as-is without a client-side exp check', async () => {
+    // The module does no `exp` check: refresh is driven by a *server* 401, not
+    // by inspecting the token locally. On a 2xx the stored token flows through
+    // untouched even if its `exp` is in the past (the 401→refresh→retry path is
+    // covered in the "401 token refresh" suite below).
     const expired = makeJwt({ tenant_id: 'org-42', exp: 1 });
     primeToken(expired);
     fetchMock.mockResolvedValueOnce(fakeResponse({ json: async () => ({}) }));
@@ -337,7 +339,11 @@ describe('apiRequest — 401 token refresh', () => {
         fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'token expired' }) })
       )
       .mockResolvedValueOnce(
-        fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'refresh rejected' }) })
+        fakeResponse({
+          status: 401,
+          ok: false,
+          json: async () => ({ message: 'refresh rejected' }),
+        })
       );
 
     await expect(apiRequest('/api/v1/me')).rejects.toThrow('token expired');
@@ -357,7 +363,11 @@ describe('apiRequest — 401 token refresh', () => {
         })
       )
       .mockResolvedValueOnce(
-        fakeResponse({ status: 401, ok: false, json: async () => ({ message: 'still unauthorized' }) })
+        fakeResponse({
+          status: 401,
+          ok: false,
+          json: async () => ({ message: 'still unauthorized' }),
+        })
       );
 
     await expect(apiRequest('/api/v1/me')).rejects.toThrow('still unauthorized');
