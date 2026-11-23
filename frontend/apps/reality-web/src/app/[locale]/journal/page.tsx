@@ -6,7 +6,6 @@
  */
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { journalEmptyCopy } from './_empty';
 import { EDITORS_PICKS, MOCK_ARTICLES, MOST_READ } from './_mock';
@@ -110,8 +109,6 @@ function ArticleCard({
 export default function JournalPage() {
   const t = useTranslations('pages.journal');
   const locale = useLocale();
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
 
   // Gate the placeholder articles to local development (same convention as the
   // DevPanel / MSW mocks in DevPanelMount.tsx): deployed builds get an empty
@@ -125,11 +122,6 @@ export default function JournalPage() {
   const latest = articles.filter((a) => !a.featured).slice(0, 4);
   const editorsPicks = articles.filter((a) => EDITORS_PICKS.includes(a.id));
   const mostRead = articles.filter((a) => MOST_READ.includes(a.id));
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) setSubscribed(true);
-  };
 
   return (
     <div
@@ -259,46 +251,60 @@ export default function JournalPage() {
                 {t('newsletterTitle')}
               </h2>
               <p style={{ opacity: 0.85, marginBottom: 20 }}>{t('newsletterIntro')}</p>
-              {subscribed ? (
-                <p style={{ fontWeight: 600, fontSize: '1.0625rem' }}>{t('newsletterSuccess')}</p>
-              ) : (
-                <form
-                  onSubmit={handleSubscribe}
-                  style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}
+              {/* No newsletter subscription endpoint exists yet (screen-map
+                  docs/screens/reality/journal.md → endpoints: []). The form
+                  previously faked success and silently dropped the address; it
+                  is now rendered in an explicit, disabled "not live yet" state
+                  so no submission is pretended. Wire the inputs to a real
+                  reality-server endpoint and drop `disabled` + the note when the
+                  subscription API lands. */}
+              <form
+                aria-describedby="newsletter-status"
+                onSubmit={(e) => e.preventDefault()}
+                style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}
+              >
+                <input
+                  type="email"
+                  disabled
+                  aria-disabled="true"
+                  placeholder={t('newsletterEmailPlaceholder')}
+                  style={{
+                    flex: 1,
+                    minWidth: 200,
+                    padding: '11px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    fontSize: '0.9375rem',
+                    outline: 'none',
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled
+                  aria-disabled="true"
+                  style={{
+                    padding: '11px 24px',
+                    background: '#fff',
+                    color: 'var(--ppt-brand-700, #1d4ed8)',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    cursor: 'not-allowed',
+                    whiteSpace: 'nowrap',
+                    opacity: 0.6,
+                  }}
                 >
-                  <input
-                    type="email"
-                    required
-                    placeholder={t('newsletterEmailPlaceholder')}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{
-                      flex: 1,
-                      minWidth: 200,
-                      padding: '11px 16px',
-                      borderRadius: 8,
-                      border: 'none',
-                      fontSize: '0.9375rem',
-                      outline: 'none',
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    style={{
-                      padding: '11px 24px',
-                      background: '#fff',
-                      color: 'var(--ppt-brand-700, #1d4ed8)',
-                      border: 'none',
-                      borderRadius: 8,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t('newsletterSubmit')}
-                  </button>
-                </form>
-              )}
+                  {t('newsletterSubmit')}
+                </button>
+              </form>
+              <p
+                id="newsletter-status"
+                style={{ opacity: 0.85, marginTop: 12, fontSize: '0.875rem' }}
+              >
+                {t('newsletterUnavailable')}
+              </p>
             </section>
 
             {/* Editor's picks — dev-only until the real feed lands */}

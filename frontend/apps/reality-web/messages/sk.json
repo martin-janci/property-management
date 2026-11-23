@@ -504,7 +504,7 @@
       "title": "Reality Žurnál",
       "readingTime": "{min} min čítania",
       "newsletterIntro": "Dostávajte najnovšie analýzy a tipy priamo do vašej schránky.",
-      "newsletterSuccess": "✅ Ste prihlásení na odber!",
+      "newsletterUnavailable": "Odber noviniek zatiaľ nie je spustený — čoskoro bude dostupný.",
       "newsletterEmailPlaceholder": "vas@email.sk",
       "newsletterSubmit": "Prihlásiť sa",
       "newsletterTitle": "Odber noviniek"

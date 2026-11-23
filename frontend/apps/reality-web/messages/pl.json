@@ -504,7 +504,7 @@
       "title": "Reality magazyn",
       "readingTime": "{min} min read",
       "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
-      "newsletterSuccess": "✅ You're subscribed!",
+      "newsletterUnavailable": "Newsletter signup isn't live yet — check back soon.",
       "newsletterEmailPlaceholder": "you@email.com",
       "newsletterSubmit": "Subscribe",
       "newsletterTitle": "Newsletter signup"
