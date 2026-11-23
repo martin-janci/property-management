@@ -9124,5 +9124,79 @@
         "resolveFailed": "Upozornění se nepodařilo vyřešit"
       }
     }
+  },
+  "governmentPortal": {
+    "guestReport": {
+      "backToDashboard": "Zpět na přehled",
+      "title": "Odeslat hlášení o hostech",
+      "subtitle": "Odešlete registrační údaje hostů do vládních portálů (ÚHÚL/Policie)",
+      "steps": {
+        "selectOptions": "Výběr možností",
+        "previewData": "Náhled dat",
+        "submit": "Odeslat"
+      },
+      "errors": {
+        "selectConnection": "Vyberte připojení k portálu",
+        "selectTemplate": "Vyberte šablonu hlášení",
+        "selectGuest": "Vyberte alespoň jednoho hosta",
+        "submissionFailed": "Odeslání selhalo"
+      },
+      "country": {
+        "sk": "Slovensko",
+        "cz": "Česká republika",
+        "skDescription": "ÚHÚL / Registr policie",
+        "czDescription": "Cizinecká policie"
+      },
+      "testMode": "Testovací režim",
+      "select": {
+        "country": "Vyberte zemi",
+        "portalConnection": "Připojení k portálu",
+        "noConnections": "Pro {{country}} nebyla nalezena žádná aktivní připojení k portálu. Nejprve nakonfigurujte připojení.",
+        "noCode": "Bez kódu",
+        "reportTemplate": "Šablona hlášení",
+        "noTemplates": "Pro {{country}} nebyly nalezeny žádné šablony hlášení.",
+        "templatePlaceholder": "Vyberte šablonu...",
+        "guestsHeading": "Vyberte hosty ({{selected}} z {{total}})",
+        "selectAll": "Vybrat vše",
+        "noGuests": "K odeslání nejsou registrováni žádní hosté."
+      },
+      "actions": {
+        "cancel": "Zrušit",
+        "previewSubmission": "Náhled odeslání",
+        "backToSelection": "Zpět na výběr",
+        "submitToPortal": "Odeslat na portál"
+      },
+      "preview": {
+        "title": "Náhled odeslání",
+        "subtitle": "Před odesláním na portál zkontrolujte údaje",
+        "destinationPortal": "Cílový portál",
+        "unknown": "Neznámý",
+        "reportTemplate": "Šablona hlášení",
+        "country": "Země",
+        "guestsToSubmit": "Hosté k odeslání",
+        "guestCount": "{{total}} hostů",
+        "guestData": "Údaje o hostech",
+        "table": {
+          "name": "Jméno",
+          "dob": "Datum narození",
+          "nationality": "Státní příslušnost",
+          "document": "Doklad",
+          "checkIn": "Příjezd",
+          "unit": "Jednotka"
+        }
+      },
+      "submitting": {
+        "title": "Odesílání na portál...",
+        "message": "Počkejte, než bude vaše hlášení o hostech odesláno.",
+        "percentComplete": "{{progress}} % dokončeno",
+        "processing": "Zpracovává se..."
+      },
+      "complete": {
+        "title": "Odeslání dokončeno!",
+        "message": "Vaše hlášení o hostech bylo úspěšně odesláno na {{portal}}.",
+        "guestsSubmitted": "Odeslaní hosté",
+        "portal": "Portál"
+      }
+    }
   }
 }
