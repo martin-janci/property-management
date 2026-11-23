@@ -16827,7 +16827,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3703"
       ],
@@ -16839,7 +16839,12 @@
       ],
       "created_at": "2026-11-22",
       "updated_at": "2026-11-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-23T16:25:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3753
+      }
     },
     {
       "id": "screen-map-drift-pr-3695-reality",
@@ -16847,7 +16852,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3695"
       ],
@@ -16860,7 +16865,12 @@
       ],
       "created_at": "2026-11-22",
       "updated_at": "2026-11-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-23T16:25:37Z",
+        "assignment_status": "merged",
+        "pr_number": 3752
+      }
     },
     {
       "id": "screen-map-drift-pr-3700-ppt",

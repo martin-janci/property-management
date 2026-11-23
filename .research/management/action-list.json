@@ -336,24 +336,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-reality-server-url-validator-cgnat-gap",
-      "action": "reality server url validator cgnat gap",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-23T05:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-registry-fullpage-nav",
       "action": "ppt web ui registry fullpage nav",
       "owner_role": "pm-tech-lead",
@@ -395,54 +377,6 @@
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
-      "id": "screen-map-drift-pr-3695-reality",
-      "action": "screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=test-gap)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T14:30:08Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "test-gap"
-      }
-    },
-    {
-      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-components-accountinginvoicedetail-tsx",
-      "action": "Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T14:30:08Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n-retry1",
-      "action": "ppt web ui editfaultpage no i18n [retry 1/2 of failed code-review-ppt-web-ui-editfaultpage-no-i18n]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-22T20:26:41Z (retry_of=code-review-ppt-web-ui-editfaultpage-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-15T14:38:14Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "retry_of": "code-review-ppt-web-ui-editfaultpage-no-i18n",
-      "retry_round": 1
     },
     {
       "id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
@@ -821,17 +755,6 @@
         "vector": "bug",
         "generated": "2026-08-14T22:30:00Z"
       }
-    },
-    {
-      "id": "pm-qa-no-test-diff-sweep-rate-2026-11-23",
-      "action": "Audit this weeks no-test-diff PRs (#3714 30 files, #3718 3 files, #3724 characterize, #3728 screen-doc) and classify each as docs-only, inline-#[cfg(test)], or real test-gap — the current 50% no-test-diff rate on merged PRs needs a legitimate explanation or a corrective gate.",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "2026-11-23 pm-analysis"
     },
     {
       "id": "pm-scrum-master-i18n-flip-countdown-8d-2026-11-23",

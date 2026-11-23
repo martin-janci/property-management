@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T14:34:23Z",
+  "archived_at": "2026-11-23T16:31:42Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -2410,6 +2410,30 @@
         "merged_pr": 3586,
         "merged_at": "2026-11-17T14:43:21Z",
         "at": "2026-11-17T16:25:13Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-components-accountinginvoicedetail-tsx",
+      "action": "Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-23T16:25:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3753,
+        "merged_at": "2026-11-23T14:42:05Z",
+        "at": "2026-11-23T16:25:37Z"
       }
     },
     {
@@ -13198,6 +13222,27 @@
       "noop_closed": "2026-11-15T14:41:19Z no-op: EditFaultPage already fully i18n-wired on dev"
     },
     {
+      "id": "code-review-ppt-web-ui-editfaultpage-no-i18n-retry1",
+      "action": "ppt web ui editfaultpage no i18n [retry 1/2 of failed code-review-ppt-web-ui-editfaultpage-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-22T20:26:41Z (retry_of=code-review-ppt-web-ui-editfaultpage-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-15T14:38:14Z) | gc1-reconcile 2026-11-23T16:25:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "retry_of": "code-review-ppt-web-ui-editfaultpage-no-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3754,
+        "merged_at": "2026-11-23T14:42:32Z",
+        "at": "2026-11-23T16:25:37Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-emergency-dir-raw-err-message",
       "action": "ppt-web-ui EmergencyContactDirectoryPage: 5 error handlers show raw `err.message` (English backend copy) — the t() i18n fallback is dead code on the common failure path",
       "owner_role": "pm-backend",
@@ -16883,6 +16928,31 @@
         "merged_pr": 3553,
         "merged_at": "2026-11-16T04:30:45Z",
         "at": "2026-11-16T08:38:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-url-validator-cgnat-gap",
+      "action": "reality server url validator cgnat gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-23T16:25:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-23T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3750,
+        "merged_at": "2026-11-23T14:40:09Z",
+        "at": "2026-11-23T16:25:37Z"
       }
     },
     {
@@ -32234,6 +32304,24 @@
       }
     },
     {
+      "id": "pm-qa-no-test-diff-sweep-rate-2026-11-23",
+      "action": "Audit this weeks no-test-diff PRs (#3714 30 files, #3718 3 files, #3724 characterize, #3728 screen-doc) and classify each as docs-only, inline-#[cfg(test)], or real test-gap — the current 50% no-test-diff rate on merged PRs needs a legitimate explanation or a corrective gate.",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "2026-11-23 pm-analysis | gc1-reconcile 2026-11-23T16:25:37Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3751,
+        "merged_at": "2026-11-23T14:44:27Z",
+        "at": "2026-11-23T16:25:37Z"
+      }
+    },
+    {
       "id": "pm-qa-pre-push-fmt-clippy-gate",
       "action": "[CLOSED-already-done-on-dev] Add pre-push cargo fmt + clippy gate (#1375) — prevents unformatted re-lands",
       "owner_role": "pm-qa",
@@ -35753,6 +35841,30 @@
       },
       "resolved_at": "2026-11-19",
       "resolution": "PR #3625 merged — ppt screen-maps reconciled"
+    },
+    {
+      "id": "screen-map-drift-pr-3695-reality",
+      "action": "screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-23T16:25:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3752,
+        "merged_at": "2026-11-23T14:45:59Z",
+        "at": "2026-11-23T16:25:37Z"
+      }
     },
     {
       "id": "screen-map-drift-pr-3700-ppt",
