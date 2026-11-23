@@ -31,6 +31,8 @@ mod favorites_authz_tests;
 mod favorites_happy_path_tests;
 #[path = "suites/health_tests.rs"]
 mod health_tests;
+#[path = "suites/imports_feed_ssrf_tests.rs"]
+mod imports_feed_ssrf_tests;
 #[path = "suites/imports_happy_path_tests.rs"]
 mod imports_happy_path_tests;
 #[path = "suites/imports_idor_tests.rs"]
