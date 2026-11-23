@@ -9118,5 +9118,79 @@
         "hint": "Ustaw fokus na kolejce zadań, aby używać tych skrótów"
       }
     }
+  },
+  "governmentPortal": {
+    "guestReport": {
+      "backToDashboard": "Powrót do pulpitu",
+      "title": "Wyślij raport o gościach",
+      "subtitle": "Wyślij dane rejestracyjne gości do portali rządowych (ÚHÚL/Policja)",
+      "steps": {
+        "selectOptions": "Wybierz opcje",
+        "previewData": "Podgląd danych",
+        "submit": "Wyślij"
+      },
+      "errors": {
+        "selectConnection": "Wybierz połączenie z portalem",
+        "selectTemplate": "Wybierz szablon raportu",
+        "selectGuest": "Wybierz co najmniej jednego gościa",
+        "submissionFailed": "Wysyłanie nie powiodło się"
+      },
+      "country": {
+        "sk": "Słowacja",
+        "cz": "Czechy",
+        "skDescription": "ÚHÚL / Rejestr policji",
+        "czDescription": "Cizinecká policie"
+      },
+      "testMode": "Tryb testowy",
+      "select": {
+        "country": "Wybierz kraj",
+        "portalConnection": "Połączenie z portalem",
+        "noConnections": "Nie znaleziono aktywnych połączeń z portalem dla {{country}}. Najpierw skonfiguruj połączenie.",
+        "noCode": "Brak kodu",
+        "reportTemplate": "Szablon raportu",
+        "noTemplates": "Nie znaleziono szablonów raportów dla {{country}}.",
+        "templatePlaceholder": "Wybierz szablon...",
+        "guestsHeading": "Wybierz gości ({{selected}} z {{total}})",
+        "selectAll": "Zaznacz wszystkich",
+        "noGuests": "Brak gości zarejestrowanych do wysłania."
+      },
+      "actions": {
+        "cancel": "Anuluj",
+        "previewSubmission": "Podgląd wysyłki",
+        "backToSelection": "Powrót do wyboru",
+        "submitToPortal": "Wyślij do portalu"
+      },
+      "preview": {
+        "title": "Podgląd wysyłki",
+        "subtitle": "Sprawdź dane przed wysłaniem do portalu",
+        "destinationPortal": "Portal docelowy",
+        "unknown": "Nieznany",
+        "reportTemplate": "Szablon raportu",
+        "country": "Kraj",
+        "guestsToSubmit": "Goście do wysłania",
+        "guestCount": "{{total}} gości",
+        "guestData": "Dane gości",
+        "table": {
+          "name": "Imię i nazwisko",
+          "dob": "Data urodzenia",
+          "nationality": "Obywatelstwo",
+          "document": "Dokument",
+          "checkIn": "Zameldowanie",
+          "unit": "Lokal"
+        }
+      },
+      "submitting": {
+        "title": "Wysyłanie do portalu...",
+        "message": "Poczekaj, aż Twój raport o gościach zostanie wysłany.",
+        "percentComplete": "Ukończono {{progress}} %",
+        "processing": "Przetwarzanie..."
+      },
+      "complete": {
+        "title": "Wysyłanie zakończone!",
+        "message": "Twój raport o gościach został pomyślnie wysłany do {{portal}}.",
+        "guestsSubmitted": "Wysłani goście",
+        "portal": "Portal"
+      }
+    }
   }
 }

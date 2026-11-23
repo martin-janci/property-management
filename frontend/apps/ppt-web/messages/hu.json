@@ -8940,5 +8940,79 @@
         "hint": "A billentyűparancsok használatához állítson fókuszt a feladatsorra"
       }
     }
+  },
+  "governmentPortal": {
+    "guestReport": {
+      "backToDashboard": "Vissza az irányítópultra",
+      "title": "Vendégjelentés beküldése",
+      "subtitle": "Küldje be a vendégregisztrációs adatokat a kormányzati portálokra (ÚHÚL/Rendőrség)",
+      "steps": {
+        "selectOptions": "Beállítások kiválasztása",
+        "previewData": "Adatok előnézete",
+        "submit": "Beküldés"
+      },
+      "errors": {
+        "selectConnection": "Válasszon portálkapcsolatot",
+        "selectTemplate": "Válasszon jelentéssablont",
+        "selectGuest": "Válasszon legalább egy vendéget",
+        "submissionFailed": "A beküldés sikertelen"
+      },
+      "country": {
+        "sk": "Szlovákia",
+        "cz": "Csehország",
+        "skDescription": "ÚHÚL / Rendőrségi nyilvántartás",
+        "czDescription": "Cizinecká policie"
+      },
+      "testMode": "Tesztmód",
+      "select": {
+        "country": "Válasszon országot",
+        "portalConnection": "Portálkapcsolat",
+        "noConnections": "Nem található aktív portálkapcsolat a következőhöz: {{country}}. Először állítson be egy kapcsolatot.",
+        "noCode": "Nincs kód",
+        "reportTemplate": "Jelentéssablon",
+        "noTemplates": "Nem található jelentéssablon a következőhöz: {{country}}.",
+        "templatePlaceholder": "Válasszon sablont...",
+        "guestsHeading": "Vendégek kiválasztása ({{selected}} / {{total}})",
+        "selectAll": "Összes kiválasztása",
+        "noGuests": "Nincsenek beküldésre regisztrált vendégek."
+      },
+      "actions": {
+        "cancel": "Mégse",
+        "previewSubmission": "Beküldés előnézete",
+        "backToSelection": "Vissza a kiválasztáshoz",
+        "submitToPortal": "Beküldés a portálra"
+      },
+      "preview": {
+        "title": "Beküldés előnézete",
+        "subtitle": "Ellenőrizze az adatokat a portálra való beküldés előtt",
+        "destinationPortal": "Célportál",
+        "unknown": "Ismeretlen",
+        "reportTemplate": "Jelentéssablon",
+        "country": "Ország",
+        "guestsToSubmit": "Beküldendő vendégek",
+        "guestCount": "{{total}} vendég",
+        "guestData": "Vendégadatok",
+        "table": {
+          "name": "Név",
+          "dob": "Születési dátum",
+          "nationality": "Állampolgárság",
+          "document": "Dokumentum",
+          "checkIn": "Érkezés",
+          "unit": "Egység"
+        }
+      },
+      "submitting": {
+        "title": "Beküldés a portálra...",
+        "message": "Kérjük, várjon, amíg a vendégjelentés beküldésre kerül.",
+        "percentComplete": "{{progress}} % kész",
+        "processing": "Feldolgozás..."
+      },
+      "complete": {
+        "title": "Beküldés kész!",
+        "message": "A vendégjelentés sikeresen beküldve ide: {{portal}}.",
+        "guestsSubmitted": "Beküldött vendégek",
+        "portal": "Portál"
+      }
+    }
   }
 }

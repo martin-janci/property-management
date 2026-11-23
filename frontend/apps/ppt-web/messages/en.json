@@ -8938,5 +8938,79 @@
         "resolveFailed": "Could not resolve alert"
       }
     }
+  },
+  "governmentPortal": {
+    "guestReport": {
+      "backToDashboard": "Back to Dashboard",
+      "title": "Submit Guest Report",
+      "subtitle": "Submit guest registration data to government portals (ÚHÚL/Police)",
+      "steps": {
+        "selectOptions": "Select Options",
+        "previewData": "Preview Data",
+        "submit": "Submit"
+      },
+      "errors": {
+        "selectConnection": "Please select a portal connection",
+        "selectTemplate": "Please select a report template",
+        "selectGuest": "Please select at least one guest",
+        "submissionFailed": "Submission failed"
+      },
+      "country": {
+        "sk": "Slovakia",
+        "cz": "Czech Republic",
+        "skDescription": "ÚHÚL / Police Registry",
+        "czDescription": "Cizinecká policie"
+      },
+      "testMode": "Test Mode",
+      "select": {
+        "country": "Select Country",
+        "portalConnection": "Portal Connection",
+        "noConnections": "No active portal connections found for {{country}}. Please configure a connection first.",
+        "noCode": "No code",
+        "reportTemplate": "Report Template",
+        "noTemplates": "No report templates found for {{country}}.",
+        "templatePlaceholder": "Select a template...",
+        "guestsHeading": "Select Guests ({{selected}} of {{total}})",
+        "selectAll": "Select all",
+        "noGuests": "No guests registered for submission."
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "previewSubmission": "Preview Submission",
+        "backToSelection": "Back to Selection",
+        "submitToPortal": "Submit to Portal"
+      },
+      "preview": {
+        "title": "Submission Preview",
+        "subtitle": "Review the data before submitting to the portal",
+        "destinationPortal": "Destination Portal",
+        "unknown": "Unknown",
+        "reportTemplate": "Report Template",
+        "country": "Country",
+        "guestsToSubmit": "Guests to Submit",
+        "guestCount": "{{total}} guest(s)",
+        "guestData": "Guest Data",
+        "table": {
+          "name": "Name",
+          "dob": "DOB",
+          "nationality": "Nationality",
+          "document": "Document",
+          "checkIn": "Check-in",
+          "unit": "Unit"
+        }
+      },
+      "submitting": {
+        "title": "Submitting to Portal...",
+        "message": "Please wait while your guest report is being submitted.",
+        "percentComplete": "{{progress}}% complete",
+        "processing": "Processing..."
+      },
+      "complete": {
+        "title": "Submission Complete!",
+        "message": "Your guest report has been successfully submitted to {{portal}}.",
+        "guestsSubmitted": "Guests Submitted",
+        "portal": "Portal"
+      }
+    }
   }
 }

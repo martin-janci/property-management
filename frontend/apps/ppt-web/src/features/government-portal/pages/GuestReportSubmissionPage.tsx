@@ -12,6 +12,7 @@ import type {
   RegulatoryReportTemplate,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /** Guest record for submission */
 export interface GuestRecord {
@@ -62,6 +63,7 @@ export function GuestReportSubmissionPage({
   onSubmit,
   onBack,
 }: GuestReportSubmissionPageProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<SubmissionStep>('select');
   const [selectedCountry, setSelectedCountry] = useState<'SK' | 'CZ'>('SK');
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>('');
@@ -78,15 +80,20 @@ export function GuestReportSubmissionPage({
   );
 
   const filteredTemplates = templates.filter(
-    (t) =>
-      t.countryCode === selectedCountry &&
-      (t.portalType === 'police_registry' || t.portalType === 'housing_registry') &&
-      t.isActive
+    (template) =>
+      template.countryCode === selectedCountry &&
+      (template.portalType === 'police_registry' || template.portalType === 'housing_registry') &&
+      template.isActive
   );
 
   const selectedConnection = connections.find((c) => c.id === selectedConnectionId);
-  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
+  const selectedTemplate = templates.find((tpl) => tpl.id === selectedTemplateId);
   const selectedGuestRecords = guests.filter((g) => selectedGuests.includes(g.id));
+
+  const countryName =
+    selectedCountry === 'SK'
+      ? t('governmentPortal.guestReport.country.sk', { defaultValue: 'Slovakia' })
+      : t('governmentPortal.guestReport.country.cz', { defaultValue: 'Czech Republic' });
 
   const handleSelectAllGuests = () => {
     if (selectedGuests.length === guests.length) {
@@ -106,15 +113,27 @@ export function GuestReportSubmissionPage({
     setLocalError(null);
 
     if (!selectedConnectionId) {
-      setLocalError('Please select a portal connection');
+      setLocalError(
+        t('governmentPortal.guestReport.errors.selectConnection', {
+          defaultValue: 'Please select a portal connection',
+        })
+      );
       return;
     }
     if (!selectedTemplateId) {
-      setLocalError('Please select a report template');
+      setLocalError(
+        t('governmentPortal.guestReport.errors.selectTemplate', {
+          defaultValue: 'Please select a report template',
+        })
+      );
       return;
     }
     if (selectedGuests.length === 0) {
-      setLocalError('Please select at least one guest');
+      setLocalError(
+        t('governmentPortal.guestReport.errors.selectGuest', {
+          defaultValue: 'Please select at least one guest',
+        })
+      );
       return;
     }
 
@@ -161,7 +180,13 @@ export function GuestReportSubmissionPage({
 
       setStep('complete');
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Submission failed');
+      setLocalError(
+        err instanceof Error
+          ? err.message
+          : t('governmentPortal.guestReport.errors.submissionFailed', {
+              defaultValue: 'Submission failed',
+            })
+      );
       setStep('preview');
     }
   };
@@ -215,18 +240,28 @@ export function GuestReportSubmissionPage({
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Dashboard
+          {t('governmentPortal.guestReport.backToDashboard', { defaultValue: 'Back to Dashboard' })}
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Submit Guest Report</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {t('governmentPortal.guestReport.title', { defaultValue: 'Submit Guest Report' })}
+        </h1>
         <p className="mt-1 text-gray-500">
-          Submit guest registration data to government portals (ÚHÚL/Police)
+          {t('governmentPortal.guestReport.subtitle', {
+            defaultValue: 'Submit guest registration data to government portals (ÚHÚL/Police)',
+          })}
         </p>
       </div>
 
       {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          {['Select Options', 'Preview Data', 'Submit'].map((label, index) => {
+          {[
+            t('governmentPortal.guestReport.steps.selectOptions', {
+              defaultValue: 'Select Options',
+            }),
+            t('governmentPortal.guestReport.steps.previewData', { defaultValue: 'Preview Data' }),
+            t('governmentPortal.guestReport.steps.submit', { defaultValue: 'Submit' }),
+          ].map((label, index) => {
             const stepNumber = index + 1;
             const isActive =
               (step === 'select' && stepNumber === 1) ||
@@ -312,7 +347,9 @@ export function GuestReportSubmissionPage({
         <div className="space-y-6">
           {/* Country Selector */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Select Country</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {t('governmentPortal.guestReport.select.country', { defaultValue: 'Select Country' })}
+            </h2>
             <div className="flex gap-4">
               {(['SK', 'CZ'] as const).map((country) => (
                 <button
@@ -333,10 +370,22 @@ export function GuestReportSubmissionPage({
                     <span className="text-2xl">{country === 'SK' ? '🇸🇰' : '🇨🇿'}</span>
                     <div className="text-left">
                       <p className="font-medium text-gray-900">
-                        {country === 'SK' ? 'Slovakia' : 'Czech Republic'}
+                        {country === 'SK'
+                          ? t('governmentPortal.guestReport.country.sk', {
+                              defaultValue: 'Slovakia',
+                            })
+                          : t('governmentPortal.guestReport.country.cz', {
+                              defaultValue: 'Czech Republic',
+                            })}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {country === 'SK' ? 'ÚHÚL / Police Registry' : 'Cizinecká policie'}
+                        {country === 'SK'
+                          ? t('governmentPortal.guestReport.country.skDescription', {
+                              defaultValue: 'ÚHÚL / Police Registry',
+                            })
+                          : t('governmentPortal.guestReport.country.czDescription', {
+                              defaultValue: 'Cizinecká policie',
+                            })}
                       </p>
                     </div>
                   </div>
@@ -347,12 +396,18 @@ export function GuestReportSubmissionPage({
 
           {/* Portal Connection */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Portal Connection</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {t('governmentPortal.guestReport.select.portalConnection', {
+                defaultValue: 'Portal Connection',
+              })}
+            </h2>
             {filteredConnections.length === 0 ? (
               <p className="text-gray-500">
-                No active portal connections found for{' '}
-                {selectedCountry === 'SK' ? 'Slovakia' : 'Czech Republic'}. Please configure a
-                connection first.
+                {t('governmentPortal.guestReport.select.noConnections', {
+                  defaultValue:
+                    'No active portal connections found for {{country}}. Please configure a connection first.',
+                  country: countryName,
+                })}
               </p>
             ) : (
               <div className="space-y-3">
@@ -377,10 +432,15 @@ export function GuestReportSubmissionPage({
                       <p className="font-medium text-gray-900">{connection.portalName}</p>
                       <p className="text-sm text-gray-500">
                         {connection.portalType.replace('_', ' ')} -{' '}
-                        {connection.portalCode || 'No code'}
+                        {connection.portalCode ||
+                          t('governmentPortal.guestReport.select.noCode', {
+                            defaultValue: 'No code',
+                          })}
                         {connection.testMode && (
                           <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                            Test Mode
+                            {t('governmentPortal.guestReport.testMode', {
+                              defaultValue: 'Test Mode',
+                            })}
                           </span>
                         )}
                       </p>
@@ -393,11 +453,17 @@ export function GuestReportSubmissionPage({
 
           {/* Report Template */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Report Template</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {t('governmentPortal.guestReport.select.reportTemplate', {
+                defaultValue: 'Report Template',
+              })}
+            </h2>
             {filteredTemplates.length === 0 ? (
               <p className="text-gray-500">
-                No report templates found for{' '}
-                {selectedCountry === 'SK' ? 'Slovakia' : 'Czech Republic'}.
+                {t('governmentPortal.guestReport.select.noTemplates', {
+                  defaultValue: 'No report templates found for {{country}}.',
+                  country: countryName,
+                })}
               </p>
             ) : (
               <select
@@ -405,7 +471,11 @@ export function GuestReportSubmissionPage({
                 onChange={(e) => setSelectedTemplateId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select a template...</option>
+                <option value="">
+                  {t('governmentPortal.guestReport.select.templatePlaceholder', {
+                    defaultValue: 'Select a template...',
+                  })}
+                </option>
                 {filteredTemplates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.templateName} ({template.templateCode})
@@ -419,7 +489,11 @@ export function GuestReportSubmissionPage({
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
-                Select Guests ({selectedGuests.length} of {guests.length})
+                {t('governmentPortal.guestReport.select.guestsHeading', {
+                  defaultValue: 'Select Guests ({{selected}} of {{total}})',
+                  selected: selectedGuests.length,
+                  total: guests.length,
+                })}
               </h2>
               <label className="flex items-center gap-2 text-sm text-gray-600">
                 <input
@@ -428,12 +502,16 @@ export function GuestReportSubmissionPage({
                   onChange={handleSelectAllGuests}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                Select all
+                {t('governmentPortal.guestReport.select.selectAll', { defaultValue: 'Select all' })}
               </label>
             </div>
 
             {guests.length === 0 ? (
-              <p className="text-gray-500">No guests registered for submission.</p>
+              <p className="text-gray-500">
+                {t('governmentPortal.guestReport.select.noGuests', {
+                  defaultValue: 'No guests registered for submission.',
+                })}
+              </p>
             ) : (
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {guests.map((guest) => (
@@ -477,7 +555,7 @@ export function GuestReportSubmissionPage({
               onClick={onBack}
               className="px-4 py-2 text-gray-700 hover:text-gray-900"
             >
-              Cancel
+              {t('governmentPortal.guestReport.actions.cancel', { defaultValue: 'Cancel' })}
             </button>
             <button
               type="button"
@@ -485,7 +563,9 @@ export function GuestReportSubmissionPage({
               disabled={filteredConnections.length === 0 || filteredTemplates.length === 0}
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Preview Submission
+              {t('governmentPortal.guestReport.actions.previewSubmission', {
+                defaultValue: 'Preview Submission',
+              })}
               <svg
                 className="h-4 w-4"
                 fill="none"
@@ -511,9 +591,15 @@ export function GuestReportSubmissionPage({
           {/* Preview Modal/Section */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Submission Preview</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('governmentPortal.guestReport.preview.title', {
+                  defaultValue: 'Submission Preview',
+                })}
+              </h2>
               <p className="text-sm text-gray-500">
-                Review the data before submitting to the portal
+                {t('governmentPortal.guestReport.preview.subtitle', {
+                  defaultValue: 'Review the data before submitting to the portal',
+                })}
               </p>
             </div>
 
@@ -521,56 +607,100 @@ export function GuestReportSubmissionPage({
               {/* Destination Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Destination Portal</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    {t('governmentPortal.guestReport.preview.destinationPortal', {
+                      defaultValue: 'Destination Portal',
+                    })}
+                  </p>
                   <p className="text-gray-900">
-                    {selectedConnection?.portalName || 'Unknown'}
+                    {selectedConnection?.portalName ||
+                      t('governmentPortal.guestReport.preview.unknown', {
+                        defaultValue: 'Unknown',
+                      })}
                     {selectedConnection?.testMode && (
                       <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                        Test Mode
+                        {t('governmentPortal.guestReport.testMode', { defaultValue: 'Test Mode' })}
                       </span>
                     )}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Report Template</p>
-                  <p className="text-gray-900">{selectedTemplate?.templateName || 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Country</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    {t('governmentPortal.guestReport.preview.reportTemplate', {
+                      defaultValue: 'Report Template',
+                    })}
+                  </p>
                   <p className="text-gray-900">
-                    {selectedCountry === 'SK' ? '🇸🇰 Slovakia' : '🇨🇿 Czech Republic'}
+                    {selectedTemplate?.templateName ||
+                      t('governmentPortal.guestReport.preview.unknown', {
+                        defaultValue: 'Unknown',
+                      })}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Guests to Submit</p>
-                  <p className="text-gray-900">{selectedGuestRecords.length} guest(s)</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    {t('governmentPortal.guestReport.preview.country', { defaultValue: 'Country' })}
+                  </p>
+                  <p className="text-gray-900">
+                    {selectedCountry === 'SK' ? '🇸🇰 ' : '🇨🇿 '}
+                    {countryName}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">
+                    {t('governmentPortal.guestReport.preview.guestsToSubmit', {
+                      defaultValue: 'Guests to Submit',
+                    })}
+                  </p>
+                  <p className="text-gray-900">
+                    {t('governmentPortal.guestReport.preview.guestCount', {
+                      defaultValue: '{{total}} guest(s)',
+                      total: selectedGuestRecords.length,
+                    })}
+                  </p>
                 </div>
               </div>
 
               {/* Guest Data Preview */}
               <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-3">Guest Data</h3>
+                <h3 className="text-sm font-medium text-gray-900 mb-3">
+                  {t('governmentPortal.guestReport.preview.guestData', {
+                    defaultValue: 'Guest Data',
+                  })}
+                </h3>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Name
+                          {t('governmentPortal.guestReport.preview.table.name', {
+                            defaultValue: 'Name',
+                          })}
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          DOB
+                          {t('governmentPortal.guestReport.preview.table.dob', {
+                            defaultValue: 'DOB',
+                          })}
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Nationality
+                          {t('governmentPortal.guestReport.preview.table.nationality', {
+                            defaultValue: 'Nationality',
+                          })}
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Document
+                          {t('governmentPortal.guestReport.preview.table.document', {
+                            defaultValue: 'Document',
+                          })}
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Check-in
+                          {t('governmentPortal.guestReport.preview.table.checkIn', {
+                            defaultValue: 'Check-in',
+                          })}
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Unit
+                          {t('governmentPortal.guestReport.preview.table.unit', {
+                            defaultValue: 'Unit',
+                          })}
                         </th>
                       </tr>
                     </thead>
@@ -621,7 +751,9 @@ export function GuestReportSubmissionPage({
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Back to Selection
+              {t('governmentPortal.guestReport.actions.backToSelection', {
+                defaultValue: 'Back to Selection',
+              })}
             </button>
             <button
               type="button"
@@ -642,7 +774,9 @@ export function GuestReportSubmissionPage({
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              Submit to Portal
+              {t('governmentPortal.guestReport.actions.submitToPortal', {
+                defaultValue: 'Submit to Portal',
+              })}
             </button>
           </div>
         </div>
@@ -673,9 +807,15 @@ export function GuestReportSubmissionPage({
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Submitting to Portal...</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {t('governmentPortal.guestReport.submitting.title', {
+              defaultValue: 'Submitting to Portal...',
+            })}
+          </h2>
           <p className="text-gray-500 mb-6">
-            Please wait while your guest report is being submitted.
+            {t('governmentPortal.guestReport.submitting.message', {
+              defaultValue: 'Please wait while your guest report is being submitted.',
+            })}
           </p>
 
           {/* Progress Bar */}
@@ -687,7 +827,14 @@ export function GuestReportSubmissionPage({
               />
             </div>
             <p className="mt-2 text-sm text-gray-500">
-              {isSubmitting ? `${submissionProgress}% complete` : 'Processing...'}
+              {isSubmitting
+                ? t('governmentPortal.guestReport.submitting.percentComplete', {
+                    defaultValue: '{{progress}}% complete',
+                    progress: submissionProgress,
+                  })
+                : t('governmentPortal.guestReport.submitting.processing', {
+                    defaultValue: 'Processing...',
+                  })}
             </p>
           </div>
         </div>
@@ -712,20 +859,34 @@ export function GuestReportSubmissionPage({
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Submission Complete!</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {t('governmentPortal.guestReport.complete.title', {
+              defaultValue: 'Submission Complete!',
+            })}
+          </h2>
           <p className="text-gray-500 mb-6">
-            Your guest report has been successfully submitted to{' '}
-            {selectedConnection?.portalName || 'the portal'}.
+            {t('governmentPortal.guestReport.complete.message', {
+              defaultValue: 'Your guest report has been successfully submitted to {{portal}}.',
+              portal:
+                selectedConnection?.portalName ||
+                t('governmentPortal.guestReport.complete.portal', { defaultValue: 'Portal' }),
+            })}
           </p>
 
           <div className="bg-gray-50 rounded-lg p-4 max-w-md mx-auto mb-6">
             <div className="grid grid-cols-2 gap-4 text-left">
               <div>
-                <p className="text-xs font-medium text-gray-500">Guests Submitted</p>
+                <p className="text-xs font-medium text-gray-500">
+                  {t('governmentPortal.guestReport.complete.guestsSubmitted', {
+                    defaultValue: 'Guests Submitted',
+                  })}
+                </p>
                 <p className="text-lg font-semibold text-gray-900">{selectedGuestRecords.length}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500">Portal</p>
+                <p className="text-xs font-medium text-gray-500">
+                  {t('governmentPortal.guestReport.complete.portal', { defaultValue: 'Portal' })}
+                </p>
                 <p className="text-sm text-gray-900">{selectedConnection?.portalName}</p>
               </div>
             </div>
@@ -736,7 +897,9 @@ export function GuestReportSubmissionPage({
             onClick={onBack}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Back to Dashboard
+            {t('governmentPortal.guestReport.backToDashboard', {
+              defaultValue: 'Back to Dashboard',
+            })}
           </button>
         </div>
       )}

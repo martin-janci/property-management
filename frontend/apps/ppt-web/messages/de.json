@@ -8940,5 +8940,79 @@
         "hint": "Fokussieren Sie die Aufgabenliste, um diese Tastenkombinationen zu verwenden"
       }
     }
+  },
+  "governmentPortal": {
+    "guestReport": {
+      "backToDashboard": "Zurück zum Dashboard",
+      "title": "Gästebericht einreichen",
+      "subtitle": "Reichen Sie Gästeregistrierungsdaten bei Behördenportalen ein (ÚHÚL/Polizei)",
+      "steps": {
+        "selectOptions": "Optionen auswählen",
+        "previewData": "Datenvorschau",
+        "submit": "Einreichen"
+      },
+      "errors": {
+        "selectConnection": "Bitte wählen Sie eine Portalverbindung",
+        "selectTemplate": "Bitte wählen Sie eine Berichtsvorlage",
+        "selectGuest": "Bitte wählen Sie mindestens einen Gast",
+        "submissionFailed": "Einreichung fehlgeschlagen"
+      },
+      "country": {
+        "sk": "Slowakei",
+        "cz": "Tschechien",
+        "skDescription": "ÚHÚL / Polizeiregister",
+        "czDescription": "Cizinecká policie"
+      },
+      "testMode": "Testmodus",
+      "select": {
+        "country": "Land auswählen",
+        "portalConnection": "Portalverbindung",
+        "noConnections": "Für {{country}} wurden keine aktiven Portalverbindungen gefunden. Bitte konfigurieren Sie zuerst eine Verbindung.",
+        "noCode": "Kein Code",
+        "reportTemplate": "Berichtsvorlage",
+        "noTemplates": "Für {{country}} wurden keine Berichtsvorlagen gefunden.",
+        "templatePlaceholder": "Vorlage auswählen...",
+        "guestsHeading": "Gäste auswählen ({{selected}} von {{total}})",
+        "selectAll": "Alle auswählen",
+        "noGuests": "Keine Gäste zur Einreichung registriert."
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "previewSubmission": "Einreichungsvorschau",
+        "backToSelection": "Zurück zur Auswahl",
+        "submitToPortal": "An Portal übermitteln"
+      },
+      "preview": {
+        "title": "Einreichungsvorschau",
+        "subtitle": "Überprüfen Sie die Daten vor der Übermittlung an das Portal",
+        "destinationPortal": "Zielportal",
+        "unknown": "Unbekannt",
+        "reportTemplate": "Berichtsvorlage",
+        "country": "Land",
+        "guestsToSubmit": "Einzureichende Gäste",
+        "guestCount": "{{total}} Gast/Gäste",
+        "guestData": "Gästedaten",
+        "table": {
+          "name": "Name",
+          "dob": "Geb.-Datum",
+          "nationality": "Staatsangehörigkeit",
+          "document": "Dokument",
+          "checkIn": "Check-in",
+          "unit": "Einheit"
+        }
+      },
+      "submitting": {
+        "title": "Übermittlung an Portal...",
+        "message": "Bitte warten Sie, während Ihr Gästebericht übermittelt wird.",
+        "percentComplete": "{{progress}} % abgeschlossen",
+        "processing": "Wird verarbeitet..."
+      },
+      "complete": {
+        "title": "Einreichung abgeschlossen!",
+        "message": "Ihr Gästebericht wurde erfolgreich an {{portal}} übermittelt.",
+        "guestsSubmitted": "Übermittelte Gäste",
+        "portal": "Portal"
+      }
+    }
   }
 }
