@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T18:34:54Z",
+  "archived_at": "2026-11-23T20:29:09Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -13696,6 +13696,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
+      "action": "ppt web ui forms feature no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-23T20:26:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T14:34:41Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3757,
+        "merged_at": "2026-11-23T18:31:51Z",
+        "at": "2026-11-23T20:26:00Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-groupdetail-delete-noop",
       "action": "ppt web ui groupdetail delete noop",
       "owner_role": "pm-backend",
@@ -13739,6 +13764,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-21T02:23:44Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-guest-report-submission-no-i18n",
+      "action": "ppt web ui guest report submission no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-23T20:26:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3756,
+        "merged_at": "2026-11-23T18:28:09Z",
+        "at": "2026-11-23T20:26:00Z"
       }
     },
     {
@@ -14193,6 +14243,31 @@
         "merged_pr": 3562,
         "merged_at": "2026-11-16T08:30:16Z",
         "at": "2026-11-16T08:38:19Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-moderation-native-prompt-flow",
+      "action": "ppt web ui moderation native prompt flow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-23T20:26:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T20:26:00Z"
       }
     },
     {
@@ -14703,6 +14778,31 @@
         "merged_pr": 3453,
         "merged_at": "2026-11-12T12:37:46Z",
         "at": "2026-11-12T12:38:24Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-fullpage-nav",
+      "action": "ppt web ui registry fullpage nav",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=refactor) | gc1-reconcile 2026-11-23T20:26:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "refactor",
+        "generated": "2026-08-22T16:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3755,
+        "merged_at": "2026-11-23T18:27:53Z",
+        "at": "2026-11-23T20:26:00Z"
       }
     },
     {
@@ -19245,6 +19345,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-report-page-fake-submit",
+      "action": "reality web report page fake submit",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=3 vector=bug) | gc1-reconcile 2026-11-23T20:26:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-12T20:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T20:26:00Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-report-page-hardcoded-sk",
       "action": "reality web report page hardcoded sk",
       "owner_role": "pm-backend",
@@ -19385,6 +19510,31 @@
         "merged_pr": 2894,
         "merged_at": "2026-08-30T22:32:09Z",
         "at": "2026-08-30T22:34:19Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-sell-page-fake-submit",
+      "action": "reality web sell page fake submit",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=3 vector=bug) | gc1-reconcile 2026-11-23T20:26:00Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-12T20:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T20:26:00Z"
       }
     },
     {

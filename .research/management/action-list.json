@@ -336,24 +336,6 @@
       "retry_round": 1
     },
     {
-      "id": "code-review-ppt-web-ui-registry-fullpage-nav",
-      "action": "ppt web ui registry fullpage nav",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "refactor",
-        "generated": "2026-08-22T16:40:00Z"
-      }
-    },
-    {
       "id": "pm-scrum-master-land-the-2026-12-01-i18n-warn-error-lint-flip-burn-down-merg-2026-11-22",
       "action": "Land the 2026-12-01 i18n warn→error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
       "owner_role": "pm-scrum-master",
@@ -397,24 +379,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
-      "action": "ppt web ui forms feature no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-22T14:34:41Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-inproc-ratelimit-not-distributed",
       "action": "api handlers inproc ratelimit not distributed",
       "owner_role": "pm-backend",
@@ -428,42 +392,6 @@
       "signal_ref": {
         "segment": "api-handlers",
         "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-22T05:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-guest-report-submission-no-i18n",
-      "action": "ppt web ui guest report submission no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-22T05:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-moderation-native-prompt-flow",
-      "action": "ppt web ui moderation native prompt flow",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
         "vector": "bug",
         "generated": "2026-08-22T05:00:00Z"
       }
@@ -938,42 +866,6 @@
         "score": 1,
         "vector": "refactor",
         "generated": "2026-08-13T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-report-page-fake-submit",
-      "action": "reality web report page fake submit",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-23T18:28:58Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-12T20:30:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-sell-page-fake-submit",
-      "action": "reality web sell page fake submit",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-23T18:28:58Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-12T20:30:00Z"
       }
     },
     {
