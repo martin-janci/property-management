@@ -6,6 +6,7 @@
 
 import type { FormField, SubmitFormRequest } from '@ppt/api-client';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface FormRendererProps {
   fields: FormField[];
@@ -22,6 +23,7 @@ export function FormRenderer({
   onSubmit,
   onCancel,
 }: FormRendererProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [signatureData, setSignatureData] = useState<string | undefined>();
@@ -35,7 +37,7 @@ export function FormRenderer({
       if (field.required) {
         const value = formData[field.id];
         if (value === undefined || value === null || value === '') {
-          newErrors[field.id] = 'This field is required';
+          newErrors[field.id] = t('forms.renderer.requiredField');
         }
       }
 
@@ -43,7 +45,7 @@ export function FormRenderer({
       if (field.fieldType === 'email' && formData[field.id]) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData[field.id] as string)) {
-          newErrors[field.id] = 'Please enter a valid email address';
+          newErrors[field.id] = t('forms.renderer.invalidEmail');
         }
       }
 
@@ -51,13 +53,13 @@ export function FormRenderer({
       if (field.fieldType === 'phone' && formData[field.id]) {
         const phoneRegex = /^[+]?[\d\s-()]{7,}$/;
         if (!phoneRegex.test(formData[field.id] as string)) {
-          newErrors[field.id] = 'Please enter a valid phone number';
+          newErrors[field.id] = t('forms.renderer.invalidPhone');
         }
       }
     }
 
     if (requireSignature && !signatureData) {
-      newErrors._signature = 'Signature is required';
+      newErrors._signature = t('forms.renderer.signatureRequiredError');
     }
 
     setErrors(newErrors);
@@ -203,7 +205,7 @@ export function FormRenderer({
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor={field.id} className="text-sm text-gray-700">
-              {field.helpText || 'Yes'}
+              {field.helpText || t('forms.renderer.yes')}
             </label>
           </div>
         );
@@ -237,7 +239,7 @@ export function FormRenderer({
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             className={baseInputClass}
           >
-            <option value="">{field.placeholder || 'Select an option'}</option>
+            <option value="">{field.placeholder || t('forms.renderer.selectOption')}</option>
             {field.options?.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -304,7 +306,7 @@ export function FormRenderer({
               onClick={clearSignature}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              Clear signature
+              {t('forms.actions.clearSignature')}
             </button>
           </div>
         );
@@ -333,9 +335,10 @@ export function FormRenderer({
       {requireSignature && (
         <fieldset className="border-0 p-0 m-0">
           <legend className="block text-sm font-medium text-gray-700 mb-1">
-            Signature<span className="text-red-500 ml-1">*</span>
+            {t('forms.renderer.signatureLegend')}
+            <span className="text-red-500 ml-1">*</span>
           </legend>
-          <p className="text-sm text-gray-500 mb-2">Please sign in the box below</p>
+          <p className="text-sm text-gray-500 mb-2">{t('forms.renderer.signaturePrompt')}</p>
           <canvas
             ref={canvasRef}
             width={400}
@@ -353,7 +356,7 @@ export function FormRenderer({
             onClick={clearSignature}
             className="mt-2 text-sm text-gray-500 hover:text-gray-700"
           >
-            Clear signature
+            {t('forms.actions.clearSignature')}
           </button>
           {errors._signature && <p className="mt-1 text-sm text-red-600">{errors._signature}</p>}
         </fieldset>
@@ -365,7 +368,7 @@ export function FormRenderer({
           disabled={isSubmitting}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Submitting...' : 'Submit Form'}
+          {isSubmitting ? t('forms.renderer.submitting') : t('forms.renderer.submitForm')}
         </button>
         <button
           type="button"
@@ -373,7 +376,7 @@ export function FormRenderer({
           disabled={isSubmitting}
           className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </form>

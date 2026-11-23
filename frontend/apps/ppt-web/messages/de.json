@@ -151,6 +151,170 @@
       "timelinessText": "Berichte sollten mindestens jährlich für Plattformen mit erheblicher Nutzerbasis in der EU veröffentlicht werden."
     }
   },
+  "forms": {
+    "management": {
+      "title": "Formularverwaltung"
+    },
+    "actions": {
+      "createForm": "Formular erstellen",
+      "create": "Erstellen",
+      "search": "Suchen",
+      "view": "Ansehen",
+      "edit": "Bearbeiten",
+      "publish": "Veröffentlichen",
+      "delete": "Löschen",
+      "archive": "Archivieren",
+      "duplicate": "Duplizieren",
+      "back": "Zurück",
+      "backToForms": "Zurück zu den Formularen",
+      "downloadPdf": "PDF herunterladen",
+      "fillOut": "Ausfüllen",
+      "editForm": "Formular bearbeiten",
+      "continueEditing": "Weiter bearbeiten",
+      "saveAndExit": "Speichern und schließen",
+      "exportCsv": "CSV exportieren",
+      "exportExcel": "Excel exportieren",
+      "goBack": "Zurück",
+      "clearSignature": "Unterschrift löschen",
+      "editField": "Feld bearbeiten",
+      "deleteField": "Feld löschen"
+    },
+    "filters": {
+      "allStatuses": "Alle Status",
+      "allCategories": "Alle Kategorien",
+      "searchPlaceholder": "Formulare suchen..."
+    },
+    "status": {
+      "draft": "Entwurf",
+      "published": "Veröffentlicht",
+      "archived": "Archiviert"
+    },
+    "list": {
+      "emptyTitle": "Keine Formulare gefunden",
+      "emptyDescription": "Erstellen Sie zunächst Ihre erste Formularvorlage.",
+      "emptyAction": "Erstes Formular erstellen"
+    },
+    "pagination": {
+      "showing": "{{from}} bis {{to}} von {{total}} werden angezeigt",
+      "pageOf": "Seite {{page}} von {{totalPages}}"
+    },
+    "card": {
+      "signatureRequired": "Unterschrift erforderlich",
+      "fieldsCount": "{{count}} Felder",
+      "submissionsCount": "{{count}} Einreichungen",
+      "due": "Fällig: {{date}}",
+      "iconCategory": "Kategorie",
+      "iconFields": "Felder",
+      "iconSubmissions": "Einreichungen",
+      "iconDeadline": "Frist",
+      "noFormsIcon": "Keine Formulare"
+    },
+    "renderer": {
+      "requiredField": "Dieses Feld ist erforderlich",
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein",
+      "signatureRequiredError": "Unterschrift ist erforderlich",
+      "yes": "Ja",
+      "selectOption": "Option auswählen",
+      "signatureLegend": "Unterschrift",
+      "signaturePrompt": "Bitte unterschreiben Sie im Feld unten",
+      "submitForm": "Formular absenden",
+      "submitting": "Wird gesendet..."
+    },
+    "submissions": {
+      "title": "Formulareinreichungen",
+      "emptyTitle": "Noch keine Einreichungen",
+      "emptyDescription": "Einreichungen werden hier angezeigt, sobald Benutzer dieses Formular ausfüllen.",
+      "noSubmissionsIcon": "Keine Einreichungen",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "status": {
+        "pending": "Prüfung ausstehend",
+        "reviewed": "Geprüft",
+        "approved": "Genehmigt",
+        "rejected": "Abgelehnt"
+      },
+      "columns": {
+        "submittedBy": "Eingereicht von",
+        "form": "Formular",
+        "status": "Status",
+        "submittedAt": "Eingereicht am",
+        "reviewedAt": "Geprüft am",
+        "actions": "Aktionen"
+      }
+    },
+    "builder": {
+      "addFields": "Felder hinzufügen",
+      "formFields": "Formularfelder",
+      "emptyTitle": "Noch keine Felder",
+      "emptyDescription": "Klicken Sie auf einen Feldtyp in der Palette, um ihn zum Formular hinzuzufügen.",
+      "noFieldsIcon": "Keine Felder",
+      "optionsLabel": "Optionen: {{options}}",
+      "newField": "Neues {{type}}-Feld",
+      "fieldLabel": "Bezeichnung",
+      "requiredField": "Pflichtfeld",
+      "placeholderLabel": "Platzhalter",
+      "helpTextLabel": "Hilfetext",
+      "optionsPerLine": "Optionen (eine pro Zeile)"
+    },
+    "fieldTypes": {
+      "text": "Text",
+      "textarea": "Langer Text",
+      "number": "Zahl",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "date": "Datum",
+      "datetime": "Datum & Uhrzeit",
+      "checkbox": "Kontrollkästchen",
+      "radio": "Optionsfeld",
+      "select": "Dropdown",
+      "multiselect": "Mehrfachauswahl",
+      "file": "Datei-Upload",
+      "signature": "Unterschrift"
+    },
+    "create": {
+      "title": "Neues Formular erstellen",
+      "subtitleWithFields": "Fügen Sie Ihrem Formular Felder mit dem Drag-and-drop-Builder hinzu.",
+      "subtitleBasic": "Beginnen Sie mit den grundlegenden Formulardetails.",
+      "titleRequired": "Formulartitel ist erforderlich",
+      "createFailed": "Formular konnte nicht erstellt werden",
+      "addFieldFailed": "Feld konnte nicht hinzugefügt werden",
+      "updateFieldFailed": "Feld konnte nicht aktualisiert werden",
+      "deleteFieldFailed": "Feld konnte nicht gelöscht werden",
+      "reorderFieldsFailed": "Felder konnten nicht neu geordnet werden",
+      "formTitleLabel": "Formulartitel",
+      "formTitlePlaceholder": "z. B. Wartungsanfrage-Formular",
+      "descriptionLabel": "Beschreibung",
+      "descriptionPlaceholder": "Beschreiben Sie den Zweck dieses Formulars...",
+      "categoryLabel": "Kategorie",
+      "categoryPlaceholder": "z. B. Wartung, Anfragen, Beschwerden",
+      "deadlineLabel": "Einreichungsfrist (optional)",
+      "requireSignature": "Digitale Unterschrift erforderlich",
+      "allowMultiple": "Mehrere Einreichungen pro Benutzer zulassen",
+      "creating": "Wird erstellt..."
+    },
+    "view": {
+      "fields": "Felder",
+      "submissions": "Einreichungen",
+      "pendingReview": "Prüfung ausstehend",
+      "downloads": "Downloads",
+      "formPreview": "Formularvorschau",
+      "submissionsTab": "Einreichungen ({{count}})"
+    },
+    "fill": {
+      "expiredTitle": "Formular abgelaufen",
+      "expiredDescription": "Die Frist für dieses Formular ist abgelaufen. Sie können keine Antworten mehr einreichen.",
+      "signatureRequired": "Unterschrift erforderlich",
+      "expiredIcon": "Abgelaufen",
+      "signatureRequiredIcon": "Unterschrift erforderlich"
+    },
+    "available": {
+      "title": "Verfügbare Formulare",
+      "subtitle": "Durchsuchen und füllen Sie Formulare aus oder laden Sie sie als PDF herunter.",
+      "emptyTitle": "Keine Formulare verfügbar",
+      "emptyDescription": "Derzeit stehen keine Formulare zum Ausfüllen zur Verfügung."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Dashboard zur Inhaltsmoderation",

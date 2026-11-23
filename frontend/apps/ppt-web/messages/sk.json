@@ -151,6 +151,170 @@
       "timelinessText": "Správy by sa mali zverejňovať aspoň raz ročne pre platformy s významnou používateľskou základňou v EÚ."
     }
   },
+  "forms": {
+    "management": {
+      "title": "Správa formulárov"
+    },
+    "actions": {
+      "createForm": "Vytvoriť formulár",
+      "create": "Vytvoriť",
+      "search": "Hľadať",
+      "view": "Zobraziť",
+      "edit": "Upraviť",
+      "publish": "Publikovať",
+      "delete": "Odstrániť",
+      "archive": "Archivovať",
+      "duplicate": "Duplikovať",
+      "back": "Späť",
+      "backToForms": "Späť na formuláre",
+      "downloadPdf": "Stiahnuť PDF",
+      "fillOut": "Vyplniť",
+      "editForm": "Upraviť formulár",
+      "continueEditing": "Pokračovať v úprave",
+      "saveAndExit": "Uložiť a zavrieť",
+      "exportCsv": "Exportovať CSV",
+      "exportExcel": "Exportovať Excel",
+      "goBack": "Späť",
+      "clearSignature": "Vymazať podpis",
+      "editField": "Upraviť pole",
+      "deleteField": "Odstrániť pole"
+    },
+    "filters": {
+      "allStatuses": "Všetky stavy",
+      "allCategories": "Všetky kategórie",
+      "searchPlaceholder": "Hľadať formuláre..."
+    },
+    "status": {
+      "draft": "Koncept",
+      "published": "Publikované",
+      "archived": "Archivované"
+    },
+    "list": {
+      "emptyTitle": "Nenašli sa žiadne formuláre",
+      "emptyDescription": "Začnite vytvorením svojej prvej šablóny formulára.",
+      "emptyAction": "Vytvoriť prvý formulár"
+    },
+    "pagination": {
+      "showing": "Zobrazujú sa {{from}} až {{to}} z {{total}}",
+      "pageOf": "Strana {{page}} z {{totalPages}}"
+    },
+    "card": {
+      "signatureRequired": "Vyžaduje sa podpis",
+      "fieldsCount": "{{count}} polí",
+      "submissionsCount": "{{count}} odoslaní",
+      "due": "Termín: {{date}}",
+      "iconCategory": "Kategória",
+      "iconFields": "Polia",
+      "iconSubmissions": "Odoslania",
+      "iconDeadline": "Termín",
+      "noFormsIcon": "Žiadne formuláre"
+    },
+    "renderer": {
+      "requiredField": "Toto pole je povinné",
+      "invalidEmail": "Zadajte platnú e-mailovú adresu",
+      "invalidPhone": "Zadajte platné telefónne číslo",
+      "signatureRequiredError": "Podpis je povinný",
+      "yes": "Áno",
+      "selectOption": "Vyberte možnosť",
+      "signatureLegend": "Podpis",
+      "signaturePrompt": "Podpíšte sa do poľa nižšie",
+      "submitForm": "Odoslať formulár",
+      "submitting": "Odosiela sa..."
+    },
+    "submissions": {
+      "title": "Odoslania formulára",
+      "emptyTitle": "Zatiaľ žiadne odoslania",
+      "emptyDescription": "Odoslania sa tu zobrazia, keď používatelia vyplnia tento formulár.",
+      "noSubmissionsIcon": "Žiadne odoslania",
+      "approve": "Schváliť",
+      "reject": "Zamietnuť",
+      "status": {
+        "pending": "Čaká na posúdenie",
+        "reviewed": "Posúdené",
+        "approved": "Schválené",
+        "rejected": "Zamietnuté"
+      },
+      "columns": {
+        "submittedBy": "Odoslal",
+        "form": "Formulár",
+        "status": "Stav",
+        "submittedAt": "Dátum odoslania",
+        "reviewedAt": "Dátum posúdenia",
+        "actions": "Akcie"
+      }
+    },
+    "builder": {
+      "addFields": "Pridať polia",
+      "formFields": "Polia formulára",
+      "emptyTitle": "Zatiaľ žiadne polia",
+      "emptyDescription": "Kliknutím na typ poľa v palete ho pridáte do formulára.",
+      "noFieldsIcon": "Žiadne polia",
+      "optionsLabel": "Možnosti: {{options}}",
+      "newField": "Nové pole typu {{type}}",
+      "fieldLabel": "Označenie",
+      "requiredField": "Povinné pole",
+      "placeholderLabel": "Zástupný text",
+      "helpTextLabel": "Text pomocníka",
+      "optionsPerLine": "Možnosti (jedna na riadok)"
+    },
+    "fieldTypes": {
+      "text": "Text",
+      "textarea": "Dlhý text",
+      "number": "Číslo",
+      "email": "E-mail",
+      "phone": "Telefón",
+      "date": "Dátum",
+      "datetime": "Dátum a čas",
+      "checkbox": "Zaškrtávacie pole",
+      "radio": "Prepínač",
+      "select": "Rozbaľovací zoznam",
+      "multiselect": "Viacnásobný výber",
+      "file": "Nahranie súboru",
+      "signature": "Podpis"
+    },
+    "create": {
+      "title": "Vytvoriť nový formulár",
+      "subtitleWithFields": "Pridajte polia do formulára pomocou nástroja drag-and-drop.",
+      "subtitleBasic": "Začnite vyplnením základných údajov formulára.",
+      "titleRequired": "Názov formulára je povinný",
+      "createFailed": "Nepodarilo sa vytvoriť formulár",
+      "addFieldFailed": "Nepodarilo sa pridať pole",
+      "updateFieldFailed": "Nepodarilo sa aktualizovať pole",
+      "deleteFieldFailed": "Nepodarilo sa odstrániť pole",
+      "reorderFieldsFailed": "Nepodarilo sa zmeniť poradie polí",
+      "formTitleLabel": "Názov formulára",
+      "formTitlePlaceholder": "napr. Formulár žiadosti o údržbu",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "Opíšte účel tohto formulára...",
+      "categoryLabel": "Kategória",
+      "categoryPlaceholder": "napr. Údržba, Žiadosti, Sťažnosti",
+      "deadlineLabel": "Termín odoslania (voliteľné)",
+      "requireSignature": "Vyžadovať digitálny podpis",
+      "allowMultiple": "Povoliť viac odoslaní na používateľa",
+      "creating": "Vytvára sa..."
+    },
+    "view": {
+      "fields": "Polia",
+      "submissions": "Odoslania",
+      "pendingReview": "Čaká na posúdenie",
+      "downloads": "Stiahnutia",
+      "formPreview": "Náhľad formulára",
+      "submissionsTab": "Odoslania ({{count}})"
+    },
+    "fill": {
+      "expiredTitle": "Formulár vypršal",
+      "expiredDescription": "Termín pre tento formulár uplynul. Odpovede už nie je možné odoslať.",
+      "signatureRequired": "Vyžaduje sa podpis",
+      "expiredIcon": "Vypršané",
+      "signatureRequiredIcon": "Vyžaduje sa podpis"
+    },
+    "available": {
+      "title": "Dostupné formuláre",
+      "subtitle": "Prehliadajte a vypĺňajte formuláre alebo si ich stiahnite ako PDF.",
+      "emptyTitle": "Žiadne dostupné formuláre",
+      "emptyDescription": "Momentálne nie sú k dispozícii žiadne formuláre na vyplnenie."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Prehľad moderovania obsahu",

@@ -5,6 +5,7 @@
  */
 
 import type { FormWithDetails, SubmitFormRequest } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { getActiveLocale } from '../../../lib/locale';
 import { FormRenderer } from '../components/FormRenderer';
 
@@ -16,6 +17,7 @@ interface FillFormPageProps {
 }
 
 export function FillFormPage({ form, isSubmitting, onSubmit, onCancel }: FillFormPageProps) {
+  const { t } = useTranslation();
   const handleSubmit = (data: SubmitFormRequest) => {
     onSubmit(form.id, data);
   };
@@ -32,7 +34,7 @@ export function FillFormPage({ form, isSubmitting, onSubmit, onCancel }: FillFor
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>Expired</title>
+            <title>{t('forms.fill.expiredIcon')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -40,16 +42,16 @@ export function FillFormPage({ form, isSubmitting, onSubmit, onCancel }: FillFor
               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <h2 className="text-xl font-semibold text-red-800 mb-2">Form Expired</h2>
-          <p className="text-red-600 mb-4">
-            The deadline for this form has passed. You can no longer submit responses.
-          </p>
+          <h2 className="text-xl font-semibold text-red-800 mb-2">
+            {t('forms.fill.expiredTitle')}
+          </h2>
+          <p className="text-red-600 mb-4">{t('forms.fill.expiredDescription')}</p>
           <button
             type="button"
             onClick={onCancel}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
-            Go Back
+            {t('forms.actions.goBack')}
           </button>
         </div>
       </div>
@@ -67,7 +69,7 @@ export function FillFormPage({ form, isSubmitting, onSubmit, onCancel }: FillFor
           {form.category && (
             <span className="flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Category</title>
+                <title>{t('forms.card.iconCategory')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -81,7 +83,7 @@ export function FillFormPage({ form, isSubmitting, onSubmit, onCancel }: FillFor
           {form.submissionDeadline && (
             <span className="flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Deadline</title>
+                <title>{t('forms.card.iconDeadline')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -89,13 +91,15 @@ export function FillFormPage({ form, isSubmitting, onSubmit, onCancel }: FillFor
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              Due: {new Date(form.submissionDeadline).toLocaleDateString(getActiveLocale())}
+              {t('forms.card.due', {
+                date: new Date(form.submissionDeadline).toLocaleDateString(getActiveLocale()),
+              })}
             </span>
           )}
           {form.requireSignatures && (
             <span className="flex items-center gap-1 text-purple-600">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Signature required</title>
+                <title>{t('forms.fill.signatureRequiredIcon')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -103,7 +107,7 @@ export function FillFormPage({ form, isSubmitting, onSubmit, onCancel }: FillFor
                   d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                 />
               </svg>
-              Signature Required
+              {t('forms.fill.signatureRequired')}
             </span>
           )}
         </div>
