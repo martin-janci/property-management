@@ -5118,6 +5118,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-voice-contact-mgr-fake-email",
+      "branch": "auto-impl/code-review-api-core-voice-contact-mgr-f-9f206956",
+      "status": "failed",
+      "claimed_at": "2026-11-23T20:28:58Z",
+      "last_updated": "2026-11-23T20:39:15Z",
+      "status_changed_at": "2026-11-23T20:39:15Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=STALE-FINDING already-fixed on dev: action_contact_manager (voice_commands.rs) resolves org.contact_email via find_by_id_rls, fails explicitly (ActionFailed) when org unresolved, regression test test_contact_manager_uses_real_org_contact_email present; no placeholder email in any live path. No diff -> no empty PR. [fast-path pr=none -> failed]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-voice-read-handlers-fabricate-data",
       "branch": "auto-impl/code-review-api-core-voice-read-handlers-62395236",
       "status": "failed",
@@ -14595,6 +14617,28 @@
       "fix_rounds": 0,
       "merge_attempted_at": null,
       "archived_at": "2026-10-01T22:31:08Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-registry-silent-mutation-errors",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-silent-m-43440958",
+      "status": "failed",
+      "claimed_at": "2026-11-23T20:28:58Z",
+      "last_updated": "2026-11-23T20:39:32Z",
+      "status_changed_at": "2026-11-23T20:39:32Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=STALE-FINDING already-resolved on dev: RegistryPage/RegistryRulesPage mutations all try/catch + error toast w/ server msg; forms+modal presentational (feature unwired PAP-55); regression test RegistryPage.toast.test.tsx present. No silent path remains. No diff -> no empty PR. [fast-path pr=none -> failed]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-registry-silent-mutation-fail",
@@ -34516,5 +34560,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-23T19:30:04Z"
+  "archived_at": "2026-11-23T20:39:32Z"
 }
