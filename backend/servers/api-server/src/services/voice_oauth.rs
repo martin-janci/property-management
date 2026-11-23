@@ -77,8 +77,11 @@ pub(crate) fn oauth_error_status(error: &OAuthError) -> StatusCode {
 /// - a provider **grant rejection** (bad/expired/revoked authorization code or
 ///   refresh token) → `invalid_grant` (HTTP 400) — the grant is the problem;
 /// - an **unsupported platform** → `invalid_request` (HTTP 400);
-/// - a **transport failure**, an **unparseable provider response**, or **missing
-///   server-side configuration** → `server_error` (HTTP 500) — our-side faults.
+/// - a **transport failure** reaching the provider (DNS, connect, timeout) →
+///   `temporarily_unavailable` (HTTP 503) — a *transient* upstream-availability
+///   problem the voice platform should retry, not a permanent fault;
+/// - an **unparseable provider response** or **missing server-side
+///   configuration** → `server_error` (HTTP 500) — our-side faults.
 pub(crate) fn classify_voice_oauth_error(
     err: &VoiceOAuthError,
     client_message: &'static str,
@@ -88,9 +91,19 @@ pub(crate) fn classify_voice_oauth_error(
             OAuthError::invalid_grant(client_message)
         }
         VoiceOAuthError::InvalidPlatform(_) => OAuthError::invalid_request(client_message),
-        VoiceOAuthError::Http(_)
-        | VoiceOAuthError::InvalidResponse(_)
-        | VoiceOAuthError::MissingConfig(_) => OAuthError::server_error(client_message),
+        // A transport-level failure is transient: surface RFC 6749 §5.2's
+        // `temporarily_unavailable` (HTTP 503, see `oauth_error_status`) so the
+        // caller retries instead of treating it as a permanent `server_error`.
+        // `OAuthError` has no constructor for this code — it is the only 5xx
+        // code not minted elsewhere — so it is built directly here.
+        VoiceOAuthError::Http(_) => OAuthError {
+            error: "temporarily_unavailable".to_string(),
+            error_description: Some(client_message.to_string()),
+            error_uri: None,
+        },
+        VoiceOAuthError::InvalidResponse(_) | VoiceOAuthError::MissingConfig(_) => {
+            OAuthError::server_error(client_message)
+        }
     }
 }
 
@@ -504,6 +517,44 @@ mod tests {
         assert_eq!(
             classified.error_description.as_deref(),
             Some(OAUTH_EXCHANGE_FAILED_MESSAGE)
+        );
+    }
+
+    /// RFC 6749 §5.2: a transport-level failure reaching the upstream provider
+    /// (DNS, connect, timeout — `VoiceOAuthError::Http`) is a *transient*
+    /// availability problem, so it classifies to `temporarily_unavailable`
+    /// (HTTP 503) — signalling the voice platform (Alexa/Google) to retry —
+    /// rather than `server_error` (500), which implies a permanent internal
+    /// fault. This also exercises the otherwise-unreachable 503 arm of
+    /// `oauth_error_status`. Genuinely our-side faults (`InvalidResponse`,
+    /// `MissingConfig`) stay `server_error` (500).
+    #[test]
+    fn transport_failure_classifies_as_temporarily_unavailable() {
+        use integrations::VoiceOAuthError as E;
+
+        // A relative URL (no base) yields a real `reqwest::Error` synchronously
+        // via `RequestBuilder::build` — no network I/O, no runtime needed.
+        let http_err = reqwest::Client::new()
+            .get("/relative-url-without-base")
+            .build()
+            .expect_err("a relative URL must produce a reqwest::Error");
+
+        let classified =
+            classify_voice_oauth_error(&E::Http(http_err), OAUTH_REFRESH_FAILED_MESSAGE);
+        assert_eq!(
+            classified.error, "temporarily_unavailable",
+            "a transient transport failure must map to temporarily_unavailable"
+        );
+        assert_eq!(
+            oauth_error_status(&classified),
+            StatusCode::SERVICE_UNAVAILABLE,
+            "temporarily_unavailable must surface as HTTP 503"
+        );
+        // The sanitized description stays the static client message, never the
+        // (potentially sensitive) transport detail.
+        assert_eq!(
+            classified.error_description.as_deref(),
+            Some(OAUTH_REFRESH_FAILED_MESSAGE)
         );
     }
 
