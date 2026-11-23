@@ -6265,6 +6265,45 @@
         "savedBody": "Vaše zmeny pravidiel registra boli použité.",
         "saveFailed": "Pravidlá registra sa nepodarilo uložiť",
         "saveFailedBody": "Vaše zmeny sa nepodarilo uložiť. Skúste to znova."
+      },
+      "page": {
+        "title": "Pravidlá registra",
+        "subtitle": "Nastavte pravidlá registrácie domácich zvierat a vozidiel pre vašu budovu"
+      },
+      "error": {
+        "buildingRequiredTitle": "Vyžaduje sa ID budovy",
+        "loadFailedTitle": "Nepodarilo sa načítať pravidlá registra",
+        "buildingRequiredBody": "Vyberte budovu, pre ktorú chcete nastaviť pravidlá registra.",
+        "loadFailedBody": "Pri načítaní pravidiel registra došlo k chybe. Skúste to znova.",
+        "goBack": "Späť"
+      },
+      "info": {
+        "iconLabel": "Informácia",
+        "heading": "O pravidlách registra",
+        "item1": "Pravidlá sa vzťahujú na všetky nové registrácie po ich uložení",
+        "item2": "Existujúce schválené registrácie nie sú zmenami pravidiel dotknuté",
+        "item3": "Ak sa vyžaduje schválenie, správcovia budú upozornení na nové registrácie",
+        "item4": "Obyvatelia budú upozornení, ak bude ich registrácia zamietnutá"
+      },
+      "form": {
+        "petRulesHeading": "Pravidlá pre domáce zvieratá",
+        "petsAllowed": "Domáce zvieratá sú v tejto budove povolené",
+        "petsRequireApproval": "Registrácie domácich zvierat vyžadujú schválenie správcom",
+        "maxPetsPerUnit": "Maximálny počet zvierat na jednotku",
+        "allowedPetTypes": "Povolené druhy zvierat (prázdne = všetky)",
+        "bannedBreeds": "Zakázané plemená",
+        "bannedBreedPlaceholder": "Zadajte názov plemena a stlačte Enter",
+        "add": "Pridať",
+        "maxPetWeight": "Maximálna hmotnosť zvieraťa (kg)",
+        "vehicleRulesHeading": "Pravidlá pre vozidlá",
+        "vehiclesRequireApproval": "Registrácie vozidiel vyžadujú schválenie správcom",
+        "maxVehiclesPerUnit": "Maximálny počet vozidiel na jednotku",
+        "additionalNotes": "Ďalšie poznámky",
+        "notesPlaceholder": "Akékoľvek ďalšie pravidlá registra alebo poznámky...",
+        "noLimit": "Bez obmedzenia",
+        "cancel": "Zrušiť",
+        "save": "Uložiť pravidlá",
+        "saving": "Ukladá sa..."
       }
     },
     "toast": {

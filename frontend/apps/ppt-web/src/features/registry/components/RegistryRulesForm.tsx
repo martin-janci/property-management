@@ -6,6 +6,7 @@
 
 import type { BuildingRegistryRules, PetType, UpdateRegistryRulesRequest } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface RegistryRulesFormProps {
   initialData?: BuildingRegistryRules;
@@ -14,15 +15,7 @@ interface RegistryRulesFormProps {
   isSubmitting?: boolean;
 }
 
-const petTypes: { value: PetType; label: string }[] = [
-  { value: 'dog', label: 'Dog' },
-  { value: 'cat', label: 'Cat' },
-  { value: 'bird', label: 'Bird' },
-  { value: 'fish', label: 'Fish' },
-  { value: 'reptile', label: 'Reptile' },
-  { value: 'rodent', label: 'Rodent' },
-  { value: 'other', label: 'Other' },
-];
+const petTypes: PetType[] = ['dog', 'cat', 'bird', 'fish', 'reptile', 'rodent', 'other'];
 
 export function RegistryRulesForm({
   initialData,
@@ -30,6 +23,7 @@ export function RegistryRulesForm({
   onCancel,
   isSubmitting,
 }: RegistryRulesFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<UpdateRegistryRulesRequest>({
     petsAllowed: initialData?.petsAllowed ?? true,
     petsRequireApproval: initialData?.petsRequireApproval ?? true,
@@ -73,9 +67,11 @@ export function RegistryRulesForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Pet Rules */}
+      {/* Pet rules section */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Pet Rules</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('registry.rules.form.petRulesHeading')}
+        </h3>
 
         <div className="space-y-4">
           {/* Pets Allowed */}
@@ -88,7 +84,7 @@ export function RegistryRulesForm({
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="petsAllowed" className="ml-2 block text-sm text-gray-900">
-              Pets are allowed in this building
+              {t('registry.rules.form.petsAllowed')}
             </label>
           </div>
 
@@ -106,7 +102,7 @@ export function RegistryRulesForm({
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label htmlFor="petsRequireApproval" className="ml-2 block text-sm text-gray-900">
-                  Pet registrations require manager approval
+                  {t('registry.rules.form.petsRequireApproval')}
                 </label>
               </div>
 
@@ -116,7 +112,7 @@ export function RegistryRulesForm({
                   htmlFor="maxPetsPerUnit"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Maximum pets per unit
+                  {t('registry.rules.form.maxPetsPerUnit')}
                 </label>
                 <input
                   id="maxPetsPerUnit"
@@ -131,28 +127,30 @@ export function RegistryRulesForm({
                     })
                   }
                   className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="No limit"
+                  placeholder={t('registry.rules.form.noLimit')}
                 />
               </div>
 
               {/* Allowed Pet Types */}
               <div className="ml-6">
                 <span className="block text-sm font-medium text-gray-700 mb-2">
-                  Allowed pet types (leave empty for all)
+                  {t('registry.rules.form.allowedPetTypes')}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {petTypes.map((type) => (
                     <label
-                      key={type.value}
+                      key={type}
                       className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
                     >
                       <input
                         type="checkbox"
-                        checked={(formData.allowedPetTypes || []).includes(type.value)}
-                        onChange={() => handlePetTypeToggle(type.value)}
+                        checked={(formData.allowedPetTypes || []).includes(type)}
+                        onChange={() => handlePetTypeToggle(type)}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <span className="ml-2 text-sm text-gray-900">{type.label}</span>
+                      <span className="ml-2 text-sm text-gray-900">
+                        {t(`registry.pet.types.${type}`)}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -160,7 +158,9 @@ export function RegistryRulesForm({
 
               {/* Banned Breeds */}
               <div className="ml-6">
-                <span className="block text-sm font-medium text-gray-700 mb-2">Banned breeds</span>
+                <span className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('registry.rules.form.bannedBreeds')}
+                </span>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
@@ -173,14 +173,14 @@ export function RegistryRulesForm({
                       }
                     }}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter breed name and press Enter"
+                    placeholder={t('registry.rules.form.bannedBreedPlaceholder')}
                   />
                   <button
                     type="button"
                     onClick={addBannedBreed}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
                   >
-                    Add
+                    {t('registry.rules.form.add')}
                   </button>
                 </div>
                 {formData.bannedPetBreeds && formData.bannedPetBreeds.length > 0 && (
@@ -210,7 +210,7 @@ export function RegistryRulesForm({
                   htmlFor="maxPetWeight"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Maximum pet weight (kg)
+                  {t('registry.rules.form.maxPetWeight')}
                 </label>
                 <input
                   id="maxPetWeight"
@@ -225,7 +225,7 @@ export function RegistryRulesForm({
                     })
                   }
                   className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="No limit"
+                  placeholder={t('registry.rules.form.noLimit')}
                 />
               </div>
             </>
@@ -233,9 +233,11 @@ export function RegistryRulesForm({
         </div>
       </div>
 
-      {/* Vehicle Rules */}
+      {/* Vehicle rules section */}
       <div className="border-t pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Vehicle Rules</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {t('registry.rules.form.vehicleRulesHeading')}
+        </h3>
 
         <div className="space-y-4">
           {/* Require Approval */}
@@ -250,7 +252,7 @@ export function RegistryRulesForm({
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="vehiclesRequireApproval" className="ml-2 block text-sm text-gray-900">
-              Vehicle registrations require manager approval
+              {t('registry.rules.form.vehiclesRequireApproval')}
             </label>
           </div>
 
@@ -260,7 +262,7 @@ export function RegistryRulesForm({
               htmlFor="maxVehiclesPerUnit"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Maximum vehicles per unit
+              {t('registry.rules.form.maxVehiclesPerUnit')}
             </label>
             <input
               id="maxVehiclesPerUnit"
@@ -275,7 +277,7 @@ export function RegistryRulesForm({
                 })
               }
               className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="No limit"
+              placeholder={t('registry.rules.form.noLimit')}
             />
           </div>
         </div>
@@ -284,7 +286,7 @@ export function RegistryRulesForm({
       {/* Notes */}
       <div className="border-t pt-6">
         <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-          Additional notes
+          {t('registry.rules.form.additionalNotes')}
         </label>
         <textarea
           id="notes"
@@ -292,7 +294,7 @@ export function RegistryRulesForm({
           value={formData.notes || ''}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Any additional registry rules or notes..."
+          placeholder={t('registry.rules.form.notesPlaceholder')}
         />
       </div>
 
@@ -304,7 +306,7 @@ export function RegistryRulesForm({
           disabled={isSubmitting}
           className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
-          Cancel
+          {t('registry.rules.form.cancel')}
         </button>
         <button
           type="submit"
@@ -314,7 +316,7 @@ export function RegistryRulesForm({
           {isSubmitting && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
           )}
-          {isSubmitting ? 'Saving...' : 'Save Rules'}
+          {isSubmitting ? t('registry.rules.form.saving') : t('registry.rules.form.save')}
         </button>
       </div>
     </form>

@@ -6265,6 +6265,45 @@
         "savedBody": "Your registry rule changes have been applied.",
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
+      },
+      "page": {
+        "title": "Pravidla registru",
+        "subtitle": "Nastavte pravidla registrace domácích zvířat a vozidel pro vaši budovu"
+      },
+      "error": {
+        "buildingRequiredTitle": "Vyžaduje se ID budovy",
+        "loadFailedTitle": "Nepodařilo se načíst pravidla registru",
+        "buildingRequiredBody": "Vyberte budovu, pro kterou chcete nastavit pravidla registru.",
+        "loadFailedBody": "Při načítání pravidel registru došlo k chybě. Zkuste to znovu.",
+        "goBack": "Zpět"
+      },
+      "info": {
+        "iconLabel": "Informace",
+        "heading": "O pravidlech registru",
+        "item1": "Pravidla se vztahují na všechny nové registrace po jejich uložení",
+        "item2": "Stávající schválené registrace nejsou změnami pravidel dotčeny",
+        "item3": "Pokud je vyžadováno schválení, správci budou upozorněni na nové registrace",
+        "item4": "Obyvatelé budou upozorněni, pokud bude jejich registrace zamítnuta"
+      },
+      "form": {
+        "petRulesHeading": "Pravidla pro domácí zvířata",
+        "petsAllowed": "Domácí zvířata jsou v této budově povolena",
+        "petsRequireApproval": "Registrace domácích zvířat vyžadují schválení správcem",
+        "maxPetsPerUnit": "Maximální počet zvířat na jednotku",
+        "allowedPetTypes": "Povolené druhy zvířat (prázdné = všechny)",
+        "bannedBreeds": "Zakázaná plemena",
+        "bannedBreedPlaceholder": "Zadejte název plemene a stiskněte Enter",
+        "add": "Přidat",
+        "maxPetWeight": "Maximální hmotnost zvířete (kg)",
+        "vehicleRulesHeading": "Pravidla pro vozidla",
+        "vehiclesRequireApproval": "Registrace vozidel vyžadují schválení správcem",
+        "maxVehiclesPerUnit": "Maximální počet vozidel na jednotku",
+        "additionalNotes": "Další poznámky",
+        "notesPlaceholder": "Jakákoli další pravidla registru nebo poznámky...",
+        "noLimit": "Bez omezení",
+        "cancel": "Zrušit",
+        "save": "Uložit pravidla",
+        "saving": "Ukládání..."
       }
     },
     "toast": {
