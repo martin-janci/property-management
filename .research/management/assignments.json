@@ -47,18 +47,18 @@
     {
       "task_id": "code-review-mobile-rn-useapi-401-no-refresh",
       "branch": "auto-impl/code-review-mobile-rn-useapi-401-no-refr-7ae26cfc",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-23T22:28:27Z",
-      "last_updated": "2026-11-23T22:28:27Z",
-      "status_changed_at": "2026-11-23T22:28:27Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-23T22:45:08Z",
+      "status_changed_at": "2026-11-23T22:45:08Z",
+      "pr_number": 3765,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3765",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=3765 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=RN useApi single-flight refresh + retry once on 401 (reused readTokenPair); 977/977 mobile tests green VERIFY OK; drift=owner-hint mismatch",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -155,5 +155,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-23T22:41:52Z"
+  "generated": "2026-11-23T22:45:08Z"
 }
