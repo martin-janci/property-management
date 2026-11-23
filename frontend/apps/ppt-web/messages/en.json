@@ -1829,6 +1829,9 @@
         "loadErrorRetrying": "Retrying…"
       },
       "timeline": {
+        "loadError": "Could not load the activity log.",
+        "loadErrorRetry": "Retry",
+        "loadErrorRetrying": "Retrying…",
         "icon": {
           "disputeFiled": "Dispute filed",
           "statusChanged": "Status changed",

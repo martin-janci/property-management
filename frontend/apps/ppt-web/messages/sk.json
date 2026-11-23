@@ -1859,6 +1859,9 @@
         "loadErrorRetrying": "Skúšam znova…"
       },
       "timeline": {
+        "loadError": "Protokol aktivít sa nepodarilo načítať.",
+        "loadErrorRetry": "Skúsiť znova",
+        "loadErrorRetrying": "Skúšam znova…",
         "icon": {
           "disputeFiled": "Spor podaný",
           "statusChanged": "Stav zmenený",

@@ -1859,6 +1859,9 @@
         "loadErrorRetrying": "Ponawianie…"
       },
       "timeline": {
+        "loadError": "Nie udało się wczytać dziennika aktywności.",
+        "loadErrorRetry": "Spróbuj ponownie",
+        "loadErrorRetrying": "Ponawianie…",
         "icon": {
           "disputeFiled": "Spór zgłoszony",
           "statusChanged": "Status zmieniony",

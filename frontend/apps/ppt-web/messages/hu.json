@@ -1829,6 +1829,9 @@
         "loadErrorRetrying": "Újrapróbálás…"
       },
       "timeline": {
+        "loadError": "A tevékenységnaplót nem sikerült betölteni.",
+        "loadErrorRetry": "Újra",
+        "loadErrorRetrying": "Újrapróbálás…",
         "icon": {
           "disputeFiled": "Vita benyújtva",
           "statusChanged": "Állapot megváltozott",

@@ -60,7 +60,7 @@ const eventColorMap: Record<TimelineEventType, string> = {
 
 export function MediationTimelineView({ disputeId }: MediationTimelineViewProps) {
   const { t, i18n } = useTranslation();
-  const { data: events, isLoading } = useDisputeTimeline(disputeId);
+  const { data: events, isLoading, isError, refetch, isFetching } = useDisputeTimeline(disputeId);
   // The activity log carries only actor ids; resolve names from the parties
   // already loaded (and cached) by the workspace page's useDispute call.
   const { data: dispute } = useDispute(disputeId);
@@ -70,6 +70,26 @@ export function MediationTimelineView({ disputeId }: MediationTimelineViewProps)
     return (
       <div className="flex justify-center py-8">
         <Spinner size="md" />
+      </div>
+    );
+  }
+
+  // Surface a load failure instead of silently falling through to the empty
+  // state — otherwise a failed fetch is indistinguishable from "no events".
+  if (isError) {
+    return (
+      <div role="alert" className="text-center py-8">
+        <p className="text-sm text-red-600">{t('disputes.mediation.timeline.loadError')}</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="mt-1.5 text-sm font-medium text-violet-700 hover:text-violet-900 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {isFetching
+            ? t('disputes.mediation.timeline.loadErrorRetrying')
+            : t('disputes.mediation.timeline.loadErrorRetry')}
+        </button>
       </div>
     );
   }
