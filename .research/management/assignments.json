@@ -69,18 +69,18 @@
     {
       "task_id": "code-review-ppt-web-ui-ai-chat-delete-swallows-err",
       "branch": "auto-impl/code-review-ppt-web-ui-ai-chat-delete-sw-3d91229a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-23T22:28:27Z",
-      "last_updated": "2026-11-23T22:28:27Z",
-      "status_changed_at": "2026-11-23T22:28:27Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-23T22:50:35Z",
+      "status_changed_at": "2026-11-23T22:50:35Z",
+      "pr_number": 3767,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3767",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3767 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=added deleteSession.isError banner + aiChat.deleteError 6 locales; TDD; verify green 15942 (unrelated rentals flake documented)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -155,5 +155,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-23T22:46:44Z"
+  "generated": "2026-11-23T22:50:35Z"
 }
