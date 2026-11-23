@@ -618,17 +618,15 @@
   },
   "personMonths": {
     "title": "Személyhónapok",
-    "subtitle": "Adja meg, hány személy lakott az egységében havonta a költségfelosztáshoz.",
-    "invalidTitle": "Érvénytelen érték",
-    "invalidMessage": "Adjon meg egy egész számot 0 és 20 között.",
-    "bulkEntry": "Tömeges bevitel…",
+    "subtitle": "Hány személyt vettek figyelembe havonta a lakásában a költségfelosztáshoz.",
+    "loadError": "A személyhónapokat nem sikerült betölteni.",
+    "noUnit": "A fiókjához nincs lakás rendelve.",
+    "empty": "Erre az évre nincs rögzített személyhónap.",
+    "contactManager": "Ha egy érték hibás, forduljon az épület kezelőjéhez.",
+    "previousYear": "Előző év",
+    "nextYear": "Következő év",
     "personCount_one": "{{count}} személy",
-    "personCount_other": "{{count}} személy",
-    "status": {
-      "draft": "Piszkozat",
-      "submitted": "Beküldve",
-      "confirmed": "Megerősítve"
-    }
+    "personCount_other": "{{count}} személy"
   },
   "outages": {
     "backToList": "‹ Kimaradások",

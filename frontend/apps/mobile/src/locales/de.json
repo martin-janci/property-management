@@ -618,17 +618,15 @@
   },
   "personMonths": {
     "title": "Personenmonate",
-    "subtitle": "Geben Sie an, wie viele Personen jeden Monat in Ihrer Wohneinheit gelebt haben, zur Kostenverteilung.",
-    "invalidTitle": "Ungültiger Wert",
-    "invalidMessage": "Geben Sie eine ganze Zahl zwischen 0 und 20 ein.",
-    "bulkEntry": "Sammeleingabe…",
+    "subtitle": "Wie viele Personen in Ihrer Einheit pro Monat für die Kostenverteilung gezählt wurden.",
+    "loadError": "Personenmonate konnten nicht geladen werden.",
+    "noUnit": "Ihrem Konto ist keine Einheit zugeordnet.",
+    "empty": "Für dieses Jahr sind keine Personenmonate erfasst.",
+    "contactManager": "Wenn ein Wert falsch ist, wenden Sie sich an Ihre Hausverwaltung.",
+    "previousYear": "Vorheriges Jahr",
+    "nextYear": "Nächstes Jahr",
     "personCount_one": "{{count}} Person",
-    "personCount_other": "{{count}} Personen",
-    "status": {
-      "draft": "Entwurf",
-      "submitted": "Eingereicht",
-      "confirmed": "Bestätigt"
-    }
+    "personCount_other": "{{count}} Personen"
   },
   "outages": {
     "backToList": "‹ Störungen",

@@ -9,6 +9,11 @@ implementations:
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
+  mobile:
+    component: PersonMonthsScreen
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: complete
 endpoints: []
 relatedScreens:
   - id: ppt/buildings-detail
@@ -70,6 +75,7 @@ Reachable from the building detail page via a "Person-months" quick link.
   units that already have an entry.
 
 ## Agent Log
+- 2026-11-23 — agent: mobile `PersonMonthsScreen` moved off mock data to a read-only view: unit from `GET /users/me/units`, rows from `GET /buildings/{b}/units/{u}/person-months?year=`, year switcher, unit chips for multi-unit residents; edit/bulk controls removed (writes are manager-only).
 - 2026-11-04 — agent: bulk entry (`/buildings/:buildingId/person-months/bulk`): counts not edited fall back to the unit's value, so units that load after mount no longer fail "must be 0 or more"; month names come from `Intl.DateTimeFormat` (R3 #23). Status unchanged.
 
 - 2026-11-04 — agent: r3-nav-roles — bulk entry and per-unit edit routes are manager-gated; summary/unit pages are read-only for residents (audit r3 #14). Backend still only checks org membership on upsert/bulk.

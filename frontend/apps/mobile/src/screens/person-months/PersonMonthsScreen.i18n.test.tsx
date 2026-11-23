@@ -1,123 +1,142 @@
 /**
- * PersonMonthsScreen — header + validation-Alert i18n regression test
- * (code-review-mobile-rn-outages-news-header-chip-i18n).
+ * PersonMonthsScreen: read-only, API-backed view (UC-10).
  *
- * The screen rendered its header title/subtitle, the Save/Cancel/Edit/Bulk
- * controls, the "{n} person(s)" count, and the invalid-value `Alert.alert`
- * as hardcoded English literals — the screen did not even import
- * react-i18next. This suite locks the contract: those strings are now sourced
- * from i18n keys via `t()`.
- *
- * Mirrors FaultsListScreen.i18n.test.tsx: render layer asserts the screen
- * renders the i18n KEYS (setup mocks `t(key) => key`) and that the old
- * literals are gone; the Alert is checked via an `Alert.alert` spy; resource
- * layer asserts the locale JSON carries the new keys.
+ * Locks the contract:
+ * - building/unit ids come from `GET /api/v1/users/me/units` and feed the
+ *   `GET /api/v1/buildings/{b}/units/{u}/person-months?year=` request;
+ * - rows render newest month first with the localised person count;
+ * - there are no edit or bulk-entry controls (writes are manager-only);
+ * - loading / error / no-unit / empty states use i18n keys, and every locale
+ *   carries them.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { render, screen } from '@testing-library/react-native';
 import cs from '../../locales/cs.json';
 import de from '../../locales/de.json';
 import en from '../../locales/en.json';
 import hu from '../../locales/hu.json';
 import pl from '../../locales/pl.json';
 import sk from '../../locales/sk.json';
-import { PersonMonthsScreen } from './PersonMonthsScreen';
+import { PersonMonthsScreen, parsePersonMonths } from './PersonMonthsScreen';
 
-// The old hardcoded header/control literals that must no longer be rendered.
-const HARDCODED = [
-  'Person-months',
-  'Declare how many people lived in your unit each month for cost allocation.',
-  'Save',
-  'Cancel',
-  'Edit',
-  'Bulk entry…',
+jest.mock('../../hooks/useApi', () => ({
+  useApiQuery: jest.fn(),
+}));
+
+const mockUseApiQuery = jest.requireMock('../../hooks/useApi').useApiQuery as jest.Mock;
+
+const MY_UNITS = [
+  {
+    association: { residentId: 'r1', residentType: 'owner' },
+    unit: { id: 'unit-1', buildingId: 'bld-1', designation: '4B' },
+    building: { id: 'bld-1', street: 'Main 1', city: 'Bratislava', postalCode: '81101' },
+  },
 ];
 
-describe('PersonMonthsScreen header + control i18n', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+const ROWS = [
+  { id: 'pm-1', unit_id: 'unit-1', year: 2026, month: 1, count: 2, source: 'manual', notes: null },
+  { id: 'pm-3', unit_id: 'unit-1', year: 2026, month: 3, count: 3, source: 'manual', notes: null },
+];
+
+function query(overrides: Record<string, unknown> = {}) {
+  return {
+    data: undefined,
+    isLoading: false,
+    isFetching: false,
+    error: null,
+    refetch: jest.fn(),
+    ...overrides,
+  };
+}
+
+function mockQueries(units: Record<string, unknown>, months: Record<string, unknown>) {
+  mockUseApiQuery.mockImplementation((key: readonly unknown[]) =>
+    key[0] === 'my-units' ? query(units) : query(months)
+  );
+}
+
+describe('PersonMonthsScreen', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('requests the unit person-months for the resident unit and current year', async () => {
+    mockQueries({ data: MY_UNITS }, { data: ROWS });
+    await render(<PersonMonthsScreen />);
+    const year = new Date().getFullYear();
+    const monthsCall = mockUseApiQuery.mock.calls.find((c) => c[0][0] === 'person-months');
+    expect(monthsCall?.[1]).toBe(`/api/v1/buildings/bld-1/units/unit-1/person-months?year=${year}`);
+    expect(monthsCall?.[2]).toMatchObject({ enabled: true });
   });
 
-  it('renders header title/subtitle keys, not hardcoded literals', async () => {
+  it('renders rows and header via i18n keys, without edit or bulk controls', async () => {
+    mockQueries({ data: MY_UNITS }, { data: ROWS });
     await render(<PersonMonthsScreen />);
     expect(screen.getByText('personMonths.title')).toBeTruthy();
     expect(screen.getByText('personMonths.subtitle')).toBeTruthy();
+    expect(screen.getAllByText('personMonths.personCount')).toHaveLength(2);
+    expect(screen.getByText('personMonths.contactManager')).toBeTruthy();
+    expect(screen.queryByText('common.edit')).toBeNull();
+    expect(screen.queryByText('personMonths.bulkEntry')).toBeNull();
   });
 
-  it('renders control keys (edit/bulk) via common/personMonths, not literals', async () => {
+  it('shows the no-unit state when the resident has no unit', async () => {
+    mockQueries({ data: [] }, {});
     await render(<PersonMonthsScreen />);
-    // One draft entry is editable -> one edit link.
-    expect(screen.getByText('common.edit')).toBeTruthy();
-    expect(screen.getByText('personMonths.bulkEntry')).toBeTruthy();
-    for (const literal of HARDCODED) {
-      expect(screen.queryByText(literal)).toBeNull();
-    }
+    expect(screen.getByText('personMonths.noUnit')).toBeTruthy();
+    const monthsCall = mockUseApiQuery.mock.calls.find((c) => c[0][0] === 'person-months');
+    expect(monthsCall?.[2]).toMatchObject({ enabled: false });
   });
 
-  it('renders status badges via i18n keys, not the raw enum values', async () => {
+  it('shows the empty state', async () => {
+    mockQueries({ data: MY_UNITS }, { data: [] });
     await render(<PersonMonthsScreen />);
-    // Mock data carries one draft and three confirmed entries on first render.
-    expect(screen.getAllByText('personMonths.status.draft').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('personMonths.status.confirmed').length).toBeGreaterThan(0);
-    // Raw enum values must not leak through as badge labels.
-    expect(screen.queryByText('draft')).toBeNull();
-    expect(screen.queryByText('confirmed')).toBeNull();
+    expect(screen.getByText('personMonths.empty')).toBeTruthy();
   });
 
-  it('raises the invalid-value Alert via i18n keys, not hardcoded literals', async () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  it('shows the error state', async () => {
+    mockQueries({ data: MY_UNITS }, { error: new Error('boom') });
     await render(<PersonMonthsScreen />);
-    await fireEvent.press(screen.getByText('common.edit'));
-    await fireEvent.changeText(screen.getByDisplayValue('3'), '99');
-    await fireEvent.press(screen.getByText('common.save'));
-    expect(alertSpy).toHaveBeenCalledWith(
-      'personMonths.invalidTitle',
-      'personMonths.invalidMessage'
-    );
-    alertSpy.mockRestore();
+    expect(screen.getByText('personMonths.loadError')).toBeTruthy();
   });
 });
 
-describe('personMonths keys resolve to real, locale-distinct translations', () => {
+describe('parsePersonMonths', () => {
+  it('drops malformed rows and sorts newest month first', () => {
+    const parsed = parsePersonMonths([...ROWS, { id: 7 }, null]);
+    expect(parsed.map((r) => r.id)).toEqual(['pm-3', 'pm-1']);
+  });
+
+  it('returns [] for non-array payloads', () => {
+    expect(parsePersonMonths({ items: ROWS })).toEqual([]);
+  });
+});
+
+describe('personMonths keys resolve in every locale', () => {
+  const KEYS = [
+    'title',
+    'subtitle',
+    'loadError',
+    'noUnit',
+    'empty',
+    'contactManager',
+    'previousYear',
+    'nextYear',
+  ];
+
   it('en carries the expected English copy', () => {
     expect(en.personMonths.title).toBe('Person-months');
-    expect(en.personMonths.subtitle).toBe(
-      'Declare how many people lived in your unit each month for cost allocation.'
-    );
-    expect(en.personMonths.invalidTitle).toBe('Invalid value');
-    expect(en.personMonths.invalidMessage).toBe('Enter a whole number between 0 and 20.');
-    expect(en.personMonths.bulkEntry).toBe('Bulk entry…');
     expect(en.personMonths.personCount_one).toContain('{{count}}');
     expect(en.personMonths.personCount_other).toContain('{{count}}');
   });
 
-  it('every locale defines the keys and translates the title/subtitle away from English', () => {
+  it('every locale defines the keys and translates the subtitle away from English', () => {
     for (const locale of [sk, cs, de, pl, hu]) {
-      for (const key of ['title', 'subtitle', 'invalidTitle', 'invalidMessage', 'bulkEntry']) {
+      for (const key of KEYS) {
         const value = (locale.personMonths as unknown as Record<string, string>)[key];
         expect(typeof value).toBe('string');
         expect(value.length).toBeGreaterThan(0);
       }
       expect(locale.personMonths.subtitle).not.toBe(en.personMonths.subtitle);
-      expect(locale.personMonths.personCount_one).toContain('{{count}}');
       expect(locale.personMonths.personCount_other).toContain('{{count}}');
-    }
-  });
-
-  it('en carries the status badge labels', () => {
-    expect(en.personMonths.status.draft).toBe('Draft');
-    expect(en.personMonths.status.submitted).toBe('Submitted');
-    expect(en.personMonths.status.confirmed).toBe('Confirmed');
-  });
-
-  it('every locale defines the status badge labels', () => {
-    for (const locale of [sk, cs, de, pl, hu]) {
-      for (const key of ['draft', 'submitted', 'confirmed'] as const) {
-        const value = (locale.personMonths.status as Record<string, string>)[key];
-        expect(typeof value).toBe('string');
-        expect(value.length).toBeGreaterThan(0);
-      }
     }
   });
 });

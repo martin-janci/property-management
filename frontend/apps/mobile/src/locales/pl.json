@@ -622,19 +622,17 @@
   },
   "personMonths": {
     "title": "Osobomiesiące",
-    "subtitle": "Zadeklaruj, ile osób mieszkało w Twoim lokalu każdego miesiąca na potrzeby rozliczenia kosztów.",
-    "invalidTitle": "Nieprawidłowa wartość",
-    "invalidMessage": "Wprowadź liczbę całkowitą od 0 do 20.",
-    "bulkEntry": "Wprowadzanie zbiorcze…",
+    "subtitle": "Ile osób uwzględniono w Twoim lokalu w poszczególnych miesiącach przy rozliczaniu kosztów.",
+    "loadError": "Nie udało się wczytać osobomiesięcy.",
+    "noUnit": "Do Twojego konta nie przypisano żadnego lokalu.",
+    "empty": "Brak osobomiesięcy zapisanych w tym roku.",
+    "contactManager": "Jeśli wartość jest błędna, skontaktuj się z zarządcą budynku.",
+    "previousYear": "Poprzedni rok",
+    "nextYear": "Następny rok",
     "personCount_one": "{{count}} osoba",
-    "personCount_few": "{{count}} osoby",
-    "personCount_many": "{{count}} osób",
     "personCount_other": "{{count}} osób",
-    "status": {
-      "draft": "Szkic",
-      "submitted": "Wysłane",
-      "confirmed": "Potwierdzone"
-    }
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osób"
   },
   "outages": {
     "backToList": "‹ Awarie",

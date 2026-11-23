@@ -658,17 +658,15 @@
   },
   "personMonths": {
     "title": "Person-months",
-    "subtitle": "Declare how many people lived in your unit each month for cost allocation.",
-    "invalidTitle": "Invalid value",
-    "invalidMessage": "Enter a whole number between 0 and 20.",
-    "bulkEntry": "Bulk entry…",
+    "subtitle": "How many people were counted in your unit each month for cost allocation.",
+    "loadError": "Could not load person-months.",
+    "noUnit": "No unit is linked to your account.",
+    "empty": "No person-months recorded for this year.",
+    "contactManager": "If a value is wrong, contact your building manager.",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
     "personCount_one": "{{count}} person",
-    "personCount_other": "{{count}} persons",
-    "status": {
-      "draft": "Draft",
-      "submitted": "Submitted",
-      "confirmed": "Confirmed"
-    }
+    "personCount_other": "{{count}} persons"
   },
   "outages": {
     "backToList": "‹ Outages",

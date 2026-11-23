@@ -1,93 +1,90 @@
 /**
  * PersonMonthsScreen (UC-10).
  *
- * Lets a resident view and edit the number of person-months declared per
- * unit per month, used for cost-allocation.
+ * Read-only view of the person-months recorded for the signed-in resident's
+ * unit(s), used for cost allocation. Editing stays with the building manager
+ * (the api-server only lets manager roles write person-months), so the screen
+ * has no edit or bulk-entry controls; residents are told to contact their
+ * manager if a value is wrong.
  *
- * NOTE: still backed by mock data. The read endpoint
- * (`GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months?year=…`)
- * needs both a building id and a unit id plus a year, and its `PersonMonth`
- * rows carry no per-entry draft/submitted/confirmed status — the field this
- * screen's editing flow depends on. Wiring it cleanly needs a resident-scoped
- * "my person-months" endpoint (or a status column) on the backend, so it is
- * intentionally left on mock data (tracked as a backend follow-up). Sibling
- * list/detail screens (Meters, Leases, Forms, Threads) are already wired.
+ * Data:
+ * - `GET /api/v1/users/me/units` (camelCase `MyUnit[]`) resolves the caller's
+ *   own units, which supplies the building and unit ids.
+ * - `GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months?year=`
+ *   (snake_case `PersonMonthResponse[]`) returns the recorded months.
  */
 
+import type { MyUnit } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-interface PersonMonthEntry {
+/** One `PersonMonthResponse` row from the api-server. */
+export interface PersonMonthRow {
   id: string;
-  month: string; // ISO YYYY-MM
-  declaredPersons: number;
-  status: 'draft' | 'submitted' | 'confirmed';
+  unit_id: string;
+  year: number;
+  month: number;
+  count: number;
+  source: string;
+  notes: string | null;
 }
 
-const MOCK_ENTRIES: PersonMonthEntry[] = [
-  { id: 'pm-2026-04', month: '2026-04', declaredPersons: 3, status: 'draft' },
-  { id: 'pm-2026-03', month: '2026-03', declaredPersons: 3, status: 'confirmed' },
-  { id: 'pm-2026-02', month: '2026-02', declaredPersons: 2, status: 'confirmed' },
-  { id: 'pm-2026-01', month: '2026-01', declaredPersons: 2, status: 'confirmed' },
-];
+/** Validate the raw response and sort newest month first. Exported for tests. */
+export function parsePersonMonths(data: unknown): PersonMonthRow[] {
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter(
+      (r): r is PersonMonthRow =>
+        !!r &&
+        typeof r === 'object' &&
+        typeof (r as PersonMonthRow).id === 'string' &&
+        typeof (r as PersonMonthRow).month === 'number' &&
+        typeof (r as PersonMonthRow).year === 'number' &&
+        typeof (r as PersonMonthRow).count === 'number'
+    )
+    .sort((a, b) => b.year - a.year || b.month - a.month);
+}
 
-function formatMonth(month: string): string {
-  const [year, m] = month.split('-').map(Number);
-  return formatDate(new Date(year, (m ?? 1) - 1, 1), {
-    month: 'long',
-    year: 'numeric',
-  });
+function formatMonth(year: number, month: number): string {
+  return formatDate(new Date(year, month - 1, 1), { month: 'long', year: 'numeric' });
 }
 
 interface PersonMonthsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
+export function PersonMonthsScreen(_props: PersonMonthsScreenProps) {
   const { t } = useTranslation();
-  const [refreshing, setRefreshing] = useState(false);
-  const [entries, setEntries] = useState<PersonMonthEntry[]>(MOCK_ENTRIES);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftValue, setDraftValue] = useState('');
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
 
+  const unitsQuery = useApiQuery<MyUnit[]>(['my-units', 'list'], '/api/v1/users/me/units', {
+    staleTime: 60_000,
+  });
+  const units = Array.isArray(unitsQuery.data) ? unitsQuery.data : [];
+  const current = units.find((u) => u.unit.id === selectedUnitId) ?? units[0];
+  const buildingId = current?.unit.buildingId;
+  const unitId = current?.unit.id;
+
+  const monthsQuery = useApiQuery<unknown>(
+    ['person-months', buildingId, unitId, year],
+    `/api/v1/buildings/${buildingId ?? ''}/units/${unitId ?? ''}/person-months?year=${year}`,
+    { staleTime: 30_000, enabled: !!buildingId && !!unitId }
+  );
+  const rows = parsePersonMonths(monthsQuery.data);
+
+  const { refetch: refetchUnits } = unitsQuery;
+  const { refetch: refetchMonths } = monthsQuery;
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setRefreshing(false);
-  }, []);
+    await Promise.all([refetchUnits(), refetchMonths()]);
+  }, [refetchUnits, refetchMonths]);
 
-  const startEdit = (entry: PersonMonthEntry) => {
-    if (entry.status === 'confirmed') return;
-    setEditingId(entry.id);
-    setDraftValue(String(entry.declaredPersons));
-  };
-
-  const saveEdit = (entry: PersonMonthEntry) => {
-    const next = Number(draftValue);
-    if (!Number.isInteger(next) || next < 0 || next > 20) {
-      Alert.alert(t('personMonths.invalidTitle'), t('personMonths.invalidMessage'));
-      return;
-    }
-    setEntries((prev) =>
-      prev.map((e) =>
-        e.id === entry.id ? { ...e, declaredPersons: next, status: 'submitted' } : e
-      )
-    );
-    setEditingId(null);
-    setDraftValue('');
-  };
+  const loading = unitsQuery.isLoading || (!!unitId && monthsQuery.isLoading);
+  const failed = unitsQuery.error || monthsQuery.error;
 
   return (
     <View style={s.container}>
@@ -98,72 +95,86 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={unitsQuery.isFetching || monthsQuery.isFetching}
+            onRefresh={onRefresh}
+          />
+        }
       >
-        {entries.map((entry) => {
-          const isEditing = entry.id === editingId;
-          return (
-            <View key={entry.id} style={s.card}>
-              <View style={s.cardHeader}>
-                <Text style={s.cardTitle}>{formatMonth(entry.month)}</Text>
-                <View
-                  style={[
-                    s.badge,
-                    entry.status === 'confirmed' && styles.badgeConfirmed,
-                    entry.status === 'submitted' && styles.badgeSubmitted,
-                    entry.status === 'draft' && styles.badgeDraft,
-                  ]}
+        {units.length > 1 && (
+          <View style={styles.chipRow}>
+            {units.map((u) => {
+              const active = u.unit.id === unitId;
+              return (
+                <Pressable
+                  key={u.unit.id}
+                  style={[s.filterChip, active && s.filterChipActive]}
+                  onPress={() => setSelectedUnitId(u.unit.id)}
                 >
-                  <Text
-                    style={[
-                      s.badgeText,
-                      entry.status === 'confirmed' && styles.badgeConfirmedText,
-                      entry.status === 'submitted' && styles.badgeSubmittedText,
-                      entry.status === 'draft' && styles.badgeDraftText,
-                    ]}
-                  >
-                    {t(`personMonths.status.${entry.status}`)}
+                  <Text style={[s.filterText, active && s.filterTextActive]}>
+                    {u.unit.designation}
                   </Text>
-                </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
+        <View style={styles.yearRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('personMonths.previousYear')}
+            onPress={() => setYear((y) => y - 1)}
+            style={styles.yearButton}
+          >
+            <Text style={styles.yearButtonText}>‹</Text>
+          </Pressable>
+          <Text style={styles.yearText}>{year}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('personMonths.nextYear')}
+            onPress={() => setYear((y) => y + 1)}
+            style={styles.yearButton}
+          >
+            <Text style={styles.yearButtonText}>›</Text>
+          </Pressable>
+        </View>
+
+        {loading ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
+          </View>
+        ) : failed ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>{t('personMonths.loadError')}</Text>
+          </View>
+        ) : !current ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>🏠</Text>
+            <Text style={s.emptyTitle}>{t('personMonths.noUnit')}</Text>
+          </View>
+        ) : rows.length === 0 ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>👥</Text>
+            <Text style={s.emptyTitle}>{t('personMonths.empty')}</Text>
+          </View>
+        ) : (
+          rows.map((row) => (
+            <View key={row.id} style={s.card}>
+              <View style={s.cardHeader}>
+                <Text style={s.cardTitle}>{formatMonth(row.year, row.month)}</Text>
               </View>
-
-              {isEditing ? (
-                <View style={styles.editRow}>
-                  <TextInput
-                    style={styles.editInput}
-                    value={draftValue}
-                    onChangeText={setDraftValue}
-                    keyboardType="number-pad"
-                  />
-                  <Pressable
-                    style={[s.primaryButton, styles.saveButton]}
-                    onPress={() => saveEdit(entry)}
-                  >
-                    <Text style={s.primaryButtonText}>{t('common.save')}</Text>
-                  </Pressable>
-                  <Pressable style={styles.cancelButton} onPress={() => setEditingId(null)}>
-                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <View style={styles.viewRow}>
-                  <Text style={styles.value}>
-                    {t('personMonths.personCount', { count: entry.declaredPersons })}
-                  </Text>
-                  {entry.status !== 'confirmed' && (
-                    <Pressable onPress={() => startEdit(entry)} style={styles.editLink}>
-                      <Text style={styles.editLinkText}>{t('common.edit')}</Text>
-                    </Pressable>
-                  )}
-                </View>
-              )}
+              <Text style={styles.value}>
+                {t('personMonths.personCount', { count: row.count })}
+              </Text>
+              {row.notes ? <Text style={s.cardBody}>{row.notes}</Text> : null}
             </View>
-          );
-        })}
+          ))
+        )}
 
-        <Pressable style={s.primaryButton} onPress={() => onNavigate?.('PersonMonthsBulk')}>
-          <Text style={s.primaryButtonText}>{t('personMonths.bulkEntry')}</Text>
-        </Pressable>
+        {current && <Text style={styles.hint}>{t('personMonths.contactManager')}</Text>}
 
         <View style={s.bottomSpacer} />
       </ScrollView>
@@ -172,26 +183,17 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  badgeDraft: { backgroundColor: colors.warningBg },
-  badgeDraftText: { color: colors.warningDark },
-  badgeSubmitted: { backgroundColor: colors.accentSoft },
-  badgeSubmittedText: { color: colors.accentDark },
-  badgeConfirmed: { backgroundColor: colors.successBg },
-  badgeConfirmedText: { color: colors.successDark },
-  viewRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  value: { fontSize: 18, fontWeight: '600', color: colors.text },
-  editLink: { padding: 8 },
-  editLinkText: { color: colors.accent, fontWeight: '500' },
-  editRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  editInput: {
-    flex: 1,
-    minWidth: 80,
-    padding: 12,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: 8,
-    fontSize: 16,
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  yearRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 12,
   },
-  saveButton: { marginTop: 0, paddingHorizontal: 16, paddingVertical: 12 },
-  cancelButton: { padding: 12 },
-  cancelButtonText: { color: colors.textMuted, fontWeight: '500' },
+  yearButton: { paddingHorizontal: 12, paddingVertical: 4 },
+  yearButtonText: { fontSize: 22, color: colors.accent },
+  yearText: { fontSize: 17, fontWeight: '600', color: colors.text },
+  value: { fontSize: 15, color: colors.textSecondary, marginTop: 4 },
+  hint: { fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 8 },
 });

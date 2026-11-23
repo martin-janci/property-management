@@ -662,19 +662,17 @@
   },
   "personMonths": {
     "title": "Osoboměsíce",
-    "subtitle": "Nahlaste, kolik osob bydlelo ve vaší jednotce každý měsíc pro účely rozúčtování nákladů.",
-    "invalidTitle": "Neplatná hodnota",
-    "invalidMessage": "Zadejte celé číslo od 0 do 20.",
-    "bulkEntry": "Hromadné zadání…",
+    "subtitle": "Kolik osob bylo v jednotlivých měsících započteno ve vaší jednotce pro rozúčtování nákladů.",
+    "loadError": "Osoboměsíce se nepodařilo načíst.",
+    "noUnit": "K vašemu účtu není přiřazena žádná jednotka.",
+    "empty": "Pro tento rok nejsou zaznamenány žádné osoboměsíce.",
+    "contactManager": "Pokud údaj nesedí, kontaktujte správce domu.",
+    "previousYear": "Předchozí rok",
+    "nextYear": "Následující rok",
     "personCount_one": "{{count}} osoba",
-    "personCount_few": "{{count}} osoby",
-    "personCount_many": "{{count}} osoby",
     "personCount_other": "{{count}} osob",
-    "status": {
-      "draft": "Koncept",
-      "submitted": "Odesláno",
-      "confirmed": "Potvrzeno"
-    }
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osoby"
   },
   "outages": {
     "backToList": "‹ Výpadky",

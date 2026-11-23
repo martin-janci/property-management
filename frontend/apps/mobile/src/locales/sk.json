@@ -662,19 +662,17 @@
   },
   "personMonths": {
     "title": "Osobomesiace",
-    "subtitle": "Nahláste, koľko osôb bývalo vo vašej jednotke každý mesiac na účely rozúčtovania nákladov.",
-    "invalidTitle": "Neplatná hodnota",
-    "invalidMessage": "Zadajte celé číslo od 0 do 20.",
-    "bulkEntry": "Hromadné zadanie…",
+    "subtitle": "Koľko osôb bolo v jednotlivých mesiacoch započítaných vo vašom byte pre rozúčtovanie nákladov.",
+    "loadError": "Osobomesiace sa nepodarilo načítať.",
+    "noUnit": "K vášmu účtu nie je priradený žiadny byt.",
+    "empty": "Pre tento rok nie sú zaznamenané žiadne osobomesiace.",
+    "contactManager": "Ak údaj nesedí, kontaktujte správcu domu.",
+    "previousYear": "Predchádzajúci rok",
+    "nextYear": "Nasledujúci rok",
     "personCount_one": "{{count}} osoba",
-    "personCount_few": "{{count}} osoby",
-    "personCount_many": "{{count}} osoby",
     "personCount_other": "{{count}} osôb",
-    "status": {
-      "draft": "Koncept",
-      "submitted": "Odoslané",
-      "confirmed": "Potvrdené"
-    }
+    "personCount_few": "{{count}} osoby",
+    "personCount_many": "{{count}} osoby"
   },
   "outages": {
     "backToList": "‹ Výpadky",
