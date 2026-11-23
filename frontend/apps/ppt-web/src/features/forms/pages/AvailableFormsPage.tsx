@@ -6,6 +6,7 @@
 
 import type { FormSummary } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getActiveLocale } from '../../../lib/locale';
 
 interface AvailableFormsPageProps {
@@ -31,6 +32,7 @@ export function AvailableFormsPage({
   onCategoryFilter,
   onSearchChange,
 }: AvailableFormsPageProps) {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [categoryFilter, setCategoryFilter] = useState<string>('');
@@ -61,8 +63,8 @@ export function AvailableFormsPage({
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Available Forms</h1>
-        <p className="text-gray-500 mt-1">Browse and fill out forms, or download them as PDF.</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('forms.available.title')}</h1>
+        <p className="text-gray-500 mt-1">{t('forms.available.subtitle')}</p>
       </div>
 
       {/* Filters */}
@@ -72,7 +74,7 @@ export function AvailableFormsPage({
           onChange={(e) => handleCategoryChange(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">All Categories</option>
+          <option value="">{t('forms.filters.allCategories')}</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
@@ -86,7 +88,7 @@ export function AvailableFormsPage({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search forms..."
+              placeholder={t('forms.filters.searchPlaceholder')}
               className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <svg
@@ -95,7 +97,7 @@ export function AvailableFormsPage({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <title>Search</title>
+              <title>{t('forms.actions.search')}</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -120,7 +122,7 @@ export function AvailableFormsPage({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>No forms</title>
+            <title>{t('forms.card.noFormsIcon')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -128,8 +130,8 @@ export function AvailableFormsPage({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-lg font-medium mb-2">No forms available</p>
-          <p>There are no forms available for you to fill out at this time.</p>
+          <p className="text-lg font-medium mb-2">{t('forms.available.emptyTitle')}</p>
+          <p>{t('forms.available.emptyDescription')}</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -144,7 +146,7 @@ export function AvailableFormsPage({
                     <h3 className="text-lg font-medium text-gray-900">{form.title}</h3>
                     {form.requireSignatures && (
                       <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                        Signature Required
+                        {t('forms.card.signatureRequired')}
                       </span>
                     )}
                   </div>
@@ -162,7 +164,7 @@ export function AvailableFormsPage({
                           stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <title>Category</title>
+                          <title>{t('forms.card.iconCategory')}</title>
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -180,7 +182,7 @@ export function AvailableFormsPage({
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <title>Fields</title>
+                        <title>{t('forms.card.iconFields')}</title>
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -188,7 +190,7 @@ export function AvailableFormsPage({
                           d="M4 6h16M4 10h16M4 14h16M4 18h16"
                         />
                       </svg>
-                      {form.fieldCount} fields
+                      {t('forms.card.fieldsCount', { count: form.fieldCount })}
                     </span>
                     {form.submissionDeadline && (
                       <span className="flex items-center gap-1 text-orange-600">
@@ -198,7 +200,7 @@ export function AvailableFormsPage({
                           stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <title>Deadline</title>
+                          <title>{t('forms.card.iconDeadline')}</title>
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -206,8 +208,11 @@ export function AvailableFormsPage({
                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                           />
                         </svg>
-                        Due:{' '}
-                        {new Date(form.submissionDeadline).toLocaleDateString(getActiveLocale())}
+                        {t('forms.card.due', {
+                          date: new Date(form.submissionDeadline).toLocaleDateString(
+                            getActiveLocale()
+                          ),
+                        })}
                       </span>
                     )}
                   </div>
@@ -220,14 +225,14 @@ export function AvailableFormsPage({
                     onClick={() => onDownloadPdf(form.id)}
                     className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
                   >
-                    Download PDF
+                    {t('forms.actions.downloadPdf')}
                   </button>
                   <button
                     type="button"
                     onClick={() => onFillForm(form.id)}
                     className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
-                    Fill Out
+                    {t('forms.actions.fillOut')}
                   </button>
                 </div>
               </div>
@@ -240,7 +245,11 @@ export function AvailableFormsPage({
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+            {t('forms.pagination.showing', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -249,18 +258,16 @@ export function AvailableFormsPage({
               disabled={page === 1}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('common.previous')}
             </button>
-            <span className="px-3 py-1">
-              Page {page} of {totalPages}
-            </span>
+            <span className="px-3 py-1">{t('forms.pagination.pageOf', { page, totalPages })}</span>
             <button
               type="button"
               onClick={() => handlePageChange(page + 1)}
               disabled={page === totalPages}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </div>

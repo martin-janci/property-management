@@ -6,6 +6,7 @@
 
 import type { CreateFormField, CreateFormRequest, FormField } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FormBuilder } from '../components/FormBuilder';
 
 interface CreateFormPageProps {
@@ -33,6 +34,7 @@ export function CreateFormPage({
   onNavigateToEdit,
   onCancel,
 }: CreateFormPageProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -48,7 +50,7 @@ export function CreateFormPage({
     setError(null);
 
     if (!title.trim()) {
-      setError('Form title is required');
+      setError(t('forms.create.titleRequired'));
       return;
     }
 
@@ -63,7 +65,7 @@ export function CreateFormPage({
       });
       setFormId(id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create form');
+      setError(err instanceof Error ? err.message : t('forms.create.createFailed'));
     }
   };
 
@@ -73,7 +75,7 @@ export function CreateFormPage({
       const newField = await onAddField(formId, field);
       setFields((prev) => [...prev, newField]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add field');
+      setError(err instanceof Error ? err.message : t('forms.create.addFieldFailed'));
     }
   };
 
@@ -83,7 +85,7 @@ export function CreateFormPage({
       await onUpdateField(formId, fieldId, updates);
       setFields((prev) => prev.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update field');
+      setError(err instanceof Error ? err.message : t('forms.create.updateFieldFailed'));
     }
   };
 
@@ -93,7 +95,7 @@ export function CreateFormPage({
       await onDeleteField(formId, fieldId);
       setFields((prev) => prev.filter((f) => f.id !== fieldId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete field');
+      setError(err instanceof Error ? err.message : t('forms.create.deleteFieldFailed'));
     }
   };
 
@@ -104,7 +106,7 @@ export function CreateFormPage({
       const reorderedFields = fieldIds.map((id) => fields.find((f) => f.id === id)!);
       setFields(reorderedFields);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reorder fields');
+      setError(err instanceof Error ? err.message : t('forms.create.reorderFieldsFailed'));
     }
   };
 
@@ -117,11 +119,9 @@ export function CreateFormPage({
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Create New Form</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('forms.create.title')}</h1>
         <p className="text-gray-500 mt-1">
-          {formId
-            ? 'Add fields to your form using the drag-and-drop builder.'
-            : 'Start by filling in the basic form details.'}
+          {formId ? t('forms.create.subtitleWithFields') : t('forms.create.subtitleBasic')}
         </p>
       </div>
 
@@ -139,42 +139,46 @@ export function CreateFormPage({
           <div className="space-y-6">
             <label className="block">
               <span className="block text-sm font-medium text-gray-700 mb-1">
-                Form Title <span className="text-red-500">*</span>
+                {t('forms.create.formTitleLabel')} <span className="text-red-500">*</span>
               </span>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Maintenance Request Form"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </label>
-
-            <label className="block">
-              <span className="block text-sm font-medium text-gray-700 mb-1">Description</span>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the purpose of this form..."
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </label>
-
-            <label className="block">
-              <span className="block text-sm font-medium text-gray-700 mb-1">Category</span>
-              <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g., Maintenance, Requests, Complaints"
+                placeholder={t('forms.create.formTitlePlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </label>
 
             <label className="block">
               <span className="block text-sm font-medium text-gray-700 mb-1">
-                Submission Deadline (optional)
+                {t('forms.create.descriptionLabel')}
+              </span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t('forms.create.descriptionPlaceholder')}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+
+            <label className="block">
+              <span className="block text-sm font-medium text-gray-700 mb-1">
+                {t('forms.create.categoryLabel')}
+              </span>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder={t('forms.create.categoryPlaceholder')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+
+            <label className="block">
+              <span className="block text-sm font-medium text-gray-700 mb-1">
+                {t('forms.create.deadlineLabel')}
               </span>
               <input
                 type="datetime-local"
@@ -192,7 +196,7 @@ export function CreateFormPage({
                   onChange={(e) => setRequireSignatures(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Require digital signature</span>
+                <span className="text-sm text-gray-700">{t('forms.create.requireSignature')}</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -202,7 +206,7 @@ export function CreateFormPage({
                   onChange={(e) => setAllowMultipleSubmissions(e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Allow multiple submissions per user</span>
+                <span className="text-sm text-gray-700">{t('forms.create.allowMultiple')}</span>
               </label>
             </div>
           </div>
@@ -213,14 +217,14 @@ export function CreateFormPage({
               disabled={isCreating}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isCreating ? 'Creating...' : 'Create Form'}
+              {isCreating ? t('forms.create.creating') : t('forms.actions.createForm')}
             </button>
             <button
               type="button"
               onClick={onCancel}
               className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </form>
@@ -241,14 +245,14 @@ export function CreateFormPage({
               onClick={handleContinueToEdit}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Continue Editing
+              {t('forms.actions.continueEditing')}
             </button>
             <button
               type="button"
               onClick={onCancel}
               className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
             >
-              Save and Exit
+              {t('forms.actions.saveAndExit')}
             </button>
           </div>
         </>

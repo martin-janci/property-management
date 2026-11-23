@@ -151,6 +151,170 @@
       "timelinessText": "Zprávy by se měly zveřejňovat alespoň jednou ročně pro platformy s významnou uživatelskou základnou v EU."
     }
   },
+  "forms": {
+    "management": {
+      "title": "Správa formulářů"
+    },
+    "actions": {
+      "createForm": "Vytvořit formulář",
+      "create": "Vytvořit",
+      "search": "Hledat",
+      "view": "Zobrazit",
+      "edit": "Upravit",
+      "publish": "Publikovat",
+      "delete": "Odstranit",
+      "archive": "Archivovat",
+      "duplicate": "Duplikovat",
+      "back": "Zpět",
+      "backToForms": "Zpět na formuláře",
+      "downloadPdf": "Stáhnout PDF",
+      "fillOut": "Vyplnit",
+      "editForm": "Upravit formulář",
+      "continueEditing": "Pokračovat v úpravě",
+      "saveAndExit": "Uložit a zavřít",
+      "exportCsv": "Exportovat CSV",
+      "exportExcel": "Exportovat Excel",
+      "goBack": "Zpět",
+      "clearSignature": "Vymazat podpis",
+      "editField": "Upravit pole",
+      "deleteField": "Odstranit pole"
+    },
+    "filters": {
+      "allStatuses": "Všechny stavy",
+      "allCategories": "Všechny kategorie",
+      "searchPlaceholder": "Hledat formuláře..."
+    },
+    "status": {
+      "draft": "Koncept",
+      "published": "Publikováno",
+      "archived": "Archivováno"
+    },
+    "list": {
+      "emptyTitle": "Nebyly nalezeny žádné formuláře",
+      "emptyDescription": "Začněte vytvořením své první šablony formuláře.",
+      "emptyAction": "Vytvořit první formulář"
+    },
+    "pagination": {
+      "showing": "Zobrazeno {{from}} až {{to}} z {{total}}",
+      "pageOf": "Strana {{page}} z {{totalPages}}"
+    },
+    "card": {
+      "signatureRequired": "Vyžadován podpis",
+      "fieldsCount": "{{count}} polí",
+      "submissionsCount": "{{count}} odeslání",
+      "due": "Termín: {{date}}",
+      "iconCategory": "Kategorie",
+      "iconFields": "Pole",
+      "iconSubmissions": "Odeslání",
+      "iconDeadline": "Termín",
+      "noFormsIcon": "Žádné formuláře"
+    },
+    "renderer": {
+      "requiredField": "Toto pole je povinné",
+      "invalidEmail": "Zadejte platnou e-mailovou adresu",
+      "invalidPhone": "Zadejte platné telefonní číslo",
+      "signatureRequiredError": "Podpis je povinný",
+      "yes": "Ano",
+      "selectOption": "Vyberte možnost",
+      "signatureLegend": "Podpis",
+      "signaturePrompt": "Podepište se do pole níže",
+      "submitForm": "Odeslat formulář",
+      "submitting": "Odesílá se..."
+    },
+    "submissions": {
+      "title": "Odeslání formuláře",
+      "emptyTitle": "Zatím žádná odeslání",
+      "emptyDescription": "Odeslání se zde zobrazí, jakmile uživatelé vyplní tento formulář.",
+      "noSubmissionsIcon": "Žádná odeslání",
+      "approve": "Schválit",
+      "reject": "Zamítnout",
+      "status": {
+        "pending": "Čeká na posouzení",
+        "reviewed": "Posouzeno",
+        "approved": "Schváleno",
+        "rejected": "Zamítnuto"
+      },
+      "columns": {
+        "submittedBy": "Odeslal",
+        "form": "Formulář",
+        "status": "Stav",
+        "submittedAt": "Datum odeslání",
+        "reviewedAt": "Datum posouzení",
+        "actions": "Akce"
+      }
+    },
+    "builder": {
+      "addFields": "Přidat pole",
+      "formFields": "Pole formuláře",
+      "emptyTitle": "Zatím žádná pole",
+      "emptyDescription": "Kliknutím na typ pole v paletě jej přidáte do formuláře.",
+      "noFieldsIcon": "Žádná pole",
+      "optionsLabel": "Možnosti: {{options}}",
+      "newField": "Nové pole typu {{type}}",
+      "fieldLabel": "Popisek",
+      "requiredField": "Povinné pole",
+      "placeholderLabel": "Zástupný text",
+      "helpTextLabel": "Text nápovědy",
+      "optionsPerLine": "Možnosti (jedna na řádek)"
+    },
+    "fieldTypes": {
+      "text": "Text",
+      "textarea": "Dlouhý text",
+      "number": "Číslo",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "date": "Datum",
+      "datetime": "Datum a čas",
+      "checkbox": "Zaškrtávací pole",
+      "radio": "Přepínač",
+      "select": "Rozbalovací seznam",
+      "multiselect": "Vícenásobný výběr",
+      "file": "Nahrání souboru",
+      "signature": "Podpis"
+    },
+    "create": {
+      "title": "Vytvořit nový formulář",
+      "subtitleWithFields": "Přidejte pole do formuláře pomocí nástroje drag-and-drop.",
+      "subtitleBasic": "Začněte vyplněním základních údajů formuláře.",
+      "titleRequired": "Název formuláře je povinný",
+      "createFailed": "Formulář se nepodařilo vytvořit",
+      "addFieldFailed": "Pole se nepodařilo přidat",
+      "updateFieldFailed": "Pole se nepodařilo aktualizovat",
+      "deleteFieldFailed": "Pole se nepodařilo odstranit",
+      "reorderFieldsFailed": "Pořadí polí se nepodařilo změnit",
+      "formTitleLabel": "Název formuláře",
+      "formTitlePlaceholder": "např. Formulář žádosti o údržbu",
+      "descriptionLabel": "Popis",
+      "descriptionPlaceholder": "Popište účel tohoto formuláře...",
+      "categoryLabel": "Kategorie",
+      "categoryPlaceholder": "např. Údržba, Žádosti, Stížnosti",
+      "deadlineLabel": "Termín odeslání (volitelné)",
+      "requireSignature": "Vyžadovat digitální podpis",
+      "allowMultiple": "Povolit více odeslání na uživatele",
+      "creating": "Vytváří se..."
+    },
+    "view": {
+      "fields": "Pole",
+      "submissions": "Odeslání",
+      "pendingReview": "Čeká na posouzení",
+      "downloads": "Stažení",
+      "formPreview": "Náhled formuláře",
+      "submissionsTab": "Odeslání ({{count}})"
+    },
+    "fill": {
+      "expiredTitle": "Platnost formuláře vypršela",
+      "expiredDescription": "Termín pro tento formulář uplynul. Odpovědi již nelze odeslat.",
+      "signatureRequired": "Vyžadován podpis",
+      "expiredIcon": "Vypršelo",
+      "signatureRequiredIcon": "Vyžadován podpis"
+    },
+    "available": {
+      "title": "Dostupné formuláře",
+      "subtitle": "Procházejte a vyplňujte formuláře nebo si je stáhněte jako PDF.",
+      "emptyTitle": "Žádné dostupné formuláře",
+      "emptyDescription": "Momentálně nejsou k dispozici žádné formuláře k vyplnění."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Nástěnka moderování obsahu",

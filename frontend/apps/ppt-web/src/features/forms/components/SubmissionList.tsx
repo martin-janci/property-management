@@ -6,6 +6,7 @@
 
 import type { FormSubmissionStatus, FormSubmissionSummary } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getActiveLocale } from '../../../lib/locale';
 
 interface SubmissionListProps {
@@ -28,13 +29,6 @@ const statusColors: Record<FormSubmissionStatus, string> = {
   rejected: 'bg-red-100 text-red-800',
 };
 
-const statusLabels: Record<FormSubmissionStatus, string> = {
-  pending: 'Pending Review',
-  reviewed: 'Reviewed',
-  approved: 'Approved',
-  rejected: 'Rejected',
-};
-
 export function SubmissionList({
   submissions,
   total,
@@ -47,6 +41,7 @@ export function SubmissionList({
   onApprove,
   onReject,
 }: SubmissionListProps) {
+  const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<FormSubmissionStatus | ''>('');
   const totalPages = Math.ceil(total / pageSize);
 
@@ -59,18 +54,18 @@ export function SubmissionList({
     <div>
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-xl font-semibold text-gray-900">Form Submissions</h2>
+        <h2 className="text-xl font-semibold text-gray-900">{t('forms.submissions.title')}</h2>
         <div className="flex gap-4">
           <select
             value={statusFilter}
             onChange={(e) => handleStatusChange(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending Review</option>
-            <option value="reviewed">Reviewed</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+            <option value="">{t('forms.filters.allStatuses')}</option>
+            <option value="pending">{t('forms.submissions.status.pending')}</option>
+            <option value="reviewed">{t('forms.submissions.status.reviewed')}</option>
+            <option value="approved">{t('forms.submissions.status.approved')}</option>
+            <option value="rejected">{t('forms.submissions.status.rejected')}</option>
           </select>
         </div>
       </div>
@@ -88,7 +83,7 @@ export function SubmissionList({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>No submissions</title>
+            <title>{t('forms.submissions.noSubmissionsIcon')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -96,8 +91,8 @@ export function SubmissionList({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-lg font-medium mb-2">No submissions yet</p>
-          <p>Submissions will appear here once users fill out this form.</p>
+          <p className="text-lg font-medium mb-2">{t('forms.submissions.emptyTitle')}</p>
+          <p>{t('forms.submissions.emptyDescription')}</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -105,22 +100,22 @@ export function SubmissionList({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Submitted By
+                  {t('forms.submissions.columns.submittedBy')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Form
+                  {t('forms.submissions.columns.form')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  {t('forms.submissions.columns.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Submitted At
+                  {t('forms.submissions.columns.submittedAt')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Reviewed At
+                  {t('forms.submissions.columns.reviewedAt')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  {t('forms.submissions.columns.actions')}
                 </th>
               </tr>
             </thead>
@@ -141,7 +136,7 @@ export function SubmissionList({
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status]}`}
                       >
-                        {statusLabels[status]}
+                        {t(`forms.submissions.status.${status}`)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -159,7 +154,7 @@ export function SubmissionList({
                           onClick={() => onView(submission.id)}
                           className="text-blue-600 hover:text-blue-900"
                         >
-                          View
+                          {t('forms.actions.view')}
                         </button>
                         {isPending && (
                           <>
@@ -168,14 +163,14 @@ export function SubmissionList({
                               onClick={() => onApprove(submission.id)}
                               className="text-green-600 hover:text-green-900"
                             >
-                              Approve
+                              {t('forms.submissions.approve')}
                             </button>
                             <button
                               type="button"
                               onClick={() => onReject(submission.id)}
                               className="text-red-600 hover:text-red-900"
                             >
-                              Reject
+                              {t('forms.submissions.reject')}
                             </button>
                           </>
                         )}
@@ -193,7 +188,11 @@ export function SubmissionList({
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+            {t('forms.pagination.showing', {
+              from: (page - 1) * pageSize + 1,
+              to: Math.min(page * pageSize, total),
+              total,
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -202,18 +201,16 @@ export function SubmissionList({
               disabled={page === 1}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Previous
+              {t('common.previous')}
             </button>
-            <span className="px-3 py-1">
-              Page {page} of {totalPages}
-            </span>
+            <span className="px-3 py-1">{t('forms.pagination.pageOf', { page, totalPages })}</span>
             <button
               type="button"
               onClick={() => onPageChange(page + 1)}
               disabled={page === totalPages}
               className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </div>

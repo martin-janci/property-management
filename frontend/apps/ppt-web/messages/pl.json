@@ -151,6 +151,170 @@
       "timelinessText": "Raporty powinny być publikowane co najmniej raz w roku dla platform ze znaczącą bazą użytkowników w UE."
     }
   },
+  "forms": {
+    "management": {
+      "title": "Zarządzanie formularzami"
+    },
+    "actions": {
+      "createForm": "Utwórz formularz",
+      "create": "Utwórz",
+      "search": "Szukaj",
+      "view": "Wyświetl",
+      "edit": "Edytuj",
+      "publish": "Opublikuj",
+      "delete": "Usuń",
+      "archive": "Archiwizuj",
+      "duplicate": "Duplikuj",
+      "back": "Wstecz",
+      "backToForms": "Powrót do formularzy",
+      "downloadPdf": "Pobierz PDF",
+      "fillOut": "Wypełnij",
+      "editForm": "Edytuj formularz",
+      "continueEditing": "Kontynuuj edycję",
+      "saveAndExit": "Zapisz i zamknij",
+      "exportCsv": "Eksportuj CSV",
+      "exportExcel": "Eksportuj Excel",
+      "goBack": "Wróć",
+      "clearSignature": "Wyczyść podpis",
+      "editField": "Edytuj pole",
+      "deleteField": "Usuń pole"
+    },
+    "filters": {
+      "allStatuses": "Wszystkie statusy",
+      "allCategories": "Wszystkie kategorie",
+      "searchPlaceholder": "Szukaj formularzy..."
+    },
+    "status": {
+      "draft": "Wersja robocza",
+      "published": "Opublikowany",
+      "archived": "Zarchiwizowany"
+    },
+    "list": {
+      "emptyTitle": "Nie znaleziono formularzy",
+      "emptyDescription": "Zacznij od utworzenia swojego pierwszego szablonu formularza.",
+      "emptyAction": "Utwórz pierwszy formularz"
+    },
+    "pagination": {
+      "showing": "Wyświetlanie {{from}} do {{to}} z {{total}}",
+      "pageOf": "Strona {{page}} z {{totalPages}}"
+    },
+    "card": {
+      "signatureRequired": "Wymagany podpis",
+      "fieldsCount": "Pola: {{count}}",
+      "submissionsCount": "Zgłoszenia: {{count}}",
+      "due": "Termin: {{date}}",
+      "iconCategory": "Kategoria",
+      "iconFields": "Pola",
+      "iconSubmissions": "Zgłoszenia",
+      "iconDeadline": "Termin",
+      "noFormsIcon": "Brak formularzy"
+    },
+    "renderer": {
+      "requiredField": "To pole jest wymagane",
+      "invalidEmail": "Podaj prawidłowy adres e-mail",
+      "invalidPhone": "Podaj prawidłowy numer telefonu",
+      "signatureRequiredError": "Podpis jest wymagany",
+      "yes": "Tak",
+      "selectOption": "Wybierz opcję",
+      "signatureLegend": "Podpis",
+      "signaturePrompt": "Podpisz się w polu poniżej",
+      "submitForm": "Wyślij formularz",
+      "submitting": "Wysyłanie..."
+    },
+    "submissions": {
+      "title": "Zgłoszenia formularza",
+      "emptyTitle": "Brak zgłoszeń",
+      "emptyDescription": "Zgłoszenia pojawią się tutaj, gdy użytkownicy wypełnią ten formularz.",
+      "noSubmissionsIcon": "Brak zgłoszeń",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "status": {
+        "pending": "Oczekuje na przegląd",
+        "reviewed": "Sprawdzone",
+        "approved": "Zatwierdzone",
+        "rejected": "Odrzucone"
+      },
+      "columns": {
+        "submittedBy": "Zgłoszone przez",
+        "form": "Formularz",
+        "status": "Status",
+        "submittedAt": "Data zgłoszenia",
+        "reviewedAt": "Data przeglądu",
+        "actions": "Akcje"
+      }
+    },
+    "builder": {
+      "addFields": "Dodaj pola",
+      "formFields": "Pola formularza",
+      "emptyTitle": "Brak pól",
+      "emptyDescription": "Kliknij typ pola w palecie, aby dodać je do formularza.",
+      "noFieldsIcon": "Brak pól",
+      "optionsLabel": "Opcje: {{options}}",
+      "newField": "Nowe pole typu {{type}}",
+      "fieldLabel": "Etykieta",
+      "requiredField": "Pole wymagane",
+      "placeholderLabel": "Tekst zastępczy",
+      "helpTextLabel": "Tekst pomocy",
+      "optionsPerLine": "Opcje (jedna w wierszu)"
+    },
+    "fieldTypes": {
+      "text": "Tekst",
+      "textarea": "Długi tekst",
+      "number": "Liczba",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "date": "Data",
+      "datetime": "Data i godzina",
+      "checkbox": "Pole wyboru",
+      "radio": "Przycisk opcji",
+      "select": "Lista rozwijana",
+      "multiselect": "Wielokrotny wybór",
+      "file": "Przesyłanie pliku",
+      "signature": "Podpis"
+    },
+    "create": {
+      "title": "Utwórz nowy formularz",
+      "subtitleWithFields": "Dodaj pola do formularza za pomocą kreatora przeciągnij i upuść.",
+      "subtitleBasic": "Zacznij od wypełnienia podstawowych danych formularza.",
+      "titleRequired": "Tytuł formularza jest wymagany",
+      "createFailed": "Nie udało się utworzyć formularza",
+      "addFieldFailed": "Nie udało się dodać pola",
+      "updateFieldFailed": "Nie udało się zaktualizować pola",
+      "deleteFieldFailed": "Nie udało się usunąć pola",
+      "reorderFieldsFailed": "Nie udało się zmienić kolejności pól",
+      "formTitleLabel": "Tytuł formularza",
+      "formTitlePlaceholder": "np. Formularz zgłoszenia konserwacji",
+      "descriptionLabel": "Opis",
+      "descriptionPlaceholder": "Opisz cel tego formularza...",
+      "categoryLabel": "Kategoria",
+      "categoryPlaceholder": "np. Konserwacja, Wnioski, Skargi",
+      "deadlineLabel": "Termin zgłoszenia (opcjonalnie)",
+      "requireSignature": "Wymagaj podpisu cyfrowego",
+      "allowMultiple": "Zezwalaj na wiele zgłoszeń na użytkownika",
+      "creating": "Tworzenie..."
+    },
+    "view": {
+      "fields": "Pola",
+      "submissions": "Zgłoszenia",
+      "pendingReview": "Oczekuje na przegląd",
+      "downloads": "Pobrania",
+      "formPreview": "Podgląd formularza",
+      "submissionsTab": "Zgłoszenia ({{count}})"
+    },
+    "fill": {
+      "expiredTitle": "Formularz wygasł",
+      "expiredDescription": "Termin dla tego formularza minął. Nie możesz już przesyłać odpowiedzi.",
+      "signatureRequired": "Wymagany podpis",
+      "expiredIcon": "Wygasł",
+      "signatureRequiredIcon": "Wymagany podpis"
+    },
+    "available": {
+      "title": "Dostępne formularze",
+      "subtitle": "Przeglądaj i wypełniaj formularze lub pobierz je w formacie PDF.",
+      "emptyTitle": "Brak dostępnych formularzy",
+      "emptyDescription": "Obecnie nie ma formularzy dostępnych do wypełnienia."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Panel moderacji treści",

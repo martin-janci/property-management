@@ -151,6 +151,170 @@
       "timelinessText": "Reports should be published at least annually for platforms with significant EU user bases."
     }
   },
+  "forms": {
+    "management": {
+      "title": "Forms Management"
+    },
+    "actions": {
+      "createForm": "Create Form",
+      "create": "Create",
+      "search": "Search",
+      "view": "View",
+      "edit": "Edit",
+      "publish": "Publish",
+      "delete": "Delete",
+      "archive": "Archive",
+      "duplicate": "Duplicate",
+      "back": "Back",
+      "backToForms": "Back to Forms",
+      "downloadPdf": "Download PDF",
+      "fillOut": "Fill Out",
+      "editForm": "Edit Form",
+      "continueEditing": "Continue Editing",
+      "saveAndExit": "Save and Exit",
+      "exportCsv": "Export CSV",
+      "exportExcel": "Export Excel",
+      "goBack": "Go Back",
+      "clearSignature": "Clear signature",
+      "editField": "Edit field",
+      "deleteField": "Delete field"
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allCategories": "All Categories",
+      "searchPlaceholder": "Search forms..."
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "list": {
+      "emptyTitle": "No forms found",
+      "emptyDescription": "Get started by creating your first form template.",
+      "emptyAction": "Create your first form"
+    },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}}",
+      "pageOf": "Page {{page}} of {{totalPages}}"
+    },
+    "card": {
+      "signatureRequired": "Signature Required",
+      "fieldsCount": "{{count}} fields",
+      "submissionsCount": "{{count}} submissions",
+      "due": "Due: {{date}}",
+      "iconCategory": "Category",
+      "iconFields": "Fields",
+      "iconSubmissions": "Submissions",
+      "iconDeadline": "Deadline",
+      "noFormsIcon": "No forms"
+    },
+    "renderer": {
+      "requiredField": "This field is required",
+      "invalidEmail": "Please enter a valid email address",
+      "invalidPhone": "Please enter a valid phone number",
+      "signatureRequiredError": "Signature is required",
+      "yes": "Yes",
+      "selectOption": "Select an option",
+      "signatureLegend": "Signature",
+      "signaturePrompt": "Please sign in the box below",
+      "submitForm": "Submit Form",
+      "submitting": "Submitting..."
+    },
+    "submissions": {
+      "title": "Form Submissions",
+      "emptyTitle": "No submissions yet",
+      "emptyDescription": "Submissions will appear here once users fill out this form.",
+      "noSubmissionsIcon": "No submissions",
+      "approve": "Approve",
+      "reject": "Reject",
+      "status": {
+        "pending": "Pending Review",
+        "reviewed": "Reviewed",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "columns": {
+        "submittedBy": "Submitted By",
+        "form": "Form",
+        "status": "Status",
+        "submittedAt": "Submitted At",
+        "reviewedAt": "Reviewed At",
+        "actions": "Actions"
+      }
+    },
+    "builder": {
+      "addFields": "Add Fields",
+      "formFields": "Form Fields",
+      "emptyTitle": "No fields yet",
+      "emptyDescription": "Click on a field type from the palette to add it to your form.",
+      "noFieldsIcon": "No fields",
+      "optionsLabel": "Options: {{options}}",
+      "newField": "New {{type}} field",
+      "fieldLabel": "Label",
+      "requiredField": "Required field",
+      "placeholderLabel": "Placeholder",
+      "helpTextLabel": "Help Text",
+      "optionsPerLine": "Options (one per line)"
+    },
+    "fieldTypes": {
+      "text": "Text",
+      "textarea": "Long Text",
+      "number": "Number",
+      "email": "Email",
+      "phone": "Phone",
+      "date": "Date",
+      "datetime": "Date & Time",
+      "checkbox": "Checkbox",
+      "radio": "Radio",
+      "select": "Dropdown",
+      "multiselect": "Multi-Select",
+      "file": "File Upload",
+      "signature": "Signature"
+    },
+    "create": {
+      "title": "Create New Form",
+      "subtitleWithFields": "Add fields to your form using the drag-and-drop builder.",
+      "subtitleBasic": "Start by filling in the basic form details.",
+      "titleRequired": "Form title is required",
+      "createFailed": "Failed to create form",
+      "addFieldFailed": "Failed to add field",
+      "updateFieldFailed": "Failed to update field",
+      "deleteFieldFailed": "Failed to delete field",
+      "reorderFieldsFailed": "Failed to reorder fields",
+      "formTitleLabel": "Form Title",
+      "formTitlePlaceholder": "e.g., Maintenance Request Form",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe the purpose of this form...",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "e.g., Maintenance, Requests, Complaints",
+      "deadlineLabel": "Submission Deadline (optional)",
+      "requireSignature": "Require digital signature",
+      "allowMultiple": "Allow multiple submissions per user",
+      "creating": "Creating..."
+    },
+    "view": {
+      "fields": "Fields",
+      "submissions": "Submissions",
+      "pendingReview": "Pending Review",
+      "downloads": "Downloads",
+      "formPreview": "Form Preview",
+      "submissionsTab": "Submissions ({{count}})"
+    },
+    "fill": {
+      "expiredTitle": "Form Expired",
+      "expiredDescription": "The deadline for this form has passed. You can no longer submit responses.",
+      "signatureRequired": "Signature Required",
+      "expiredIcon": "Expired",
+      "signatureRequiredIcon": "Signature required"
+    },
+    "available": {
+      "title": "Available Forms",
+      "subtitle": "Browse and fill out forms, or download them as PDF.",
+      "emptyTitle": "No forms available",
+      "emptyDescription": "There are no forms available for you to fill out at this time."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Content Moderation Dashboard",

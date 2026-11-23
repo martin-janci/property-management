@@ -5,6 +5,7 @@
  */
 
 import type { FormStatus, FormSummary } from '@ppt/api-client';
+import { useTranslation } from 'react-i18next';
 import { getActiveLocale } from '../../../lib/locale';
 
 interface FormCardProps {
@@ -23,12 +24,6 @@ const statusColors: Record<FormStatus, string> = {
   archived: 'bg-gray-100 text-gray-800',
 };
 
-const statusLabels: Record<FormStatus, string> = {
-  draft: 'Draft',
-  published: 'Published',
-  archived: 'Archived',
-};
-
 export function FormCard({
   form,
   onView,
@@ -38,6 +33,7 @@ export function FormCard({
   onArchive,
   onDuplicate,
 }: FormCardProps) {
+  const { t } = useTranslation();
   const status = form.status as FormStatus;
   const isDraft = status === 'draft';
   const isPublished = status === 'published';
@@ -51,11 +47,11 @@ export function FormCard({
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[status]}`}
             >
-              {statusLabels[status]}
+              {t(`forms.status.${status}`)}
             </span>
             {form.requireSignatures && (
               <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                Signature Required
+                {t('forms.card.signatureRequired')}
               </span>
             )}
           </div>
@@ -68,7 +64,7 @@ export function FormCard({
             {form.category && (
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <title>Category</title>
+                  <title>{t('forms.card.iconCategory')}</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -81,7 +77,7 @@ export function FormCard({
             )}
             <span className="flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Fields</title>
+                <title>{t('forms.card.iconFields')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -89,11 +85,11 @@ export function FormCard({
                   d="M4 6h16M4 10h16M4 14h16M4 18h16"
                 />
               </svg>
-              {form.fieldCount} fields
+              {t('forms.card.fieldsCount', { count: form.fieldCount })}
             </span>
             <span className="flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Submissions</title>
+                <title>{t('forms.card.iconSubmissions')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -101,12 +97,12 @@ export function FormCard({
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              {form.submissionCount} submissions
+              {t('forms.card.submissionsCount', { count: form.submissionCount })}
             </span>
             {form.submissionDeadline && (
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <title>Deadline</title>
+                  <title>{t('forms.card.iconDeadline')}</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -114,7 +110,9 @@ export function FormCard({
                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
-                Due: {new Date(form.submissionDeadline).toLocaleDateString(getActiveLocale())}
+                {t('forms.card.due', {
+                  date: new Date(form.submissionDeadline).toLocaleDateString(getActiveLocale()),
+                })}
               </span>
             )}
           </div>
@@ -126,10 +124,10 @@ export function FormCard({
             type="button"
             onClick={() => onView(form.id)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-            title="View"
+            title={t('forms.actions.view')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <title>View</title>
+              <title>{t('forms.actions.view')}</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -151,10 +149,10 @@ export function FormCard({
                 type="button"
                 onClick={() => onEdit(form.id)}
                 className="p-2 text-blue-400 hover:text-blue-600 rounded-md hover:bg-blue-50"
-                title="Edit"
+                title={t('forms.actions.edit')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <title>Edit</title>
+                  <title>{t('forms.actions.edit')}</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -168,10 +166,10 @@ export function FormCard({
                 type="button"
                 onClick={() => onPublish(form.id)}
                 className="p-2 text-green-400 hover:text-green-600 rounded-md hover:bg-green-50"
-                title="Publish"
+                title={t('forms.actions.publish')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <title>Publish</title>
+                  <title>{t('forms.actions.publish')}</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -185,10 +183,10 @@ export function FormCard({
                 type="button"
                 onClick={() => onDelete(form.id)}
                 className="p-2 text-red-400 hover:text-red-600 rounded-md hover:bg-red-50"
-                title="Delete"
+                title={t('forms.actions.delete')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <title>Delete</title>
+                  <title>{t('forms.actions.delete')}</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -205,10 +203,10 @@ export function FormCard({
               type="button"
               onClick={() => onArchive(form.id)}
               className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-              title="Archive"
+              title={t('forms.actions.archive')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <title>Archive</title>
+                <title>{t('forms.actions.archive')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -223,10 +221,10 @@ export function FormCard({
             type="button"
             onClick={() => onDuplicate(form.id)}
             className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-            title="Duplicate"
+            title={t('forms.actions.duplicate')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <title>Duplicate</title>
+              <title>{t('forms.actions.duplicate')}</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

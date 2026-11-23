@@ -151,6 +151,170 @@
       "timelinessText": "A jelentéseket legalább évente közzé kell tenni a jelentős uniós felhasználói bázissal rendelkező platformok esetében."
     }
   },
+  "forms": {
+    "management": {
+      "title": "Űrlapok kezelése"
+    },
+    "actions": {
+      "createForm": "Űrlap létrehozása",
+      "create": "Létrehozás",
+      "search": "Keresés",
+      "view": "Megtekintés",
+      "edit": "Szerkesztés",
+      "publish": "Közzététel",
+      "delete": "Törlés",
+      "archive": "Archiválás",
+      "duplicate": "Másolat",
+      "back": "Vissza",
+      "backToForms": "Vissza az űrlapokhoz",
+      "downloadPdf": "PDF letöltése",
+      "fillOut": "Kitöltés",
+      "editForm": "Űrlap szerkesztése",
+      "continueEditing": "Szerkesztés folytatása",
+      "saveAndExit": "Mentés és kilépés",
+      "exportCsv": "CSV exportálása",
+      "exportExcel": "Excel exportálása",
+      "goBack": "Vissza",
+      "clearSignature": "Aláírás törlése",
+      "editField": "Mező szerkesztése",
+      "deleteField": "Mező törlése"
+    },
+    "filters": {
+      "allStatuses": "Minden állapot",
+      "allCategories": "Minden kategória",
+      "searchPlaceholder": "Űrlapok keresése..."
+    },
+    "status": {
+      "draft": "Vázlat",
+      "published": "Közzétéve",
+      "archived": "Archiválva"
+    },
+    "list": {
+      "emptyTitle": "Nem található űrlap",
+      "emptyDescription": "Kezdje az első űrlapsablon létrehozásával.",
+      "emptyAction": "Első űrlap létrehozása"
+    },
+    "pagination": {
+      "showing": "{{from}}–{{to}} megjelenítése, összesen {{total}}",
+      "pageOf": "{{page}}. oldal, összesen {{totalPages}}"
+    },
+    "card": {
+      "signatureRequired": "Aláírás szükséges",
+      "fieldsCount": "{{count}} mező",
+      "submissionsCount": "{{count}} beküldés",
+      "due": "Határidő: {{date}}",
+      "iconCategory": "Kategória",
+      "iconFields": "Mezők",
+      "iconSubmissions": "Beküldések",
+      "iconDeadline": "Határidő",
+      "noFormsIcon": "Nincs űrlap"
+    },
+    "renderer": {
+      "requiredField": "Ez a mező kötelező",
+      "invalidEmail": "Adjon meg érvényes e-mail-címet",
+      "invalidPhone": "Adjon meg érvényes telefonszámot",
+      "signatureRequiredError": "Az aláírás kötelező",
+      "yes": "Igen",
+      "selectOption": "Válasszon egy lehetőséget",
+      "signatureLegend": "Aláírás",
+      "signaturePrompt": "Írjon alá az alábbi mezőben",
+      "submitForm": "Űrlap beküldése",
+      "submitting": "Beküldés..."
+    },
+    "submissions": {
+      "title": "Űrlapbeküldések",
+      "emptyTitle": "Még nincs beküldés",
+      "emptyDescription": "A beküldések itt jelennek meg, miután a felhasználók kitöltik ezt az űrlapot.",
+      "noSubmissionsIcon": "Nincs beküldés",
+      "approve": "Jóváhagyás",
+      "reject": "Elutasítás",
+      "status": {
+        "pending": "Felülvizsgálatra vár",
+        "reviewed": "Felülvizsgálva",
+        "approved": "Jóváhagyva",
+        "rejected": "Elutasítva"
+      },
+      "columns": {
+        "submittedBy": "Beküldő",
+        "form": "Űrlap",
+        "status": "Állapot",
+        "submittedAt": "Beküldés ideje",
+        "reviewedAt": "Felülvizsgálat ideje",
+        "actions": "Műveletek"
+      }
+    },
+    "builder": {
+      "addFields": "Mezők hozzáadása",
+      "formFields": "Űrlapmezők",
+      "emptyTitle": "Még nincs mező",
+      "emptyDescription": "Kattintson egy mezőtípusra a palettán, hogy hozzáadja az űrlaphoz.",
+      "noFieldsIcon": "Nincs mező",
+      "optionsLabel": "Lehetőségek: {{options}}",
+      "newField": "Új {{type}} mező",
+      "fieldLabel": "Címke",
+      "requiredField": "Kötelező mező",
+      "placeholderLabel": "Helykitöltő",
+      "helpTextLabel": "Súgószöveg",
+      "optionsPerLine": "Lehetőségek (soronként egy)"
+    },
+    "fieldTypes": {
+      "text": "Szöveg",
+      "textarea": "Hosszú szöveg",
+      "number": "Szám",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "date": "Dátum",
+      "datetime": "Dátum és idő",
+      "checkbox": "Jelölőnégyzet",
+      "radio": "Választógomb",
+      "select": "Legördülő lista",
+      "multiselect": "Többszörös választás",
+      "file": "Fájlfeltöltés",
+      "signature": "Aláírás"
+    },
+    "create": {
+      "title": "Új űrlap létrehozása",
+      "subtitleWithFields": "Adjon hozzá mezőket az űrlaphoz a fogd és vidd szerkesztővel.",
+      "subtitleBasic": "Kezdje az űrlap alapadatainak kitöltésével.",
+      "titleRequired": "Az űrlap címe kötelező",
+      "createFailed": "Az űrlap létrehozása nem sikerült",
+      "addFieldFailed": "A mező hozzáadása nem sikerült",
+      "updateFieldFailed": "A mező frissítése nem sikerült",
+      "deleteFieldFailed": "A mező törlése nem sikerült",
+      "reorderFieldsFailed": "A mezők átrendezése nem sikerült",
+      "formTitleLabel": "Űrlap címe",
+      "formTitlePlaceholder": "pl. Karbantartási kérelem űrlap",
+      "descriptionLabel": "Leírás",
+      "descriptionPlaceholder": "Írja le az űrlap célját...",
+      "categoryLabel": "Kategória",
+      "categoryPlaceholder": "pl. Karbantartás, Kérelmek, Panaszok",
+      "deadlineLabel": "Beküldési határidő (opcionális)",
+      "requireSignature": "Digitális aláírás megkövetelése",
+      "allowMultiple": "Több beküldés engedélyezése felhasználónként",
+      "creating": "Létrehozás..."
+    },
+    "view": {
+      "fields": "Mezők",
+      "submissions": "Beküldések",
+      "pendingReview": "Felülvizsgálatra vár",
+      "downloads": "Letöltések",
+      "formPreview": "Űrlap előnézete",
+      "submissionsTab": "Beküldések ({{count}})"
+    },
+    "fill": {
+      "expiredTitle": "Az űrlap lejárt",
+      "expiredDescription": "Az űrlap határideje lejárt. Többé nem küldhet be választ.",
+      "signatureRequired": "Aláírás szükséges",
+      "expiredIcon": "Lejárt",
+      "signatureRequiredIcon": "Aláírás szükséges"
+    },
+    "available": {
+      "title": "Elérhető űrlapok",
+      "subtitle": "Böngésszen és töltsön ki űrlapokat, vagy töltse le őket PDF formátumban.",
+      "emptyTitle": "Nincs elérhető űrlap",
+      "emptyDescription": "Jelenleg nincs kitölthető űrlap."
+    }
+  },
   "moderation": {
     "dashboard": {
       "title": "Tartalommoderálási irányítópult",

@@ -6,6 +6,7 @@
 
 import type { CreateFormField, FormField, FormFieldType } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface FormBuilderProps {
   fields: FormField[];
@@ -16,20 +17,21 @@ interface FormBuilderProps {
   onReorderFields: (fieldIds: string[]) => void;
 }
 
-const fieldTypes: { type: FormFieldType; label: string; icon: string }[] = [
-  { type: 'text', label: 'Text', icon: 'Aa' },
-  { type: 'textarea', label: 'Long Text', icon: 'Tt' },
-  { type: 'number', label: 'Number', icon: '#' },
-  { type: 'email', label: 'Email', icon: '@' },
-  { type: 'phone', label: 'Phone', icon: 'Tel' },
-  { type: 'date', label: 'Date', icon: 'Cal' },
-  { type: 'datetime', label: 'Date & Time', icon: 'DT' },
-  { type: 'checkbox', label: 'Checkbox', icon: 'Chk' },
-  { type: 'radio', label: 'Radio', icon: 'Rad' },
-  { type: 'select', label: 'Dropdown', icon: 'Sel' },
-  { type: 'multiselect', label: 'Multi-Select', icon: 'MSel' },
-  { type: 'file', label: 'File Upload', icon: 'File' },
-  { type: 'signature', label: 'Signature', icon: 'Sig' },
+// Labels are resolved via t(`forms.fieldTypes.${type}`) at render time.
+const fieldTypes: { type: FormFieldType; icon: string }[] = [
+  { type: 'text', icon: 'Aa' },
+  { type: 'textarea', icon: 'Tt' },
+  { type: 'number', icon: '#' },
+  { type: 'email', icon: '@' },
+  { type: 'phone', icon: 'Tel' },
+  { type: 'date', icon: 'Cal' },
+  { type: 'datetime', icon: 'DT' },
+  { type: 'checkbox', icon: 'Chk' },
+  { type: 'radio', icon: 'Rad' },
+  { type: 'select', icon: 'Sel' },
+  { type: 'multiselect', icon: 'MSel' },
+  { type: 'file', icon: 'File' },
+  { type: 'signature', icon: 'Sig' },
 ];
 
 export function FormBuilder({
@@ -40,6 +42,7 @@ export function FormBuilder({
   onDeleteField,
   onReorderFields,
 }: FormBuilderProps) {
+  const { t } = useTranslation();
   const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
 
@@ -69,7 +72,7 @@ export function FormBuilder({
 
   const handleAddField = (type: FormFieldType) => {
     onAddField({
-      label: `New ${type} field`,
+      label: t('forms.builder.newField', { type: t(`forms.fieldTypes.${type}`) }),
       fieldType: type,
       required: false,
       sortOrder: fields.length,
@@ -82,9 +85,11 @@ export function FormBuilder({
       {isEditing && (
         <div className="lg:col-span-1">
           <div className="bg-gray-50 rounded-lg p-4 sticky top-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Add Fields</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              {t('forms.builder.addFields')}
+            </h3>
             <div className="grid grid-cols-2 gap-2">
-              {fieldTypes.map(({ type, label, icon }) => (
+              {fieldTypes.map(({ type, icon }) => (
                 <button
                   key={type}
                   type="button"
@@ -92,7 +97,7 @@ export function FormBuilder({
                   className="flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
                 >
                   <span className="text-xs font-mono text-gray-500 mb-1">{icon}</span>
-                  <span className="text-xs text-gray-700">{label}</span>
+                  <span className="text-xs text-gray-700">{t(`forms.fieldTypes.${type}`)}</span>
                 </button>
               ))}
             </div>
@@ -103,7 +108,9 @@ export function FormBuilder({
       {/* Form Preview / Builder */}
       <div className={isEditing ? 'lg:col-span-3' : 'lg:col-span-4'}>
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Form Fields</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            {t('forms.builder.formFields')}
+          </h3>
 
           {fields.length === 0 ? (
             <div className="text-center py-12 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
@@ -113,7 +120,7 @@ export function FormBuilder({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <title>No fields</title>
+                <title>{t('forms.builder.noFieldsIcon')}</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -121,8 +128,8 @@ export function FormBuilder({
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              <p className="text-lg font-medium mb-2">No fields yet</p>
-              <p>Click on a field type from the palette to add it to your form.</p>
+              <p className="text-lg font-medium mb-2">{t('forms.builder.emptyTitle')}</p>
+              <p>{t('forms.builder.emptyDescription')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -175,6 +182,7 @@ interface FieldPreviewProps {
 }
 
 function FieldPreview({ field, isEditing, onEdit, onDelete }: FieldPreviewProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-start justify-between">
       <div className="flex-1">
@@ -190,7 +198,9 @@ function FieldPreview({ field, isEditing, onEdit, onDelete }: FieldPreviewProps)
         {field.helpText && <p className="text-sm text-gray-500">{field.helpText}</p>}
         {field.options && field.options.length > 0 && (
           <p className="text-xs text-gray-400 mt-1">
-            Options: {field.options.map((o) => o.label).join(', ')}
+            {t('forms.builder.optionsLabel', {
+              options: field.options.map((o) => o.label).join(', '),
+            })}
           </p>
         )}
       </div>
@@ -200,10 +210,10 @@ function FieldPreview({ field, isEditing, onEdit, onDelete }: FieldPreviewProps)
             type="button"
             onClick={onEdit}
             className="p-1 text-gray-400 hover:text-blue-600"
-            title="Edit field"
+            title={t('forms.actions.editField')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <title>Edit</title>
+              <title>{t('forms.actions.edit')}</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -216,10 +226,10 @@ function FieldPreview({ field, isEditing, onEdit, onDelete }: FieldPreviewProps)
             type="button"
             onClick={onDelete}
             className="p-1 text-gray-400 hover:text-red-600"
-            title="Delete field"
+            title={t('forms.actions.deleteField')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <title>Delete</title>
+              <title>{t('forms.actions.delete')}</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -242,6 +252,7 @@ interface FieldEditorProps {
 }
 
 function FieldEditor({ field, onSave, onCancel }: FieldEditorProps) {
+  const { t } = useTranslation();
   const [label, setLabel] = useState(field.label);
   const [required, setRequired] = useState(field.required);
   const [placeholder, setPlaceholder] = useState(field.placeholder || '');
@@ -271,7 +282,9 @@ function FieldEditor({ field, onSave, onCancel }: FieldEditorProps) {
   return (
     <div className="space-y-4">
       <label className="block">
-        <span className="block text-sm font-medium text-gray-700 mb-1">Label</span>
+        <span className="block text-sm font-medium text-gray-700 mb-1">
+          {t('forms.builder.fieldLabel')}
+        </span>
         <input
           type="text"
           value={label}
@@ -287,11 +300,13 @@ function FieldEditor({ field, onSave, onCancel }: FieldEditorProps) {
           onChange={(e) => setRequired(e.target.checked)}
           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
-        <span className="text-sm text-gray-700">Required field</span>
+        <span className="text-sm text-gray-700">{t('forms.builder.requiredField')}</span>
       </label>
 
       <label className="block">
-        <span className="block text-sm font-medium text-gray-700 mb-1">Placeholder</span>
+        <span className="block text-sm font-medium text-gray-700 mb-1">
+          {t('forms.builder.placeholderLabel')}
+        </span>
         <input
           type="text"
           value={placeholder}
@@ -301,7 +316,9 @@ function FieldEditor({ field, onSave, onCancel }: FieldEditorProps) {
       </label>
 
       <label className="block">
-        <span className="block text-sm font-medium text-gray-700 mb-1">Help Text</span>
+        <span className="block text-sm font-medium text-gray-700 mb-1">
+          {t('forms.builder.helpTextLabel')}
+        </span>
         <input
           type="text"
           value={helpText}
@@ -313,7 +330,7 @@ function FieldEditor({ field, onSave, onCancel }: FieldEditorProps) {
       {needsOptions && (
         <label className="block">
           <span className="block text-sm font-medium text-gray-700 mb-1">
-            Options (one per line)
+            {t('forms.builder.optionsPerLine')}
           </span>
           <textarea
             value={options}
@@ -330,14 +347,14 @@ function FieldEditor({ field, onSave, onCancel }: FieldEditorProps) {
           onClick={handleSave}
           className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
         >
-          Save
+          {t('common.save')}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="px-3 py-1.5 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </div>
