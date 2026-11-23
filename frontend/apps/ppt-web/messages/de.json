@@ -1829,6 +1829,9 @@
         "loadErrorRetrying": "Wird wiederholt…"
       },
       "timeline": {
+        "loadError": "Aktivitätsprotokoll konnte nicht geladen werden.",
+        "loadErrorRetry": "Erneut versuchen",
+        "loadErrorRetrying": "Wird wiederholt…",
         "icon": {
           "disputeFiled": "Streitigkeit eingereicht",
           "statusChanged": "Status geändert",
