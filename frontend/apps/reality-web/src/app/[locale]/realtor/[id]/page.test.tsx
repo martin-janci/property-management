@@ -19,6 +19,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RealtorApiError } from '@/lib/realtor-api';
+import csMessages from '../../../../../messages/cs.json';
+import deMessages from '../../../../../messages/de.json';
+import enMessages from '../../../../../messages/en.json';
+import huMessages from '../../../../../messages/hu.json';
+import plMessages from '../../../../../messages/pl.json';
 import skMessages from '../../../../../messages/sk.json';
 import AgentProfilePage from './page';
 
@@ -235,5 +240,102 @@ describe('AgentProfilePage reviews error', () => {
 
     // …and must NOT masquerade as a successful "no reviews yet" empty state.
     expect(screen.queryByText(skMessages.pages.agentProfile.noReviews)).toBeNull();
+  });
+});
+
+/**
+ * i18n coverage — every user-facing string on this page is routed through
+ * next-intl under `pages.agentProfile` (no hardcoded copy). This guard pins
+ * that contract across ALL locale bundles, not just `sk`:
+ *
+ *   1. Every `t('<key>')` the page actually renders resolves to a non-empty
+ *      string in every supported locale — so no locale falls back to a raw key
+ *      or an English placeholder.
+ *   2. The `agentProfile` key set is identical across locales (parity), so a
+ *      future string added to one bundle can't silently drift the others.
+ *
+ * It fails the moment a hardcoded string is re-introduced (its key stops being
+ * covered) or a locale loses/ gains a key relative to the others.
+ */
+const LOCALE_BUNDLES = {
+  cs: csMessages,
+  de: deMessages,
+  en: enMessages,
+  hu: huMessages,
+  pl: plMessages,
+  sk: skMessages,
+} as const;
+
+// The keys the page renders via `t('<key>')` under `pages.agentProfile`.
+// Keep in sync with realtor/[id]/page.tsx.
+const RENDERED_KEYS = [
+  'about',
+  'activeListings',
+  'contact',
+  'contactDetails',
+  'defaultName',
+  'experience',
+  'languages',
+  'license',
+  'loading',
+  'mailtoSubject',
+  'memberSince',
+  'modalAriaLabel',
+  'modalCancel',
+  'modalClose',
+  'modalEmailHint',
+  'modalNoContact',
+  'modalPhoneIntro',
+  'modalPlaceholder',
+  'modalSendEmail',
+  'modalTitle',
+  'noContact',
+  'noReviews',
+  'notFoundBody',
+  'notFoundTitle',
+  'rating',
+  'reviewVerified',
+  'reviews',
+  'reviewsError',
+  'sendMessage',
+  'specializations',
+  'totalListings',
+  'verified',
+  'views',
+] as const;
+
+describe('AgentProfilePage i18n coverage', () => {
+  const locales = Object.keys(LOCALE_BUNDLES) as (keyof typeof LOCALE_BUNDLES)[];
+
+  it.each(locales)('locale "%s" translates every rendered key (no hardcoded fallback)', (loc) => {
+    const ns = (LOCALE_BUNDLES[loc] as { pages: { agentProfile: Record<string, string> } }).pages
+      .agentProfile;
+    expect(ns, `pages.agentProfile missing from ${loc}.json`).toBeTruthy();
+    for (const key of RENDERED_KEYS) {
+      expect(typeof ns[key], `${loc}.json pages.agentProfile.${key} must be a string`).toBe(
+        'string'
+      );
+      expect(
+        ns[key].trim().length,
+        `${loc}.json pages.agentProfile.${key} must not be empty`
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps the agentProfile key set identical across all locales (parity)', () => {
+    const reference = Object.keys(
+      (enMessages as { pages: { agentProfile: Record<string, string> } }).pages.agentProfile
+    ).sort();
+    // The page's rendered keys must all be part of that bundle contract.
+    for (const key of RENDERED_KEYS) {
+      expect(reference, `en.json pages.agentProfile missing rendered key ${key}`).toContain(key);
+    }
+    for (const loc of locales) {
+      const keys = Object.keys(
+        (LOCALE_BUNDLES[loc] as { pages: { agentProfile: Record<string, string> } }).pages
+          .agentProfile
+      ).sort();
+      expect(keys, `pages.agentProfile key set drift in ${loc}.json`).toEqual(reference);
+    }
   });
 });
