@@ -1,36 +1,36 @@
-# pm-scrum-master — 2026-11-22
+# pm-scrum-master — 2026-11-23
 
 _Phase 1.6 — static, read-only. Cloud routine run._
 
 ## Summary
 
-26 PRs merged in-window (#3687-#3712) — a frontend-heavy wave (WS token-leak, invoice empty-items, admin console contract, logout cache purge, 2 i18n i18n drafts landed) plus three pm-integration/pm-scrum-master follow-ups from the 2026-11-21 action list. Delivery sprint remains `done` (hardening track active); 5 drafts open, 1 new follow-up issue (#3711) filed.
+24 PRs merged in-window (#3713–#3737) — overwhelmingly dispatcher output: 11 `code-review-*` fixes across api-handlers/api-core/ppt-web-ui/reality-server, 5 `pm-frontend/pm-backend/pm-scrum-master` carried actions closing out, 2 legitimate bugfixes (#3723 ppt-web mediation-sessions swallowed error surfaced, #3725 FCM 2xx body-parse → delivered), 1 feature (#3727 operator roster endpoint), 1 screen-doc (#3728 lease-create reconcile). The 2026-11-21 dispatcher stall #3357 unblocked via #3718 (key-union i18n merge-conflict resolver). Delivery sprint remains `done`; hardening track active. 8 drafts open (7 i18n-flip-adjacent, all updated 2h-4h ago); 1 open follow-up issue #3738 (SSO sessions sort hot-path, PR #3744 already drafted). i18n warn→error flip T-8d.
 
 ## Next actions
 
 | Priority | Action | Dependency | Definition of done |
 |---|---|---|---|
-| high | Land the 2026-12-01 i18n warn→error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days | pm-frontend | frontend/apps/mobile no-hardcoded-strings = 0 warnings on dev; lint flipped warn→error without CI break |
-| high | Resolve dispatcher stall #3357 — 3 approved PRs still blocked on non-mechanical conflicts across TWO merge waves (32 + 26 PRs) | pm-tech-lead | #3357 closed; dispatcher backlog claimable > 20/72 |
+| high | i18n warn→error flip countdown 8d (2026-12-01). Promote-or-close drafts #3740/#3741 (reality-web locale), #3739 (realtor/[id] parity), #3742 (ppt-web Registry Rules), #3676 (mobile-rn raw status). | pm-frontend | All i18n-flip drafts either merged, converted, or formally deferred by 2026-11-29 |
+| high | Resolve dispatcher stall #3357 — reviewer-approved PRs still blocked across two merge waves (82+ PRs). #3718 landed the mechanical resolver; non-mechanical conflicts remain. | pm-tech-lead | #3357 closed; non-mechanical conflicts manually rebased OR closed with a note |
 | high | Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable | pm-devops | cloud runner can `./gradlew build` KMP targets; backend compiles with swagger-ui dist |
-| medium | Characterize the post-split push/ + voice_webhooks/ + oauth_integration_tests/ child modules (watch-* in current_sprint) and promote to specific refactor tasks | pm-backend | each watch-* item either has a concrete split task or is closed as sized-OK |
-| medium | Triage new issue #3711 (dispatcher signals-promote dev-truth guard follow-up) into the dispatcher-reliability track | pm-tech-lead | #3711 has an owner, a plan, and lands or closes within one sprint-week |
-| medium | Promote-or-close the 5 draft PRs (#3713 dispatcher dev-truth guard, #3714 ppt-web date/number locale, #3715 ppt-web native confirm dialogs, #3676/#3677 mobile-rn i18n) | pm-scrum-master | each draft is merged, converted to ready-for-review, or closed with a note |
+| medium | Nudge draft #3676 (code-review-mobile-rn-raw-status-untranslated) — not a draft but open for 22h with no reviewDecision. | pm-frontend | #3676 merged or ready-for-review |
+| medium | Follow-up #3738 (SSO pending-session O(n) sort under flood) — PR #3744 is already drafted; verify it ships before the 48h stall threshold. | pm-backend | #3744 merged or formally deferred |
 
 ## Risks
 
 | Prob | Impact | Risk | Mitigation |
 |---|---|---|---|
-| high | high | The 2026-12-01 mobile i18n lint flip (warn→error) is 9 days out and there are still 10+ open `code-review-*-i18n-retry1` items plus 2 open draft i18n PRs — CI will break the moment the flip lands if any slip | Daily burn-down count on the i18n action-list slice; promote drafts aggressively; pre-flip gate: `pnpm --filter mobile lint --no-warn` must exit 0 on dev for 48h |
-| high | medium | Dispatcher stall #3357 persisting across two merge waves (58 + 26 = 84 PRs) suggests the blocker is not merge-wave dilution — likely a conflict pattern the rebaser cannot auto-resolve | Human-driven review of the 3 blocked PRs; publish a rebase-pattern note; treat remaining instances as `rebase-poisoned` and close/reopen |
-| medium | medium | 5 open drafts + new issue #3711 means the dispatcher pipeline still has latent mass; another day without draft-close policy creates a PR-review starvation signal | 72h draft-close policy decision from 2026-11-21 (DEC) must be landed as a dispatcher-reconcile rule |
+| high | high | 2026-12-01 mobile i18n lint flip T-8d with 7 open drafts all moved in the last 4h — dispatcher is pushing drafts faster than they land. CI will break on any slip past 2026-11-29. | Daily burn-down count; hard promote-or-close by 2026-11-29 (one weekend of drainage before flip); pre-flip gate: `pnpm --filter mobile lint --no-warn` must exit 0 on dev for 48h. |
+| medium | medium | Dispatcher queue is draining faster than refills can land (45 open / 49 after refill vs ≥36 target; sustainable). But 7/8 open PRs are drafts — if one lands clean and 6 CI-fail, pipeline starves overnight. | Monitor draft→merged conversion ratio; auto-wake if drafts ≥48h old count exceeds 3. |
+| medium | medium | FCM/worker/push stack has three untested single-file source-only fixes merged this window (#3725/#3726/#3731). Any regression in production catches no automated signal. | pm-qa's test-shadow burn-down (now in action-list); push/* lint-or-review rule under decisions. |
 
 ## Open questions
 
-- Should the dispatcher 'promote-or-close drafts >72h' rule be a hard gate (auto-close) or a soft signal (Telegram alert)?
-- Can the 2026-12-01 i18n lint flip slip by one sprint if any of the 10+ retry1 items fail CI on the flip day?
+- Is the 24-PR window representative throughput or a backlog-drain burst? (Previous window: 26; this one: 24 — appears steady.)
+- Should the dispatcher push `#[cfg(test)]`-less PRs touching `push/*` into a review-mandatory queue?
 
 ## Decisions needed
 
-- Harden or soften the 72h draft close policy — owner: pm-scrum-master
-- Decide whether to defer or hold the 2026-12-01 mobile i18n lint flip — owner: pm-frontend + pm-qa
+- Promote-or-close deadline for the 7 draft i18n PRs: set 2026-11-29 as the hard date to leave a weekend of CI drainage before the 2026-12-01 lint flip — owner: pm-scrum-master + pm-frontend.
+- Mandate a `#[cfg(test)]` block (or paired `*_tests.rs` diff) for every PR touching `push/apns.rs`, `push/fcm.rs`, or `push/worker.rs` — owner: pm-qa + pm-backend.
+- Investigate the 50% no-test-diff rate on this window's merged PRs — owner: pm-qa.

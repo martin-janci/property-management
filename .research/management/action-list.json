@@ -583,11 +583,14 @@
       "priority": "high",
       "dependency": "none",
       "depends_on": [],
-      "status": "in-progress",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z"
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3718 merged 2026-11-22 — key-union resolver for i18n locale-JSON merge conflicts"
+      ]
     },
     {
       "id": "pm-scrum-master-unblock-mobile-native-kmp-swagger-ui-egress-in-the-cloud-run-2026-11-22",
@@ -608,11 +611,14 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "in-progress",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z"
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3722 merged 2026-11-22 — cover voice OAuth refresh rate limiter (#2769)"
+      ]
     },
     {
       "id": "pm-frontend-close-out-the-carried-wire-the-button-but-not-the-post-patte-2026-11-22",
@@ -621,11 +627,14 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "in-progress",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z"
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3721 merged 2026-11-22 — POST the displayed default ranking for untouched ranked ballots"
+      ]
     },
     {
       "id": "pm-frontend-characterize-the-two-high-churn-frontend-files-this-week-acc-2026-11-22",
@@ -634,11 +643,14 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "in-progress",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z"
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3720 merged 2026-11-22 — pin application-list URL helpers in high-churn leases.tsx"
+      ]
     },
     {
       "id": "pm-frontend-confirm-the-ws-token-in-url-strip-from-3696-covers-every-web-2026-11-22",
@@ -647,11 +659,14 @@
       "priority": "medium",
       "dependency": "none",
       "depends_on": [],
-      "status": "in-progress",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z",
-      "last_updated": "2026-11-22T06:36:28Z"
+      "last_updated": "2026-11-22T06:36:28Z",
+      "evidence": [
+        "resolved: PR #3719 merged 2026-11-22 — guard WS token-in-URL strip covers every ppt-web opener"
+      ]
     },
     {
       "id": "screen-map-drift-pr-3695-reality",
@@ -914,7 +929,51 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "pm-qa-test-shadow-debt-fcm-worker-push-2026-11-23",
+      "action": "Add regression tests covering the 2xx-FCM-delivered + worker-requeue-drop + push-db-err-leak fixes (#3725/#3726/#3731). All three are single-file source-only PRs that shipped behavioral changes without test diffs — the push service now has three untested fixes in-flight.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "2026-11-23 pm-analysis"
+    },
+    {
+      "id": "pm-qa-no-test-diff-sweep-rate-2026-11-23",
+      "action": "Audit this weeks no-test-diff PRs (#3714 30 files, #3718 3 files, #3724 characterize, #3728 screen-doc) and classify each as docs-only, inline-#[cfg(test)], or real test-gap — the current 50% no-test-diff rate on merged PRs needs a legitimate explanation or a corrective gate.",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "2026-11-23 pm-analysis"
+    },
+    {
+      "id": "pm-scrum-master-i18n-flip-countdown-8d-2026-11-23",
+      "action": "i18n warn→error flip is 2026-12-01 (8 days). Promote-or-close drafts #3740/#3741 (reality-web locale), #3739 (realtor/[id] parity), #3742 (ppt-web Registry Rules i18n), #3676 (mobile-rn raw status). Any slip past 2026-11-29 forces a formal defer.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "pm-frontend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": "2026-12-01",
+      "source": "2026-11-23 pm-analysis"
+    },
+    {
+      "id": "pm-scrum-master-draft-3676-mobile-rn-raw-status-untranslated-2026-11-23",
+      "action": "Draft #3676 (code-review-mobile-rn-raw-status-untranslated) is NOT draft but open with updatedAt 2026-11-22 — 22h stale. Nudge author or promote to ready-for-review.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "pm-frontend",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "2026-11-23 pm-analysis"
     }
   ],
-  "generated": "2026-11-22T03:06:30Z"
+  "generated": "2026-11-23T04:10:00Z"
 }

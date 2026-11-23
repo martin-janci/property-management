@@ -1,0 +1,176 @@
+{
+  "date": "2026-11-23",
+  "run_start_iso": "2026-11-23T04:19:24Z",
+  "run_lag_hours": 23,
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks/oauth.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-22..23",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks/oauth.rs — 2 non-research commits this run (top-1 tied raw hotspot at count=2). Driven by PR #3737 (map transient voice OAuth transport failures to 503) + PR #3722 (cover voice oauth refresh rate limiter test for #2769). Post-split child of the voice_webhooks.rs module; first appearance in hotspot_history."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push/apns.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-22..23",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/push/apns.rs — 2 non-research commits this run (top-1 tied raw hotspot at count=2). Driven by PR #3724 (characterize push/apns + voice_webhooks/parsers) + PR #3726 (surface failed Redis requeue in push fanout worker). Post-split child of push_fanout.rs; first appearance in hotspot_history. Phase 1.5 surfaced a related correctness finding on this file (see code-review-api-core-apns-410-body-parse-stale-missed)."
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push/fcm.rs",
+      "type": "churn-hotspot",
+      "source": "commits 2026-11-22..23",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "backend/servers/api-server/src/services/push/fcm.rs — 2 non-research commits this run (top-1 tied raw hotspot at count=2). Driven by PR #3724 (characterize push/apns + voice_webhooks/parsers) + PR #3725 (bug: treat 2xx FCM response as delivered on body-parse failure, no retry). Post-split child of push_fanout.rs; first appearance in hotspot_history."
+      ]
+    },
+    {
+      "id": "code-review-api-core-apns-410-body-parse-stale-missed",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-core 2026-11-23",
+      "segment": "api-core",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "backend/servers/api-server/src/services/push/apns.rs:258-283 — send_apns_one treats HTTP 410 Gone (app uninstalled) as a stale token ONLY when ApnsErrorBody JSON parses; the Err arm at line 275-282 returns (false, false), losing the eviction signal when the body is empty/truncated/non-JSON. Per Apple's APNs HTTP/2 spec, HTTP 410 alone is the authoritative Unregistered signal — body `{\"reason\":\"Unregistered\"}` is confirmation detail. Current failure mode: stale token stays in device_push_tokens until something else evicts it, wasting every future push attempt on that user's uninstalled device. Fix: branch on status.as_u16() == 410 BEFORE body parse — mark expired=true on 410 regardless of body outcome; keep the body parse for logging the reason."
+      ],
+      "expert": "rust"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist (Phase 5 eligibility bar)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# <today>'",
+      "observed": "pass",
+      "expected": "pass"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq compare staged vs HEAD state.json",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq [.items[].id] unique check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq non-cumulative signal-id double-count check",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq [.items[] | select(.score > 8)] | length == 0 + decay check (only decay candidate http-client-no-timeout dropped this run)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "n/a — no new plans/<slug>.md added this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "count of new plans in staged diff",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret-scan grep on staged diff (minus baseline docs)",
+      "observed": "0 matches",
+      "expected": "0 matches"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty — no failed phases this run",
+      "observed": "n/a",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan slug present in plans/ or plans/_archive/",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive files staged >= archive files at HEAD",
+      "observed": "24 >= 24",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "match",
+      "expected": "match"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions length checks + idempotency + kill switch",
+      "observed": "0 actions, no candidate",
+      "expected": "<=3 total / <=1 per type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor + coverage_cursor GC7",
+      "observed": "action-list.items ok; risks.items ok; project-state.md non-empty; pm_cursor.next_index=4 in [0..7]; coverage_cursor.next_index=10 in [0,13) and advanced vs HEAD=9 while pm_cursor advanced 3->4",
+      "expected": "all ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep for literal Telegram token in staged diff added lines (minus baseline docs)",
+      "observed": "0 matches",
+      "expected": "0 matches"
+    }
+  ]
+}

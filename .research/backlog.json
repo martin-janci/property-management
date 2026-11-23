@@ -13145,8 +13145,8 @@
       "title": "Shared Ktor HttpClient has no HttpTimeout - mobile API calls can hang indefinitely",
       "vector": "bug",
       "confidence": "medium",
-      "score": 1,
-      "status": "open",
+      "score": 0,
+      "status": "dropped",
       "sources": [
         "rotating-expert-review [mobile-native-kmp]"
       ],
@@ -13154,13 +13154,14 @@
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt:37-43 - the single shared HttpClient installs only ContentNegotiation and Logging(NONE) and sets a default contentType; it never installs the HttpTimeout plugin (no requestTimeoutMillis / connectTimeoutMillis / socketTimeoutMillis).",
         "This client backs every repository (ApiClient, ListingRepository, PortalListingsRepository, InquiryRepository, NotificationRepository, FavoritesRepository, etc.). The Android (OkHttp/HttpURLConnection) path has no implicit request timeout, so a stalled connection leaves suspend calls hanging and the Compose UI stuck on a spinner with no error path.",
         "Fix: install(HttpTimeout) with sane request/connect/socket timeouts in HttpClientProvider so stalled requests surface as a catchable exception (already handled by the try/catch -> Result.failure pattern in every repository).",
-        "decayed: no new signal in 14d (updated 2026-10-25); score 2->1 applied on 2026-11-09 afternoon rerun (morning brief claimed but did not commit)"
+        "decayed: no new signal in 14d (updated 2026-10-25); score 2->1 applied on 2026-11-09 afternoon rerun (morning brief claimed but did not commit)",
+        "decayed: no new signals in 14 days"
       ],
       "files": [
         "mobile-native/shared/src/commonMain/kotlin/three/two/bit/ppt/reality/api/HttpClientProvider.kt"
       ],
       "created_at": "2026-10-25",
-      "updated_at": "2026-11-09",
+      "updated_at": "2026-11-23",
       "plan": null,
       "type": "code-review-finding",
       "source": "rotating-expert-review",
@@ -16937,6 +16938,89 @@
         "assignment_status": "merged",
         "pr_number": 3733
       }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-oauth-rs",
+      "title": "Churn hotspot: routes/voice_webhooks/oauth.rs — 2 commits this run (voice OAuth 503 mapping + rate-limit test)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3737",
+        "PR #3722"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks/oauth.rs touched by 2 non-research commits this run — PR #3737 (map transient voice OAuth transport failures to 503) + PR #3722 (cover voice oauth refresh rate limiter test for #2769). Post-split child of the voice_webhooks.rs module; first appearance in hotspot_history."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks/oauth.rs"
+      ],
+      "created_at": "2026-11-23",
+      "updated_at": "2026-11-23",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-push-apns-rs",
+      "title": "Churn hotspot: services/push/apns.rs — 2 commits this run (push stack instability under watch)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3724",
+        "PR #3726"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push/apns.rs touched by 2 non-research commits this run — PR #3724 (characterize push/apns + voice_webhooks/parsers) + PR #3726 (surface failed Redis requeue in push fanout worker). Post-split child of push_fanout.rs; first appearance in hotspot_history. Phase 1.5 surfaced a related correctness finding (see code-review-api-core-apns-410-body-parse-stale-missed)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push/apns.rs"
+      ],
+      "created_at": "2026-11-23",
+      "updated_at": "2026-11-23",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-push-fcm-rs",
+      "title": "Churn hotspot: services/push/fcm.rs — 2 commits this run (push stack instability under watch)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3724",
+        "PR #3725"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push/fcm.rs touched by 2 non-research commits this run — PR #3724 (characterize push/apns + voice_webhooks/parsers) + PR #3725 (bug: treat 2xx FCM response as delivered on body-parse failure, no retry). Post-split child of push_fanout.rs; first appearance in hotspot_history."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push/fcm.rs"
+      ],
+      "created_at": "2026-11-23",
+      "updated_at": "2026-11-23",
+      "plan": null
+    },
+    {
+      "id": "code-review-api-core-apns-410-body-parse-stale-missed",
+      "title": "api-server push/apns.rs loses APNs 410-Gone eviction signal when error body fails to parse — stale tokens stay in device_push_tokens",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review api-core 2026-11-23"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push/apns.rs:258-283 — send_apns_one treats HTTP 410 Gone (app uninstalled) as a stale token ONLY when ApnsErrorBody JSON parses; the Err arm at line 275-282 returns (false, false), losing the eviction signal when the body is empty/truncated/non-JSON. Per Apple's APNs HTTP/2 spec, HTTP 410 alone is the authoritative Unregistered signal — body `{\"reason\":\"Unregistered\"}` is confirmation detail. Current failure mode: stale token stays in device_push_tokens until something else evicts it, wasting every future push attempt on that user's uninstalled device. Fix: branch on status.as_u16() == 410 BEFORE body parse — mark expired=true on 410 regardless of body outcome; keep the body parse for logging the reason."
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push/apns.rs"
+      ],
+      "created_at": "2026-11-23",
+      "updated_at": "2026-11-23",
+      "plan": null
     }
   ]
 }

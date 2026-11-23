@@ -164,3 +164,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-11-22, pm-scrum-master):** Decide whether to defer or hold the 2026-12-01 mobile i18n lint flip — owner: pm-frontend + pm-qa
 - **NEW (2026-11-22, pm-frontend):** Whether to defer the 2026-12-01 mobile i18n lint flip by one sprint if burn-down is incomplete on 2026-11-29 — owner: pm-frontend + pm-qa
 - **NEW (2026-11-22, pm-frontend):** Whether every form Submit handler needs an MSW e2e-smoke assertion before merge (carried from 2026-10-28, still unresolved) — owner: pm-qa + pm-tech-lead
+
+
+---
+
+## Decisions logged 2026-11-23 (Phase 1.6 — pm-scrum-master + pm-qa)
+
+- **NEW (2026-11-23, pm-scrum-master):** Promote-or-close deadline for the 7 draft i18n PRs (#3739/#3740/#3741/#3742 reality-web+ppt-web locale work, #3676 mobile-rn raw status) — set 2026-11-29 as the hard date to leave a weekend of CI drainage before the 2026-12-01 lint flip. Owner: pm-scrum-master + pm-frontend.
+- **NEW (2026-11-23, pm-qa):** Mandate a #[cfg(test)] block (or paired *_tests.rs diff) for every PR touching push/apns.rs, push/fcm.rs, or push/worker.rs — three single-file source-only fixes landed this window (#3725, #3726, #3731). Owner: pm-qa + pm-backend.
+- **NEW (2026-11-23, pm-qa):** Investigate the 50% no-test-diff rate on this window's merged PRs (12/24). Some are legitimately test-less (screen-doc, locale JSON) but the push-stack cluster + #3735 (email dispatch), #3737 (voice OAuth 503), #3722 (voice OAuth rate limiter — commit message claims tests but the diff shows source-only) need per-PR classification. Owner: pm-qa.
