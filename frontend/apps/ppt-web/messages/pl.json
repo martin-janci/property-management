@@ -5899,6 +5899,45 @@
         "savedBody": "Your registry rule changes have been applied.",
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
+      },
+      "page": {
+        "title": "Zasady rejestru",
+        "subtitle": "Skonfiguruj zasady rejestracji zwierząt i pojazdów dla swojego budynku"
+      },
+      "error": {
+        "buildingRequiredTitle": "Wymagany identyfikator budynku",
+        "loadFailedTitle": "Nie udało się załadować zasad rejestru",
+        "buildingRequiredBody": "Wybierz budynek, aby skonfigurować zasady rejestru.",
+        "loadFailedBody": "Podczas ładowania zasad rejestru wystąpił błąd. Spróbuj ponownie.",
+        "goBack": "Wstecz"
+      },
+      "info": {
+        "iconLabel": "Informacja",
+        "heading": "O zasadach rejestru",
+        "item1": "Zasady obowiązują dla wszystkich nowych rejestracji po ich zapisaniu",
+        "item2": "Zmiany zasad nie wpływają na istniejące zatwierdzone rejestracje",
+        "item3": "Jeśli wymagane jest zatwierdzenie, zarządcy zostaną powiadomieni o nowych rejestracjach",
+        "item4": "Mieszkańcy zostaną powiadomieni, jeśli ich rejestracja zostanie odrzucona"
+      },
+      "form": {
+        "petRulesHeading": "Zasady dotyczące zwierząt",
+        "petsAllowed": "Zwierzęta są dozwolone w tym budynku",
+        "petsRequireApproval": "Rejestracje zwierząt wymagają zatwierdzenia przez zarządcę",
+        "maxPetsPerUnit": "Maksymalna liczba zwierząt na lokal",
+        "allowedPetTypes": "Dozwolone rodzaje zwierząt (puste = wszystkie)",
+        "bannedBreeds": "Zakazane rasy",
+        "bannedBreedPlaceholder": "Wpisz nazwę rasy i naciśnij Enter",
+        "add": "Dodaj",
+        "maxPetWeight": "Maksymalna waga zwierzęcia (kg)",
+        "vehicleRulesHeading": "Zasady dotyczące pojazdów",
+        "vehiclesRequireApproval": "Rejestracje pojazdów wymagają zatwierdzenia przez zarządcę",
+        "maxVehiclesPerUnit": "Maksymalna liczba pojazdów na lokal",
+        "additionalNotes": "Dodatkowe uwagi",
+        "notesPlaceholder": "Wszelkie dodatkowe zasady rejestru lub uwagi...",
+        "noLimit": "Bez limitu",
+        "cancel": "Anuluj",
+        "save": "Zapisz zasady",
+        "saving": "Zapisywanie..."
       }
     },
     "toast": {

@@ -8059,6 +8059,45 @@
         "savedBody": "Your registry rule changes have been applied.",
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
+      },
+      "page": {
+        "title": "Registry Rules",
+        "subtitle": "Configure pet and vehicle registration rules for your building"
+      },
+      "error": {
+        "buildingRequiredTitle": "Building ID Required",
+        "loadFailedTitle": "Failed to Load Registry Rules",
+        "buildingRequiredBody": "Please select a building to configure registry rules.",
+        "loadFailedBody": "There was an error loading the registry rules. Please try again.",
+        "goBack": "Go Back"
+      },
+      "info": {
+        "iconLabel": "Info",
+        "heading": "About Registry Rules",
+        "item1": "Rules apply to all new registrations after they are saved",
+        "item2": "Existing approved registrations are not affected by rule changes",
+        "item3": "If approval is required, managers will be notified of new registrations",
+        "item4": "Residents will be notified if their registration is rejected"
+      },
+      "form": {
+        "petRulesHeading": "Pet Rules",
+        "petsAllowed": "Pets are allowed in this building",
+        "petsRequireApproval": "Pet registrations require manager approval",
+        "maxPetsPerUnit": "Maximum pets per unit",
+        "allowedPetTypes": "Allowed pet types (leave empty for all)",
+        "bannedBreeds": "Banned breeds",
+        "bannedBreedPlaceholder": "Enter breed name and press Enter",
+        "add": "Add",
+        "maxPetWeight": "Maximum pet weight (kg)",
+        "vehicleRulesHeading": "Vehicle Rules",
+        "vehiclesRequireApproval": "Vehicle registrations require manager approval",
+        "maxVehiclesPerUnit": "Maximum vehicles per unit",
+        "additionalNotes": "Additional notes",
+        "notesPlaceholder": "Any additional registry rules or notes...",
+        "noLimit": "No limit",
+        "cancel": "Cancel",
+        "save": "Save Rules",
+        "saving": "Saving..."
       }
     },
     "toast": {

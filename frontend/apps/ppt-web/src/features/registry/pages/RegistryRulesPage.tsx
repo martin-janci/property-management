@@ -92,19 +92,21 @@ export function RegistryRulesPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <h2 className="text-lg font-medium text-red-800 mb-2">
-            {!buildingId ? 'Building ID Required' : 'Failed to Load Registry Rules'}
+            {!buildingId
+              ? t('registry.rules.error.buildingRequiredTitle')
+              : t('registry.rules.error.loadFailedTitle')}
           </h2>
           <p className="text-red-600">
             {!buildingId
-              ? 'Please select a building to configure registry rules.'
-              : 'There was an error loading the registry rules. Please try again.'}
+              ? t('registry.rules.error.buildingRequiredBody')
+              : t('registry.rules.error.loadFailedBody')}
           </p>
           <button
             type="button"
             onClick={() => navigate(-1)}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
-            Go Back
+            {t('registry.rules.error.goBack')}
           </button>
         </div>
       </div>
@@ -114,10 +116,8 @@ export function RegistryRulesPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Registry Rules</h1>
-        <p className="mt-2 text-gray-600">
-          Configure pet and vehicle registration rules for your building
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('registry.rules.page.title')}</h1>
+        <p className="mt-2 text-gray-600">{t('registry.rules.page.subtitle')}</p>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -138,7 +138,7 @@ export function RegistryRulesPage() {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <title>Info</title>
+            <title>{t('registry.rules.info.iconLabel')}</title>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -147,13 +147,15 @@ export function RegistryRulesPage() {
             />
           </svg>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">About Registry Rules</h3>
+            <h3 className="text-sm font-medium text-blue-800">
+              {t('registry.rules.info.heading')}
+            </h3>
             <div className="mt-2 text-sm text-blue-700">
               <ul className="list-disc pl-5 space-y-1">
-                <li>Rules apply to all new registrations after they are saved</li>
-                <li>Existing approved registrations are not affected by rule changes</li>
-                <li>If approval is required, managers will be notified of new registrations</li>
-                <li>Residents will be notified if their registration is rejected</li>
+                <li>{t('registry.rules.info.item1')}</li>
+                <li>{t('registry.rules.info.item2')}</li>
+                <li>{t('registry.rules.info.item3')}</li>
+                <li>{t('registry.rules.info.item4')}</li>
               </ul>
             </div>
           </div>

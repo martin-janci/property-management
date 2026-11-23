@@ -6329,6 +6329,45 @@
         "savedBody": "Your registry rule changes have been applied.",
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
+      },
+      "page": {
+        "title": "Registrierungsregeln",
+        "subtitle": "Konfigurieren Sie die Registrierungsregeln für Haustiere und Fahrzeuge für Ihr Gebäude"
+      },
+      "error": {
+        "buildingRequiredTitle": "Gebäude-ID erforderlich",
+        "loadFailedTitle": "Registrierungsregeln konnten nicht geladen werden",
+        "buildingRequiredBody": "Bitte wählen Sie ein Gebäude aus, um die Registrierungsregeln zu konfigurieren.",
+        "loadFailedBody": "Beim Laden der Registrierungsregeln ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+        "goBack": "Zurück"
+      },
+      "info": {
+        "iconLabel": "Info",
+        "heading": "Über Registrierungsregeln",
+        "item1": "Regeln gelten für alle neuen Registrierungen, nachdem sie gespeichert wurden",
+        "item2": "Bestehende genehmigte Registrierungen sind von Regeländerungen nicht betroffen",
+        "item3": "Wenn eine Genehmigung erforderlich ist, werden Verwalter über neue Registrierungen benachrichtigt",
+        "item4": "Bewohner werden benachrichtigt, wenn ihre Registrierung abgelehnt wird"
+      },
+      "form": {
+        "petRulesHeading": "Haustierregeln",
+        "petsAllowed": "Haustiere sind in diesem Gebäude erlaubt",
+        "petsRequireApproval": "Haustierregistrierungen erfordern die Genehmigung des Verwalters",
+        "maxPetsPerUnit": "Maximale Anzahl Haustiere pro Einheit",
+        "allowedPetTypes": "Erlaubte Haustierarten (leer lassen für alle)",
+        "bannedBreeds": "Verbotene Rassen",
+        "bannedBreedPlaceholder": "Rassennamen eingeben und Enter drücken",
+        "add": "Hinzufügen",
+        "maxPetWeight": "Maximales Haustiergewicht (kg)",
+        "vehicleRulesHeading": "Fahrzeugregeln",
+        "vehiclesRequireApproval": "Fahrzeugregistrierungen erfordern die Genehmigung des Verwalters",
+        "maxVehiclesPerUnit": "Maximale Anzahl Fahrzeuge pro Einheit",
+        "additionalNotes": "Zusätzliche Hinweise",
+        "notesPlaceholder": "Weitere Registrierungsregeln oder Hinweise...",
+        "noLimit": "Keine Begrenzung",
+        "cancel": "Abbrechen",
+        "save": "Regeln speichern",
+        "saving": "Wird gespeichert..."
       }
     },
     "toast": {

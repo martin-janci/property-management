@@ -5789,6 +5789,45 @@
         "savedBody": "Your registry rule changes have been applied.",
         "saveFailed": "Failed to save registry rules",
         "saveFailedBody": "Your changes could not be saved. Please try again."
+      },
+      "page": {
+        "title": "Nyilvántartási szabályok",
+        "subtitle": "Állítsa be a háziállatok és járművek regisztrációs szabályait az épületéhez"
+      },
+      "error": {
+        "buildingRequiredTitle": "Épület-azonosító szükséges",
+        "loadFailedTitle": "Nem sikerült betölteni a nyilvántartási szabályokat",
+        "buildingRequiredBody": "Válasszon egy épületet a nyilvántartási szabályok beállításához.",
+        "loadFailedBody": "Hiba történt a nyilvántartási szabályok betöltésekor. Próbálja újra.",
+        "goBack": "Vissza"
+      },
+      "info": {
+        "iconLabel": "Információ",
+        "heading": "A nyilvántartási szabályokról",
+        "item1": "A szabályok minden új regisztrációra vonatkoznak a mentés után",
+        "item2": "A meglévő jóváhagyott regisztrációkat a szabályváltozások nem érintik",
+        "item3": "Ha jóváhagyás szükséges, a kezelők értesítést kapnak az új regisztrációkról",
+        "item4": "A lakók értesítést kapnak, ha regisztrációjukat elutasítják"
+      },
+      "form": {
+        "petRulesHeading": "Háziállat-szabályok",
+        "petsAllowed": "Háziállatok engedélyezettek ebben az épületben",
+        "petsRequireApproval": "A háziállat-regisztrációk kezelői jóváhagyást igényelnek",
+        "maxPetsPerUnit": "Maximális háziállatok száma egységenként",
+        "allowedPetTypes": "Engedélyezett háziállatfajták (üresen hagyva: mind)",
+        "bannedBreeds": "Tiltott fajták",
+        "bannedBreedPlaceholder": "Adja meg a fajta nevét, és nyomja meg az Entert",
+        "add": "Hozzáadás",
+        "maxPetWeight": "Maximális háziállat-súly (kg)",
+        "vehicleRulesHeading": "Jármű-szabályok",
+        "vehiclesRequireApproval": "A jármű-regisztrációk kezelői jóváhagyást igényelnek",
+        "maxVehiclesPerUnit": "Maximális járművek száma egységenként",
+        "additionalNotes": "További megjegyzések",
+        "notesPlaceholder": "Bármilyen további nyilvántartási szabály vagy megjegyzés...",
+        "noLimit": "Nincs korlát",
+        "cancel": "Mégse",
+        "save": "Szabályok mentése",
+        "saving": "Mentés..."
       }
     },
     "toast": {
