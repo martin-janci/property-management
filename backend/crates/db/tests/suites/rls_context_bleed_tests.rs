@@ -359,6 +359,103 @@ async fn failed_clear_discards_connection(pool: PgPool) {
 }
 
 // ---------------------------------------------------------------------------
+// Test 5b — failed SET-context ON ACQUIRE (RLS) discards the connection
+// ---------------------------------------------------------------------------
+
+/// Regression (follow-up to #3583): `RlsPool::acquire_with_rls` sets the
+/// tenant/user RLS context on a freshly checked-out connection via
+/// `set_request_context`. If that SET *fails*, the connection may be left
+/// carrying a partially-applied or stale context — returning it to the pool
+/// would let the next checkout inherit an incorrect (possibly RLS-bypassing)
+/// context. Like the `acquire_public` (Test 6) and release (Test 5) paths, the
+/// acquire-with-RLS path must DISCARD the connection and return `Err` on a
+/// failed SET, not propagate the error while letting the tainted connection
+/// drop back into the pool.
+///
+/// This is the voice-webhook hazard: those handlers call `acquire_with_rls`
+/// with the device owner's org/user to run tenant-scoped command processing. If
+/// the context SET fails and the connection is recycled with a stale context,
+/// the next request could run with the wrong tenant's isolation — so the failure
+/// path must fail closed.
+///
+/// We force a real SET failure by poisoning the pool's single connection with an
+/// aborted transaction (and a super-admin context first, so a *recycled*
+/// connection would be RLS-bypassing), then dropping it back into a plain
+/// (hook-less) pool so `acquire_with_rls` checks out that very connection and its
+/// `set_request_context` call fails with "current transaction is aborted". On a
+/// `max_connections = 1` pool we assert: (a) `acquire_with_rls()` returns `Err`,
+/// (b) the pool holds zero connections (the tainted one was discarded, not
+/// recycled), and (c) a freshly opened connection is usable and carries no
+/// super-admin context.
+#[sqlx::test]
+async fn acquire_with_rls_discards_connection_on_failed_set(pool: PgPool) {
+    let opts = (*pool.connect_options()).clone();
+    let single = PgPoolOptions::new()
+        .max_connections(1)
+        .test_before_acquire(false)
+        .connect_with(opts)
+        .await
+        .expect("open single-connection pool");
+
+    let org_id = Uuid::new_v4();
+    let user_id = Uuid::new_v4();
+
+    // Poison the one connection with an aborted transaction (after placing it in
+    // super-admin SYSTEM context, so a recycled connection would be
+    // RLS-bypassing), then drop it back into the hook-less pool for
+    // `acquire_with_rls` to check back out.
+    {
+        let mut conn = single.acquire().await.expect("acquire tainted conn");
+        set_request_context(&mut *conn, Some(org_id), Some(user_id), true)
+            .await
+            .expect("set super-admin context");
+        (&mut *conn).execute("BEGIN").await.expect("begin txn");
+        assert!(
+            (&mut *conn).execute("SELECT 1 / 0").await.is_err(),
+            "division by zero must error and abort the transaction"
+        );
+    }
+
+    let rls_pool = RlsPool::new(single.clone());
+
+    // acquire_with_rls must FAIL rather than hand back / recycle a connection
+    // whose RLS context it could not set (and which may still carry stale
+    // super-admin context).
+    let result = rls_pool.acquire_with_rls(org_id, user_id, false).await;
+    assert!(
+        result.is_err(),
+        "acquire_with_rls must return Err when it cannot set RLS context"
+    );
+    drop(result);
+
+    // The poisoned connection must have been discarded on acquire: the max=1
+    // pool now holds zero connections.
+    assert_eq!(
+        single.size(),
+        0,
+        "connection whose RLS-context set failed must be discarded on acquire, \
+         not returned to the pool"
+    );
+
+    // Next acquire opens a FRESH connection: no super-admin context, usable.
+    let admin_after = read_super_admin(&single).await;
+    let admin_not_truthy = admin_after
+        .as_deref()
+        .map(|v| v.is_empty() || v == "false" || v == "off" || v == "0")
+        .unwrap_or(true);
+    assert!(
+        admin_not_truthy,
+        "fresh connection after discard must not carry super-admin context, got: {admin_after:?}"
+    );
+
+    let ok: i32 = sqlx::query_scalar("SELECT 1")
+        .fetch_one(&single)
+        .await
+        .expect("fresh connection must be usable");
+    assert_eq!(ok, 1);
+}
+
+// ---------------------------------------------------------------------------
 // Test 6 — failed clear ON ACQUIRE discards the connection (issue #3583)
 // ---------------------------------------------------------------------------
 

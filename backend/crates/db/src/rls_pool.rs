@@ -86,8 +86,35 @@ impl RlsPool {
     ) -> Result<RlsGuard, sqlx::Error> {
         let mut conn = self.inner.acquire().await?;
 
-        // Set RLS context on the connection
-        set_request_context(&mut *conn, Some(tenant_id), Some(user_id), is_super_admin).await?;
+        // Set RLS context on the connection.
+        //
+        // If this SET *fails*, the connection may be left carrying a
+        // partially-applied context, or still hold the stale (possibly
+        // RLS-bypassing super-admin / global-read) context of a previous
+        // request. Propagating the error while letting `conn` drop would return
+        // that connection to the pool, so the next checkout could run with an
+        // incorrect tenant context — tenant isolation broken. A failed SET is
+        // NOT recoverable by logging, so we discard the connection (detach +
+        // hard-close) and fail the acquire, mirroring the `acquire_public`
+        // hardening (issue #3583). The pool opens a fresh, context-free
+        // connection on the next acquire.
+        if let Err(e) =
+            set_request_context(&mut *conn, Some(tenant_id), Some(user_id), is_super_admin).await
+        {
+            tracing::error!(
+                error = %e,
+                tenant_id = %tenant_id,
+                user_id = %user_id,
+                is_super_admin = is_super_admin,
+                "SECURITY: failed to set RLS context on acquired connection - \
+                 discarding connection so a partially-applied or stale \
+                 (possibly RLS-bypassing) context cannot bleed into a later \
+                 request; failing the acquire"
+            );
+            crate::tenant_context::discard_poisoned_connection(conn, "RlsPool::acquire_with_rls")
+                .await;
+            return Err(e);
+        }
 
         tracing::debug!(
             tenant_id = %tenant_id,
