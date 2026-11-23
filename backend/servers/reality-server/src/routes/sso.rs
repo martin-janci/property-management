@@ -263,6 +263,25 @@ fn prune_expired_sso_sessions(
 /// pending sessions are the closest to TTL expiry and the least likely to still
 /// complete their callback, so dropping them is the least disruptive choice. A
 /// `max` of 0 clears the map (defensive — no pending session may be held).
+///
+/// Performance (issue #3738): this runs under the `sso_sessions` mutex on the
+/// mint path — i.e. during the exact `/login` flood the cap defends against —
+/// so it must stay cheap. Two properties keep it so:
+///
+/// * **No full sort, no all-keys clone.** The age threshold is selected with an
+///   O(n) [`select_nth_unstable`] over a vector of `created_at` stamps (which
+///   are `Copy`, so *no* session-id key strings are cloned), followed by a
+///   single [`HashMap::retain`]. The previous implementation cloned *every*
+///   session-id key into a `Vec` and ran an O(n·log n) sort on each
+///   over-capacity mint.
+/// * **Hysteresis batch trim.** Rather than evicting a single entry per mint
+///   once at the cap — which re-runs the O(n) scan on *every* subsequent mint
+///   while the map sits full during a flood — it trims a batch down to a
+///   low-water mark (`max - max/8`). The scan then runs only once per ~`max/8`
+///   inserts; the cheap inserts in between hit the early `len <= target`
+///   return, so the amortized per-mint cost is O(1).
+///
+/// [`select_nth_unstable`]: slice::select_nth_unstable
 fn enforce_pending_sso_session_capacity(
     sessions: &mut std::collections::HashMap<String, PendingSsoSession>,
     max: usize,
@@ -271,24 +290,36 @@ fn enforce_pending_sso_session_capacity(
         sessions.clear();
         return;
     }
-    // Reduce to at most `max - 1` so the caller's next insert lands at <= max.
+    // Post-call size must stay at most `max - 1` so the caller's next insert
+    // lands at <= max. This is the high-water mark that triggers a trim.
     let target = max - 1;
     if sessions.len() <= target {
         return;
     }
 
-    // Order keys oldest-first and drop the excess. Collecting + sorting is
-    // O(n log n) but only runs on the rare over-capacity mint, and the map is
-    // bounded to `max` entries by construction.
-    let mut by_age: Vec<(chrono::DateTime<chrono::Utc>, String)> = sessions
-        .iter()
-        .map(|(k, s)| (s.created_at, k.clone()))
-        .collect();
-    by_age.sort_by_key(|a| a.0); // oldest first
-    let evict = sessions.len() - target;
-    for (_, key) in by_age.into_iter().take(evict) {
-        sessions.remove(&key);
-    }
+    // Over the high-water mark: trim a batch down to a low-water mark so this
+    // O(n) scan amortizes across the next ~`batch` cheap inserts instead of
+    // re-running on every mint while the map sits at capacity. `batch` is at
+    // least 1, so for a tiny `max` this degrades to the exact "evict down to
+    // max - 1" behaviour.
+    let batch = (max / 8).max(1);
+    let low_water = target.saturating_sub(batch - 1);
+    let evict = sessions.len() - low_water;
+
+    // Select the age threshold without cloning any key: collect only the
+    // `created_at` stamps (`Copy`) and partition them so the `evict` oldest
+    // occupy the low end. `select_nth_unstable` is O(n) average; `evict >= 1`
+    // here because `sessions.len() > target >= low_water`.
+    let mut ages: Vec<chrono::DateTime<chrono::Utc>> =
+        sessions.values().map(|s| s.created_at).collect();
+    ages.select_nth_unstable(evict - 1);
+    let threshold = ages[evict - 1];
+
+    // Drop every session at or older than the threshold. With distinct stamps
+    // this removes exactly `evict`; ties at the threshold may remove a few
+    // more, which is harmless — they are the oldest, nearest TTL expiry — and
+    // still satisfies the `<= target` invariant (never fewer than `evict`).
+    sessions.retain(|_, s| s.created_at > threshold);
 }
 
 /// SSO callback query parameters.
@@ -1746,6 +1777,55 @@ mod pending_session_capacity_tests {
         }
         for i in 3..10 {
             assert!(!sessions.contains_key(&format!("s{i}")));
+        }
+    }
+
+    /// Regression (issue #3738): at a realistic cap, hitting capacity must trim
+    /// a *batch* down to a low-water mark (`max - max/8`), not a single entry.
+    ///
+    /// The old implementation evicted down to exactly `max - 1`, so once the map
+    /// sat at the cap *every* subsequent mint re-ran a full O(n·log n) sort +
+    /// all-keys clone under the lock — the pathological case during a `/login`
+    /// flood. Trimming a batch means the expensive scan runs only once per
+    /// ~`max/8` inserts (the cheap `len <= target` early-return handles the rest),
+    /// giving amortized O(1) per mint. This test pins the batch (>1) eviction so
+    /// the per-mint regression can't silently return.
+    #[test]
+    fn at_capacity_trims_a_batch_for_amortization() {
+        let now = chrono::Utc::now();
+        let max = 64usize;
+        let mut sessions = HashMap::new();
+        // Fill exactly to the cap with distinct ages: s0 newest … s63 oldest.
+        for i in 0..max {
+            sessions.insert(format!("s{i}"), session_at(now, i as i64));
+        }
+
+        enforce_pending_sso_session_capacity(&mut sessions, max);
+
+        // batch = max/8 = 8 → low_water = (max - 1) - (batch - 1) = max - batch.
+        let batch = max / 8;
+        let low_water = max - batch;
+        assert_eq!(
+            sessions.len(),
+            low_water,
+            "hitting the cap trims a batch down to the low-water mark, not one entry"
+        );
+        assert!(
+            batch > 1,
+            "the batch must be >1 so a later mint can insert without re-scanning"
+        );
+        // The `batch` oldest (largest age) are the ones evicted; the rest survive.
+        for i in 0..low_water {
+            assert!(
+                sessions.contains_key(&format!("s{i}")),
+                "newer session s{i} must survive the batch trim"
+            );
+        }
+        for i in low_water..max {
+            assert!(
+                !sessions.contains_key(&format!("s{i}")),
+                "oldest session s{i} must be evicted in the batch"
+            );
         }
     }
 
