@@ -9,6 +9,7 @@
 //!                                                   principal cannot self-introspect because
 //!                                                   `/users/{id}` requires `AuditRead`, which
 //!                                                   they may not yet hold (deadlock).
+//!   * `GET    /{capability}/holders`              — active holders of one capability (gated by `AuditRead`).
 //!   * `GET    /users/{user_id}`                   — list another principal's grants (gated by `AuditRead`).
 //!   * `POST   /users/{user_id}/grant`             — issue a grant (gated by `MembershipsGrant`).
 //!                                                   `user_id` is extracted from the path (source of
@@ -47,6 +48,10 @@ pub fn router() -> Router<AppState> {
         // platform principal can self-introspect WITHOUT first holding
         // `AuditRead` — that would be a chicken-and-egg lockout.
         .route("/me", get(list_for_me))
+        .route(
+            "/{capability}/holders",
+            get(list_holders).layer(require_capability(Capability::AuditRead)),
+        )
         .route(
             "/users/{user_id}",
             get(list_for_user).layer(require_capability(Capability::AuditRead)),
@@ -100,6 +105,70 @@ async fn list_registry(
         ORDER BY cd.capability
         "#,
     )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(rows))
+}
+
+/// One active holder of a capability, for `GET /admin/capabilities/{capability}/holders`.
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct CapabilityHolder {
+    pub grant_id: Uuid,
+    pub user_id: Uuid,
+    pub email: Option<String>,
+    pub granted_by: Uuid,
+    pub granted_by_email: Option<String>,
+    pub granted_at: DateTime<Utc>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub mfa_required: bool,
+    pub note: Option<String>,
+}
+
+/// GET /admin/capabilities/{capability}/holders
+///
+/// Active (non-revoked, non-expired) grants of one capability, with holder
+/// and grantor emails, so the console's "View holders" affordance matches the
+/// registry's `holder_count`. Unknown capability names return 404.
+async fn list_holders(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+    Path(capability): Path<String>,
+) -> Result<Json<Vec<CapabilityHolder>>, (StatusCode, String)> {
+    let known: bool = sqlx::query_scalar(
+        "SELECT EXISTS (SELECT 1 FROM capability_descriptions WHERE capability = $1)",
+    )
+    .bind(&capability)
+    .fetch_one(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    if !known {
+        return Err((StatusCode::NOT_FOUND, "Unknown capability".to_string()));
+    }
+
+    let rows = sqlx::query_as::<_, CapabilityHolder>(
+        r#"
+        SELECT
+            cg.id AS grant_id,
+            cg.user_id,
+            u.email AS email,
+            cg.granted_by,
+            gb.email AS granted_by_email,
+            cg.granted_at,
+            cg.expires_at,
+            cg.mfa_required,
+            cg.note
+        FROM capability_grants cg
+        LEFT JOIN users u ON u.id = cg.user_id
+        LEFT JOIN users gb ON gb.id = cg.granted_by
+        WHERE cg.capability = $1
+          AND cg.revoked_at IS NULL
+          AND (cg.expires_at IS NULL OR cg.expires_at > NOW())
+        ORDER BY cg.granted_at DESC
+        "#,
+    )
+    .bind(&capability)
     .fetch_all(&state.db)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;

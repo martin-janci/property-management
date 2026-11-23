@@ -613,3 +613,45 @@ async fn admin_org_members_roster_for_foreign_tenant(pool: PgPool) {
     let resp = app.get(&url).bearer(&other).send().await;
     assert_eq!(resp.status.as_u16(), 403, "{}", resp.text());
 }
+
+/// `GET /admin/capabilities/{capability}/holders` lists the active holders of
+/// one capability (matching the registry's `holder_count`), 404s on an
+/// unknown capability, and is 403 without `audit_read`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn admin_capability_holders_lists_active_grants(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, admin, granter) = authorized_admin(&pool, "holders", "audit_read").await;
+
+    let resp = app
+        .get("/api/v1/admin/capabilities/audit_read/holders")
+        .bearer(&token)
+        .send()
+        .await;
+    assert!(resp.status.is_success(), "{} {}", resp.status, resp.text());
+    let body = resp.json_value();
+    let holders = body.as_array().expect("array body");
+    let mine = holders
+        .iter()
+        .find(|h| h["user_id"] == serde_json::json!(admin.to_string()))
+        .unwrap_or_else(|| panic!("caller missing from holders: {body}"));
+    assert_eq!(mine["granted_by"], serde_json::json!(granter.to_string()));
+    assert!(
+        mine["email"].as_str().unwrap_or("").contains("holders"),
+        "{mine}"
+    );
+
+    let resp = app
+        .get("/api/v1/admin/capabilities/not_a_capability/holders")
+        .bearer(&token)
+        .send()
+        .await;
+    assert_eq!(resp.status.as_u16(), 404, "{}", resp.text());
+
+    let other = authorized_admin_token(&pool, "holders-no", "memberships_revoke").await;
+    let resp = app
+        .get("/api/v1/admin/capabilities/audit_read/holders")
+        .bearer(&other)
+        .send()
+        .await;
+    assert_eq!(resp.status.as_u16(), 403, "{}", resp.text());
+}

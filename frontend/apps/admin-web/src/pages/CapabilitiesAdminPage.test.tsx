@@ -118,6 +118,54 @@ describe('CapabilitiesAdminPage', () => {
   // 3. Registry view (default) → renders a card for every capability
   // ------------------------------------------------------------------
 
+  it("View holders lists active holders and opens a holder's grants", async () => {
+    vi.mocked(fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.endsWith('/admin/capabilities/registry')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [
+            { capability: 'audit_read', description: 'd', risk_level: 'low', holder_count: 1 },
+          ],
+        } as Response;
+      }
+      if (url.endsWith('/admin/capabilities/audit_read/holders')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [
+            {
+              grant_id: 'g1',
+              user_id: 'user-42',
+              email: 'ops@example.com',
+              granted_by: 'root',
+              granted_by_email: null,
+              granted_at: '2026-01-01T00:00:00Z',
+              expires_at: null,
+              mfa_required: true,
+              note: null,
+            },
+          ],
+        } as Response;
+      }
+      return { ok: true, status: 200, json: async () => [] } as Response;
+    });
+
+    renderPage({ capabilities: ['audit_read', 'memberships_grant'] });
+    const button = await screen.findByRole('button', { name: 'View holders' });
+    await userEvent.click(button);
+    await waitFor(() => expect(screen.getByText(/ops@example\.com/)).toBeDefined());
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(([u]) =>
+          String(u).endsWith('/api/v1/admin/capabilities/audit_read/holders')
+        )
+    ).toBe(true);
+    expect(screen.queryByText(/coming soon/i)).toBeNull();
+  });
+
   it('renders a registry card for every capability', async () => {
     // The registry mirrors the `admin_core::Capability` enum. Derive the
     // expected cards from CAPABILITIES itself so the test can't drift when a

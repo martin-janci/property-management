@@ -518,6 +518,74 @@ function ensureStyles() {
 // Registry view
 // ---------------------------------------------------------------------------
 
+/** Row of `GET /admin/capabilities/{capability}/holders`. */
+export interface CapabilityHolder {
+  grant_id: string;
+  user_id: string;
+  email: string | null;
+  granted_by: string;
+  granted_by_email: string | null;
+  granted_at: string;
+  expires_at: string | null;
+  mfa_required: boolean;
+  note: string | null;
+}
+
+interface HoldersListProps {
+  capability: string;
+  token: string | null;
+  onViewUser: (userId: string) => void;
+}
+
+/** Active holders of one capability; each row opens that user's grants. */
+export function HoldersList({ capability, token, onViewUser }: HoldersListProps) {
+  const { data, isLoading, error } = useQuery<CapabilityHolder[]>({
+    queryKey: ['admin', 'capabilities', 'holders', capability, token],
+    queryFn: async () => {
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(
+        `/api/v1/admin/capabilities/${encodeURIComponent(capability)}/holders`,
+        { headers, credentials: 'include' }
+      );
+      if (!res.ok) throw new Error(`Holders fetch failed: ${res.status}`);
+      return res.json() as Promise<CapabilityHolder[]>;
+    },
+    staleTime: 30_000,
+    retry: 1,
+  });
+
+  if (isLoading) return <p className="cap-card__desc">Loading holders…</p>;
+  if (error) {
+    return (
+      <p className="cap-card__desc" role="alert">
+        {error instanceof Error ? error.message : 'Unable to load holders.'}
+      </p>
+    );
+  }
+  const holders = data ?? [];
+  if (holders.length === 0) return <p className="cap-card__desc">No active holders.</p>;
+
+  return (
+    <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0 }}>
+      {holders.map((h) => (
+        <li
+          key={h.grant_id}
+          style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '4px 0' }}
+        >
+          <span className="cap-card__desc">
+            {h.email ?? h.user_id} · since {formatDate(h.granted_at)}
+            {h.expires_at ? ` · expires ${formatDate(h.expires_at)}` : ''}
+          </span>
+          <button type="button" className="cap-card__link" onClick={() => onViewUser(h.user_id)}>
+            Grants
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 interface RegistryViewProps {
   onViewUser: (userId: string) => void;
   token: string | null;
@@ -527,7 +595,7 @@ function RegistryView({ onViewUser, token }: RegistryViewProps) {
   // Include `token` in the query key so cached results from a previous
   // session are not served after logout / login / token refresh. React Query
   // treats different keys as separate caches, preventing cross-user leakage.
-  void onViewUser;
+  const [expanded, setExpanded] = useState<string | null>(null);
   const { data, isLoading, error, refetch } = useQuery<RegistryEntry[]>({
     queryKey: ['admin', 'capabilities', 'registry', token],
     queryFn: async () => {
@@ -590,22 +658,21 @@ function RegistryView({ onViewUser, token }: RegistryViewProps) {
           <span className="cap-card__desc">{entry.description || 'No description available.'}</span>
           <div className="cap-card__footer">
             <span className="cap-card__holders">Holders: {entry.holder_count}</span>
-            {/*
-              Per-capability holders view is not yet wired (no
-              `/admin/capabilities/:cap/holders` route exists). Render the
-              affordance as disabled rather than misrouting every card to
-              `onViewUser('me')`, which leaked the current user's grants
-              regardless of which card was clicked.
-            */}
             <button
               type="button"
               className="cap-card__link"
-              disabled
-              title="Per-capability holders view coming soon"
+              aria-expanded={expanded === entry.capability}
+              disabled={entry.holder_count === 0}
+              onClick={() =>
+                setExpanded((cur) => (cur === entry.capability ? null : entry.capability))
+              }
             >
-              View holders (coming soon)
+              {expanded === entry.capability ? 'Hide holders' : 'View holders'}
             </button>
           </div>
+          {expanded === entry.capability && (
+            <HoldersList capability={entry.capability} token={token} onViewUser={onViewUser} />
+          )}
         </article>
       ))}
     </div>
@@ -1243,8 +1310,8 @@ export default function CapabilitiesAdminPage() {
             <HelpTooltip text={t('admin.capabilities.helpTooltip')} />
           </h1>
           <p className="cap-page__subtitle">
-            All {CAPABILITIES.length} platform capability strings. Click "View holders" to inspect
-            grants for a specific user.
+            All {CAPABILITIES.length} platform capability strings. Click "View holders" to see who
+            holds a capability, then open a holder's grants.
           </p>
         </div>
       </div>
