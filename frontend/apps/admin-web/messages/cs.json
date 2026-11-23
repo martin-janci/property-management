@@ -86,7 +86,8 @@
       },
       "helpTooltip": "Feature flagy se okamžitě projeví u všech uživatelů daného nájemníka. Nouzový vypínač používejte opatrně.",
       "title": "Feature flagy",
-      "warning": "Nouzový vypínač pro nájemníka — změny se okamžitě projeví u všech uživatelů tohoto nájemníka."
+      "warning": "Nouzový vypínač pro nájemníka — změny se okamžitě projeví u všech uživatelů tohoto nájemníka.",
+      "loadFailed": "Nepodařilo se načíst příznaky funkcí ze serveru. Ukládání je vypnuté."
     },
     "impersonation": {
       "asUser": "jako {{name}}",

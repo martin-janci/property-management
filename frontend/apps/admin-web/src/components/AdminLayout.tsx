@@ -121,7 +121,7 @@ export function AdminLayout() {
             {canUsersRead || canPrincipalKindEscalate ? (
               <NavItem to="/identity/users" label={t('admin.users.title', 'Users')} />
             ) : null}
-            {canMembershipsGrant || canMembershipsRevoke ? (
+            {canMembershipsRevoke ? (
               <NavItem
                 to="/identity/memberships"
                 label={t('admin.memberships.title', 'Memberships')}
