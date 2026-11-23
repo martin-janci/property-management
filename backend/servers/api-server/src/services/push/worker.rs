@@ -722,4 +722,88 @@ mod tests {
             "sleeps happen only BETWEEN attempts, never after the last"
         );
     }
+
+    // ------------------------------------------------------------------
+    // Requeue-push policy bound to the PRODUCTION constants (#3726)
+    //
+    // The retry_bounded tests above pass a literal attempt count, so they keep
+    // passing even if `MAX_REQUEUE_PUSH_ATTEMPTS` were lowered back to a single
+    // attempt — silently reintroducing the pre-fix silent-drop bug (a transient
+    // requeue RPUSH failure dropped the already-BLPOP'd job). These pin the
+    // actual production constants the `process_pending_jobs` wiring feeds into
+    // `retry_bounded`. (The drain_once ↔ Redis integration itself needs a live
+    // Redis and is covered separately.)
+    // ------------------------------------------------------------------
+
+    /// Driving `retry_bounded` with the real `MAX_REQUEUE_PUSH_ATTEMPTS` and an
+    /// op that fails every time must (a) surface the error — not silently drop
+    /// the already-BLPOP'd push — (b) try exactly the production bound, and
+    /// (c) perform at least one *retry* (an inter-attempt sleep). The pre-fix
+    /// behaviour was a single attempt (no retry), so a transient Redis error
+    /// dropped the push; lowering the bound back to 1 makes the retry count fall
+    /// to 0 and fails this test, which the literal-count unit tests do not catch.
+    #[tokio::test]
+    async fn requeue_push_bound_permits_a_retry_before_surfacing() {
+        use std::cell::Cell;
+        let calls = Cell::new(0u32);
+        let sleeps = Cell::new(0u32);
+        let r: Result<u64, &str> = retry_bounded(
+            MAX_REQUEUE_PUSH_ATTEMPTS,
+            || {
+                calls.set(calls.get() + 1);
+                async { Err("redis down for the whole tick") }
+            },
+            |_attempt| {
+                sleeps.set(sleeps.get() + 1);
+                async {}
+            },
+        )
+        .await;
+        assert!(
+            r.is_err(),
+            "an exhausted requeue must surface the error, not silently drop the push"
+        );
+        assert_eq!(
+            calls.get(),
+            MAX_REQUEUE_PUSH_ATTEMPTS,
+            "the requeue must try exactly the production bound"
+        );
+        assert!(
+            sleeps.get() >= 1,
+            "the production requeue bound must permit at least one retry; the pre-fix \
+             single-attempt behaviour dropped the push on the first transient Redis error"
+        );
+    }
+
+    /// Within the production bound, a transient requeue failure on every attempt
+    /// but the last still recovers — the push is placed, not dropped. Wiring the
+    /// real `MAX_REQUEUE_PUSH_ATTEMPTS` (not a literal) means lowering it to 1
+    /// turns these failures into an immediate drop and fails this test.
+    #[tokio::test]
+    async fn requeue_push_recovers_within_production_bound() {
+        use std::cell::Cell;
+        let calls = Cell::new(0u32);
+        let r: Result<u64, &str> = retry_bounded(
+            MAX_REQUEUE_PUSH_ATTEMPTS,
+            || {
+                let n = calls.get() + 1;
+                calls.set(n);
+                async move {
+                    if n < MAX_REQUEUE_PUSH_ATTEMPTS {
+                        Err("NOAUTH")
+                    } else {
+                        Ok(u64::from(n))
+                    }
+                }
+            },
+            |_attempt| async {},
+        )
+        .await;
+        assert_eq!(
+            r,
+            Ok(u64::from(MAX_REQUEUE_PUSH_ATTEMPTS)),
+            "a transient requeue failure within the production bound must recover, not drop the push"
+        );
+        assert_eq!(calls.get(), MAX_REQUEUE_PUSH_ATTEMPTS);
+    }
 }

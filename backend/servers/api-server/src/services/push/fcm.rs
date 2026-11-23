@@ -1233,4 +1233,162 @@ BjoqgEdIaMmiy1bJKyDvIng=
 
         assert!(source.access_token().await.is_none());
     }
+
+    // ------------------------------------------------------------------
+    // Shared adapter-level test helpers (DB-less: a lazy pool that fails fast,
+    // a Static token provider, and a configured FcmConfig). These let the
+    // HTTP-v1 send path and the standalone `send()` error path run without a
+    // live Postgres or FCM.
+    // ------------------------------------------------------------------
+
+    /// A lazy pool with a short acquire timeout pointed at an unreachable
+    /// address: the first query fails fast with a connection error, so `send()`'s
+    /// device-token fetch exercises the DB-error path without a live Postgres.
+    fn failing_pool() -> DbPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .acquire_timeout(Duration::from_millis(250))
+            .connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("connect_lazy builds without connecting")
+    }
+
+    /// A configured FCM config (project id present → `is_configured()`), with an
+    /// optional base-URL override so a test can point the HTTP-v1 send at a
+    /// wiremock server.
+    fn configured_fcm_config(base_url: Option<String>) -> FcmConfig {
+        FcmConfig {
+            project_id: Some("test-project".to_string()),
+            oauth_token: None,
+            fcm_base_url: base_url,
+        }
+    }
+
+    fn fcm_test_notification() -> Notification {
+        Notification::new(
+            Uuid::new_v4(),
+            common::notifications::NotificationCategory::Announcements,
+            "Building update",
+            "The lift will be serviced tomorrow.",
+        )
+    }
+
+    // ------------------------------------------------------------------
+    // 2xx-FCM-delivered guard (#3725) — END TO END through the real HTTP-v1
+    // send path.
+    //
+    // The classify_fcm_outcome unit tests above pin the pure decision. These
+    // drive the actual `send_fcm_v1` request/response wiring (status +
+    // body-parse Err arm) against a mock FCM, so a future refactor that rewires
+    // the arm (e.g. passes `false` instead of `status.is_success()`, or drops
+    // the classifier) is caught even if the pure function stays correct.
+    // ------------------------------------------------------------------
+
+    /// A 2xx whose body does NOT deserialize into `FcmSendResponse` must be
+    /// treated as delivered (no retry). FCM has already accepted the message, so
+    /// reporting a failed attempt makes the fanout worker requeue the job
+    /// (PushFailed is retryable) and FCM delivers the same push a second time.
+    /// Pre-fix the body-parse-error arm returned `(false, false)`, so this fails
+    /// against the old behaviour and passes against the fix.
+    #[tokio::test]
+    async fn send_fcm_v1_treats_2xx_unparseable_body_as_delivered_not_retried() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            // 200 OK, but a body that is not valid JSON for FcmSendResponse.
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_string("OK"))
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let (delivered, expired) = adapter
+            .send_fcm_v1("test-project", "device-token-123", &fcm_test_notification())
+            .await;
+
+        assert!(
+            delivered,
+            "a 2xx FCM response with an unparseable body must be treated as delivered (no retry); \
+             reporting a failed attempt makes the worker requeue and re-deliver the push"
+        );
+        assert!(
+            !expired,
+            "a 2xx unparseable body must not evict the device token"
+        );
+    }
+
+    /// Boundary guard: a NON-2xx (e.g. 503) whose body we cannot parse stays a
+    /// failed, retryable attempt — it must NOT be reported as delivered. Pins
+    /// the fix as narrow (only 2xx is forgiven) so a future over-correction that
+    /// treats every unparseable body as delivered regresses here.
+    #[tokio::test]
+    async fn send_fcm_v1_treats_non_2xx_unparseable_body_as_failed_attempt() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            .respond_with(
+                wiremock::ResponseTemplate::new(503).set_body_string("upstream unavailable"),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let (delivered, expired) = adapter
+            .send_fcm_v1("test-project", "device-token-123", &fcm_test_notification())
+            .await;
+
+        assert!(
+            !delivered,
+            "a non-2xx unparseable response is a failed (retryable) attempt, not delivered"
+        );
+        assert!(!expired);
+    }
+
+    // ------------------------------------------------------------------
+    // Push DB-error leak guard (#3731) — FCM standalone `send()`.
+    //
+    // #3731 fixed the raw-sqlx-error leak in apns.rs, combined.rs AND fcm.rs,
+    // but only apns.rs and combined.rs received regression tests; the fcm.rs
+    // fix shipped with no coverage. This closes that shadow-debt gap.
+    // ------------------------------------------------------------------
+
+    /// Security regression (code-review `push-db-err-leak`): FCM standalone
+    /// `send()`'s device-token fetch failure must map to a FIXED, non-leaking
+    /// message — never the raw `sqlx::Error` display, which can expose the DB
+    /// host/port/credentials from the connection string (that message is
+    /// persisted verbatim to the delivery record via `into_failed(e.to_string())`).
+    /// Pre-fix returned `format!("DB error fetching tokens: {e}")`, so this fails
+    /// against the old behaviour and passes against the fix. The raw error stays
+    /// in the internal `tracing::error!` log only.
+    #[tokio::test]
+    async fn fcm_db_fetch_error_message_does_not_leak_raw_db_error() {
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(None),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let result = adapter.send(Uuid::new_v4(), &fcm_test_notification()).await;
+
+        match result {
+            Err(NotificationError::PushFailed(msg)) => {
+                assert_eq!(
+                    msg, "failed to fetch device tokens",
+                    "DB fetch failure must map to a fixed non-leaking message, got {msg:?}"
+                );
+            }
+            other => panic!("expected PushFailed(non-leaking message), got {other:?}"),
+        }
+    }
 }
