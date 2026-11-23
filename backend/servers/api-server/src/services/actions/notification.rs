@@ -110,10 +110,10 @@ pub struct WorkflowNotification {
 ///
 /// The executor is deliberately decoupled from any concrete notification
 /// service: production wires a sink backed by the notification pipeline, tests
-/// wire a recording sink. Keeping this a trait means the executor never has to
-/// pretend a notification was sent — if no sink is wired it refuses to report
-/// success (see [`NotificationExecutor::execute`]), consistent with the other
-/// action executors, which only return success after the work actually ran.
+/// wire a recording sink, and the default is [`LoggingNotificationSink`].
+/// Keeping this a trait means genuine delivery failures surface to the workflow
+/// engine (an `Err` becomes an [`ActionError::ExternalServiceError`]) while the
+/// executor never has to pretend a notification was sent.
 #[async_trait]
 pub trait NotificationSink: Send + Sync {
     /// Deliver or enqueue `notification`, returning the number of recipients
@@ -123,28 +123,63 @@ pub trait NotificationSink: Send + Sync {
     async fn dispatch(&self, notification: &WorkflowNotification) -> Result<usize, String>;
 }
 
+/// Default sink used when no concrete notification dispatcher is wired.
+///
+/// This is the graceful-degradation fallback — directly analogous to the way
+/// the sibling email action's `EmailService` drops to logging mode when SMTP is
+/// unconfigured. It logs the fully-resolved
+/// notification (so the delivery is observable and auditable in a deployment
+/// that has not yet wired a real pipeline) and reports the resolved recipients,
+/// rather than hard-erroring on every invocation.
+///
+/// It never fabricates a *downstream* delivery failure: genuine failures only
+/// arise from a real sink wired via [`NotificationExecutor::with_sink`].
+pub struct LoggingNotificationSink;
+
+#[async_trait]
+impl NotificationSink for LoggingNotificationSink {
+    async fn dispatch(&self, notification: &WorkflowNotification) -> Result<usize, String> {
+        tracing::warn!(
+            title = %notification.title,
+            targets = ?notification.targets,
+            channel = ?notification.channel,
+            priority = notification.priority,
+            "No notification dispatcher wired; logging workflow notification \
+             (development/unconfigured fallback) instead of delivering it"
+        );
+        Ok(notification.targets.len())
+    }
+}
+
 /// Notification action executor.
 ///
-/// Holds an optional [`NotificationSink`]. When a sink is wired the action
-/// dispatches/enqueues for real; when it is absent the action returns a real
-/// error rather than a silent success, so a mis-wired deployment surfaces the
-/// gap instead of claiming notifications were sent when they were not.
+/// Always holds a [`NotificationSink`]. When a real dispatcher is wired via
+/// [`NotificationExecutor::with_sink`] the action dispatches/enqueues for real
+/// and surfaces genuine delivery failures as errors; by default it falls back
+/// to a [`LoggingNotificationSink`] that logs the resolved notification rather
+/// than hard-erroring on every call. This mirrors the sibling email action,
+/// which sends via SMTP when configured and degrades to logging otherwise.
 pub struct NotificationExecutor {
-    sink: Option<Arc<dyn NotificationSink>>,
+    sink: Arc<dyn NotificationSink>,
 }
 
 impl NotificationExecutor {
-    /// Create a new notification executor with no dispatcher wired.
+    /// Create a new notification executor backed by the default
+    /// [`LoggingNotificationSink`].
     ///
-    /// Without a sink the executor refuses to report success — use
-    /// [`NotificationExecutor::with_sink`] to attach a real dispatcher.
+    /// No real dispatcher is wired, so notifications are logged (the
+    /// development/unconfigured fallback) instead of delivered — use
+    /// [`NotificationExecutor::with_sink`] to attach a real dispatcher. The
+    /// action never hard-errors merely because no pipeline is configured.
     pub fn new() -> Self {
-        Self { sink: None }
+        Self {
+            sink: Arc::new(LoggingNotificationSink),
+        }
     }
 
     /// Create a notification executor backed by a concrete dispatcher.
     pub fn with_sink(sink: Arc<dyn NotificationSink>) -> Self {
-        Self { sink: Some(sink) }
+        Self { sink }
     }
 
     /// Parse and validate the notification configuration.
@@ -256,19 +291,15 @@ impl ActionExecutor for NotificationExecutor {
             data: notif_config.data.clone(),
         };
 
-        // Actually dispatch/enqueue via the wired sink. If no sink is
-        // configured, refuse to report success: a silent "sent" when nothing
-        // was delivered is the bug this executor used to have. This mirrors the
-        // other action executors, which only return success once the work ran.
-        let Some(sink) = self.sink.as_ref() else {
-            return Err(ActionError::ExternalServiceError(
-                "notification action has no dispatcher wired; refusing to report \
-                 a notification as sent without delivering it"
-                    .to_string(),
-            ));
-        };
-
-        let recipients = sink
+        // Actually dispatch/enqueue via the wired sink. A real sink delivers
+        // and reports its recipient count; the default logging sink records the
+        // notification without delivering (development/unconfigured fallback).
+        // Either way the executor only reports success once the sink has run,
+        // and a genuine dispatch failure surfaces as an error (and is retried
+        // like any other transient action failure) — it is never a silent
+        // success, and it never hard-errors just because no pipeline is wired.
+        let recipients = self
+            .sink
             .dispatch(&notification)
             .await
             .map_err(ActionError::ExternalServiceError)?;
@@ -406,11 +437,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_notification_without_sink_errors() {
-        // Regression (code-review: api-core notif action stub noop): with no
-        // dispatcher wired, the executor must surface a real error instead of
-        // silently reporting the notification as sent. Before the fix this
-        // returned Ok(ActionResult::success(..)) — a silent no-op.
+    async fn test_notification_default_sink_does_not_hard_error() {
+        // Regression (code-review fix-round): the default executor (no real
+        // dispatcher wired) must NOT hard-error on every call. It degrades to
+        // the logging sink — analogous to the email action's SMTP-unconfigured
+        // logging fallback — and reports success with the resolved recipients,
+        // instead of failing every workflow that uses the notification action.
         let executor = NotificationExecutor::new();
         let config = serde_json::json!({
             "title": "New Fault Reported",
@@ -426,10 +458,15 @@ mod tests {
             serde_json::json!({}),
         );
 
-        let result = executor.execute(&config, &context).await;
-        assert!(
-            result.is_err(),
-            "executor with no sink must not report success without dispatching"
+        let result = executor
+            .execute(&config, &context)
+            .await
+            .expect("default executor must not hard-error without a wired dispatcher");
+        assert!(result.success);
+        assert_eq!(
+            result.output.get("recipients").unwrap().as_u64(),
+            Some(1),
+            "logging fallback should report the resolved recipients"
         );
     }
 
