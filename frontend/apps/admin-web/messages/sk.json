@@ -86,7 +86,8 @@
       },
       "helpTooltip": "Funkčné príznaky sa prejavia okamžite pre všetkých používateľov daného nájomníka. Núdzový vypínač používajte opatrne.",
       "title": "Funkčné príznaky",
-      "warning": "Núdzový vypínač pre nájomníka — zmeny sa prejavia okamžite pre každého používateľa v tomto nájomníkovi."
+      "warning": "Núdzový vypínač pre nájomníka — zmeny sa prejavia okamžite pre každého používateľa v tomto nájomníkovi.",
+      "loadFailed": "Nepodarilo sa načítať príznaky funkcií zo servera. Ukladanie je vypnuté."
     },
     "impersonation": {
       "asUser": "ako {{name}}",

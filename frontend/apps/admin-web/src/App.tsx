@@ -116,9 +116,8 @@ export function App() {
                 <Route
                   path="identity/memberships"
                   element={
-                    <ProtectedRoute
-                      requiredCapability={['memberships_grant', 'memberships_revoke']}
-                    >
+                    // The roster endpoint requires memberships_revoke server-side.
+                    <ProtectedRoute requiredCapability="memberships_revoke">
                       <MembershipsPage />
                     </ProtectedRoute>
                   }

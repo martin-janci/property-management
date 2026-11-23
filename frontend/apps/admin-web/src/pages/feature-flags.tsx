@@ -7,8 +7,9 @@
  * flag. Flag key is used as the ID since the platform_admin endpoint expects
  * the flag ID in the path.
  *
- * If the toggle endpoint returns 404 for a given flag, shows a toast
- * "Save not yet implemented" for that flag and leaves a TODO comment below.
+ * Keys the server does not know yet are skipped with a warning toast. A
+ * failed flag list load shows an error instead of silently treating every
+ * flag as unregistered.
  */
 
 import { type SettingsField, SettingsForm, useCapability } from '@ppt/admin-ui';
@@ -628,7 +629,7 @@ const FeatureFlagsPage: React.FC = () => {
   // Load real flag metadata. The backend toggle endpoint takes a UUID id, not
   // the human-readable key, so we need this list to resolve key → id and to
   // get the current `is_enabled` baseline used for diffing.
-  const { data: backendFlags } = useQuery<BackendFeatureFlag[]>({
+  const { data: backendFlags, isError: flagsLoadFailed } = useQuery<BackendFeatureFlag[]>({
     queryKey: ['admin', 'platform', 'feature-flags'],
     queryFn: async () => {
       const headers: Record<string, string> = {};
@@ -637,10 +638,7 @@ const FeatureFlagsPage: React.FC = () => {
         headers,
         credentials: 'include',
       });
-      if (!res.ok) {
-        if (res.status === 404) return [];
-        throw new Error(`Feature flags fetch failed: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`Feature flags fetch failed: ${res.status}`);
       const body = (await res.json()) as ListFeatureFlagsBackendResponse;
       return body.flags ?? [];
     },
@@ -839,6 +837,13 @@ const FeatureFlagsPage: React.FC = () => {
         <p role="alert" className="ppt-admin-warning" style={{ color: '#b00020', fontWeight: 600 }}>
           {t('admin.featureFlags.warning')}
         </p>
+        {flagsLoadFailed && (
+          <div role="alert" className="ppt-admin-error">
+            {t('admin.featureFlags.loadFailed', {
+              defaultValue: 'Could not load feature flags from the server. Saving is disabled.',
+            })}
+          </div>
+        )}
         <SettingsForm<FeatureFlagValues>
           // key forces re-init of the SettingsForm internal state once the
           // server-provided baseline arrives, so the toggles reflect actual
@@ -847,6 +852,7 @@ const FeatureFlagsPage: React.FC = () => {
           fields={fields}
           initialValues={initialValues}
           capability="feature_flags_write"
+          readOnly={flagsLoadFailed}
           onSubmit={handleSubmit}
         />
         <FeatureFlagOverridesSection flags={backendFlags ?? []} />

@@ -9,7 +9,7 @@
  *
  * Capability gates:
  *   - High-risk events card: audit_read
- *   - Active impersonation card: users_impersonate OR audit_read
+ *   - Active impersonation card: users_impersonate (server gate on /impersonation/active)
  *   - Pending merge collisions card: memberships_grant
  *   - Quick actions card: hidden if all gated out
  */
@@ -390,6 +390,8 @@ export function Dashboard() {
   const canAuditRead = useCapability('audit_read');
   const canUsersImpersonate = useCapability('users_impersonate');
   const canMembershipsGrant = useCapability('memberships_grant');
+  // The Memberships page (and its roster endpoint) needs memberships_revoke.
+  const canMembershipsRevoke = useCapability('memberships_revoke');
 
   // Derived first name from JWT sub (best-effort; fallback "Operator")
   const operatorFallback = t('admin.dashboard.operatorFallback', { defaultValue: 'Operator' });
@@ -461,7 +463,7 @@ export function Dashboard() {
     staleTime: 5_000,
     refetchInterval: 5_000,
     refetchOnWindowFocus: true,
-    enabled: token !== null && (canUsersImpersonate || canAuditRead),
+    enabled: token !== null && canUsersImpersonate,
   });
 
   const mergeCollisionsQuery = useQuery({
@@ -484,7 +486,7 @@ export function Dashboard() {
   // Quick-actions visibility
   const showFindUser = canAuditRead || canUsersImpersonate || canMembershipsGrant;
   const showAuditLog = canAuditRead;
-  const showImpersonations = canUsersImpersonate || canAuditRead;
+  const showImpersonations = canUsersImpersonate;
   const showQuickActions = showFindUser || showAuditLog || showImpersonations;
 
   return (
@@ -653,7 +655,7 @@ export function Dashboard() {
         {/* RIGHT stack */}
         <div className="ppt-dash__right-stack">
           {/* Active impersonation */}
-          {(canUsersImpersonate || canAuditRead) && (
+          {canUsersImpersonate && (
             <div className="ppt-card">
               <h3 className="ppt-card__header">
                 {t('admin.dashboard.impersonation.title', {
@@ -728,13 +730,15 @@ export function Dashboard() {
                       <span className="ppt-row__text">
                         {collision.email} · {collision.organization_names.join(', ')}
                       </span>
-                      <button
-                        type="button"
-                        className="ppt-btn ppt-btn--tiny"
-                        onClick={() => navigate('/identity/memberships')}
-                      >
-                        {t('admin.dashboard.merges.resolve', { defaultValue: 'Resolve' })}
-                      </button>
+                      {canMembershipsRevoke && (
+                        <button
+                          type="button"
+                          className="ppt-btn ppt-btn--tiny"
+                          onClick={() => navigate('/identity/memberships')}
+                        >
+                          {t('admin.dashboard.merges.resolve', { defaultValue: 'Resolve' })}
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

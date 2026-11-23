@@ -95,7 +95,8 @@
       },
       "helpTooltip": "Feature flags take effect immediately for all users in the affected tenant. Use the kill switch with caution.",
       "title": "Feature Flags",
-      "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant."
+      "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant.",
+      "loadFailed": "Could not load feature flags from the server. Saving is disabled."
     },
     "dashboard": {
       "attention": {
