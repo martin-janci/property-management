@@ -71,22 +71,22 @@ async fn run_voice_command(
             )
         })?;
 
-    // NOTE (pre-fix state — intentionally reproduces the bug this commit's test
-    // pins): the command outcome is mapped with `?`, so the error branch
-    // early-returns and leaves `guard` to its best-effort `Drop` cleanup rather
-    // than an explicit `release().await`. The regression test below asserts the
-    // "RlsGuard dropped without calling release()" warning is NOT emitted, so it
-    // FAILS here and passes once the release is added.
-    let (result, _) = processor
+    // Resolve the command outcome first so the mutable borrow of `guard` ends
+    // before we release it, THEN release on every path — the `outcome` is only
+    // mapped to the error response *after* the connection's RLS context has been
+    // cleared, so no early `?`-return can skip the release.
+    let outcome = processor
         .process_command(guard.conn(), device.id, command_text, locale)
-        .await
-        .map_err(|e| {
-            tracing::error!("Voice command processing failed: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("PROCESSING_ERROR", e.to_string())),
-            )
-        })?;
+        .await;
+    guard.release().await;
+
+    let (result, _) = outcome.map_err(|e| {
+        tracing::error!("Voice command processing failed: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("PROCESSING_ERROR", e.to_string())),
+        )
+    })?;
 
     Ok(result)
 }
