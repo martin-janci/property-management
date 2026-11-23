@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T12:31:54Z",
+  "archived_at": "2026-11-23T14:34:23Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -13127,6 +13127,31 @@
         "merged_pr": 3393,
         "merged_at": "2026-11-10T14:30:56Z",
         "at": "2026-11-10T16:25:51Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-dsa-reports-native-alert-ux",
+      "action": "ppt web ui dsa reports native alert ux",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=refactor) | gc1-reconcile 2026-11-23T14:29:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "refactor",
+        "generated": "2026-08-22T16:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T14:29:26Z"
       }
     },
     {

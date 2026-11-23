@@ -354,24 +354,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-dsa-reports-native-alert-ux",
-      "action": "ppt web ui dsa reports native alert ux",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "refactor",
-        "generated": "2026-08-22T16:40:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-registry-fullpage-nav",
       "action": "ppt web ui registry fullpage nav",
       "owner_role": "pm-tech-lead",
