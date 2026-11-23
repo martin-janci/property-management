@@ -8379,6 +8379,7 @@
     "closeSidebar": "Seitenleiste schließen",
     "openSidebar": "Seitenleiste öffnen",
     "sendError": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "deleteError": "Unterhaltung konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
     "confidence": {
       "low": "Geringe Sicherheit",
       "medium": "Mittlere Sicherheit",

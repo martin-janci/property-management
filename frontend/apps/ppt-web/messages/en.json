@@ -5756,6 +5756,7 @@
     "closeSidebar": "Close sidebar",
     "openSidebar": "Open sidebar",
     "sendError": "Failed to send message. Please try again.",
+    "deleteError": "Failed to delete conversation. Please try again.",
     "confidence": {
       "low": "Low confidence",
       "medium": "Medium confidence",

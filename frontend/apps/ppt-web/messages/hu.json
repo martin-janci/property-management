@@ -8379,6 +8379,7 @@
     "closeSidebar": "Oldalsáv bezárása",
     "openSidebar": "Oldalsáv megnyitása",
     "sendError": "Nem sikerült elküldeni az üzenetet. Próbálja újra.",
+    "deleteError": "Nem sikerült törölni a beszélgetést. Próbálja újra.",
     "confidence": {
       "low": "Alacsony megbízhatóság",
       "medium": "Közepes megbízhatóság",

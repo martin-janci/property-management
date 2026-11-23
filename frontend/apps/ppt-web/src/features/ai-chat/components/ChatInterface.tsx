@@ -91,7 +91,8 @@ export function ChatInterface({
             setCurrentSessionId(null);
           }
         } catch {
-          // Error handling is managed by mutation
+          // Failure is reflected in deleteSession.isError and rendered in the
+          // error banner below instead of being silently swallowed.
         }
       }
     },
@@ -259,6 +260,11 @@ export function ChatInterface({
         {sendMessage.isError && (
           <div className="mx-4 mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm" role="alert">
             {t('aiChat.sendError')}
+          </div>
+        )}
+        {deleteSession.isError && (
+          <div className="mx-4 mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm" role="alert">
+            {t('aiChat.deleteError')}
           </div>
         )}
       </div>
