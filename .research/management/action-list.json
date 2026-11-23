@@ -354,60 +354,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-reports-page-no-i18n",
-      "action": "ppt web ui reports page no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-23T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-file-dispute-page-no-i18n",
-      "action": "ppt web ui file dispute page no i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-22T22:40:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-mediation-notes-swallowed-load-error",
-      "action": "ppt web ui mediation notes swallowed load error",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T00:27:06Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-22T22:40:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-dsa-reports-native-alert-ux",
       "action": "ppt web ui dsa reports native alert ux",
       "owner_role": "pm-tech-lead",
@@ -514,20 +460,6 @@
       "depends_on": [],
       "first_open_at": "2026-11-22T20:26:41Z",
       "retry_of": "code-review-ppt-web-ui-editfaultpage-no-i18n",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-ppt-web-core-route-toasts-i18n-gap-retry1",
-      "action": "ppt web core route toasts i18n gap [retry 1/2 of failed code-review-ppt-web-core-route-toasts-i18n-gap]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-22T20:26:41Z (retry_of=code-review-ppt-web-core-route-toasts-i18n-gap reason=failed-no-pr cooldown_ok newest_failure=2026-11-15T14:39:47Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "retry_of": "code-review-ppt-web-core-route-toasts-i18n-gap",
       "retry_round": 1
     },
     {
@@ -691,20 +623,6 @@
         "vector": "bug",
         "generated": "2026-08-21T10:30:00Z"
       }
-    },
-    {
-      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n-retry1",
-      "action": "ppt web ui voting list page no i18n [retry 1/2 of failed code-review-ppt-web-ui-voting-list-page-no-i18n]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-23T04:28:04Z (retry_of=code-review-ppt-web-ui-voting-list-page-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-16T02:49:29Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "retry_of": "code-review-ppt-web-ui-voting-list-page-no-i18n",
-      "retry_round": 1
     },
     {
       "id": "code-review-api-core-voice-contact-mgr-fake-email",
@@ -958,6 +876,74 @@
       "status": "open",
       "deadline": null,
       "source": "2026-11-23 pm-analysis"
+    },
+    {
+      "id": "code-review-api-core-apns-410-body-parse-stale-missed",
+      "action": "api-server push/apns.rs loses APNs 410-Gone eviction signal when error body fails to parse — stale tokens stay in device_push_tokens",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=2 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T12:28:04Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-oauth-rs",
+      "action": "Churn hotspot: routes/voice_webhooks/oauth.rs — 2 commits this run (voice OAuth 503 mapping + rate-limit test)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T12:28:04Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-push-apns-rs",
+      "action": "Churn hotspot: services/push/apns.rs — 2 commits this run (push stack instability under watch)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T12:28:04Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-push-fcm-rs",
+      "action": "Churn hotspot: services/push/fcm.rs — 2 commits this run (push stack instability under watch)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T12:28:04Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
     }
   ],
   "generated": "2026-11-23T04:10:00Z"

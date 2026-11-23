@@ -12842,6 +12842,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-dsa-reports-native-alert-ux",
+      "branch": "auto-impl/code-review-ppt-web-ui-dsa-reports-nativ-07729258",
+      "status": "failed",
+      "claimed_at": "2026-11-23T12:31:41Z",
+      "last_updated": "2026-11-23T12:39:12Z",
+      "status_changed_at": "2026-11-23T12:39:12Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-fixed: DsaReportsPage already uses in-app useToast (dsa.publish.*/dsa.download.* i18n keys); no window.alert/confirm remains; regression test green 3/3; zero-diff, no PR opened; finding resolved by prior PR (siblings #2841/#2829). [no PR produced -> terminal]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-dsa-reports-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-dsa-reports-no-i1-2f373394",
       "status": "merged",
@@ -34208,5 +34230,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-23T10:47:19Z"
+  "archived_at": "2026-11-23T12:40:52Z"
 }

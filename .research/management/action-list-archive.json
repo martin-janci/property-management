@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T08:38:16Z",
+  "archived_at": "2026-11-23T12:31:54Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -11750,6 +11750,27 @@
       "noop_closed": "2026-11-15T14:41:19Z no-op: route toasts already i18n-wired on dev (test 151 passes)"
     },
     {
+      "id": "code-review-ppt-web-core-route-toasts-i18n-gap-retry1",
+      "action": "ppt web core route toasts i18n gap [retry 1/2 of failed code-review-ppt-web-core-route-toasts-i18n-gap]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-22T20:26:41Z (retry_of=code-review-ppt-web-core-route-toasts-i18n-gap reason=failed-no-pr cooldown_ok newest_failure=2026-11-15T14:39:47Z) | gc1-reconcile 2026-11-23T12:27:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "retry_of": "code-review-ppt-web-core-route-toasts-i18n-gap",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T12:27:04Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
       "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
       "owner_role": "pm-backend",
@@ -13460,6 +13481,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-file-dispute-page-no-i18n",
+      "action": "ppt web ui file dispute page no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-23T12:27:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T22:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3748,
+        "merged_at": "2026-11-23T10:45:59Z",
+        "at": "2026-11-23T12:27:04Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-file-dispute-page-partial-i18n",
       "action": "ppt-web FileDisputePage (live /disputes/new) — h1, placeholders left hardcoded English despite partial useTranslation",
       "owner_role": "pm-backend",
@@ -13910,6 +13956,31 @@
         "merged_pr": 3347,
         "merged_at": "2026-11-06T12:35:36Z",
         "at": "2026-11-06T14:25:26Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-mediation-notes-swallowed-load-error",
+      "action": "ppt web ui mediation notes swallowed load error",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-23T12:27:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-22T22:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3749,
+        "merged_at": "2026-11-23T10:44:02Z",
+        "at": "2026-11-23T12:27:04Z"
       }
     },
     {
@@ -14762,6 +14833,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-reports-page-no-i18n",
+      "action": "ppt web ui reports page no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-23T12:27:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-23T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3747,
+        "merged_at": "2026-11-23T10:46:10Z",
+        "at": "2026-11-23T12:27:04Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-rfqform-i18n",
       "action": "[already-resolved-on-dev, no change needed] ppt web ui rfqform i18n",
       "owner_role": "pm-tech-lead",
@@ -15066,6 +15162,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-16T04:27:06Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-voting-list-page-no-i18n-retry1",
+      "action": "ppt web ui voting list page no i18n [retry 1/2 of failed code-review-ppt-web-ui-voting-list-page-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-23T04:28:04Z (retry_of=code-review-ppt-web-ui-voting-list-page-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-16T02:49:29Z) | gc1-reconcile 2026-11-23T12:27:04Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T04:28:04Z",
+      "retry_of": "code-review-ppt-web-ui-voting-list-page-no-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T12:27:04Z"
       }
     },
     {
