@@ -4,6 +4,7 @@
  * Tests aria-labels on timeline event icons.
  */
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MediationTimelineView } from './MediationTimelineView';
 
 vi.mock('@ppt/api-client', () => ({
@@ -34,6 +35,9 @@ vi.mock('react-i18next', () => ({
         'disputes.mediation.timeline.icon.resolutionAccepted': 'Resolution accepted',
         'disputes.mediation.timeline.icon.escalated': 'Escalated',
         'disputes.mediation.timeline.icon.closed': 'Closed',
+        'disputes.mediation.timeline.loadError': 'Could not load the activity log.',
+        'disputes.mediation.timeline.loadErrorRetry': 'Retry',
+        'disputes.mediation.timeline.loadErrorRetrying': 'Retrying…',
       };
       return map[key] ?? key;
     },
@@ -64,6 +68,29 @@ describe('MediationTimelineView', () => {
     >);
     render(<MediationTimelineView disputeId="dsp-1" />);
     expect(screen.getByText('No timeline events yet.')).toBeInTheDocument();
+  });
+
+  it('surfaces the load error instead of the empty state, with a retry', async () => {
+    const refetch = vi.fn();
+    mockUseDisputeTimeline.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      isFetching: false,
+      refetch,
+    } as unknown as ReturnType<typeof useDisputeTimeline>);
+
+    render(<MediationTimelineView disputeId="dsp-1" />);
+
+    // The error must be visible...
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load the activity log.');
+    // ...and must NOT be swallowed into the "no events" empty state.
+    expect(screen.queryByText('No timeline events yet.')).not.toBeInTheDocument();
+
+    // Retry re-runs the query.
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('renders timeline events with aria-labels on icons', () => {
