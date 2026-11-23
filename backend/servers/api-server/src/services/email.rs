@@ -507,6 +507,128 @@ impl EmailService {
         Ok(())
     }
 
+    /// Send a free-form email on behalf of a workflow `send_email` action.
+    ///
+    /// Unlike the templated helpers above, this accepts an arbitrary
+    /// subject/body plus optional CC/BCC recipients and sends either plain-text
+    /// or HTML. Recipient addresses are validated up front — in *every* mode,
+    /// including the logging fallback — so an invalid address is reported as an
+    /// error instead of being silently accepted. Degrades to logging when SMTP
+    /// is unconfigured (like every other send path) and surfaces transport
+    /// failures to the caller so the workflow action can mark itself failed
+    /// rather than dropping the mail.
+    pub async fn send_action_email(
+        &self,
+        to: &str,
+        cc: &[String],
+        bcc: &[String],
+        subject: &str,
+        body: &str,
+        html: bool,
+    ) -> Result<(), EmailError> {
+        // Validate all recipients regardless of transport so a bad address is
+        // never silently accepted.
+        let _: Mailbox = to.parse().map_err(|e| {
+            EmailError::InvalidAddress(format!("Invalid to address '{}': {}", to, e))
+        })?;
+        for addr in cc.iter().chain(bcc.iter()) {
+            let _: Mailbox = addr.parse().map_err(|e| {
+                EmailError::InvalidAddress(format!("Invalid address '{}': {}", addr, e))
+            })?;
+        }
+
+        match self.transport.as_ref() {
+            EmailTransport::Smtp(smtp) => {
+                self.send_action_via_smtp(smtp, to, cc, bcc, subject, body, html)
+                    .await
+            }
+            EmailTransport::Log => {
+                tracing::info!(
+                    to = %to,
+                    cc = cc.len(),
+                    bcc = bcc.len(),
+                    subject = %subject,
+                    html = html,
+                    body_length = body.len(),
+                    "Action email logged (development mode)"
+                );
+                Ok(())
+            }
+        }
+    }
+
+    /// Send a free-form action email via SMTP, honoring CC/BCC and content type.
+    #[allow(clippy::too_many_arguments)]
+    async fn send_action_via_smtp(
+        &self,
+        transport: &AsyncSmtpTransport<Tokio1Executor>,
+        to: &str,
+        cc: &[String],
+        bcc: &[String],
+        subject: &str,
+        body: &str,
+        html: bool,
+    ) -> Result<(), EmailError> {
+        let config = self
+            .smtp_config
+            .as_ref()
+            .ok_or_else(|| EmailError::ConfigurationError("SMTP config missing".to_string()))?;
+
+        let from_mailbox: Mailbox = format!("{} <{}>", config.from_name, config.from_address)
+            .parse()
+            .map_err(|e| EmailError::InvalidAddress(format!("Invalid from address: {}", e)))?;
+        let to_mailbox: Mailbox = to.parse().map_err(|e| {
+            EmailError::InvalidAddress(format!("Invalid to address '{}': {}", to, e))
+        })?;
+
+        let mut builder = Message::builder()
+            .from(from_mailbox)
+            .to(to_mailbox)
+            .subject(subject);
+
+        for addr in cc {
+            let mb: Mailbox = addr.parse().map_err(|e| {
+                EmailError::InvalidAddress(format!("Invalid cc address '{}': {}", addr, e))
+            })?;
+            builder = builder.cc(mb);
+        }
+        for addr in bcc {
+            let mb: Mailbox = addr.parse().map_err(|e| {
+                EmailError::InvalidAddress(format!("Invalid bcc address '{}': {}", addr, e))
+            })?;
+            builder = builder.bcc(mb);
+        }
+
+        let content_type = if html {
+            ContentType::TEXT_HTML
+        } else {
+            ContentType::TEXT_PLAIN
+        };
+
+        let email = builder
+            .header(content_type)
+            .body(body.to_string())
+            .map_err(|e| EmailError::MessageBuildError(e.to_string()))?;
+
+        transport.send(email).await.map_err(|e| {
+            tracing::error!(
+                error = %e,
+                to = %to,
+                subject = %subject,
+                "Failed to send action email via SMTP"
+            );
+            EmailError::SendFailed(e.to_string())
+        })?;
+
+        tracing::info!(
+            to = %to,
+            subject = %subject,
+            "Action email sent successfully via SMTP"
+        );
+
+        Ok(())
+    }
+
     // ==================== Localized Templates ====================
 
     fn get_verification_subject(&self, locale: &Locale) -> String {
