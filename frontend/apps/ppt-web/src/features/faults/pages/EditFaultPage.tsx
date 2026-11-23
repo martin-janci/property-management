@@ -38,10 +38,17 @@ export function EditFaultPage({
           onClick={onCancel}
           className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4"
         >
-          ← {t('faults.edit.backToFault')}
+          ← {t('faults.edit.backToFault', { defaultValue: 'Back to Fault' })}
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{t('faults.edit.title')}</h1>
-        <p className="text-gray-600 mt-2">{t('faults.edit.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {t('faults.edit.title', { defaultValue: 'Edit Fault' })}
+        </h1>
+        <p className="text-gray-600 mt-2">
+          {t('faults.edit.subtitle', {
+            defaultValue:
+              'Update the fault details. Note: editing is only available before the fault is triaged.',
+          })}
+        </p>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
