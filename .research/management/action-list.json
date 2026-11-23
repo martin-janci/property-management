@@ -322,23 +322,6 @@
       "first_open_at": "2026-11-21T03:06:10Z"
     },
     {
-      "id": "code-review-api-core-push-db-err-leak",
-      "action": "push/combined.rs + apns.rs leak raw sqlx::Error display into NotificationError::PushFailed",
-      "owner_role": "pm-security",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-21T18:26:24Z (score=1 conf=medium vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-21T18:26:24Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "security"
-      }
-    },
-    {
       "id": "code-review-reality-web-listing-edit-no-i18n-retry1",
       "action": "reality web listing edit no i18n [retry 1/2 of failed code-review-reality-web-listing-edit-no-i18n]",
       "owner_role": "pm-backend",
@@ -671,23 +654,6 @@
       "last_updated": "2026-11-22T06:36:28Z"
     },
     {
-      "id": "code-review-ppt-web-ui-leases-dispute-unreachable",
-      "action": "ppt-web ViolationDetailPage tenant dispute branch is wrapped in MANAGER_ROLES ProtectedRoute — dead for its audience",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T14:30:08Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
       "id": "screen-map-drift-pr-3695-reality",
       "action": "screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/",
       "owner_role": "pm-qa",
@@ -705,23 +671,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-src-services-voice-oauth-rs",
-      "action": "Churn hotspot: voice_oauth.rs — 240 LoC in PR #3689 (RFC 6749 §5.2 OAuth error bodies)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T14:30:08Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-components-accountinginvoicedetail-tsx",
       "action": "Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix)",
       "owner_role": "pm-tech-lead",
@@ -736,23 +685,6 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-invoice-float-status",
-      "action": "ppt-web AccountingInvoiceDetail classifies paid/partial via JS float + 0.005 epsilon on decimal strings",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T14:30:08Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "bug"
       }
     },
     {
@@ -928,24 +860,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
-      "action": "api handlers voice webhook rlsconn unreachable",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-handlers score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-21T10:30:00Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-voice-webhook-rls-release-inconsistent",
       "action": "api handlers voice webhook rls release inconsistent",
       "owner_role": "pm-backend",
@@ -964,8 +878,8 @@
       }
     },
     {
-      "id": "code-review-api-core-email-action-stub-drops-mail",
-      "action": "api core email action stub drops mail",
+      "id": "code-review-api-core-notif-action-stub-noop",
+      "action": "api core notif action stub noop",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -982,21 +896,23 @@
       }
     },
     {
-      "id": "code-review-api-core-notif-action-stub-noop",
-      "action": "api core notif action stub noop",
-      "owner_role": "pm-backend",
+      "id": "gh-issue-3738",
+      "action": "Follow-up: SSO pending-session capacity eviction does a full O(n log n) sort on every mint under flood (PR #3730) (Closes #3738)",
+      "owner_role": "pm-tech-lead",
       "priority": "medium",
       "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-core score=3 vector=bug)",
+      "source": "dispatcher-issue-ingest 2026-11-23T02:42:28Z (#3738)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-11-22T20:26:41Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-21T05:00:00Z"
+      "first_open_at": "2026-11-23T02:42:28Z",
+      "issue_ref": {
+        "number": 3738,
+        "url": "https://github.com/martin-janci/property-management/issues/3738",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],

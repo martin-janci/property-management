@@ -16774,7 +16774,7 @@
       "vector": "security",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d)"
       ],
@@ -16788,7 +16788,12 @@
       ],
       "created_at": "2026-11-21",
       "updated_at": "2026-11-21",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-23T02:41:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3731
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-services-voice-oauth-rs",
@@ -16796,7 +16801,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3689"
       ],
@@ -16808,7 +16813,12 @@
       ],
       "created_at": "2026-11-22",
       "updated_at": "2026-11-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-23T02:41:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3737
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-features-accounting-components-accountinginvoicedetail-tsx",
@@ -16883,7 +16893,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend)"
       ],
@@ -16896,7 +16906,12 @@
       ],
       "created_at": "2026-11-22",
       "updated_at": "2026-11-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-23T02:41:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3732
+      }
     },
     {
       "id": "code-review-ppt-web-ui-invoice-float-status",
@@ -16904,7 +16919,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend)"
       ],
@@ -16916,7 +16931,12 @@
       ],
       "created_at": "2026-11-22",
       "updated_at": "2026-11-22",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-23T02:41:07Z",
+        "assignment_status": "merged",
+        "pr_number": 3733
+      }
     }
   ]
 }

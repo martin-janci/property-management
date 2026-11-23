@@ -1,9 +1,39 @@
 {
-  "generated": "2026-11-22T18:33:59Z",
+  "generated": "2026-11-23T02:38:38Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-23T02:38:38Z",
+      "prs_scanned": 15,
+      "clean": [
+        3731,
+        3737,
+        3735,
+        3734,
+        3733,
+        3732,
+        3728,
+        3729,
+        3712,
+        3710,
+        3708,
+        3709,
+        3707,
+        3705
+      ],
+      "with_issues": [
+        {
+          "pr": 3730,
+          "issue": 3738,
+          "findings": 1,
+          "specialist": "rust/pm-security",
+          "note": "SSO pending-session capacity cap (MAX_PENDING_SSO_SESSIONS=50k) is correct, but enforce_pending_sso_session_capacity does a full O(n log n) sort + clones every session-id key on EVERY /login once at capacity, holding the sso_sessions mutex -- i.e. exactly during the sustained-flood DoS the cap defends against. Propose a linear min-scan for the normal single-eviction case or batch/hysteresis trim to ~0.9*max so per-request work is amortized O(1) (performance/DoS, medium)."
+        }
+      ],
+      "note": "15 newest unreviewed PRs merged to dev 2026-11-21..23 (newest-15 cap; 6 older unreviewed -- #3706,#3704,#3702,#3700,#3699,#3701 -- roll to next run). 14 clean, 1 follow-up (#3738 for PR #3730). Very strong backend hardening sweep: #3731 stops raw sqlx-error leak (DB connection-string host/port/creds) into push PushFailed message across apns/combined/fcm w/ non-leak regression tests; #3734 RlsPool::acquire_with_rls now discards (detach+close) the connection + fails closed when set_request_context fails, closing the voice-webhook stale-RLS-context bleed (follow-up to #3583) w/ thorough bleed test; #3737 voice OAuth transport faults -> temporarily_unavailable (503) not server_error (500), RFC6749 5.2, w/ test; #3735 workflow send_email action actually delivers via shared EmailService instead of log-and-succeed (EmailExecutor::new registered once in mod.rs, no per-exec cost) w/ failure-surfacing test; #3729 malformed folder_id -> 400 not swallowed-to-None w/ integration test; #3712 docgen rejects empty/blank LLM completion (EmptyCompletion) instead of persisting blank doc w/ tests; #3708 ai_summarize surfaces persist error (was `let _ =`) + releases RLS. Frontend: #3733 decimal-safe integer-cents invoice paid/partially_paid classification (no float/toFixed/epsilon) w/ toCents unit tests; #3732 drops dead MANAGER_ROLES gate on /leases/violations/:id so the tenant dispute flow is reachable (in-page isManager gating retained; backend remains the authz boundary) w/ real-ProtectedRoute regression test + screen-map update; #3707 surfaces swallowed facility-availability error w/ loading/alert states + cancel-guarded effect; #3705 RN messages/announcements search placeholders routed through i18n (6 locales) w/ tests; #3710 admin-web contract alignment (impersonation actor/id field renames + bare-array tolerance, announcement end_at tri-state double_option, tenant-slug real lookup replacing demo stub, agency-suspend reason dialog, registerOAuthClient camelCase fix) w/ wire-contract tests; #3709 admin audit viewer keyset-paging + actor/capability/outcome/target filters w/ actor_email join, mediation-case now returns sessions+attendance (was []), feature-stats 404 on unknown feature w/ tests. #3728 screen-map-drift reconcile (docs only). No JSON-key-case (PR #473) regressions found. PR labels applied via GitHub MCP issue_write (gh writes are 403 in cloud). DISPATCHER_OWNED_COMMIT=1: wrote artifact + marker only, deferred commit to orchestrator Phase 6."
+    },
     {
       "run_at": "2026-11-22T18:33:59Z",
       "prs_scanned": 15,
@@ -580,42 +610,6 @@
         3184
       ],
       "with_issues": []
-    },
-    {
-      "run_at": "2026-11-01T14:32:05Z",
-      "prs_scanned": 13,
-      "clean": [
-        3211,
-        3210,
-        3209,
-        3214,
-        3212,
-        3207,
-        3205,
-        3204,
-        3203,
-        3202,
-        3201,
-        3200,
-        3199
-      ],
-      "with_issues": [],
-      "note": "Dispatcher Tier-1d demand-driven backlog generator run (claim buffer starved: honest claimable=6 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-18), base=dev, max_prs=15, issue-label=follow-up,from-merged-review. 13 net-new in-window dev merges lacking post-merge-reviewed/no-review-needed: #3211/#3210/#3209/#3214/#3212 (2026-11-01), #3207 (2026-10-31 20:45Z), #3205/#3204/#3203/#3202/#3201/#3200/#3199 (2026-10-31 18:26-18:27Z). Everything #3188 and older already carried post-merge-reviewed from prior runs; dependabot #3137/#3007/#2961/#3133/#3089 are closed-unmerged (null merged_at), skipped. ALL 13 CLEAN, 0 follow-ups opened. Clean verdicts: #3211 ppt-web Accounting Invoice i18n + drops native alert/confirm (chrome strings -> react-i18next); #3210 api-server test-only cross-org 404 regression suite for get_rule/get_action/get_appeal by-id reads (same-org-200/cross-org-404), pins the #850 *_for_org threading; #3209 mobile-RN resolves prior-run finding #3206: ranked-ballot a11y labels/hint now use t(key,{defaultValue}) and voting.submit/moveUp/moveDown/rankHint added to all 6 locale bundles, tests assert resolved labels not raw keys; #3214 api-server test-only: consolidate compliance_wave1b_tests fixtures onto shared seed_org/seed_membership + unprivileged_app/authorized_app Caller fixtures (behavior-preserving churn fix); #3212 reality-web extract listing-edit status mapping into tested _status.ts (mapListingStatusToForm/resolveStatusUpdate), preserves #1762 terminal-state-downgrade guard, behavior-preserving; #3207 reality-server validate_price rejects <=0 portal listing price on create/update (DECIMAL has no CHECK, Decimal can't be NaN) w/ unit tests; #3205 reality-server list_my_reports validates status filter against documented enum (400 not silent empty 200), no reflected echo, w/ regression test; #3204 api-server test-only: EDD write unknown-id 404 tests (guards #3174 500-collapse class) + first DSA platform-principal positive paths; #3203 reality-web localizes listing-edit wizard across all 6 locales (sk/cs/de/en/pl/hu) w/ per-locale i18n coverage test, companion to #3197/#3207/#3212; #3202 ppt-web resolveVatRate single-source-of-truth normalizes submitted item.vatRate to UI-derived rate (no stale 21% drift) w/ RTL test; #3201 ppt-web ConnectionStatus reconnect becomes a real <button> distinct from role=status live-region, aria-label connectionStatus.clickToReconnect present in all 6 message bundles (verified not a raw-key gap), w/ a11y tests; #3200 ppt-web ToastItem clears the 2s 'copied' reset timer on unmount via useRef+useEffect cleanup (no setState-after-unmount) w/ fake-timer regression test; #3199 reality-web ComparisonProvider guards localStorage rehydration against malformed-but-valid-JSON shapes (parseStoredListings + isStoredListing), degrades to usable subset, w/ tampered-value tests. No Task fan-out tool available to this subagent, so all 13 diffs reviewed inline (<=5 concurrency honoured conceptually). GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc); merged detected by non-null merged_at. All 13 PRs labeled post-merge-reviewed via issue_write update (none had prior labels, so label-set writes clobbered nothing). No breadcrumb comments (no issues opened). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6; did NOT touch assignments.json/action-list.json/archives.",
-      "focus_prs": [
-        3211,
-        3210,
-        3209,
-        3214,
-        3212,
-        3207,
-        3205,
-        3204,
-        3203,
-        3202,
-        3201,
-        3200,
-        3199
-      ]
     }
   ]
 }

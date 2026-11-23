@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-22T22:52:08Z",
+  "archived_at": "2026-11-23T02:45:37Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1443,6 +1443,30 @@
         "by": "dispatcher-manual-slug-mismatch",
         "at": "2026-08-13T00:33:08Z",
         "evidence": "work already landed on dev: PR #2732 (gh-issue-2643-retry1) moved OAuth token-usage recording off the hot token path; oauth.rs:1007 marks '#2643: token-usage recording is off the hot token path' with dedicated tests. Monitor-note for completed work."
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-voice-oauth-rs",
+      "action": "Churn hotspot: voice_oauth.rs — 240 LoC in PR #3689 (RFC 6749 §5.2 OAuth error bodies)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-23T02:41:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3737,
+        "merged_at": "2026-11-23T00:32:55Z",
+        "at": "2026-11-23T02:41:06Z"
       }
     },
     {
@@ -3940,6 +3964,31 @@
       }
     },
     {
+      "id": "code-review-api-core-email-action-stub-drops-mail",
+      "action": "api core email action stub drops mail",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-core score=3 vector=bug) | gc1-reconcile 2026-11-23T02:41:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-21T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3735,
+        "merged_at": "2026-11-23T00:32:55Z",
+        "at": "2026-11-23T02:41:06Z"
+      }
+    },
+    {
       "id": "code-review-api-core-fcm-2xx-parse-retry",
       "action": "push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry — duplicate-delivery risk",
       "owner_role": "pm-backend",
@@ -4300,6 +4349,30 @@
         "merged_pr": 3556,
         "merged_at": "2026-11-15T20:39:07Z",
         "at": "2026-11-15T20:41:17Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-push-db-err-leak",
+      "action": "push/combined.rs + apns.rs leak raw sqlx::Error display into NotificationError::PushFailed",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-21T18:26:24Z (score=1 conf=medium vector=security) | gc1-reconcile 2026-11-23T02:41:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T18:26:24Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "security"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3731,
+        "merged_at": "2026-11-23T00:33:40Z",
+        "at": "2026-11-23T02:41:06Z"
       }
     },
     {
@@ -7094,6 +7167,31 @@
         "commit": "d84baaed10055a6a16a225088e9307b034db7737",
         "subject": "code-review-api-handlers-voice-webhook-default-secret-retry2: voice webhook HMAC fails closed on empty secret (#2806)",
         "at": "2026-08-20T10:27:25Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rlsconn-unreachable",
+      "action": "api handlers voice webhook rlsconn unreachable",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-handlers score=3 vector=bug) | gc1-reconcile 2026-11-23T02:41:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-21T10:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3734,
+        "merged_at": "2026-11-23T00:32:55Z",
+        "at": "2026-11-23T02:41:06Z"
       }
     },
     {
@@ -13456,6 +13554,30 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-invoice-float-status",
+      "action": "ppt-web AccountingInvoiceDetail classifies paid/partial via JS float + 0.005 epsilon on decimal strings",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=1 conf=medium vector=bug) | gc1-reconcile 2026-11-23T02:41:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3733,
+        "merged_at": "2026-11-23T00:32:55Z",
+        "at": "2026-11-23T02:41:06Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-invoice-qty-price-nan",
       "action": "ppt-web AccountingInvoiceForm parseFloat on qty/unitPrice yields NaN, bypasses handleSubmit guard → NaN totals persisted",
       "owner_role": "pm-backend",
@@ -13574,6 +13696,30 @@
         "merged_pr": 3343,
         "merged_at": "2026-11-06T12:35:13Z",
         "at": "2026-11-06T14:25:26Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-leases-dispute-unreachable",
+      "action": "ppt-web ViolationDetailPage tenant dispute branch is wrapped in MANAGER_ROLES ProtectedRoute — dead for its audience",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-22T14:30:08Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-11-23T02:41:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T14:30:08Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3732,
+        "merged_at": "2026-11-23T00:32:55Z",
+        "at": "2026-11-23T02:41:06Z"
       }
     },
     {
