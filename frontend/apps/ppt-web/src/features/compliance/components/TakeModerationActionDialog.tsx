@@ -24,6 +24,17 @@ const MODERATION_ACTION_TYPES: readonly ModerationActionType[] = [
   'remove',
 ];
 
+/**
+ * Runtime narrowing guard for the `action_type` union. The `<select>` only
+ * renders the four valid options, but `HTMLSelectElement.value` is typed as a
+ * plain `string`; validate against the allow-list instead of asserting the
+ * union with an unchecked `as` cast so a future markup/DOM change can't push an
+ * out-of-union value into the API payload.
+ */
+export function isModerationActionType(value: string): value is ModerationActionType {
+  return (MODERATION_ACTION_TYPES as readonly string[]).includes(value);
+}
+
 interface TakeModerationActionDialogProps {
   isOpen: boolean;
   isSubmitting?: boolean;
@@ -94,7 +105,10 @@ export function TakeModerationActionDialog({
               <select
                 id="take-action-type"
                 value={actionType}
-                onChange={(e) => setActionType(e.target.value as ModerationActionType)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  if (isModerationActionType(next)) setActionType(next);
+                }}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {MODERATION_ACTION_TYPES.map((value) => (
