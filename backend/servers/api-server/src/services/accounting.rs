@@ -26,6 +26,23 @@ fn normalize_iban(raw: &str) -> String {
         .to_uppercase()
 }
 
+/// Keep only the candidates whose due date is nearest (in absolute days) to
+/// `booking_date`. Ties are all retained; an empty input stays empty.
+fn closest_due_date<T>(
+    booking_date: NaiveDate,
+    candidates: Vec<T>,
+    due_date: impl Fn(&T) -> NaiveDate,
+) -> Vec<T> {
+    let distance = |c: &T| (booking_date - due_date(c)).num_days().abs();
+    let Some(min) = candidates.iter().map(&distance).min() else {
+        return candidates;
+    };
+    candidates
+        .into_iter()
+        .filter(|c| distance(c) == min)
+        .collect()
+}
+
 #[derive(Debug, Deserialize)]
 struct CsvLine {
     date: String,
@@ -265,7 +282,10 @@ impl AccountingService {
                     }
                 }
 
-                // TODO: Date proximity
+                // 4. Date proximity is not scored here: it only breaks ties
+                //    between equal-confidence candidates below (see
+                //    `closest_due_date`), so it can never lift a line over the
+                //    auto-suggest threshold on its own.
 
                 // Confidence is a 0..1 score; the weights above sum to at most
                 // 1.0, but clamp defensively so future signals can't overflow
@@ -282,8 +302,18 @@ impl AccountingService {
                 continue;
             };
 
+            // Among equal-confidence candidates (typically recurring invoices
+            // sharing VS, amount and payer IBAN), keep the one(s) whose due
+            // date is closest to the booking date; genuine ties stay.
+            let best: Vec<(&Invoice, Decimal)> = scored
+                .iter()
+                .filter(|(_, c)| *c == best_confidence)
+                .copied()
+                .collect();
+            let best = closest_due_date(line.booking_date, best, |(inv, _)| inv.due_date);
+
             let mut suggested_any = false;
-            for (invoice, confidence) in scored.iter().filter(|(_, c)| *c == best_confidence) {
+            for (invoice, confidence) in best.iter() {
                 let p_match = PaymentMatch {
                     id: Uuid::new_v4(),
                     tenant_id,
@@ -510,6 +540,44 @@ mod tests {
             AccountingService::statement_account_iban(Some(&account)),
             "SK9611000000002918599669",
         );
+    }
+
+    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    }
+
+    // Recurring monthly invoices share VS, amount and payer IBAN, so they all
+    // tie on confidence; the payment booked on 2026-03-14 belongs to the
+    // invoice due 2026-03-15, not to January's or February's.
+    #[test]
+    fn closest_due_date_picks_nearest_recurring_invoice() {
+        let due = vec![
+            ("jan", d(2026, 1, 15)),
+            ("feb", d(2026, 2, 15)),
+            ("mar", d(2026, 3, 15)),
+        ];
+        let picked = closest_due_date(d(2026, 3, 14), due, |(_, dd)| *dd);
+        assert_eq!(picked, vec![("mar", d(2026, 3, 15))]);
+    }
+
+    #[test]
+    fn closest_due_date_keeps_genuine_ties() {
+        let due = vec![
+            ("a", d(2026, 3, 10)),
+            ("b", d(2026, 3, 20)),
+            ("c", d(2026, 1, 1)),
+        ];
+        let picked = closest_due_date(d(2026, 3, 15), due, |(_, dd)| *dd);
+        assert_eq!(
+            picked.iter().map(|(n, _)| *n).collect::<Vec<_>>(),
+            vec!["a", "b"]
+        );
+    }
+
+    #[test]
+    fn closest_due_date_empty_input() {
+        let picked: Vec<NaiveDate> = closest_due_date(d(2026, 3, 15), vec![], |x| *x);
+        assert!(picked.is_empty());
     }
 
     #[test]
