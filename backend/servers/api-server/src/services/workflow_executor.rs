@@ -6,6 +6,7 @@
 //! - Conditional logic evaluation (Story 94.3)
 
 use crate::services::actions::{ActionContext, ActionError, ActionRegistry, ActionResult};
+use crate::services::notification::NotificationService;
 use db::models::{
     execution_status, on_failure, step_status, trigger_type, TriggerWorkflow, Workflow,
     WorkflowAction,
@@ -13,6 +14,7 @@ use db::models::{
 use db::repositories::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECONDS};
 use db::{RlsGuard, RlsPool};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use thiserror::Error;
 use tracing::Instrument;
@@ -216,10 +218,18 @@ pub struct WorkflowExecutor {
     workflow_repo: WorkflowRepository,
     action_registry: ActionRegistry,
     config: WorkflowExecutorConfig,
+    /// Notification pipeline wired into the `send_notification` action. `None`
+    /// falls back to the logging sink; production passes `Some(..)` so the
+    /// action actually delivers (see [`WorkflowExecutor::with_notification_service`]).
+    notification_service: Option<Arc<NotificationService>>,
 }
 
 impl WorkflowExecutor {
     /// Create a new workflow executor.
+    ///
+    /// The notification action uses the logging fallback sink; use
+    /// [`WorkflowExecutor::with_notification_service`] in production so it
+    /// dispatches for real.
     pub fn new(db: RlsPool, workflow_repo: WorkflowRepository) -> Self {
         Self::with_config(db, workflow_repo, WorkflowExecutorConfig::default())
     }
@@ -235,6 +245,36 @@ impl WorkflowExecutor {
             workflow_repo,
             action_registry: ActionRegistry::new(),
             config,
+            notification_service: None,
+        }
+    }
+
+    /// Create a workflow executor whose `send_notification` action delivers
+    /// through the real [`NotificationService`] pipeline instead of logging.
+    ///
+    /// This is the production constructor — analogous to wiring a configured
+    /// mail service into the email action.
+    pub fn with_notification_service(
+        db: RlsPool,
+        workflow_repo: WorkflowRepository,
+        notification_service: Arc<NotificationService>,
+    ) -> Self {
+        Self {
+            db,
+            workflow_repo,
+            action_registry: ActionRegistry::with_notification_service(
+                notification_service.clone(),
+            ),
+            config: WorkflowExecutorConfig::default(),
+            notification_service: Some(notification_service),
+        }
+    }
+
+    /// Build an [`ActionRegistry`] honouring the wired notification pipeline.
+    fn build_action_registry(&self) -> ActionRegistry {
+        match &self.notification_service {
+            Some(service) => ActionRegistry::with_notification_service(service.clone()),
+            None => ActionRegistry::new(),
         }
     }
 
@@ -283,7 +323,7 @@ impl WorkflowExecutor {
             org_id: workflow.organization_id,
             acting_user: workflow.created_by,
             workflow_repo: self.workflow_repo.clone(),
-            action_registry: ActionRegistry::new(),
+            action_registry: self.build_action_registry(),
             config: self.config.clone(),
         };
 

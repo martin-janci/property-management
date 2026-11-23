@@ -4,8 +4,8 @@ use std::time::Instant;
 
 use crate::services::id_ocr::{default_id_document_ocr, SharedIdDocumentOcr};
 use crate::services::{
-    AccountingService, AuthService, EmailService, JwtService, NotificationPipeline, OAuthService,
-    PipelineConfig, TotpService,
+    AccountingService, AuthService, EmailService, JwtService, NotificationPipeline,
+    NotificationService, NotificationServiceConfig, OAuthService, PipelineConfig, TotpService,
 };
 use api_core::TenantMembershipProvider;
 use db::{
@@ -320,6 +320,11 @@ pub struct AppState {
     pub sentiment_repo: SentimentRepository,
     pub equipment_repo: EquipmentRepository,
     pub workflow_repo: WorkflowRepository,
+    /// Shared notification pipeline (Epic 106) backing the `send_notification`
+    /// workflow action (Epic 94). Built once from the env-configured
+    /// [`EmailService`] so the action delivers for real in production instead of
+    /// logging. See [`WorkflowExecutor::with_notification_service`](crate::services::WorkflowExecutor::with_notification_service).
+    pub notification_service: std::sync::Arc<NotificationService>,
     // Epic 14: IoT & Smart Building
     pub sensor_repo: SensorRepository,
     // Epic 15: Property Listings & Multi-Portal Sync
@@ -555,6 +560,15 @@ impl AppState {
         let sentiment_repo = SentimentRepository::new(db.clone());
         let equipment_repo = EquipmentRepository::new(db.clone());
         let workflow_repo = WorkflowRepository::new(db.clone());
+        // Shared notification pipeline backing the send_notification workflow
+        // action. Reuses the env-configured email service, so in-app/email/push
+        // delivery is real in production (the action degrades to logging only
+        // when this pipeline is not wired).
+        let notification_service = std::sync::Arc::new(NotificationService::new(
+            db.clone(),
+            email_service.clone(),
+            NotificationServiceConfig::default(),
+        ));
         // Epic 14: IoT & Smart Building
         let sensor_repo = SensorRepository::new();
         // Epic 15: Property Listings & Multi-Portal Sync
@@ -729,6 +743,7 @@ impl AppState {
             sentiment_repo,
             equipment_repo,
             workflow_repo,
+            notification_service,
             sensor_repo,
             listing_repo,
             agency_repo,

@@ -3,6 +3,10 @@
 //! Sends in-app notifications as part of workflow execution.
 
 use super::{ActionContext, ActionError, ActionExecutor, ActionResult};
+use crate::services::notification::{
+    Notification as ServiceNotification, NotificationChannel as ServiceChannel,
+    NotificationService, NotificationType as ServiceNotificationType,
+};
 use async_trait::async_trait;
 use db::models::action_type;
 use serde::{Deserialize, Serialize};
@@ -127,10 +131,14 @@ pub trait NotificationSink: Send + Sync {
 ///
 /// This is the graceful-degradation fallback — directly analogous to the way
 /// the sibling email action's `EmailService` drops to logging mode when SMTP is
-/// unconfigured. It logs the fully-resolved
-/// notification (so the delivery is observable and auditable in a deployment
-/// that has not yet wired a real pipeline) and reports the resolved recipients,
-/// rather than hard-erroring on every invocation.
+/// unconfigured. It logs the fully-resolved notification (so the delivery is
+/// observable and auditable in a deployment that has not yet wired a real
+/// pipeline) rather than hard-erroring on every invocation.
+///
+/// Crucially it does **not** pretend a notification was delivered: because it
+/// only logs, it reports **zero** recipients dispatched, so the executor's
+/// `ActionResult` honestly records `dispatched: false` / `recipients: 0`
+/// instead of claiming a delivery that never happened.
 ///
 /// It never fabricates a *downstream* delivery failure: genuine failures only
 /// arise from a real sink wired via [`NotificationExecutor::with_sink`].
@@ -145,9 +153,110 @@ impl NotificationSink for LoggingNotificationSink {
             channel = ?notification.channel,
             priority = notification.priority,
             "No notification dispatcher wired; logging workflow notification \
-             (development/unconfigured fallback) instead of delivering it"
+             (development/unconfigured fallback) WITHOUT delivering it"
         );
-        Ok(notification.targets.len())
+        // Nothing was actually delivered, so report zero recipients. Reporting
+        // `targets.len()` here would make the executor claim a dispatch that
+        // never happened.
+        Ok(0)
+    }
+}
+
+/// Production [`NotificationSink`] that delivers workflow notifications through
+/// the real [`NotificationService`] pipeline.
+///
+/// This is the notification analogue of wiring a configured `EmailService` into
+/// the email action: when the production [`ActionRegistry`] is built via
+/// [`ActionRegistry::with_notification_service`](super::ActionRegistry::with_notification_service)
+/// the `send_notification` action delivers for real (persisting in-app
+/// notifications, honouring per-user channel preferences) instead of logging.
+///
+/// It is deliberately a *thin* adapter: it delivers to targets that resolve to a
+/// concrete user id. Audience selectors (`role:`, `building:`, `org:`) require
+/// expansion into user lists that this adapter does not perform — they are
+/// logged and reported as **not** delivered rather than counted as sent, so the
+/// recipient count the executor reports stays truthful.
+pub struct NotificationServiceSink {
+    service: Arc<NotificationService>,
+}
+
+impl NotificationServiceSink {
+    /// Create a sink backed by a concrete [`NotificationService`].
+    pub fn new(service: Arc<NotificationService>) -> Self {
+        Self { service }
+    }
+
+    /// Map the workflow action's channel onto the notification service's
+    /// channels. SMS has no [`NotificationService`] channel, so it maps to an
+    /// empty set (nothing is delivered and zero recipients are reported).
+    fn service_channels(channel: &NotificationChannel) -> Vec<ServiceChannel> {
+        match channel {
+            NotificationChannel::InApp => vec![ServiceChannel::InApp],
+            NotificationChannel::Push => vec![ServiceChannel::Push],
+            NotificationChannel::Sms => Vec::new(),
+            NotificationChannel::All => {
+                vec![
+                    ServiceChannel::InApp,
+                    ServiceChannel::Push,
+                    ServiceChannel::Email,
+                ]
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl NotificationSink for NotificationServiceSink {
+    async fn dispatch(&self, notification: &WorkflowNotification) -> Result<usize, String> {
+        let channels = Self::service_channels(&notification.channel);
+        if channels.is_empty() {
+            tracing::warn!(
+                channel = ?notification.channel,
+                "Workflow notification channel not supported by NotificationService; \
+                 nothing delivered"
+            );
+            return Ok(0);
+        }
+
+        // Resolve concrete user-id targets. Selector targets (`role:`,
+        // `building:`, `org:`) need audience expansion this thin adapter does
+        // not perform, so they are logged and left uncounted rather than
+        // reported as delivered.
+        let mut user_ids = Vec::new();
+        for target in &notification.targets {
+            match uuid::Uuid::parse_str(target) {
+                Ok(id) => user_ids.push(id),
+                Err(_) => {
+                    tracing::warn!(
+                        target = %target,
+                        "Workflow notification target is not a concrete user id; \
+                         selector expansion is not supported by this adapter, skipping"
+                    );
+                }
+            }
+        }
+
+        if user_ids.is_empty() {
+            return Ok(0);
+        }
+
+        let service_notification = ServiceNotification {
+            notification_type: ServiceNotificationType::WorkflowAction,
+            title: notification.title.clone(),
+            body: notification.message.clone(),
+            data: notification.data.clone(),
+            channels,
+        };
+
+        // A fresh entity id per dispatch: arbitrary, distinct workflow
+        // notifications must not be collapsed by the service's
+        // (user, type, entity) dedup window.
+        let entity_id = Some(uuid::Uuid::new_v4());
+
+        self.service
+            .send_to_users(&user_ids, &service_notification, entity_id)
+            .await
+            .map_err(|e| e.to_string())
     }
 }
 
@@ -306,6 +415,10 @@ impl ActionExecutor for NotificationExecutor {
 
         let duration_ms = start.elapsed().as_millis() as i32;
 
+        // Report delivery honestly: `dispatched` is true only when the sink
+        // actually delivered to at least one recipient. The logging fallback
+        // (no pipeline wired) reports zero recipients, so it surfaces as
+        // `dispatched: false` rather than claiming a send that never happened.
         Ok(ActionResult::success(
             serde_json::json!({
                 "title": title,
@@ -314,7 +427,7 @@ impl ActionExecutor for NotificationExecutor {
                 "channel": notif_config.channel.to_string(),
                 "priority": notif_config.priority,
                 "action_url": action_url,
-                "dispatched": true,
+                "dispatched": recipients > 0,
                 "recipients": recipients,
                 "sent_at": chrono::Utc::now().to_rfc3339()
             }),
@@ -441,8 +554,8 @@ mod tests {
         // Regression (code-review fix-round): the default executor (no real
         // dispatcher wired) must NOT hard-error on every call. It degrades to
         // the logging sink — analogous to the email action's SMTP-unconfigured
-        // logging fallback — and reports success with the resolved recipients,
-        // instead of failing every workflow that uses the notification action.
+        // logging fallback — instead of failing every workflow that uses the
+        // notification action.
         let executor = NotificationExecutor::new();
         let config = serde_json::json!({
             "title": "New Fault Reported",
@@ -462,11 +575,18 @@ mod tests {
             .execute(&config, &context)
             .await
             .expect("default executor must not hard-error without a wired dispatcher");
+        // The action ran without erroring, but the logging fallback delivered
+        // nothing — so it must NOT pretend a notification was sent.
         assert!(result.success);
         assert_eq!(
+            result.output.get("dispatched").unwrap().as_bool(),
+            Some(false),
+            "logging fallback must not claim a notification was dispatched"
+        );
+        assert_eq!(
             result.output.get("recipients").unwrap().as_u64(),
-            Some(1),
-            "logging fallback should report the resolved recipients"
+            Some(0),
+            "logging fallback delivered to no one, so it must report zero recipients"
         );
     }
 
