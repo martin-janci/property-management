@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T16:31:42Z",
+  "archived_at": "2026-11-23T18:34:54Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12227,6 +12227,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-accounting-invoice-form-no-i18n",
+      "action": "ppt web ui accounting invoice form no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-23T18:27:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T18:27:53Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-accounting-invoice-silent-fail",
       "action": "AccountingInvoiceManagementPage: create/delete mutations have no onError — silent invoice failures",
       "owner_role": "pm-backend",
@@ -12508,6 +12533,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-20T18:25:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-building-detail-no-i18n",
+      "action": "ppt web ui building detail no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-23T18:27:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-22T14:34:41Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T18:27:53Z"
       }
     },
     {
