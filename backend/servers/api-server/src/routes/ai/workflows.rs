@@ -128,8 +128,12 @@ async fn create_workflow(
 async fn list_workflows(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Query(query): Query<WorkflowQuery>,
+    Query(mut query): Query<WorkflowQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // Clamp the client-supplied page size at the handler boundary before it
+    // reaches the repo's `LIMIT` (a hostile `?limit=1000000` would otherwise
+    // request an unbounded page — a cheap DoS). Default 50 matches the repo.
+    query.limit = Some(clamp_limit(query.limit, 50));
     let tenant_id = rls.tenant_id();
     let result = state
         .workflow_repo
@@ -364,8 +368,12 @@ async fn trigger_workflow(
 async fn list_executions(
     State(state): State<AppState>,
     mut rls: RlsConnection,
-    Query(query): Query<ExecutionQuery>,
+    Query(mut query): Query<ExecutionQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // Clamp the client-supplied page size at the handler boundary before it
+    // reaches the repo's `LIMIT` (a hostile `?limit=1000000` would otherwise
+    // request an unbounded page — a cheap DoS). Default 50 matches the repo.
+    query.limit = Some(clamp_limit(query.limit, 50));
     let tenant_id = rls.tenant_id();
     let result = state
         .workflow_repo
