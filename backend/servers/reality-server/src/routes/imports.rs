@@ -383,6 +383,21 @@ pub async fn create_feed(
     principal: PortalPrincipal,
     Json(data): Json<CreateFeedSubscription>,
 ) -> Result<(axum::http::StatusCode, Json<FeedResponse>), (axum::http::StatusCode, String)> {
+    // SECURITY (SSRF): reject SSRF-prone feed URLs at submission time — parity
+    // with the import-job handlers (`create_import_job` / `update_import_job`).
+    // A feed subscription's `feed_url` is fetched server-side by the feed sync
+    // path (`sync_feed` / scheduled sync), so persisting an unvalidated URL is
+    // an SSRF vector onto internal / cloud-metadata hosts (e.g.
+    // `http://169.254.169.254/`, `file://`, private/loopback ranges). A domain
+    // that passes this static check can still resolve to a private IP (DNS
+    // rebinding) — the sync worker must re-validate at fetch time: connect only
+    // to IPs passed by `common::url_validation::validate_resolved_addrs`, and
+    // re-check every redirect hop with
+    // `common::url_validation::validate_redirect_hop`.
+    if let Err(err) = validate_external_url(&data.feed_url) {
+        return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+    }
+
     let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
@@ -444,6 +459,16 @@ pub async fn update_feed(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateFeedSubscription>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY (SSRF): re-validate a changed feed_url on update too — it is
+    // fetched server-side by the sync path, so an update is just as much an
+    // SSRF vector as create. See `create_feed` for the fetch-time
+    // (DNS-rebinding / redirect-hop) re-validation the sync worker must do.
+    if let Some(url) = data.feed_url.as_deref() {
+        if let Err(err) = validate_external_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     let agency_id = resolve_agency(&state, principal.user_id).await?;
     let feed = state
         .reality_portal_repo
