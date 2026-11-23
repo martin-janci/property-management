@@ -1,5 +1,5 @@
 /// <reference types="vitest/globals" />
-import { paymentUpdate, toCents } from './AccountingInvoiceDetail';
+import { paymentUpdate, remainingAmount, toCents } from './AccountingInvoiceDetail';
 
 describe('toCents', () => {
   it('parses decimal money strings to exact integer cents', () => {
@@ -54,5 +54,33 @@ describe('paymentUpdate', () => {
       paid_amount: '66.67',
       status: 'partially_paid',
     });
+  });
+});
+
+describe('remainingAmount', () => {
+  it('returns the full total when nothing is paid', () => {
+    expect(remainingAmount({ total_amount: '121.00', paid_amount: '0' })).toBe('121.00');
+    expect(remainingAmount({ total_amount: '121.00', paid_amount: '0.00' })).toBe('121.00');
+  });
+
+  it('subtracts the paid amount in exact integer cents', () => {
+    expect(remainingAmount({ total_amount: '121.00', paid_amount: '20.00' })).toBe('101.00');
+    expect(remainingAmount({ total_amount: '0.30', paid_amount: '0.10' })).toBe('0.20');
+  });
+
+  it('rounds the subtraction decimal-safely instead of through a JS float', () => {
+    // Old code: Math.max(0, Number('10.00') - Number('2.125')).toFixed(2)
+    //   → (7.875).toFixed(2) === '7.88' (float path rounds the half up).
+    // Decimal-safe: 1000 cents − toCents('2.125')=213 → 787 cents → '7.87'.
+    expect(remainingAmount({ total_amount: '10.00', paid_amount: '2.125' })).toBe('7.87');
+    expect(remainingAmount({ total_amount: '100.00', paid_amount: '0.125' })).toBe('99.87');
+  });
+
+  it('clamps an overpaid invoice to 0.00 rather than a negative string', () => {
+    expect(remainingAmount({ total_amount: '50.00', paid_amount: '80.00' })).toBe('0.00');
+  });
+
+  it('falls back to 0.00 for non-numeric wire data', () => {
+    expect(remainingAmount({ total_amount: 'oops', paid_amount: '0' })).toBe('0.00');
   });
 });
