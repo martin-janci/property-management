@@ -58,4 +58,23 @@ describe('JournalPage — placeholder gating (non-development build)', () => {
     // newsletterSubmit is the identity-mocked key on the subscribe button.
     expect(screen.getByText('newsletterSubmit')).toBeInTheDocument();
   });
+
+  // Regression: the newsletter form used to fake success (local state only,
+  // no API call), silently dropping the address while showing a "subscribed!"
+  // message. There is no subscription endpoint yet (screen-map endpoints: []),
+  // so the form must render an explicit, disabled non-functional state instead
+  // of pretending the submission worked. Fails against the old fake-submit
+  // implementation, which rendered an enabled input/button and no status note.
+  it('renders the newsletter form in an explicit disabled state, not a fake submit', () => {
+    render(<JournalPage />);
+
+    // The submit button and email input are disabled — the form cannot be
+    // submitted, so no address is silently dropped.
+    expect(screen.getByRole('button', { name: 'newsletterSubmit' })).toBeDisabled();
+    expect(screen.getByPlaceholderText('newsletterEmailPlaceholder')).toBeDisabled();
+
+    // An honest "not live yet" status note is shown in place of the former
+    // fabricated success message.
+    expect(screen.getByText('newsletterUnavailable')).toBeInTheDocument();
+  });
 });
