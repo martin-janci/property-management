@@ -71,15 +71,15 @@
       "branch": "auto-impl/code-review-reality-server-imports-feed-3bce3c89",
       "status": "review",
       "claimed_at": "2026-11-23T18:34:47Z",
-      "last_updated": "2026-11-23T19:29:55Z",
+      "last_updated": "2026-11-23T20:34:58Z",
       "status_changed_at": "2026-11-23T19:29:55Z",
       "pr_number": 3761,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3761",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3761 status=done specialist=rust-backend scope_drift=false \u2014 feed-subscription create/update now call validate_external_url (SSRF); import-job endpoints already guarded; 3 sqlx::test regressions; VERIFY OK fmt/clippy/test reality-server green; IG3 two-commit split",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=f34dd90987c1f2ded530a228cc390406ffecc367 note=ssrf-feed-url-validation-correct-reuses-shared-validator-tests-solid-only-unrelated-cargo-deny-red",
+      "last_reviewed_oid": "f34dd90987c1f2ded530a228cc390406ffecc367",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-23T20:28:58Z"
+  "generated": "2026-11-23T20:34:58Z"
 }
