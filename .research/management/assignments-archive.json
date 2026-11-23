@@ -13886,6 +13886,28 @@
       "merge_attempted_at": "2026-11-16T08:34:08Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-moderation-native-prompt-flow",
+      "branch": "auto-impl/code-review-ppt-web-ui-moderation-native-86822b13",
+      "status": "failed",
+      "claimed_at": "2026-11-23T18:34:47Z",
+      "last_updated": "2026-11-23T19:29:55Z",
+      "status_changed_at": "2026-11-23T19:29:55Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=done specialist=react-web — STALE finding: moderation flow already uses in-app TakeModerationActionDialog/DecideAppealDialog+Toast (zero native prompt/confirm/alert in ppt-web src; landed commit 50e52a640); guard tests lock it in; no change needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-moderation-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-moderation-no-i18-52eee807",
       "status": "merged",
@@ -18816,6 +18838,28 @@
       "merge_attempted_at": "2026-11-21T14:32:22Z"
     },
     {
+      "task_id": "code-review-reality-web-report-page-fake-submit",
+      "branch": "auto-impl/code-review-reality-web-report-page-fake-1384e126",
+      "status": "failed",
+      "claimed_at": "2026-11-23T18:34:47Z",
+      "last_updated": "2026-11-23T19:29:55Z",
+      "status_changed_at": "2026-11-23T19:29:55Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=nextjs-web — STALE finding: /report submit already wired to real backend on dev (POST /api/v1/reports via useSubmitReport; landed PR #3695); regression test page.test.tsx already pins it; no change needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-web-report-page-hardcoded-sk",
       "branch": "auto-impl/code-review-reality-web-report-page-hard-74cc877c",
       "status": "merged",
@@ -18926,6 +18970,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-30T18:28:27Z"
+    },
+    {
+      "task_id": "code-review-reality-web-sell-page-fake-submit",
+      "branch": "auto-impl/code-review-reality-web-sell-page-fake-s-0f90bd3f",
+      "status": "failed",
+      "claimed_at": "2026-11-23T18:34:47Z",
+      "last_updated": "2026-11-23T19:29:55Z",
+      "status_changed_at": "2026-11-23T19:29:55Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=nextjs-web — STALE finding: sell submit already a real createListing POST on dev (duplicate of merged code-review-reality-web-sell-wizard-no-persist, commit 50e52a640); page.publish.test.tsx pins it; no change needed",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-web-share-cmp-unchecked-json",
@@ -34450,5 +34516,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-23T18:34:54Z"
+  "archived_at": "2026-11-23T19:30:04Z"
 }
