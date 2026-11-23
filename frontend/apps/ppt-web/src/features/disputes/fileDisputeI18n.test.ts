@@ -13,6 +13,13 @@
  * string — in en/sk/cs/de/pl/hu. Without it a future bundle edit (or a new
  * locale) could re-drop a key and silently regress to the English fallback,
  * which is invisible to typecheck and lint.
+ *
+ * It also guards the page's *cross-namespace* user-facing strings
+ * (`common.backToDisputes`, `common.cancel`, `aria.disputeType`). Those are
+ * rendered by the File Dispute form but live outside the `disputes.*`
+ * namespace, so `disputesI18nCompleteness.test.ts` — which only scans
+ * `disputes.*` — never sees them. A locale dropping one of these would let the
+ * page fall back to English with nothing in the disputes feature catching it.
  */
 
 import cs from '../../../messages/cs.json';
@@ -22,12 +29,27 @@ import hu from '../../../messages/hu.json';
 import pl from '../../../messages/pl.json';
 import sk from '../../../messages/sk.json';
 
-type Bundle = { disputes?: Record<string, unknown> };
+type Bundle = {
+  disputes?: Record<string, unknown>;
+  common?: Record<string, unknown>;
+  aria?: Record<string, unknown>;
+};
 
 const BUNDLES: Record<string, Bundle> = { en, sk, cs, de, pl, hu };
 
 /** Every disputes.* key the FileDisputePage static copy reads. */
 const KEYS = ['filePageTitle', 'subjectPlaceholder', 'descriptionPlaceholder'] as const;
+
+/**
+ * User-facing keys the page renders from *outside* the disputes namespace.
+ * These are invisible to `disputesI18nCompleteness.test.ts`, so they get their
+ * own per-locale presence guard here. `[namespace, key]` pairs.
+ */
+const CROSS_NAMESPACE_KEYS = [
+  ['common', 'backToDisputes'],
+  ['common', 'cancel'],
+  ['aria', 'disputeType'],
+] as const;
 
 describe('FileDisputePage i18n keys', () => {
   // Guard the locale set itself: a new locale bundle must be added here too, or
@@ -57,6 +79,18 @@ describe('FileDisputePage i18n keys', () => {
     for (const [locale, bundle] of Object.entries(BUNDLES)) {
       const present = KEYS.filter((k) => typeof bundle.disputes?.[k] === 'string').sort();
       expect(present, `${locale}.json key set drifted from the reference`).toEqual(reference);
+    }
+  });
+
+  describe('cross-namespace user-facing keys', () => {
+    for (const [locale, bundle] of Object.entries(BUNDLES)) {
+      for (const [namespace, key] of CROSS_NAMESPACE_KEYS) {
+        it(`defines a non-empty ${namespace}.${key} in ${locale}`, () => {
+          const value = bundle[namespace]?.[key];
+          expect(value, `${namespace}.${key} missing in ${locale}.json`).toBeTypeOf('string');
+          expect((value as string).trim().length).toBeGreaterThan(0);
+        });
+      }
     }
   });
 });
