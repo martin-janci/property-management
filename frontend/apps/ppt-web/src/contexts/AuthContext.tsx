@@ -423,15 +423,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // on every one of those changes.
   const onUnauthorizedRef = useRef<() => Promise<string | null>>(async () => null);
 
+  // Holds the latest single-flight `refreshToken` so the stable `getAccessToken`
+  // callback below can kick off a proactive refresh without taking a dependency
+  // on `refreshToken` (whose identity changes across renders). Same rationale as
+  // `onUnauthorizedRef`: routing through a ref keeps `getAccessToken` stable so
+  // the configureApiClient effect stays single-run.
+  const refreshTokenRef = useRef<() => Promise<string | null>>(async () => null);
+
   // Derived state
   const isAuthenticated = user !== null;
 
   /**
    * Get the current access token.
    * This is also used as the token provider for all API modules.
+   *
+   * Proactive expiry handling: when the stored access token is expired (or
+   * within the clock-skew buffer of expiring) and the session still looks
+   * recoverable, kick off a single-flight silent refresh *now* rather than
+   * waiting for the next request to 401. Without this, an access token that
+   * lapsed mid-session was handed out unchanged and treated as valid until a
+   * request failed — the exact "expired JWT used until a request fails" gap.
+   * The refresh is deduplicated (via `refreshToken`'s in-flight guard) and
+   * fire-and-forget: we still return the current token synchronously so callers
+   * proceed, and the 401 interceptor remains the backstop. Opaque / non-`exp`
+   * tokens are never treated as expired (see `isAccessTokenExpired`).
    */
   const getAccessToken = useCallback((): string | null => {
-    return tokenStorage.getAccessToken();
+    const token = tokenStorage.getAccessToken();
+    if (
+      token &&
+      isAccessTokenExpired(token) &&
+      (tokenStorage.getRefreshToken() || tokenStorage.getUser())
+    ) {
+      // Fire-and-forget; swallow rejections (refreshTokenInternal has already
+      // cleared storage + de-authenticated on failure).
+      void refreshTokenRef.current().catch(() => {});
+    }
+    return token;
   }, []);
 
   /**
@@ -799,6 +827,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     onUnauthorizedRef.current = handleUnauthorized;
   }, [handleUnauthorized]);
+
+  // Keep the ref read by the proactive-refresh branch in `getAccessToken`
+  // pointed at the current single-flight `refreshToken`, so an expired token
+  // triggers the latest refresh closure without re-registering the token
+  // provider.
+  useEffect(() => {
+    refreshTokenRef.current = refreshToken;
+  }, [refreshToken]);
 
   /**
    * Update the in-memory user and persist to storage. Lets profile-edit
