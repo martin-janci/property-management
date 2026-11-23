@@ -40,6 +40,14 @@ vi.mock('@ppt/api-client', () => ({
   getToken,
 }));
 
+// RegistryPage now navigates via react-router's `useNavigate`. Stub it so this
+// suite can mount the page without a surrounding <Router> (navigation itself is
+// covered by RegistryPage.navigation.test.tsx).
+vi.mock('react-router-dom', async (importActual) => {
+  const actual = await importActual<typeof import('react-router-dom')>();
+  return { ...actual, useNavigate: () => vi.fn() };
+});
+
 // Imported after the mock so the (pre-fix) module-scope client build is
 // recorded against the mocked `createRegistryApi`.
 import { RegistryPage } from './RegistryPage';

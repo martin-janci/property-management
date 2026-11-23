@@ -13,6 +13,7 @@
 import type { RegistryStatus } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useToastOptional } from '../../../components';
 import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import { PetRegistrationList } from '../components/PetRegistrationList';
@@ -21,6 +22,10 @@ import { useRegistryApi } from '../hooks/useRegistry';
 
 export function RegistryPage() {
   const { t } = useTranslation();
+  // SPA navigation via react-router: preserve client state (filters, tab,
+  // query cache) and avoid a shell flash. Previously used
+  // `window.location.href = …`, a full-page reload (code-review finding).
+  const navigate = useNavigate();
   // Provider-tolerant: resolves to the app-level ToastProvider in production.
   // `useToastOptional` (not `useToast`) so the page also renders under the
   // auth-context regression suite, which mounts it without a ToastProvider.
@@ -93,13 +98,19 @@ export function RegistryPage() {
     setPetPage(1); // Reset to first page when search changes
   }, []);
 
-  const handlePetView = useCallback((id: string) => {
-    window.location.href = `/registry/pets/${id}`;
-  }, []);
+  const handlePetView = useCallback(
+    (id: string) => {
+      navigate(`/registry/pets/${id}`);
+    },
+    [navigate]
+  );
 
-  const handlePetEdit = useCallback((id: string) => {
-    window.location.href = `/registry/pets/${id}/edit`;
-  }, []);
+  const handlePetEdit = useCallback(
+    (id: string) => {
+      navigate(`/registry/pets/${id}/edit`);
+    },
+    [navigate]
+  );
 
   const handlePetDelete = useCallback(
     async (id: string) => {
@@ -172,8 +183,8 @@ export function RegistryPage() {
   );
 
   const handlePetCreate = useCallback(() => {
-    window.location.href = '/registry/pets/new';
-  }, []);
+    navigate('/registry/pets/new');
+  }, [navigate]);
 
   // Vehicle handlers
   const handleVehiclePageChange = useCallback((page: number) => {
@@ -190,13 +201,19 @@ export function RegistryPage() {
     setVehiclePage(1); // Reset to first page when search changes
   }, []);
 
-  const handleVehicleView = useCallback((id: string) => {
-    window.location.href = `/registry/vehicles/${id}`;
-  }, []);
+  const handleVehicleView = useCallback(
+    (id: string) => {
+      navigate(`/registry/vehicles/${id}`);
+    },
+    [navigate]
+  );
 
-  const handleVehicleEdit = useCallback((id: string) => {
-    window.location.href = `/registry/vehicles/${id}/edit`;
-  }, []);
+  const handleVehicleEdit = useCallback(
+    (id: string) => {
+      navigate(`/registry/vehicles/${id}/edit`);
+    },
+    [navigate]
+  );
 
   const handleVehicleDelete = useCallback(
     async (id: string) => {
@@ -269,8 +286,8 @@ export function RegistryPage() {
   );
 
   const handleVehicleCreate = useCallback(() => {
-    window.location.href = '/registry/vehicles/new';
-  }, []);
+    navigate('/registry/vehicles/new');
+  }, [navigate]);
 
   // Transform API response to component format
   const petListData = petsData
