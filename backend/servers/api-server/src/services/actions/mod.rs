@@ -3,9 +3,11 @@
 //! Each action type has a dedicated executor that handles the specific
 //! logic for that action type.
 
+use crate::services::notification::NotificationService;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -195,14 +197,39 @@ pub struct ActionRegistry {
 
 impl ActionRegistry {
     /// Create a new registry with all built-in executors.
+    ///
+    /// The `send_notification` action uses the logging fallback sink (it logs
+    /// the resolved notification without delivering). Production should build
+    /// the registry via [`ActionRegistry::with_notification_service`] so the
+    /// notification action actually dispatches — this mirrors the email action
+    /// degrading to logging only when no mail service is configured.
     pub fn new() -> Self {
+        Self::with_notification_sink(Arc::new(notification::LoggingNotificationSink))
+    }
+
+    /// Create a registry whose `send_notification` action delivers through the
+    /// real [`NotificationService`] pipeline (persisting in-app notifications,
+    /// honouring per-user channel preferences) instead of only logging.
+    ///
+    /// This is the production constructor: it wires a
+    /// [`NotificationServiceSink`](notification::NotificationServiceSink) so the
+    /// notification action is no longer a silent no-op.
+    pub fn with_notification_service(notification_service: Arc<NotificationService>) -> Self {
+        Self::with_notification_sink(Arc::new(notification::NotificationServiceSink::new(
+            notification_service,
+        )))
+    }
+
+    /// Shared builder: register every built-in executor, wiring the given sink
+    /// into the notification action.
+    fn with_notification_sink(sink: Arc<dyn notification::NotificationSink>) -> Self {
         let mut registry = Self {
             executors: HashMap::new(),
         };
 
         // Register built-in executors
         registry.register(Box::new(EmailExecutor::new()));
-        registry.register(Box::new(NotificationExecutor::new()));
+        registry.register(Box::new(NotificationExecutor::with_sink(sink)));
         registry.register(Box::new(ApiCallExecutor::new()));
         registry.register(Box::new(DelayExecutor::new()));
 

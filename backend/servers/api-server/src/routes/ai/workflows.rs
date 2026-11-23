@@ -331,8 +331,11 @@ async fn trigger_workflow(
 
     // Create the workflow executor; it acquires its own RLS-context
     // connections (org derived from the row loaded above).
-    let executor =
-        WorkflowExecutor::new(RlsPool::new(state.db.clone()), state.workflow_repo.clone());
+    let executor = WorkflowExecutor::with_notification_service(
+        RlsPool::new(state.db.clone()),
+        state.workflow_repo.clone(),
+        state.notification_service.clone(),
+    );
 
     // Execute the workflow asynchronously (Epic 94)
     match executor
@@ -467,8 +470,11 @@ async fn handle_workflow_event(
     rls.release().await;
 
     // Create the workflow executor
-    let executor =
-        WorkflowExecutor::new(RlsPool::new(state.db.clone()), state.workflow_repo.clone());
+    let executor = WorkflowExecutor::with_notification_service(
+        RlsPool::new(state.db.clone()),
+        state.workflow_repo.clone(),
+        state.notification_service.clone(),
+    );
 
     // Create the event
     let mut event = WorkflowEvent::new(&req.event_type, tenant_id, req.data);

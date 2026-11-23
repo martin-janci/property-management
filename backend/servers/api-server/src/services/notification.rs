@@ -59,6 +59,10 @@ pub enum NotificationType {
 
     // Session notifications (Story 106.4)
     SessionExpiringSoon,
+
+    // Workflow automation notifications (Epic 94): emitted by the
+    // `send_notification` workflow action via `NotificationServiceSink`.
+    WorkflowAction,
 }
 
 impl NotificationType {
@@ -78,6 +82,7 @@ impl NotificationType {
             NotificationType::PaymentOverdue => "payment.overdue",
             NotificationType::VoteReminderNotVoted => "vote.reminder_not_voted",
             NotificationType::SessionExpiringSoon => "session.expiring_soon",
+            NotificationType::WorkflowAction => "workflow.action",
         }
     }
 }
