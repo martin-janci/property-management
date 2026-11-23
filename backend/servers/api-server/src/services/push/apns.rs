@@ -402,14 +402,18 @@ impl PushTransport for ApnsHttpAdapter {
         let tokens = match self.token_repo.get_tokens_for_user(user_id).await {
             Ok(t) => t,
             Err(e) => {
+                // Keep the raw DB error (which can carry connection-string
+                // host/port/credentials) in the internal log only — never in the
+                // returned error, which is persisted verbatim to the delivery
+                // record via `into_failed(e.to_string())`.
                 tracing::error!(
                     user_id = %user_id,
                     error = %e,
                     "[8A-3] APNs: failed to fetch device tokens"
                 );
-                return Err(NotificationError::PushFailed(format!(
-                    "DB error fetching APNs tokens: {e}"
-                )));
+                return Err(NotificationError::PushFailed(
+                    "failed to fetch device tokens".to_string(),
+                ));
             }
         };
         self.deliver(user_id, &tokens, notification)
@@ -421,6 +425,64 @@ impl PushTransport for ApnsHttpAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ------------------------------------------------------------------
+    // DB-fetch error path must not leak raw DB errors (code-review
+    // `push-db-err-leak`)
+    // ------------------------------------------------------------------
+
+    /// A lazy pool with a short acquire timeout pointed at an unreachable
+    /// address: the first query fails fast with a connection error, so `send()`'s
+    /// device-token fetch exercises the DB-error path without a live Postgres.
+    fn failing_pool() -> DbPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .acquire_timeout(Duration::from_millis(250))
+            .connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("connect_lazy builds without connecting")
+    }
+
+    fn configured_apns() -> ApnsConfig {
+        ApnsConfig {
+            p8_key_pem: Some("--- not a real key ---".to_string()),
+            key_id: Some("ABCDE12345".to_string()),
+            team_id: Some("TEAM123456".to_string()),
+            topic: "three.two.bit.ppt.management".to_string(),
+            apns_base_url: None,
+        }
+    }
+
+    fn apns_test_notification() -> Notification {
+        Notification::new(
+            Uuid::new_v4(),
+            common::notifications::NotificationCategory::Announcements,
+            "Building update",
+            "The lift will be serviced tomorrow.",
+        )
+    }
+
+    /// Security regression (code-review `push-db-err-leak`): APNs `send()`'s
+    /// device-token fetch failure must map to a FIXED, non-leaking message —
+    /// never the raw `sqlx::Error` display (which can expose the DB
+    /// host/port/credentials from the connection string). The raw error stays in
+    /// the internal `tracing::error!` log only.
+    #[tokio::test]
+    async fn apns_db_fetch_error_message_does_not_leak_raw_db_error() {
+        let adapter = ApnsHttpAdapter::new(failing_pool(), configured_apns());
+
+        let result = adapter
+            .send(Uuid::new_v4(), &apns_test_notification())
+            .await;
+
+        match result {
+            Err(NotificationError::PushFailed(msg)) => {
+                assert_eq!(
+                    msg, "failed to fetch device tokens",
+                    "DB fetch failure must map to a fixed non-leaking message, got {msg:?}"
+                );
+            }
+            other => panic!("expected PushFailed(non-leaking message), got {other:?}"),
+        }
+    }
 
     // ------------------------------------------------------------------
     // APNs config and JWT minting

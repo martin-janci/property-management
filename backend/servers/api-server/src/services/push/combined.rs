@@ -173,14 +173,18 @@ impl PushTransport for CombinedPushAdapter {
         let tokens = match self.token_repo.get_tokens_for_user(user_id).await {
             Ok(t) => t,
             Err(e) => {
+                // Keep the raw DB error (which can carry connection-string
+                // host/port/credentials) in the internal log only — never in the
+                // returned error, which is persisted verbatim to the delivery
+                // record via `into_failed(e.to_string())`.
                 tracing::error!(
                     user_id = %user_id,
                     error = %e,
                     "[8A-3] Combined: failed to fetch device tokens for push delivery"
                 );
-                return Err(NotificationError::PushFailed(format!(
-                    "DB error fetching tokens: {e}"
-                )));
+                return Err(NotificationError::PushFailed(
+                    "failed to fetch device tokens".to_string(),
+                ));
             }
         };
         self.deliver_with_tokens(user_id, &tokens, notification)
@@ -240,6 +244,16 @@ mod tests {
     /// and never queries the DB).
     fn unused_pool() -> DbPool {
         sqlx::PgPool::connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("connect_lazy builds without connecting")
+    }
+
+    /// A lazy pool with a short acquire timeout pointed at an unreachable
+    /// address: the first query fails fast with a connection error, so `send()`'s
+    /// device-token fetch exercises the DB-error path without a live Postgres.
+    fn failing_pool() -> DbPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(250))
+            .connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
             .expect("connect_lazy builds without connecting")
     }
 
@@ -348,6 +362,29 @@ mod tests {
             ProviderOutcome::Failed(NotificationError::PushFailed("apns down".into())),
         )
         .is_ok());
+    }
+
+    /// Security regression (code-review `push-db-err-leak`): when the single
+    /// device-token fetch fails, the push error path must carry a FIXED,
+    /// non-leaking message — never the raw `sqlx::Error` display, which can
+    /// expose the DB host/port/credentials from the connection string. The raw
+    /// error stays in the internal `tracing::error!` log only.
+    #[tokio::test]
+    async fn combined_db_fetch_error_message_does_not_leak_raw_db_error() {
+        let (fcm, apns) = fcm_only_configured();
+        let adapter = CombinedPushAdapter::new(failing_pool(), fcm, apns);
+
+        let result = adapter.send(Uuid::new_v4(), &test_notification()).await;
+
+        match result {
+            Err(NotificationError::PushFailed(msg)) => {
+                assert_eq!(
+                    msg, "failed to fetch device tokens",
+                    "DB fetch failure must map to a fixed non-leaking message, got {msg:?}"
+                );
+            }
+            other => panic!("expected PushFailed(non-leaking message), got {other:?}"),
+        }
     }
 
     #[test]

@@ -835,9 +835,9 @@ impl PushTransport for FcmHttpAdapter {
                     error = %e,
                     "[8A-3] Failed to fetch device tokens for push delivery"
                 );
-                return Err(NotificationError::PushFailed(format!(
-                    "DB error fetching tokens: {e}"
-                )));
+                return Err(NotificationError::PushFailed(
+                    "failed to fetch device tokens".to_string(),
+                ));
             }
         };
         self.deliver(user_id, &tokens, notification)
