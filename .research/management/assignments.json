@@ -47,10 +47,10 @@
     {
       "task_id": "code-review-api-core-notif-action-stub-noop",
       "branch": "auto-impl/code-review-api-core-notif-action-stub-n-4382f809",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-22T20:31:45Z",
-      "last_updated": "2026-11-23T00:32:00Z",
-      "status_changed_at": "2026-11-23T00:32:00Z",
+      "last_updated": "2026-11-23T00:48:17Z",
+      "status_changed_at": "2026-11-23T00:48:17Z",
       "pr_number": 3736,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3736",
       "merged_at": null,
@@ -67,5 +67,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-23T00:33:52Z"
+  "generated": "2026-11-23T00:48:32Z"
 }
