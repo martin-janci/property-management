@@ -49,6 +49,15 @@ vi.mock('../../../components', () => ({
   useToastOptional: () => ({ showToast, removeToast: vi.fn() }),
 }));
 
+// RegistryPage now navigates via react-router's `useNavigate`. Stub it so this
+// suite can mount the page without a surrounding <Router> (the destructive
+// handlers under test don't navigate; navigation is covered separately in
+// RegistryPage.navigation.test.tsx).
+vi.mock('react-router-dom', async (importActual) => {
+  const actual = await importActual<typeof import('react-router-dom')>();
+  return { ...actual, useNavigate: () => vi.fn() };
+});
+
 // Confirm dialog: auto-confirm every destructive action.
 vi.mock('../../../components/useConfirmDialog', () => ({
   useConfirmDialog: () => ({
