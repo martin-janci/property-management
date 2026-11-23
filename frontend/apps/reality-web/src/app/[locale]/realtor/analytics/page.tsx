@@ -6,10 +6,11 @@
  * Displays headline performance metrics for the signed-in realtor.
  */
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { formatNumber } from '@/lib/format';
 import { getMyRealtorAnalytics, type RealtorAnalytics } from '@/lib/realtor-api';
 import { useRealtorErrorMessage } from '@/lib/realtor-error';
 
@@ -32,6 +33,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 function AnalyticsContent() {
   const t = useTranslations('pages.realtorAnalytics');
+  const locale = useLocale();
   const describeError = useRealtorErrorMessage();
   const [analytics, setAnalytics] = useState<RealtorAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,13 +77,23 @@ function AnalyticsContent() {
 
       {analytics && (
         <div className="grid">
-          <StatCard label={t('totalListings')} value={analytics.totalListings.toLocaleString()} />
-          <StatCard label={t('activeListings')} value={analytics.activeListings.toLocaleString()} />
-          <StatCard label={t('totalViews')} value={analytics.totalViews.toLocaleString()} />
-          <StatCard label={t('inquiries')} value={analytics.totalInquiries.toLocaleString()} />
+          <StatCard
+            label={t('totalListings')}
+            value={formatNumber(analytics.totalListings, locale)}
+          />
+          <StatCard
+            label={t('activeListings')}
+            value={formatNumber(analytics.activeListings, locale)}
+          />
+          <StatCard label={t('totalViews')} value={formatNumber(analytics.totalViews, locale)} />
+          <StatCard label={t('inquiries')} value={formatNumber(analytics.totalInquiries, locale)} />
           <StatCard
             label={t('conversionRate')}
-            value={`${(analytics.conversionRate * 100).toFixed(1)}%`}
+            value={formatNumber(analytics.conversionRate, locale, {
+              style: 'percent',
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            })}
           />
         </div>
       )}
