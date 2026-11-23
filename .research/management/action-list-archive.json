@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T06:41:34Z",
+  "archived_at": "2026-11-23T08:38:16Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12491,6 +12491,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-buildings-pages-no-i18n",
+      "action": "ppt web ui buildings pages no i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-23T08:38:15Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-23T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3745,
+        "merged_at": "2026-11-23T08:38:03Z",
+        "at": "2026-11-23T08:38:15Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-categorypref-hardcoded-labels",
       "action": "ppt web ui categorypref hardcoded labels",
       "owner_role": "pm-backend",
@@ -13996,6 +14021,31 @@
         "vector": "bug"
       },
       "last_updated": "2026-08-17T10:45:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-ui-move-folder-dialog-hardcoded-sk",
+      "action": "ppt web ui move folder dialog hardcoded sk",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-22T00:27:06Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-23T08:38:15Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T00:27:06Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T22:40:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T08:38:15Z"
+      }
     },
     {
       "id": "code-review-ppt-web-ui-native-confirm-dialogs",
@@ -17585,6 +17635,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-14T22:25:08Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-csv-import-filepick-no-type-guard-retry1",
+      "action": "reality web csv import filepick no type guard [retry 1/2 of failed code-review-reality-web-csv-import-filepick-no-type-guard]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-21T22:25:02Z (retry_of=code-review-reality-web-csv-import-filepick-no-type-guard reason=failed-no-pr cooldown_ok newest_failure=2026-11-14T20:45:16Z) | gc1-reconcile 2026-11-23T08:38:15Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-21T22:25:02Z",
+      "retry_of": "code-review-reality-web-csv-import-filepick-no-type-guard",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-23T08:38:15Z"
       }
     },
     {
@@ -32151,6 +32222,24 @@
         "at": "2026-06-18T00:19:59Z",
         "by": "dispatcher-exact-id-reconcile",
         "evidence": "PR #1510 merged 2026-06-17T12:30:47Z"
+      }
+    },
+    {
+      "id": "pm-qa-test-shadow-debt-fcm-worker-push-2026-11-23",
+      "action": "Add regression tests covering the 2xx-FCM-delivered + worker-requeue-drop + push-db-err-leak fixes (#3725/#3726/#3731). All three are single-file source-only PRs that shipped behavioral changes without test diffs — the push service now has three untested fixes in-flight.",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "2026-11-23 pm-analysis | gc1-reconcile 2026-11-23T08:38:15Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3746,
+        "merged_at": "2026-11-23T08:38:03Z",
+        "at": "2026-11-23T08:38:15Z"
       }
     },
     {
