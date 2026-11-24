@@ -8,3 +8,4 @@ export { CompareButton } from './CompareButton';
 export { ComparisonTray } from './ComparisonTray';
 export { ComparisonUrlHandler } from './ComparisonUrlHandler';
 export { ComparisonView } from './ComparisonView';
+export { parseSharedIdsParam } from './sharedIdsParam';
