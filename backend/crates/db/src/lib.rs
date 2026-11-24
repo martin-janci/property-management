@@ -185,3 +185,28 @@ pub async fn create_rls_safe_pool(database_url: &str) -> Result<DbPool, sqlx::Er
         .connect(database_url)
         .await
 }
+
+/// Build the connection-pool options used for **one-shot seeding**.
+///
+/// NOTE (placeholder, see the fix commit): this currently returns the same
+/// pool shape as [`create_rls_safe_pool`] — a multi-connection pool whose
+/// `after_release` hook scrubs RLS context on every release. That shape is
+/// correct for the request-serving servers but WRONG for seeding, which sets a
+/// super-admin RLS context once and then runs many writes that must all see it.
+pub fn seed_pool_options() -> PgPoolOptions {
+    use sqlx::Executor;
+
+    PgPoolOptions::new()
+        .max_connections(10)
+        .acquire_timeout(Duration::from_secs(5))
+        .after_release(|conn, _meta| {
+            Box::pin(
+                async move { conn.execute("SELECT clear_request_context()").await.map(|_| true) },
+            )
+        })
+}
+
+/// Create the connection pool used by the seed binary.
+pub async fn create_seed_pool(database_url: &str) -> Result<DbPool, sqlx::Error> {
+    seed_pool_options().connect(database_url).await
+}
