@@ -6671,6 +6671,22 @@
         "colActions": "Akce",
         "notAssigned": "Nepřiřazeno"
       }
+    },
+    "review": {
+      "titlePet": "Posoudit registraci zvířete",
+      "titleVehicle": "Posoudit registraci vozidla",
+      "chooseAction": "Vyberte akci:",
+      "approve": "Schválit",
+      "reject": "Zamítnout",
+      "infoIconLabel": "Informace",
+      "approveConfirm": "Opravdu chcete schválit tuto registraci? Vlastník bude upozorněn.",
+      "confirmApproval": "Potvrdit schválení",
+      "approving": "Schvaluje se...",
+      "rejectionReasonLabel": "Důvod zamítnutí",
+      "rejectionPlaceholder": "Uveďte důvod zamítnutí této registrace...",
+      "rejectionHint": "Toto bude odesláno vlastníkovi.",
+      "confirmRejection": "Potvrdit zamítnutí",
+      "rejecting": "Zamítá se..."
     }
   },
   "community": {

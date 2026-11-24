@@ -6195,6 +6195,22 @@
         "colActions": "Műveletek",
         "notAssigned": "Nincs hozzárendelve"
       }
+    },
+    "review": {
+      "titlePet": "Kisállat-regisztráció felülvizsgálata",
+      "titleVehicle": "Járműregisztráció felülvizsgálata",
+      "chooseAction": "Válasszon műveletet:",
+      "approve": "Jóváhagyás",
+      "reject": "Elutasítás",
+      "infoIconLabel": "Információ",
+      "approveConfirm": "Biztosan jóváhagyja ezt a regisztrációt? A tulajdonos értesítést kap.",
+      "confirmApproval": "Jóváhagyás megerősítése",
+      "approving": "Jóváhagyás folyamatban...",
+      "rejectionReasonLabel": "Elutasítás indoka",
+      "rejectionPlaceholder": "Adja meg a regisztráció elutasításának indokát...",
+      "rejectionHint": "Ezt elküldjük a tulajdonosnak.",
+      "confirmRejection": "Elutasítás megerősítése",
+      "rejecting": "Elutasítás folyamatban..."
     }
   },
   "community": {

@@ -65,7 +65,9 @@ export function ReviewRegistrationModal({
         <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
           <div className="mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              Review {registrationType === 'pet' ? 'Pet' : 'Vehicle'} Registration
+              {registrationType === 'pet'
+                ? t('registry.review.titlePet')
+                : t('registry.review.titleVehicle')}
             </h3>
             <p className="mt-1 text-sm text-gray-500">{registrationName}</p>
           </div>
@@ -74,7 +76,9 @@ export function ReviewRegistrationModal({
             {/* Action Selection */}
             {!action && (
               <div className="space-y-3">
-                <span className="block text-sm font-medium text-gray-700">Choose action:</span>
+                <span className="block text-sm font-medium text-gray-700">
+                  {t('registry.review.chooseAction')}
+                </span>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -87,7 +91,7 @@ export function ReviewRegistrationModal({
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <title>Approve</title>
+                      <title>{t('registry.review.approve')}</title>
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -95,7 +99,7 @@ export function ReviewRegistrationModal({
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    Approve
+                    {t('registry.review.approve')}
                   </button>
                   <button
                     type="button"
@@ -108,7 +112,7 @@ export function ReviewRegistrationModal({
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <title>Reject</title>
+                      <title>{t('registry.review.reject')}</title>
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -116,7 +120,7 @@ export function ReviewRegistrationModal({
                         d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    Reject
+                    {t('registry.review.reject')}
                   </button>
                 </div>
               </div>
@@ -133,7 +137,7 @@ export function ReviewRegistrationModal({
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <title>Info</title>
+                      <title>{t('registry.review.infoIconLabel')}</title>
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -143,8 +147,7 @@ export function ReviewRegistrationModal({
                     </svg>
                     <div className="ml-3">
                       <p className="text-sm text-green-700">
-                        Are you sure you want to approve this registration? The owner will be
-                        notified.
+                        {t('registry.review.approveConfirm')}
                       </p>
                     </div>
                   </div>
@@ -157,7 +160,7 @@ export function ReviewRegistrationModal({
                     disabled={isSubmitting}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Back
+                    {t('common.back')}
                   </button>
                   <button
                     type="submit"
@@ -167,7 +170,9 @@ export function ReviewRegistrationModal({
                     {isSubmitting && (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                     )}
-                    {isSubmitting ? 'Approving...' : 'Confirm Approval'}
+                    {isSubmitting
+                      ? t('registry.review.approving')
+                      : t('registry.review.confirmApproval')}
                   </button>
                 </div>
               </div>
@@ -181,7 +186,7 @@ export function ReviewRegistrationModal({
                     htmlFor="rejectionReason"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Reason for rejection *
+                    {t('registry.review.rejectionReasonLabel')} *
                   </label>
                   <textarea
                     id="rejectionReason"
@@ -190,9 +195,9 @@ export function ReviewRegistrationModal({
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Please provide a reason for rejecting this registration..."
+                    placeholder={t('registry.review.rejectionPlaceholder')}
                   />
-                  <p className="mt-1 text-sm text-gray-500">This will be sent to the owner.</p>
+                  <p className="mt-1 text-sm text-gray-500">{t('registry.review.rejectionHint')}</p>
                 </div>
 
                 <div className="flex justify-end gap-3">
@@ -202,7 +207,7 @@ export function ReviewRegistrationModal({
                     disabled={isSubmitting}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Back
+                    {t('common.back')}
                   </button>
                   <button
                     type="submit"
@@ -212,7 +217,9 @@ export function ReviewRegistrationModal({
                     {isSubmitting && (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                     )}
-                    {isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}
+                    {isSubmitting
+                      ? t('registry.review.rejecting')
+                      : t('registry.review.confirmRejection')}
                   </button>
                 </div>
               </div>
@@ -227,7 +234,7 @@ export function ReviewRegistrationModal({
                 onClick={resetAndClose}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           )}

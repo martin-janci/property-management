@@ -6735,6 +6735,22 @@
         "colActions": "Aktionen",
         "notAssigned": "Nicht zugewiesen"
       }
+    },
+    "review": {
+      "titlePet": "Haustier-Registrierung prüfen",
+      "titleVehicle": "Fahrzeug-Registrierung prüfen",
+      "chooseAction": "Aktion auswählen:",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "infoIconLabel": "Information",
+      "approveConfirm": "Möchten Sie diese Registrierung wirklich genehmigen? Der Eigentümer wird benachrichtigt.",
+      "confirmApproval": "Genehmigung bestätigen",
+      "approving": "Wird genehmigt...",
+      "rejectionReasonLabel": "Ablehnungsgrund",
+      "rejectionPlaceholder": "Bitte geben Sie einen Grund für die Ablehnung dieser Registrierung an...",
+      "rejectionHint": "Dies wird an den Eigentümer gesendet.",
+      "confirmRejection": "Ablehnung bestätigen",
+      "rejecting": "Wird abgelehnt..."
     }
   },
   "community": {
