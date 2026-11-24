@@ -46,6 +46,8 @@ The backend carries a listing lifecycle enum (`active`/`paused`/`draft` plus the
 ## Agent Log
 
 <!-- newest entries on top -->
+- 2026-11-25 — agent: gap-audit-r15 — saving no longer overwrites the listing title with the first 80 characters of the description; the loaded title is kept (`_title.ts`).
+
 - 2026-11-04 — agent: screen-map drift reconcile for PR #3217 ("extract listing-edit numeric coercion into tested `_number` helper"). Pure refactor of `page.tsx` `handleSave` — extracted the triplicated `sizeSqm`/`rooms`/`floor` optional-numeric coercion into unit-tested `_number.ts` (`resolveOptionalNumber`) and fixed a silent-zero bug (string `'0'` → dropped). Documented under Notes > Specific. No frontmatter change: `buildStatus: shipped` and `apiStatus: partial` both unchanged (no route/build/API-surface change). Docs-only.
 - 2026-11-02 — agent: screen-map drift reconcile for PR #3212 ("extract status mapping into tested `_status` helper"). Corrected `component` (`AccountListingEditPage` → actual default export `ListingEditPage`) and `apiStatus` (`stub` → `partial`: the route wires real reality-server calls via `@/lib/realtor-api` `getMyListing`/`updateListing`). Documented the `_status.ts`/`_price.ts` extraction and the #1762 downgrade regression now pinned by `_status.test.ts`. Docs-only change; `buildStatus: shipped` unchanged.
 - 2026-05-18 — agent: created stub for unmapped route.

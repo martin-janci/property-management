@@ -72,6 +72,7 @@ audit-logged behind an AuditReasonPrompt (≥20-char reason).
   screen-map's `endpoints` references validate.
 
 ## Agent Log
+- 2026-11-25 — agent: gap-audit-r15 — global toggle form is built from the flags `GET /platform-admin/feature-flags` returns (was three hard-coded keys that are not in the table, so every save ended in "Unknown feature flag"); the list is reloaded after a save. The audit reason is still collected and not sent (the toggle endpoint has no body).
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-10B-2 → Epic-10B (strip story suffix); /screens validate clean.
 
 <!-- newest entries on top -->

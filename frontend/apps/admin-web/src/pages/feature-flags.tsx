@@ -27,30 +27,13 @@ import { useToast } from '../components/Toast';
 import { useFocusTrap } from '../components/useFocusTrap';
 import { HelpTooltip } from '../features/help';
 
-interface FeatureFlagValues extends Record<string, unknown> {
-  'beta.new_listings_search': boolean;
-  'beta.ai_fault_triage': boolean;
-  'building.disabled': boolean;
-}
-
-const FLAG_KEYS = [
-  'beta.new_listings_search',
-  'beta.ai_fault_triage',
-  'building.disabled',
-] as const;
-
-const defaultValues: FeatureFlagValues = {
-  'beta.new_listings_search': false,
-  'beta.ai_fault_triage': false,
-  'building.disabled': false,
-};
-
-interface BackendFeatureFlag {
-  id: string;
-  key: string;
-  name?: string;
-  is_enabled: boolean;
-}
+import {
+  type BackendFeatureFlag,
+  changedFlags,
+  type FeatureFlagValues,
+  flagFields,
+  flagInitialValues,
+} from './featureFlagForm';
 
 interface ListFeatureFlagsBackendResponse {
   flags: BackendFeatureFlag[];
@@ -625,6 +608,7 @@ const FeatureFlagsPage: React.FC = () => {
   const { t } = useTranslation();
   const { token } = useAdminAuth();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   // Load real flag metadata. The backend toggle endpoint takes a UUID id, not
   // the human-readable key, so we need this list to resolve key → id and to
@@ -646,23 +630,12 @@ const FeatureFlagsPage: React.FC = () => {
     retry: 1,
   });
 
-  // Index by key for O(1) lookup of {id, is_enabled} during save.
-  const flagsByKey = useMemo(() => {
-    const map = new Map<string, BackendFeatureFlag>();
-    for (const f of backendFlags ?? []) map.set(f.key, f);
-    return map;
-  }, [backendFlags]);
-
-  // Form initial values derived from the server's current is_enabled, falling
-  // back to defaults for keys the server doesn't yet know about.
-  const initialValues = useMemo<FeatureFlagValues>(() => {
-    const result = { ...defaultValues };
-    for (const k of FLAG_KEYS) {
-      const found = flagsByKey.get(k);
-      if (found) (result as Record<string, unknown>)[k] = found.is_enabled;
-    }
-    return result;
-  }, [flagsByKey]);
+  // Fields and baseline come from the flags the server actually has; the
+  // form used to list three hard-coded keys that were never in the table.
+  const initialValues = useMemo<FeatureFlagValues>(
+    () => flagInitialValues(backendFlags ?? []),
+    [backendFlags]
+  );
 
   // Pending values captured from SettingsForm so we can pass to dialog
   const pendingValuesRef = useRef<FeatureFlagValues | null>(null);
@@ -674,24 +647,8 @@ const FeatureFlagsPage: React.FC = () => {
   const [dialogPending, setDialogPending] = useState(false);
 
   const fields = useMemo<ReadonlyArray<SettingsField>>(
-    () => [
-      {
-        kind: 'boolean',
-        key: 'beta.new_listings_search',
-        label: t('admin.featureFlags.fields.newListingsSearch'),
-      },
-      {
-        kind: 'boolean',
-        key: 'beta.ai_fault_triage',
-        label: t('admin.featureFlags.fields.aiFaultTriage'),
-      },
-      {
-        kind: 'boolean',
-        key: 'building.disabled',
-        label: t('admin.featureFlags.fields.buildingDisabled'),
-      },
-    ],
-    [t]
+    () => flagFields(backendFlags ?? []),
+    [backendFlags]
   );
 
   const handleSubmit = useCallback((values: FeatureFlagValues): Promise<void> => {
@@ -714,13 +671,9 @@ const FeatureFlagsPage: React.FC = () => {
       // Diff submitted values against the server baseline; only call toggle
       // for flags that actually changed. Avoids needless writes (and needless
       // audit-log rows) for flags the operator left untouched.
-      const changedKeys = FLAG_KEYS.filter((k) => {
-        const desired = values[k] === true;
-        const current = flagsByKey.get(k)?.is_enabled ?? defaultValues[k];
-        return desired !== current;
-      });
+      const changed = changedFlags(backendFlags ?? [], values);
 
-      if (changedKeys.length === 0) {
+      if (changed.length === 0) {
         setDialogPending(false);
         setDialogOpen(false);
         showToast({
@@ -736,16 +689,8 @@ const FeatureFlagsPage: React.FC = () => {
 
       let anySuccess = false;
       let anyFailure = false;
-      const unknownKeys: string[] = [];
 
-      for (const flagKey of changedKeys) {
-        const meta = flagsByKey.get(flagKey);
-        if (!meta) {
-          // Flag isn't registered on the server yet — skip and warn.
-          unknownKeys.push(flagKey);
-          anyFailure = true;
-          continue;
-        }
+      for (const meta of changed) {
         try {
           const res = await fetch(
             `/api/v1/platform-admin/feature-flags/${encodeURIComponent(meta.id)}/toggle`,
@@ -765,16 +710,14 @@ const FeatureFlagsPage: React.FC = () => {
         }
       }
 
+      // The endpoint flips the flag, so a stale baseline would make the next
+      // save toggle the wrong way. Reload before the form is used again.
+      if (anySuccess) {
+        await queryClient.invalidateQueries({ queryKey: ['admin', 'platform', 'feature-flags'] });
+      }
+
       setDialogPending(false);
       setDialogOpen(false);
-
-      if (unknownKeys.length > 0) {
-        showToast({
-          type: 'warning',
-          title: 'Unknown feature flag(s)',
-          message: `Not registered on server: ${unknownKeys.join(', ')}. Create them via POST /platform-admin/feature-flags first.`,
-        });
-      }
 
       if (anySuccess && !anyFailure) {
         showToast({
@@ -809,7 +752,7 @@ const FeatureFlagsPage: React.FC = () => {
         resolveSubmitRef.current?.();
       }
     },
-    [token, showToast, t, flagsByKey]
+    [token, showToast, t, backendFlags, queryClient]
   );
 
   // Cancel resolves the form's submit Promise instead of rejecting it, so the
@@ -848,7 +791,7 @@ const FeatureFlagsPage: React.FC = () => {
           // key forces re-init of the SettingsForm internal state once the
           // server-provided baseline arrives, so the toggles reflect actual
           // server values instead of always-false defaults.
-          key={`ff-${(backendFlags ?? []).length}`}
+          key={`ff-${(backendFlags ?? []).map((f) => `${f.key}:${f.is_enabled}`).join(',')}`}
           fields={fields}
           initialValues={initialValues}
           capability="feature_flags_write"
