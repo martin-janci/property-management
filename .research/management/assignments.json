@@ -5,7 +5,7 @@
       "branch": "auto-impl/code-review-mobile-rn-hardcoded-button-l-f8069e2c",
       "status": "review",
       "claimed_at": "2026-11-20T20:27:30Z",
-      "last_updated": "2026-11-24T18:45:34Z",
+      "last_updated": "2026-11-24T20:30:16Z",
       "status_changed_at": "2026-11-24T16:43:27Z",
       "pr_number": 3677,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3677",
@@ -20,7 +20,7 @@
       "rebase_attempts": 3,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": "2026-11-24T04:43:22Z"
+      "merge_attempted_at": "2026-11-24T20:30:16Z"
     },
     {
       "task_id": "code-review-mobile-rn-raw-status-untranslated",
@@ -177,5 +177,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-24T18:45:34Z"
+  "generated": "2026-11-24T20:31:20Z"
 }
