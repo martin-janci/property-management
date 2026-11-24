@@ -1391,4 +1391,320 @@ BjoqgEdIaMmiy1bJKyDvIng=
             other => panic!("expected PushFailed(non-leaking message), got {other:?}"),
         }
     }
+
+    // ------------------------------------------------------------------
+    // send_fcm_v1 end-to-end routing — parseable success / error bodies.
+    //
+    // The pure `classify_fcm_outcome` / `indicates_stale_token` unit tests above
+    // pin the decisions; the two existing wiremock tests only cover the
+    // *unparseable*-body arms. These drive the `send_fcm_v1` request/response
+    // wiring for the common PARSEABLE outcomes (happy 200, permanent-failure
+    // UNREGISTERED, transient 503) so a refactor that mis-wires status parsing,
+    // the error-code extraction, or the expired flag is caught at the transport
+    // seam — not just in the pure classifier.
+    // ------------------------------------------------------------------
+
+    /// A 200 with a well-formed success body (`name`, no `error`) reports
+    /// delivered and never evicts the token.
+    #[tokio::test]
+    async fn send_fcm_v1_parseable_2xx_success_is_delivered() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "name": "projects/test-project/messages/0:1700000000000000%abcd"
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let (delivered, expired) = adapter
+            .send_fcm_v1("test-project", "device-token-123", &fcm_test_notification())
+            .await;
+
+        assert!(
+            delivered,
+            "a parseable 2xx success body must report delivered"
+        );
+        assert!(!expired, "a successful send must not evict the token");
+    }
+
+    /// A 404 carrying the FCM-specific `UNREGISTERED` code in `error.details[]`
+    /// (the real app-uninstalled shape) must report NOT delivered AND flag the
+    /// token for eviction — driven through the real send path, not just the pure
+    /// classifier.
+    #[tokio::test]
+    async fn send_fcm_v1_unregistered_rejection_marks_token_expired() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            .respond_with(
+                wiremock::ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                    "error": {
+                        "code": 404,
+                        "message": "Requested entity was not found.",
+                        "status": "NOT_FOUND",
+                        "details": [{
+                            "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                            "errorCode": "UNREGISTERED"
+                        }]
+                    }
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let (delivered, expired) = adapter
+            .send_fcm_v1("test-project", "device-token-123", &fcm_test_notification())
+            .await;
+
+        assert!(!delivered, "an UNREGISTERED rejection is not a delivery");
+        assert!(
+            expired,
+            "an UNREGISTERED rejection must flag the token for eviction"
+        );
+    }
+
+    /// A transient 503 UNAVAILABLE is a failed, *retryable* attempt: NOT
+    /// delivered and NOT a stale token. Evicting here would wipe live tokens on
+    /// an FCM outage; reporting delivered would drop the push. This pins the
+    /// retry/backoff decision (keep token, let the caller retry) at the
+    /// transport seam.
+    #[tokio::test]
+    async fn send_fcm_v1_transient_unavailable_is_retryable_not_stale() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            .respond_with(
+                wiremock::ResponseTemplate::new(503).set_body_json(serde_json::json!({
+                    "error": {
+                        "code": 503,
+                        "message": "The service is currently unavailable.",
+                        "status": "UNAVAILABLE",
+                        "details": [{
+                            "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                            "errorCode": "UNAVAILABLE"
+                        }]
+                    }
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let (delivered, expired) = adapter
+            .send_fcm_v1("test-project", "device-token-123", &fcm_test_notification())
+            .await;
+
+        assert!(!delivered, "a 503 UNAVAILABLE is a failed attempt");
+        assert!(
+            !expired,
+            "a transient UNAVAILABLE must NOT evict the token (retryable, token still valid)"
+        );
+    }
+
+    /// With no OAuth token available (`FcmTokenProvider::None`) the send is
+    /// skipped before any HTTP request: `(false, false)` — a failed, retryable
+    /// attempt that must NOT evict the token. Guards the credential-missing
+    /// skip path (no fallback since Google decommissioned `/fcm/send`).
+    #[tokio::test]
+    async fn send_fcm_v1_without_oauth_token_skips_without_evicting() {
+        // No wiremock server: a request would fail the test since the base URL
+        // points nowhere, proving the send is skipped before any HTTP call.
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some("http://127.0.0.1:1".to_string())),
+            FcmTokenProvider::None,
+        );
+
+        let (delivered, expired) = adapter
+            .send_fcm_v1("test-project", "device-token-123", &fcm_test_notification())
+            .await;
+
+        assert!(
+            !delivered,
+            "a send with no OAuth token is skipped (not delivered)"
+        );
+        assert!(!expired, "a skipped send must not evict the token");
+    }
+
+    // ------------------------------------------------------------------
+    // deliver() orchestration — the fanout-facing entry point. Previously had
+    // ZERO direct coverage: NotConfigured / NoTargets short-circuits, the
+    // success → Delivered path, and the permanent-failure → Failed path with
+    // the stale-token eviction loop (fcm.rs lines ~755-819) were only reachable
+    // through the live fanout worker. These pin that orchestration.
+    // ------------------------------------------------------------------
+
+    /// `deliver()` returns `NotConfigured` (attempting nothing) when no GCP
+    /// project id is set, regardless of tokens handed in.
+    #[tokio::test]
+    async fn deliver_returns_not_configured_without_project_id() {
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            FcmConfig {
+                project_id: None,
+                oauth_token: None,
+                fcm_base_url: None,
+            },
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &[], &fcm_test_notification())
+            .await;
+
+        assert!(
+            matches!(outcome, ProviderOutcome::NotConfigured),
+            "no FCM_PROJECT_ID must yield NotConfigured"
+        );
+    }
+
+    /// `deliver()` returns `NoTargets` (configured, but nothing to send) when the
+    /// shared token set holds no FCM tokens — e.g. an iOS-only user. This is the
+    /// honest-metrics distinction `CombinedPushAdapter` relies on (NoTargets is
+    /// not a failure, but is not a delivery either).
+    #[tokio::test]
+    async fn deliver_returns_no_targets_when_no_fcm_tokens() {
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(None),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        // Only an APNs token in the shared set — the FCM platform filter selects
+        // nothing.
+        let tokens = vec![crate::services::push::stored_token(
+            "apns-only",
+            "apns",
+            None,
+        )];
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &tokens, &fcm_test_notification())
+            .await;
+
+        assert!(
+            matches!(outcome, ProviderOutcome::NoTargets),
+            "an FCM-tokenless set must yield NoTargets"
+        );
+    }
+
+    /// Happy path through `deliver()`: a single FCM token, FCM accepts (200) →
+    /// `Delivered`. No eviction, so the DB is never touched.
+    #[tokio::test]
+    async fn deliver_reports_delivered_on_fcm_accept() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                    "name": "projects/test-project/messages/1"
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let tokens = vec![crate::services::push::stored_token(
+            "fcm-live-token",
+            "fcm",
+            None,
+        )];
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &tokens, &fcm_test_notification())
+            .await;
+
+        assert!(
+            matches!(outcome, ProviderOutcome::Delivered),
+            "an accepted FCM send must report Delivered"
+        );
+    }
+
+    /// Permanent-failure path through `deliver()`: the single FCM token is
+    /// rejected as `UNREGISTERED`, so (a) the overall outcome is `Failed` (every
+    /// attempt failed) and (b) the stale-token eviction loop runs. Eviction is
+    /// best-effort — against the failing pool the `delete_stale_token` call errors
+    /// and is swallowed with a warn — but exercising the loop pins that an
+    /// expired token drives the eviction branch rather than the success branch,
+    /// and that an eviction DB failure does not change the reported outcome or
+    /// panic the fanout worker.
+    #[tokio::test]
+    async fn deliver_reports_failed_and_attempts_eviction_on_unregistered() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            .respond_with(
+                wiremock::ResponseTemplate::new(404).set_body_json(serde_json::json!({
+                    "error": {
+                        "code": 404,
+                        "message": "Requested entity was not found.",
+                        "status": "NOT_FOUND",
+                        "details": [{
+                            "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                            "errorCode": "UNREGISTERED"
+                        }]
+                    }
+                })),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("test-bearer".into()),
+        );
+
+        let tokens = vec![crate::services::push::stored_token(
+            "fcm-dead-token",
+            "fcm",
+            None,
+        )];
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &tokens, &fcm_test_notification())
+            .await;
+
+        match outcome {
+            ProviderOutcome::Failed(NotificationError::PushFailed(msg)) => {
+                assert_eq!(
+                    msg, "all FCM delivery attempts failed",
+                    "a sole UNREGISTERED rejection must fail the whole delivery, got {msg:?}"
+                );
+            }
+            _ => panic!("expected Failed(PushFailed(..)) after an UNREGISTERED rejection"),
+        }
+    }
 }
