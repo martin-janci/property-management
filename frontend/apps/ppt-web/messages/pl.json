@@ -8547,6 +8547,7 @@
     "closeSidebar": "Zamknij panel boczny",
     "openSidebar": "Otwórz panel boczny",
     "sendError": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+    "deleteError": "Nie udało się usunąć rozmowy. Spróbuj ponownie.",
     "confidence": {
       "low": "Niska pewność",
       "medium": "Średnia pewność",

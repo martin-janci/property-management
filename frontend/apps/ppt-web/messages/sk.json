@@ -9083,6 +9083,7 @@
     "closeSidebar": "Zavrieť bočný panel",
     "openSidebar": "Otvoriť bočný panel",
     "sendError": "Správu sa nepodarilo odoslať. Skúste to znova.",
+    "deleteError": "Konverzáciu sa nepodarilo odstrániť. Skúste to znova.",
     "confidence": {
       "low": "Nízka istota",
       "medium": "Stredná istota",
