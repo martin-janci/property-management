@@ -157,7 +157,18 @@ impl SeedRunner {
             .and_then(|u| u.email.split('@').nth(1))
             .unwrap_or("demo-reality.test");
 
-        // 1. Set super admin context to bypass RLS
+        // 1. Set super admin context to bypass RLS.
+        //
+        // Setting context on `&self.pool` is only correct because the seed
+        // binary builds this pool with `db::create_seed_pool` — a
+        // single-connection pool (so every `&pool` acquire, including the
+        // factories' `pool.begin()` transactions, lands on the one connection
+        // this context is set on) with NO `after_release` clearing hook (so the
+        // context survives across acquires until it is explicitly cleared at the
+        // end of this run). With an ordinary multi-connection / context-clearing
+        // pool this `SET` would never reach the connections that run the writes
+        // below (code-review finding: RLS context on the pool, not the
+        // per-request connection). See `db::seed_pool_options`.
         set_request_context(&self.pool, None, None, true)
             .await
             .map_err(|e| SeedError::Database(e.to_string()))?;
