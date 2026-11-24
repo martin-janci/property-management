@@ -5,7 +5,18 @@ import { useApiQuery } from '../../hooks/useApi';
 import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors } from '../shared/screenStyles';
 
-export type FaultStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+/** Server `fault_status` enum. The list used to know only four values (with a
+ *  client-only `open`), so `new`, `triaged`, `scheduled`, `waiting_parts` and
+ *  `reopened` faults were all shown as "Open". */
+export type FaultStatus =
+  | 'new'
+  | 'triaged'
+  | 'in_progress'
+  | 'waiting_parts'
+  | 'scheduled'
+  | 'resolved'
+  | 'closed'
+  | 'reopened';
 export type FaultPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type FaultCategory =
   | 'plumbing'
@@ -35,8 +46,10 @@ interface FaultsListScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-/** Subset of `FaultSummary` from the api-server that the list view needs. */
-interface ApiFaultSummary {
+/** `FaultSummary` from `GET /api/v1/faults`. The server sends only id,
+ *  building/unit ids, title, category, priority, status and `created_at`; the
+ *  remaining fields are optional so a richer payload still maps. */
+export interface ApiFaultSummary {
   id: string;
   title: string;
   description?: string | null;
@@ -45,7 +58,7 @@ interface ApiFaultSummary {
   category: string;
   location_description?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string | null;
   reporter_name?: string | null;
   assignee_name?: string | null;
 }
@@ -55,7 +68,16 @@ interface ApiFaultListResponse {
   count: number;
 }
 
-const FAULT_STATUSES: readonly FaultStatus[] = ['open', 'in_progress', 'resolved', 'closed'];
+const FAULT_STATUSES: readonly FaultStatus[] = [
+  'new',
+  'triaged',
+  'in_progress',
+  'waiting_parts',
+  'scheduled',
+  'resolved',
+  'closed',
+  'reopened',
+];
 const FAULT_PRIORITIES: readonly FaultPriority[] = ['low', 'medium', 'high', 'urgent'];
 const FAULT_CATEGORIES: readonly FaultCategory[] = [
   'plumbing',
@@ -73,17 +95,19 @@ const FAULT_CATEGORIES: readonly FaultCategory[] = [
 const narrow = <T extends string>(value: string, allowed: readonly T[], fallback: T): T =>
   (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 
-function toUiFault(f: ApiFaultSummary): Fault {
+/** Exported for unit testing. */
+export function toUiFault(f: ApiFaultSummary): Fault {
   return {
     id: f.id,
     title: f.title,
     description: f.description ?? '',
-    status: narrow(f.status, FAULT_STATUSES, 'open'),
+    status: narrow(f.status, FAULT_STATUSES, 'new'),
     priority: narrow(f.priority, FAULT_PRIORITIES, 'medium'),
     category: narrow(f.category, FAULT_CATEGORIES, 'other'),
     location: f.location_description ?? '',
     createdAt: f.created_at,
-    updatedAt: f.updated_at,
+    // The summary carries no `updated_at`; fall back so the card shows a date.
+    updatedAt: f.updated_at ?? f.created_at,
     photos: [],
     reportedBy: f.reporter_name ?? 'Resident',
     assignedTo: f.assignee_name ?? undefined,
@@ -91,17 +115,25 @@ function toUiFault(f: ApiFaultSummary): Fault {
 }
 
 const statusBgColor: Record<FaultStatus, string> = {
-  open: colors.statusNewBg,
+  new: colors.statusNewBg,
+  triaged: colors.statusTriagedBg,
   in_progress: colors.statusInProgressBg,
+  waiting_parts: colors.statusWaitPartsBg,
+  scheduled: colors.statusScheduledBg,
   resolved: colors.statusResolvedBg,
   closed: colors.statusClosedBg,
+  reopened: colors.statusReopenedBg,
 };
 
 const statusInkColor: Record<FaultStatus, string> = {
-  open: colors.statusNewInk,
+  new: colors.statusNewInk,
+  triaged: colors.statusTriagedInk,
   in_progress: colors.statusInProgressInk,
+  waiting_parts: colors.statusWaitPartsInk,
+  scheduled: colors.statusScheduledInk,
   resolved: colors.statusResolvedInk,
   closed: colors.statusClosedInk,
+  reopened: colors.statusReopenedInk,
 };
 
 const priorityInkColor: Record<FaultPriority, string> = {
@@ -124,10 +156,14 @@ const categoryIcon: Record<FaultCategory, string> = {
 // Map runtime enum values to their i18n catalog keys so the badges render a
 // localized label instead of the raw enum / English literal.
 const statusLabelKey: Record<FaultStatus, string> = {
-  open: 'faults.statusOpen',
+  new: 'faults.statusNew',
+  triaged: 'faults.statusTriaged',
   in_progress: 'faults.statusInProgress',
+  waiting_parts: 'faults.statusWaitingParts',
+  scheduled: 'faults.statusScheduled',
   resolved: 'faults.statusResolved',
   closed: 'faults.statusClosed',
+  reopened: 'faults.statusReopened',
 };
 
 const priorityLabelKey: Record<FaultPriority, string> = {
@@ -137,9 +173,17 @@ const priorityLabelKey: Record<FaultPriority, string> = {
   urgent: 'faults.priorityUrgent',
 };
 
-type FaultFilter = 'all' | 'open' | 'resolved';
+export type FaultFilter = 'all' | 'open' | 'resolved';
 
 const FAULT_FILTERS: readonly FaultFilter[] = ['all', 'open', 'resolved'];
+
+/** Whether a fault belongs under a filter chip. "Open" is everything not yet
+ *  resolved or closed. Exported for unit testing. */
+export function matchesFaultFilter(status: FaultStatus, filter: FaultFilter): boolean {
+  if (filter === 'all') return true;
+  const done = status === 'resolved' || status === 'closed';
+  return filter === 'resolved' ? done : !done;
+}
 
 const filterLabelKey: Record<FaultFilter, string> = {
   all: 'faults.filterAll',
@@ -171,12 +215,7 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
     await refetch();
   }, [refetch]);
 
-  const filteredFaults = faults.filter((fault) => {
-    if (filter === 'all') return true;
-    if (filter === 'open') return fault.status === 'open' || fault.status === 'in_progress';
-    if (filter === 'resolved') return fault.status === 'resolved' || fault.status === 'closed';
-    return true;
-  });
+  const filteredFaults = faults.filter((fault) => matchesFaultFilter(fault.status, filter));
 
   return (
     <View style={styles.container}>
