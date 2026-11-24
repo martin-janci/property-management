@@ -86,4 +86,33 @@ describe('buildSessionUser', () => {
     const { user } = buildSessionUser({ user: embedded }, makeJwt({ sub: 'u5' }));
     expect(user).toEqual(embedded);
   });
+
+  it('narrows a malformed embedded user instead of trusting it verbatim', () => {
+    // The login response body is attacker-influenceable / can drift from the
+    // contract: guard against non-string, missing, and junk fields rather than
+    // casting the embedded object straight into a SessionUser (code-review:
+    // unvalidated token response body).
+    const token = makeJwt({ sub: 'u9', email: 'claim@x.sk', name: 'Claim Name' });
+    const { user } = buildSessionUser(
+      {
+        user: {
+          id: 'u9',
+          email: 42, // malformed — not a string
+          firstName: null, // missing
+          role: 'wizard', // unknown role must not leak past toAppRole()
+          isAdmin: true, // junk field must be dropped, not spread through
+        },
+      },
+      token
+    );
+    expect(user.id).toBe('u9');
+    // Non-string email is rejected and falls back to the token claim.
+    expect(user.email).toBe('claim@x.sk');
+    expect(user.firstName).toBe('');
+    expect(user.lastName).toBe('');
+    // Unknown role is narrowed to the safe default, never trusted verbatim.
+    expect(user.role).toBe('resident');
+    // Junk fields from the response are not carried into the session user.
+    expect(user).not.toHaveProperty('isAdmin');
+  });
 });
