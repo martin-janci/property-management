@@ -291,8 +291,15 @@ async fn main() -> anyhow::Result<()> {
     println!();
     println!("Connecting to database...");
 
-    // Connect to database
-    let pool = db::create_rls_safe_pool(&database_url).await?;
+    // Connect to database.
+    //
+    // Seeding sets a super-admin RLS context once and then runs every write
+    // through this pool, so the context must stay bound to the connection that
+    // runs those queries. `create_seed_pool` is a single-connection pool with no
+    // RLS-context-clearing release hook (unlike `create_rls_safe_pool`, whose
+    // hook would scrub the super-admin context between statements), so the
+    // context set in `SeedRunner::run` actually applies to every seed query.
+    let pool = db::create_seed_pool(&database_url).await?;
 
     println!("Connected. Starting seed process...");
     println!();

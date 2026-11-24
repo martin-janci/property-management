@@ -188,25 +188,33 @@ pub async fn create_rls_safe_pool(database_url: &str) -> Result<DbPool, sqlx::Er
 
 /// Build the connection-pool options used for **one-shot seeding**.
 ///
-/// NOTE (placeholder, see the fix commit): this currently returns the same
-/// pool shape as [`create_rls_safe_pool`] — a multi-connection pool whose
-/// `after_release` hook scrubs RLS context on every release. That shape is
-/// correct for the request-serving servers but WRONG for seeding, which sets a
-/// super-admin RLS context once and then runs many writes that must all see it.
+/// Seeding runs as `set super-admin RLS context → many writes → clear context`,
+/// and that context MUST stay bound to the single physical connection that runs
+/// every write — direct queries *and* `pool.begin()` transactions alike
+/// (code-review finding: "RLS context set on the pool, not the per-request
+/// connection"; the `SET`/`set_config` GUCs otherwise never reach the actual
+/// query connection). Two properties guarantee the binding here:
+///
+/// * **`max_connections(1)`** — the pool owns exactly one physical connection,
+///   so every `&pool` acquire lands on the connection the super-admin context
+///   was set on. This is the same "size-1 pool pins connection identity" idiom
+///   the report-schedule scheduler relies on; seeding is a sequential,
+///   single-shot CLI with no concurrent acquires, so one connection suffices.
+/// * **No `after_release` context-clearing hook** — unlike
+///   [`create_rls_safe_pool`] (whose hook scrubs RLS context every time a
+///   connection returns to the pool, which is correct for the request-serving
+///   servers but would wipe the seed's super-admin context between every
+///   statement), the seed pool keeps the session GUCs until the seeder clears
+///   them explicitly at the end of the run.
 pub fn seed_pool_options() -> PgPoolOptions {
-    use sqlx::Executor;
-
     PgPoolOptions::new()
-        .max_connections(10)
+        .max_connections(1)
         .acquire_timeout(Duration::from_secs(5))
-        .after_release(|conn, _meta| {
-            Box::pin(
-                async move { conn.execute("SELECT clear_request_context()").await.map(|_| true) },
-            )
-        })
 }
 
-/// Create the connection pool used by the seed binary.
+/// Create the single-connection, RLS-context-preserving pool used by the seed
+/// binary. See [`seed_pool_options`] for why seeding needs its own pool shape
+/// rather than [`create_rls_safe_pool`].
 pub async fn create_seed_pool(database_url: &str) -> Result<DbPool, sqlx::Error> {
     seed_pool_options().connect(database_url).await
 }
