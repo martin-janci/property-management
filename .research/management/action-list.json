@@ -785,24 +785,6 @@
       }
     },
     {
-      "id": "code-review-api-core-rls-context-pool-not-conn",
-      "action": "api core rls context pool not conn",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-core score=3 vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-24T00:24:47Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-08-09T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-core-idempotency-tx-across-handler",
       "action": "api core idempotency tx across handler",
       "owner_role": "pm-backend",

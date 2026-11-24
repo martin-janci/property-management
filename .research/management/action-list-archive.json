@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-24T06:33:04Z",
+  "archived_at": "2026-11-24T08:37:01Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4682,6 +4682,31 @@
         "merged_pr": 3434,
         "merged_at": "2026-11-12T04:27:10Z",
         "at": "2026-11-12T06:25:56Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-rls-context-pool-not-conn",
+      "action": "api core rls context pool not conn",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-core score=3 vector=bug) | gc1-reconcile 2026-11-24T08:25:23Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-24T00:24:47Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3770,
+        "merged_at": "2026-11-24T06:27:37Z",
+        "at": "2026-11-24T08:25:23Z"
       }
     },
     {

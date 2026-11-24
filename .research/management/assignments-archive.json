@@ -1551,6 +1551,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-backend-servers-api-server-src-services-push-fcm-rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-1a5667b9",
+      "status": "merged",
+      "claimed_at": "2026-11-24T02:32:07Z",
+      "last_updated": "2026-11-24T08:36:52Z",
+      "status_changed_at": "2026-11-24T08:36:52Z",
+      "pr_number": 3771,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3771",
+      "merged_at": "2026-11-24T08:33:50Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3771 status=done(local-DB-blocked) specialist=rust-backend scope_drift=false note=8 FCM tests (tests-only); fmt/clippy/fcm-tests green; cargo test -p api-server DB-blocked (22 pre-existing); PR opened by dispatcher from pushed branch for CI gate",
+      "reviewer_summary": "verdict=approve head_oid=a7e62153636e107cdffd744950d67bbc722a9cc8 note=tests-only-fcm-regression-genuine-strong-assertions-ci-green",
+      "last_reviewed_oid": "a7e62153636e107cdffd744950d67bbc722a9cc8",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend-servers-api-server-src-services-voice-oauth-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-96a7af2e",
       "status": "merged",
@@ -29639,6 +29661,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-devops-security-test-gate-path-filter-2026-11-24",
+      "branch": "auto-impl/pm-devops-security-test-gate-path-filter-b61714b2",
+      "status": "failed",
+      "claimed_at": "2026-11-24T08:36:52Z",
+      "last_updated": "2026-11-24T08:36:52Z",
+      "status_changed_at": "2026-11-24T08:36:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=none status=blocked specialist=generic scope_drift=false code_reuse_warn=none note=security-test-gate.yml has NO PR path-filter (fires on 'security' label, not paths) — premise false, no fix needed; low signal is label-coverage not a path no-op",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-devops-stale-routine-watch-2026-11-13",
       "branch": "auto-impl/pm-devops-stale-routine-watch-2026-11-13-02ad3962",
       "status": "merged",
@@ -34890,5 +34934,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T06:34:37Z"
+  "archived_at": "2026-11-24T08:37:01Z"
 }
