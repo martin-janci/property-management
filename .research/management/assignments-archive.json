@@ -31045,6 +31045,28 @@
       "merge_attempted_at": "2026-11-22T08:35:00Z"
     },
     {
+      "task_id": "pm-scrum-master-resolve-dispatcher-stall-3357-nonmechanical-2026-11-24",
+      "branch": "auto-impl/pm-scrum-master-resolve-dispatcher-stall-0c202c44",
+      "status": "failed",
+      "claimed_at": "2026-11-24T14:36:00Z",
+      "last_updated": "2026-11-24T14:52:00Z",
+      "status_changed_at": "2026-11-24T14:52:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "followup=partial (no own-PR; coordination/rebase task). Rebased PR #3677 clean+green (force-pushed 9157ecdd9 — will re-review+merge next run). PR #3676 real convention collision (flat vs nested status i18n) — aborted+commented for human decision. Root cause of 4-day stall: shallow clone → no merge-base → false rebase exhaustion; filed issue #3781.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20",
       "branch": "auto-impl/pm-scrum-master-resolve-dispatcher-stall-be74de28",
       "status": "failed",
@@ -35132,5 +35154,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T14:40:35Z"
+  "archived_at": "2026-11-24T14:48:48Z"
 }
