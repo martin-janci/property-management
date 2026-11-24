@@ -69,18 +69,18 @@
     {
       "task_id": "code-review-ppt-web-ui-dsa-reports-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-dsa-reports-i18n-906e3f76",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-24T14:36:00Z",
-      "last_updated": "2026-11-24T14:36:00Z",
-      "status_changed_at": "2026-11-24T14:36:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-24T15:04:00Z",
+      "status_changed_at": "2026-11-24T15:04:00Z",
+      "pr_number": 3783,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3783",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3783 status=done specialist=react-web scope_drift=true note=localized DsaTransparencyReportCard via dsa.card.* across 6 locales + regression test; VERIFY OK (16131 tests)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -111,5 +111,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-24T14:58:00Z"
+  "generated": "2026-11-24T15:04:00Z"
 }
