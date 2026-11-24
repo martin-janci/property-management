@@ -1,0 +1,285 @@
+//! Resident person-month submissions awaiting manager approval (UC-10).
+//!
+//! A current resident proposes a count for their own unit; a manager lists,
+//! approves (the count lands in `person_months`) or rejects it. Residents of
+//! other units and non-managers are refused.
+
+use axum::http::StatusCode;
+use chrono::Datelike;
+use common::tenant::TenantRole;
+use serde_json::json;
+use sqlx::PgPool;
+use uuid::Uuid;
+
+use crate::common::{mint_tenant_token, seed_membership, seed_org, TestApp};
+
+async fn seed_user(pool: &PgPool, label: &str) -> (Uuid, String) {
+    let email = format!("{label}-{}@pm-sub.test", Uuid::new_v4());
+    let id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO users (email, password_hash, name) VALUES ($1, 'x', $2) RETURNING id",
+    )
+    .bind(&email)
+    .bind(label)
+    .fetch_one(pool)
+    .await
+    .expect("seed user");
+    (id, email)
+}
+
+struct Fixture {
+    org: Uuid,
+    building: Uuid,
+    unit: Uuid,
+    other_unit: Uuid,
+    resident: (Uuid, String),
+    manager: (Uuid, String),
+}
+
+async fn fixture(pool: &PgPool) -> Fixture {
+    let org = seed_org(pool, "pm-sub").await;
+    let building = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO buildings (organization_id, street, city, postal_code, country)
+           VALUES ($1, 'Sub St 1', 'Bratislava', '81101', 'SK') RETURNING id"#,
+    )
+    .bind(org)
+    .fetch_one(pool)
+    .await
+    .expect("building");
+    let mut units = vec![];
+    for d in ["1A", "1B"] {
+        units.push(
+            sqlx::query_scalar::<_, Uuid>(
+                "INSERT INTO units (building_id, designation) VALUES ($1, $2) RETURNING id",
+            )
+            .bind(building)
+            .bind(d)
+            .fetch_one(pool)
+            .await
+            .expect("unit"),
+        );
+    }
+    let resident = seed_user(pool, "resident").await;
+    let manager = seed_user(pool, "manager").await;
+    seed_membership(pool, org, resident.0, "resident").await;
+    seed_membership(pool, org, manager.0, "manager").await;
+    sqlx::query(
+        "INSERT INTO unit_residents (unit_id, user_id, resident_type) VALUES ($1, $2, 'tenant')",
+    )
+    .bind(units[0])
+    .bind(resident.0)
+    .execute(pool)
+    .await
+    .expect("residency");
+    Fixture {
+        org,
+        building,
+        unit: units[0],
+        other_unit: units[1],
+        resident,
+        manager,
+    }
+}
+
+fn this_month() -> (i32, i32) {
+    let today = chrono::Utc::now().date_naive();
+    (today.year(), today.month() as i32)
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn resident_submits_and_manager_approves(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = fixture(&pool).await;
+    let resident_token =
+        mint_tenant_token(f.resident.0, &f.resident.1, f.org, TenantRole::Resident);
+    let manager_token = mint_tenant_token(f.manager.0, &f.manager.1, f.org, TenantRole::Manager);
+    let (year, month) = this_month();
+    let unit_base = format!(
+        "/api/v1/buildings/{}/units/{}/person-months/submissions",
+        f.building, f.unit
+    );
+
+    // Resident submits; a second submission replaces the pending one.
+    for count in [2, 3] {
+        let resp = app
+            .execute(
+                app.post(&unit_base)
+                    .bearer(&resident_token)
+                    .tenant(f.org)
+                    .json(json!({ "year": year, "month": month, "count": count, "note": "baby" }))
+                    .build(),
+            )
+            .await;
+        assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    }
+    let resp = app
+        .execute(
+            app.get(&format!("{unit_base}?year={year}"))
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let list = resp.json_value();
+    let items = list.as_array().expect("array");
+    assert_eq!(items.len(), 1, "pending submission is replaced: {list}");
+    assert_eq!(items[0]["count"], 3);
+    assert_eq!(items[0]["status"], "pending");
+    let submission_id = items[0]["id"].as_str().unwrap().to_string();
+
+    // Resident cannot see the review list or approve.
+    let review = format!("/api/v1/buildings/{}/person-months/submissions", f.building);
+    let resp = app
+        .execute(
+            app.get(&review)
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+    let approve = format!("{review}/{submission_id}/approve");
+    let resp = app
+        .execute(
+            app.post(&approve)
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+
+    // Manager sees it and approves; the count lands in person_months.
+    let resp = app
+        .execute(
+            app.get(&review)
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let pending = resp.json_value();
+    assert_eq!(pending[0]["unit_designation"], "1A", "{pending}");
+    assert!(pending[0]["submitter_email"]
+        .as_str()
+        .unwrap_or("")
+        .starts_with("resident-"));
+
+    let resp = app
+        .execute(
+            app.post(&approve)
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    assert_eq!(resp.json_value()["status"], "approved");
+
+    let recorded: i32 = sqlx::query_scalar(
+        "SELECT count FROM person_months WHERE unit_id = $1 AND year = $2 AND month = $3",
+    )
+    .bind(f.unit)
+    .bind(year)
+    .bind(month)
+    .fetch_one(&pool)
+    .await
+    .expect("person_months row");
+    assert_eq!(recorded, 3);
+
+    // A decision applies once.
+    let resp = app
+        .execute(
+            app.post(&approve)
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CONFLICT, "{}", resp.text());
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn manager_rejects_and_non_residents_are_refused(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = fixture(&pool).await;
+    let resident_token =
+        mint_tenant_token(f.resident.0, &f.resident.1, f.org, TenantRole::Resident);
+    let manager_token = mint_tenant_token(f.manager.0, &f.manager.1, f.org, TenantRole::Manager);
+    let (year, month) = this_month();
+
+    // Not a resident of the other unit.
+    let other = format!(
+        "/api/v1/buildings/{}/units/{}/person-months/submissions",
+        f.building, f.other_unit
+    );
+    let resp = app
+        .execute(
+            app.post(&other)
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .json(json!({ "year": year, "month": month, "count": 1 }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::FORBIDDEN, "{}", resp.text());
+
+    // Future month and out-of-range count are rejected.
+    let own = format!(
+        "/api/v1/buildings/{}/units/{}/person-months/submissions",
+        f.building, f.unit
+    );
+    for body in [
+        json!({ "year": year + 1, "month": month, "count": 1 }),
+        json!({ "year": year, "month": month, "count": 99 }),
+    ] {
+        let resp = app
+            .execute(
+                app.post(&own)
+                    .bearer(&resident_token)
+                    .tenant(f.org)
+                    .json(body)
+                    .build(),
+            )
+            .await;
+        assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
+    }
+
+    let resp = app
+        .execute(
+            app.post(&own)
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .json(json!({ "year": year, "month": month, "count": 4 }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let id = resp.json_value()["id"].as_str().unwrap().to_string();
+
+    let reject = format!(
+        "/api/v1/buildings/{}/person-months/submissions/{id}/reject",
+        f.building
+    );
+    let resp = app
+        .execute(
+            app.post(&reject)
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .json(json!({ "note": "Only 2 people registered" }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let body = resp.json_value();
+    assert_eq!(body["status"], "rejected");
+    assert_eq!(body["decision_note"], "Only 2 people registered");
+
+    let written: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM person_months WHERE unit_id = $1")
+        .bind(f.unit)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(written, 0, "a rejected submission writes nothing");
+}

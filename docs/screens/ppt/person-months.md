@@ -75,6 +75,7 @@ Reachable from the building detail page via a "Person-months" quick link.
   units that already have an entry.
 
 ## Agent Log
+- 2026-11-24 — agent: resident submissions (Martin's decision, option B): residents report a count per month in mobile (`POST /buildings/{b}/units/{u}/person-months/submissions`), managers approve/reject on the building page panel (`GET/POST /buildings/{b}/person-months/submissions[/{id}/approve|reject]`); approval writes `person_months`. New table `person_month_submissions` (migration 00250).
 - 2026-11-23 — agent: mobile `PersonMonthsScreen` moved off mock data to a read-only view: unit from `GET /users/me/units`, rows from `GET /buildings/{b}/units/{u}/person-months?year=`, year switcher, unit chips for multi-unit residents; edit/bulk controls removed (writes are manager-only).
 - 2026-11-04 — agent: bulk entry (`/buildings/:buildingId/person-months/bulk`): counts not edited fall back to the unit's value, so units that load after mount no longer fail "must be 0 or more"; month names come from `Intl.DateTimeFormat` (R3 #23). Status unchanged.
 

@@ -7299,6 +7299,16 @@
       "failedToSave": "Personenmonatsdaten konnten nicht gespeichert werden",
       "failedToDelete": "Personenmonatsdaten konnten nicht gelöscht werden",
       "failedToExport": "Daten konnten nicht exportiert werden"
+    },
+    "submissions": {
+      "title_one": "{{count}} Bewohnermeldung zur Prüfung",
+      "title_other": "{{count}} Bewohnermeldungen zur Prüfung",
+      "proposed": "Vorgeschlagen: {{count}} Personen (aktuell {{current}})",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "approvedToast": "Meldung genehmigt",
+      "rejectedToast": "Meldung abgelehnt",
+      "decideFailed": "Entscheidung konnte nicht gespeichert werden"
     }
   },
   "accounting": {

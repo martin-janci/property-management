@@ -127,3 +127,48 @@ export interface CalculatePersonMonthRequest {
   year: number;
   month?: number;
 }
+
+// ============================================================================
+// Resident submissions (UC-10)
+// ============================================================================
+
+export type PersonMonthSubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+/** A resident-proposed count awaiting (or after) manager review. */
+export interface PersonMonthSubmission {
+  id: string;
+  unit_id: string;
+  year: number;
+  month: number;
+  count: number;
+  note: string | null;
+  status: PersonMonthSubmissionStatus;
+  submitted_by: string;
+  submitted_at: string;
+  decided_by: string | null;
+  decided_at: string | null;
+  decision_note: string | null;
+}
+
+/** Manager review row: submission + unit designation, submitter and current count. */
+export interface PersonMonthSubmissionWithUnit {
+  id: string;
+  unit_id: string;
+  unit_designation: string;
+  year: number;
+  month: number;
+  count: number;
+  current_count: number | null;
+  note: string | null;
+  status: PersonMonthSubmissionStatus;
+  submitted_by: string;
+  submitter_email: string | null;
+  submitted_at: string;
+}
+
+export interface SubmitPersonMonthRequest {
+  year: number;
+  month: number;
+  count: number;
+  note?: string;
+}

@@ -622,17 +622,28 @@
   },
   "personMonths": {
     "title": "Osobomiesiące",
-    "subtitle": "Ile osób uwzględniono w Twoim lokalu w poszczególnych miesiącach przy rozliczaniu kosztów.",
+    "subtitle": "Ile osób uwzględniono w Twoim lokalu w poszczególnych miesiącach przy rozliczaniu kosztów. Zgłoś zmianę, a zarządca ją rozpatrzy.",
     "loadError": "Nie udało się wczytać osobomiesięcy.",
     "noUnit": "Do Twojego konta nie przypisano żadnego lokalu.",
     "empty": "Brak osobomiesięcy zapisanych w tym roku.",
-    "contactManager": "Jeśli wartość jest błędna, skontaktuj się z zarządcą budynku.",
     "previousYear": "Poprzedni rok",
     "nextYear": "Następny rok",
     "personCount_one": "{{count}} osoba",
     "personCount_other": "{{count}} osób",
     "personCount_few": "{{count}} osoby",
-    "personCount_many": "{{count}} osób"
+    "personCount_many": "{{count}} osób",
+    "notRecorded": "Jeszcze nie wprowadzono",
+    "pendingCount": "Zgłoszono: {{count}}, oczekuje na zatwierdzenie",
+    "report": "Zgłoś zmianę",
+    "reportLabel": "Liczba osób",
+    "send": "Wyślij",
+    "approvalHint": "Zgłoszenia obowiązują dopiero po zatwierdzeniu przez zarządcę budynku.",
+    "submitFailed": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.",
+    "invalidMessage": "Wpisz liczbę całkowitą od 0 do 50.",
+    "submissionStatus": {
+      "pending": "Oczekuje na zatwierdzenie",
+      "rejected": "Odrzucono"
+    }
   },
   "outages": {
     "backToList": "‹ Awarie",

@@ -7241,6 +7241,17 @@
       "failedToSave": "Údaje o osobomesiacoch sa nepodarilo uložiť",
       "failedToDelete": "Údaje o osobomesiacoch sa nepodarilo vymazať",
       "failedToExport": "Údaje sa nepodarilo exportovať"
+    },
+    "submissions": {
+      "title_one": "{{count}} návrh od obyvateľa na posúdenie",
+      "title_few": "{{count}} návrhy od obyvateľov na posúdenie",
+      "title_other": "{{count}} návrhov od obyvateľov na posúdenie",
+      "proposed": "Navrhuje {{count}} osôb (aktuálne {{current}})",
+      "approve": "Schváliť",
+      "reject": "Zamietnuť",
+      "approvedToast": "Návrh schválený",
+      "rejectedToast": "Návrh zamietnutý",
+      "decideFailed": "Rozhodnutie sa nepodarilo uložiť"
     }
   },
   "accounting": {

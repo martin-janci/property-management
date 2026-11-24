@@ -658,15 +658,26 @@
   },
   "personMonths": {
     "title": "Person-months",
-    "subtitle": "How many people were counted in your unit each month for cost allocation.",
+    "subtitle": "How many people were counted in your unit each month for cost allocation. Report a change and your manager will review it.",
     "loadError": "Could not load person-months.",
     "noUnit": "No unit is linked to your account.",
     "empty": "No person-months recorded for this year.",
-    "contactManager": "If a value is wrong, contact your building manager.",
     "previousYear": "Previous year",
     "nextYear": "Next year",
     "personCount_one": "{{count}} person",
-    "personCount_other": "{{count}} persons"
+    "personCount_other": "{{count}} persons",
+    "notRecorded": "Not recorded yet",
+    "pendingCount": "Reported: {{count}}, awaiting approval",
+    "report": "Report a change",
+    "reportLabel": "Number of persons",
+    "send": "Send",
+    "approvalHint": "Reports are reviewed by your building manager before they count.",
+    "submitFailed": "The report could not be sent. Try again.",
+    "invalidMessage": "Enter a whole number between 0 and 50.",
+    "submissionStatus": {
+      "pending": "Awaiting approval",
+      "rejected": "Rejected"
+    }
   },
   "outages": {
     "backToList": "‹ Outages",

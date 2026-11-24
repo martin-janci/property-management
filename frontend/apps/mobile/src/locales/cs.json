@@ -662,17 +662,28 @@
   },
   "personMonths": {
     "title": "Osoboměsíce",
-    "subtitle": "Kolik osob bylo v jednotlivých měsících započteno ve vaší jednotce pro rozúčtování nákladů.",
+    "subtitle": "Kolik osob bylo v jednotlivých měsících započteno ve vaší jednotce pro rozúčtování nákladů. Změnu můžete nahlásit, správce ji posoudí.",
     "loadError": "Osoboměsíce se nepodařilo načíst.",
     "noUnit": "K vašemu účtu není přiřazena žádná jednotka.",
     "empty": "Pro tento rok nejsou zaznamenány žádné osoboměsíce.",
-    "contactManager": "Pokud údaj nesedí, kontaktujte správce domu.",
     "previousYear": "Předchozí rok",
     "nextYear": "Následující rok",
     "personCount_one": "{{count}} osoba",
     "personCount_other": "{{count}} osob",
     "personCount_few": "{{count}} osoby",
-    "personCount_many": "{{count}} osoby"
+    "personCount_many": "{{count}} osoby",
+    "notRecorded": "Zatím nezadáno",
+    "pendingCount": "Nahlášeno: {{count}}, čeká na schválení",
+    "report": "Nahlásit změnu",
+    "reportLabel": "Počet osob",
+    "send": "Odeslat",
+    "approvalHint": "Nahlášené změny platí až po schválení správcem domu.",
+    "submitFailed": "Nahlášení se nepodařilo odeslat. Zkuste to znovu.",
+    "invalidMessage": "Zadejte celé číslo od 0 do 50.",
+    "submissionStatus": {
+      "pending": "Čeká na schválení",
+      "rejected": "Zamítnuto"
+    }
   },
   "outages": {
     "backToList": "‹ Výpadky",

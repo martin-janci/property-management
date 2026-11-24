@@ -4006,7 +4006,17 @@
     "entryRemoved": "Entry removed",
     "deleteFailed": "Could not delete entry",
     "saved": "Person-month saved",
-    "saveFailed": "Could not save person-month"
+    "saveFailed": "Could not save person-month",
+    "submissions": {
+      "title_one": "{{count}} resident submission to review",
+      "title_other": "{{count}} resident submissions to review",
+      "proposed": "Proposed {{count}} persons (currently {{current}})",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approvedToast": "Submission approved",
+      "rejectedToast": "Submission rejected",
+      "decideFailed": "Could not save the decision"
+    }
   },
   "insurance": {
     "title": "Insurance",

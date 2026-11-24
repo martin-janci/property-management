@@ -255,7 +255,8 @@ pub use organization_member::{
 pub use password_reset::{CreatePasswordResetToken, PasswordResetToken};
 pub use person_month::{
     person_month_source, BuildingPersonMonthSummary, BulkPersonMonthEntry, BulkUpsertPersonMonths,
-    CreatePersonMonth, MonthlyCount, PersonMonth, PersonMonthWithUnit, UpdatePersonMonth,
+    CreatePersonMonth, MonthlyCount, PersonMonth, PersonMonthSubmission,
+    PersonMonthSubmissionWithUnit, PersonMonthWithUnit, UpdatePersonMonth,
     YearlyPersonMonthSummary,
 };
 pub use platform_admin::{

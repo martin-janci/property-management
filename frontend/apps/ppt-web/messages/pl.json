@@ -7435,6 +7435,18 @@
       "failedToSave": "Nie udało się zapisać danych osobomiesięcy",
       "failedToDelete": "Nie udało się usunąć danych osobomiesięcy",
       "failedToExport": "Nie udało się wyeksportować danych"
+    },
+    "submissions": {
+      "title_one": "{{count}} zgłoszenie mieszkańca do rozpatrzenia",
+      "title_few": "{{count}} zgłoszenia mieszkańców do rozpatrzenia",
+      "title_many": "{{count}} zgłoszeń mieszkańców do rozpatrzenia",
+      "title_other": "{{count}} zgłoszeń mieszkańców do rozpatrzenia",
+      "proposed": "Proponuje {{count}} osób (obecnie {{current}})",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "approvedToast": "Zgłoszenie zatwierdzone",
+      "rejectedToast": "Zgłoszenie odrzucone",
+      "decideFailed": "Nie udało się zapisać decyzji"
     }
   },
   "accounting": {

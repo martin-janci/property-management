@@ -16,7 +16,11 @@ import type {
   GetUnitPersonMonthsQuery,
   PersonMonth,
   PersonMonthBuildingSummary,
+  PersonMonthSubmission,
+  PersonMonthSubmissionStatus,
+  PersonMonthSubmissionWithUnit,
   PersonMonthWithUnit,
+  SubmitPersonMonthRequest,
   UpdatePersonMonthRequest,
   UpsertPersonMonthRequest,
   YearlyPersonMonthSummary,
@@ -193,4 +197,65 @@ export async function getBuildingSummary(
 ): Promise<PersonMonthBuildingSummary> {
   const qs = buildQueryString({ year: query.year, month: query.month });
   return fetchApi<PersonMonthBuildingSummary>(`${buildingBase(buildingId)}/summary${qs}`);
+}
+
+// ============================================================================
+// Resident submissions (UC-10)
+// ============================================================================
+
+/** Resident: propose a count for their own unit (replaces a pending one). */
+export async function submitPersonMonth(
+  buildingId: string,
+  unitId: string,
+  body: SubmitPersonMonthRequest
+): Promise<PersonMonthSubmission> {
+  return fetchApi<PersonMonthSubmission>(`${unitBase(buildingId, unitId)}/submissions`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/** Resident or manager: a unit's submissions for a year. */
+export async function listUnitSubmissions(
+  buildingId: string,
+  unitId: string,
+  year: number
+): Promise<PersonMonthSubmission[]> {
+  return fetchApi<PersonMonthSubmission[]>(
+    `${unitBase(buildingId, unitId)}/submissions${buildQueryString({ year })}`
+  );
+}
+
+/** Manager: a building's submissions (default: pending). */
+export async function listBuildingSubmissions(
+  buildingId: string,
+  status: PersonMonthSubmissionStatus | 'all' = 'pending'
+): Promise<PersonMonthSubmissionWithUnit[]> {
+  return fetchApi<PersonMonthSubmissionWithUnit[]>(
+    `${buildingBase(buildingId)}/submissions${buildQueryString({ status })}`
+  );
+}
+
+/** Manager: approve a pending submission (writes the count). */
+export async function approvePersonMonthSubmission(
+  buildingId: string,
+  submissionId: string,
+  note?: string
+): Promise<PersonMonthSubmission> {
+  return fetchApi<PersonMonthSubmission>(
+    `${buildingBase(buildingId)}/submissions/${submissionId}/approve`,
+    { method: 'POST', body: JSON.stringify({ note }) }
+  );
+}
+
+/** Manager: reject a pending submission. */
+export async function rejectPersonMonthSubmission(
+  buildingId: string,
+  submissionId: string,
+  note?: string
+): Promise<PersonMonthSubmission> {
+  return fetchApi<PersonMonthSubmission>(
+    `${buildingBase(buildingId)}/submissions/${submissionId}/reject`,
+    { method: 'POST', body: JSON.stringify({ note }) }
+  );
 }
