@@ -22,7 +22,13 @@ import type { AxiosAdapter, AxiosResponse } from 'axios';
 import { AxiosHeaders } from 'axios';
 import type { ReactNode } from 'react';
 import { configureApiClient, resetApiClient } from '../../../lib/api';
-import { useAiChatSessions, useCreateSession, useDeleteSession } from './useAiChat';
+import {
+  aiChatKeys,
+  useAiChatMessages,
+  useAiChatSessions,
+  useCreateSession,
+  useDeleteSession,
+} from './useAiChat';
 
 const ACCESS_TOKEN = 'ai-chat-access-token-abc';
 
@@ -168,5 +174,111 @@ describe('useAiChat — routes through the JWT-injecting axios client', () => {
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(result.current.error).toBeInstanceOf(Error);
     });
+  });
+});
+
+/**
+ * Regression: the paged reads (`useAiChatMessages`, `useAiChatSessions`,
+ * `useEscalatedMessages`) accept `limit`/`offset` but previously built their
+ * TanStack `queryKey` WITHOUT those inputs (`aiChatKeys.messages(sessionId)` /
+ * `aiChatKeys.sessions()`). Two different pages therefore collided on one cache
+ * entry: once page 1 was cached (and still fresh under its `staleTime`),
+ * requesting page 2 returned page 1's rows and issued no second request.
+ *
+ * The keys now fold `{ limit, offset }` in (`aiChatKeys.messagesList(...)` /
+ * `sessionsList(...)`), giving each page its own cache slot. These tests share
+ * ONE QueryClient across both page requests and assert that a second,
+ * distinct-offset request is actually issued and returns its own page — they
+ * fail on the pre-fix key that omitted the pagination inputs.
+ */
+describe('useAiChat — paginated query keys include limit/offset', () => {
+  beforeEach(() => {
+    resetApiClient();
+  });
+
+  afterEach(() => {
+    resetApiClient();
+  });
+
+  /** Adapter whose `{ messages }` page depends on the request's `offset`. */
+  function pagedMessagesAdapter(): {
+    adapter: AxiosAdapter;
+    requests: () => RecordedRequest[];
+  } {
+    const seen: RecordedRequest[] = [];
+    const adapter: AxiosAdapter = (config) => {
+      const headers = AxiosHeaders.from(config.headers);
+      const params = (config.params ?? {}) as { limit?: number; offset?: number };
+      seen.push({
+        auth: headers.get('Authorization') as string | undefined,
+        url: config.url,
+        method: config.method,
+        params: config.params,
+        data: config.data,
+      });
+      const offset = Number(params.offset ?? 0);
+      const messages = offset === 0 ? [{ id: 'm-page0' }] : [{ id: 'm-page1' }];
+      return Promise.resolve({
+        data: { messages },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      } as AxiosResponse);
+    };
+    return { adapter, requests: () => seen };
+  }
+
+  function sharedClientWrapper() {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        // No retry, but keep the default (non-zero) staleTime behaviour of the
+        // hooks: a fresh cache hit must NOT refetch. gcTime high so the first
+        // page stays cached while the second page mounts.
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    return { wrapper };
+  }
+
+  it('serves a different message page instead of the first page cache', async () => {
+    const instance = configureApiClient({ getToken: () => ACCESS_TOKEN });
+    const { adapter, requests } = pagedMessagesAdapter();
+    instance.defaults.adapter = adapter;
+
+    const { wrapper } = sharedClientWrapper();
+
+    const first = renderHook(() => useAiChatMessages('s1', 1, 0), { wrapper });
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    expect(first.result.current.data).toEqual([{ id: 'm-page0' }]);
+
+    const second = renderHook(() => useAiChatMessages('s1', 1, 1), { wrapper });
+    await waitFor(() => expect(second.result.current.isSuccess).toBe(true));
+    // Pre-fix this returned page 0's cached rows; now each page has its own key.
+    expect(second.result.current.data).toEqual([{ id: 'm-page1' }]);
+
+    // A second, distinct request was actually issued (pre-fix: only one).
+    expect(requests().map((r) => r.params)).toEqual([
+      { limit: 1, offset: 0 },
+      { limit: 1, offset: 1 },
+    ]);
+  });
+
+  it('keys message pages under the invalidation scope prefix', () => {
+    // The scope key stays a strict prefix of each paged key, so invalidating
+    // `messages(sessionId)` still prefix-matches every page.
+    const scope = aiChatKeys.messages('s1');
+    const page = aiChatKeys.messagesList('s1', 25, 50);
+    expect(page.slice(0, scope.length)).toEqual([...scope]);
+    expect(page[page.length - 1]).toEqual({ limit: 25, offset: 50 });
+
+    const sessionsScope = aiChatKeys.sessions();
+    const sessionsPage = aiChatKeys.sessionsList(10, 20);
+    expect(sessionsPage.slice(0, sessionsScope.length)).toEqual([...sessionsScope]);
+    expect(sessionsPage[sessionsPage.length - 1]).toEqual({ limit: 10, offset: 20 });
   });
 });
