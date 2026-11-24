@@ -333,78 +333,6 @@
       "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
-      "id": "code-review-ppt-web-ui-dsa-reports-i18n",
-      "action": "ppt web ui dsa reports i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=i18n)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "i18n",
-        "generated": "2026-08-20T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-confirm-i18n",
-      "action": "ppt web ui registry confirm i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=i18n)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "i18n",
-        "generated": "2026-08-20T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-langswitcher-promise",
-      "action": "ppt web ui langswitcher promise",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=quality)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "quality",
-        "generated": "2026-08-16T08:21:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-web-pricemap-hardcoded-locale",
-      "action": "reality web pricemap hardcoded locale",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d reality-web score=1 vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-15T13:20:00Z"
-      }
-    },
-    {
       "id": "churn-hotspot-backend-servers-api-server-src-services-push-apns-rs",
       "action": "Churn hotspot: services/push/apns.rs — 2 commits this run (push stack instability under watch)",
       "owner_role": "pm-tech-lead",
@@ -491,24 +419,6 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-08-14T12:30:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-dup-url-validators",
-      "action": "reality server dup url validators",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-server score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T18:28:58Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "refactor",
-        "generated": "2026-08-13T00:00:00Z"
       }
     },
     {
@@ -758,18 +668,6 @@
       "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
-      "id": "pm-scrum-master-characterize-push-voice-hotspots-2026-11-24",
-      "action": "Characterize high-churn hotspots surfaced this run: voice_webhooks/handlers.rs (265), services/push/apns.rs + services/push/fcm.rs (open PRs #3771/#3772) — split successors to legacy voice_webhooks.rs + push_fanout.rs hotspots.",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-24",
-      "first_open_at": "2026-11-24T10:28:53Z"
-    },
-    {
       "id": "pm-scrum-master-dependabot-3441-axum-test-2026-11-24",
       "action": "Dependabot #3441 (axum-test 21.0.0 → 21.1.0) open since 2026-11-23 — trivial patch bump, land next cycle.",
       "owner_role": "pm-scrum-master",
@@ -782,22 +680,156 @@
       "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
-      "id": "gh-issue-3781",
-      "action": "dispatcher: auto-rebase silently exhausts rebase_attempts in a shallow clone (no merge-base) — unshallow before rebasing (Closes #3781)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
+      "id": "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",
+      "action": "ppt-web AppShell UserMenu declares role=\"menu\" but missing arrow-key navigation + focus return — SR users cannot operate",
+      "owner_role": "pm-backend",
+      "priority": "low",
       "status": "open",
-      "source": "dispatcher-issue-ingest 2026-11-24T16:27:28Z (#3781)",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
-      "first_open_at": "2026-11-24T16:27:28Z",
-      "issue_ref": {
-        "number": 3781,
-        "url": "https://github.com/martin-janci/property-management/issues/3781",
-        "labels": [
-          "follow-up"
-        ]
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "test-gap-pr-3762-payment-match-no-test-diff",
+      "action": "PR #3762 (payment-match date tiebreak + admin-web capability gates) added 70 LoC to accounting.rs with no test diff",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-journal-pr-3764",
+      "action": "screen-map drift: PR #3764 changed reality-web /journal route without touching docs/screens/reality/journal.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-realtor-analytics-pr-3740",
+      "action": "screen-map drift: PR #3740 changed reality-web /realtor/analytics without touching docs/screens/reality/realtor-analytics.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-handlers-rs",
+      "action": "Churn hotspot: api-server voice_webhooks/handlers.rs — 265 LoC in PR #3760 (RLS release fix)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-government-portal-pages-guest-report-submission-page-tsx",
+      "action": "Churn hotspot: ppt-web GuestReportSubmissionPage.tsx — 283 LoC in PR #3756 (i18n route-through)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-i18n-buildings-i18n-test-ts",
+      "action": "Churn hotspot: ppt-web buildingsI18n.test.ts — 379 LoC in PR #3745 (i18n regression lock)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirm-dialog-static-ids",
+      "action": "ppt-web ConfirmationDialog hardcodes DOM ids — two concurrent instances break aria-labelledby/-describedby pairing",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-role-alert-mismatch",
+      "action": "ppt-web Toast.tsx role=\"alert\" is unconditional — success/info toasts interrupt SR reading",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=1 conf=medium vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "bug"
       }
     }
   ],

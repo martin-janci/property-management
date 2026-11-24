@@ -13194,6 +13194,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-dsa-reports-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-dsa-reports-i18n-906e3f76",
+      "status": "merged",
+      "claimed_at": "2026-11-24T14:36:00Z",
+      "last_updated": "2026-11-24T18:45:34Z",
+      "status_changed_at": "2026-11-24T18:45:34Z",
+      "pr_number": 3783,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3783",
+      "merged_at": "2026-11-24T18:38:44Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3783 status=done specialist=react-web scope_drift=true note=localized DsaTransparencyReportCard via dsa.card.* across 6 locales + regression test; VERIFY OK (16131 tests)",
+      "reviewer_summary": "verdict=approve head_oid=ce377c6429c15c3466d90d0b24e6ea019ec7d708 note=clean-ppt-web-i18n-scope-drift-false-positive-ci-green",
+      "last_reviewed_oid": "ce377c6429c15c3466d90d0b24e6ea019ec7d708",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T18:45:34Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-dsa-reports-native-alert-ux",
       "branch": "auto-impl/code-review-ppt-web-ui-dsa-reports-nativ-07729258",
       "status": "failed",
@@ -13950,6 +13972,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-langswitcher-promise",
+      "branch": "auto-impl/code-review-ppt-web-ui-langswitcher-prom-1eff8f55",
+      "status": "merged",
+      "claimed_at": "2026-11-24T16:31:18Z",
+      "last_updated": "2026-11-24T18:45:34Z",
+      "status_changed_at": "2026-11-24T18:45:34Z",
+      "pr_number": 3785,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3785",
+      "merged_at": "2026-11-24T18:42:04Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3785 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=floating promise confirmed; LanguageSwitcher.tsx now void i18n.changeLanguage().catch(console.error); IG3 two-commit split; verify green (15954 tests); draft PR #3785",
+      "reviewer_summary": "verdict=approve head_oid=ede6480e0d7a502e8c564e85ba4afb53982242ae note=correct-floating-promise-fix+test-ig3-ok,drift-is-owner-mapping-only,ci-green (posted as COMMENT not APPROVE: GitHub blocks self-approval by PR-author account)",
+      "last_reviewed_oid": "ede6480e0d7a502e8c564e85ba4afb53982242ae",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T18:45:34Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-leases-dispute-unreachable",
       "branch": "auto-impl/code-review-ppt-web-ui-leases-dispute-un-ada214dc",
       "status": "merged",
@@ -14680,6 +14724,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-registry-confirm-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-confirm-416c77b9",
+      "status": "merged",
+      "claimed_at": "2026-11-24T14:36:00Z",
+      "last_updated": "2026-11-24T18:45:34Z",
+      "status_changed_at": "2026-11-24T18:45:34Z",
+      "pr_number": 3782,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3782",
+      "merged_at": "2026-11-24T18:43:44Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3782 status=done specialist=react-web scope_drift=true note=localized registry ReviewRegistrationModal via react-i18next; registry.review.* in all 6 locales + regression test; VERIFY OK",
+      "reviewer_summary": "verdict=approve head_oid=2c1dcd02040e1a119fe82ce3a144fa9b3c89d021 note=ppt-web-i18n-clean-14-keys-6-locales-common-reused-IG3-proof-ci-green-scope-drift-benign",
+      "last_reviewed_oid": "2c1dcd02040e1a119fe82ce3a144fa9b3c89d021",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T18:45:34Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-registry-feature-orphaned-routes",
@@ -15775,6 +15841,28 @@
       "merge_attempted_at": "2026-10-09T16:33:50Z",
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-reality-server-dup-url-validators",
+      "branch": "auto-impl/code-review-reality-server-dup-url-valid-8ed649c4",
+      "status": "failed",
+      "claimed_at": "2026-11-24T18:30:58Z",
+      "last_updated": "2026-11-24T18:45:34Z",
+      "status_changed_at": "2026-11-24T18:45:34Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=no-duplication-found: reality-server has 3 distinct single-copy URL validators (SSRF common::url_validation, XSS util::url, SSO check_redirect_uri_allowed); prior dedup already done; no change invented",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-server-favorites-limit-toctou",
@@ -29411,6 +29499,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "gh-issue-3781",
+      "branch": "auto-impl/gh-issue-3781-78ff5d39",
+      "status": "merged",
+      "claimed_at": "2026-11-24T16:31:18Z",
+      "last_updated": "2026-11-24T18:45:34Z",
+      "status_changed_at": "2026-11-24T18:45:34Z",
+      "pr_number": 3784,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3784",
+      "merged_at": "2026-11-24T18:41:51Z",
+      "specialist": "generic",
+      "implementer_summary": "pr=3784 status=done specialist=generic scope_drift=false code_reuse_warn=none note=unshallow guard added to Phase 5.6 rebaser-prompt.md; self-test T27 anchor added; verify OK (docs/.research-only)",
+      "reviewer_summary": "verdict=approve head_oid=760ac4d99a6f3ac2b6598d53bd057ebcf03eaf2d note=unshallow-guard-correct; T27 anchor asserted; CI green; posted as COMMENT (self-approval blocked)",
+      "last_reviewed_oid": "760ac4d99a6f3ac2b6598d53bd057ebcf03eaf2d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T18:45:34Z"
+    },
+    {
       "task_id": "hotfix-no-test-pr-3497",
       "branch": "auto-impl/hotfix-no-test-pr-3497-ecc94f46",
       "status": "done",
@@ -30707,6 +30817,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-24T12:57:21Z"
+    },
+    {
+      "task_id": "pm-scrum-master-characterize-push-voice-hotspots-2026-11-24",
+      "branch": "auto-impl/pm-scrum-master-characterize-push-voice-f910b034",
+      "status": "merged",
+      "claimed_at": "2026-11-24T12:33:43Z",
+      "last_updated": "2026-11-24T18:45:34Z",
+      "status_changed_at": "2026-11-24T18:45:34Z",
+      "pr_number": 3780,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3780",
+      "merged_at": "2026-11-24T18:38:38Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3780 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=10 characterization tests apns.rs(+9)/fcm.rs(+1); fmt+clippy green; 95/95 push tests pass; tests-only",
+      "reviewer_summary": "verdict=approve head_oid=b9de1598efbd32370ce56dcb0e240b414298adf7 note=tests-only apns+fcm characterization verified against prod; approve posted as COMMENT (self-approval API-blocked)",
+      "last_reviewed_oid": "b9de1598efbd32370ce56dcb0e240b414298adf7",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T18:45:34Z"
     },
     {
       "task_id": "pm-scrum-master-characterize-the-post-split-push-voice-webhooks-oauth-integr-2026-11-22",
@@ -35176,5 +35308,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T16:42:46Z"
+  "archived_at": "2026-11-24T18:45:41Z"
 }
