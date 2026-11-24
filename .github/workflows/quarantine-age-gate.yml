@@ -19,7 +19,7 @@ name: Quarantine-age gate
 # exercises the parser + policy logic against fixtures so a future refactor
 # that breaks the detector is caught in CI, mirroring ignore-reason-gate.yml.
 #
-# Policy: docs/quarantine-policy.md.
+# Policy: docs/quarantine-policy.md. Cadence: .github/quarantine/cadence.md.
 
 on:
   pull_request:
@@ -53,6 +53,15 @@ jobs:
       - uses: actions/checkout@v7
       - name: Scan quarantined tests
         run: python3 .github/workflows/scripts/check-quarantine-age.py
+      # Weekly dispatcher-visible burn-down metric. Non-failing report: the
+      # dispatcher reads workflow step summaries over MCP, so the metric is
+      # visible without editing a doc. Runs even if the gate above fails.
+      # Cadence: .github/quarantine/cadence.md
+      - name: Burn-down metric
+        if: always()
+        run: |
+          python3 .github/workflows/scripts/check-quarantine-age.py --summary \
+            | tee -a "$GITHUB_STEP_SUMMARY"
 
   self-test:
     name: Self-test — check-quarantine-age.py fixtures
