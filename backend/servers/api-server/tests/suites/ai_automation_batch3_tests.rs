@@ -419,3 +419,50 @@ async fn test_delete_equipment_returns_200(pool: PgPool) {
     // The delete handler returns 204 No Content on success.
     assert_eq!(resp.status, StatusCode::NO_CONTENT, "delete equipment");
 }
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_list_workflows_clamps_hostile_limit(pool: PgPool) {
+    // Regression: `GET /api/v1/ai/workflows` fed the client-supplied `?limit`
+    // straight into the repo's `LIMIT`, so `?limit=1000000` requested an
+    // unbounded page (a cheap DoS). The handler must clamp to MAX_PAGE_LIMIT.
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::default();
+    let (token, org_id) = create_authenticated_user_with_org(&app, &user, "ai-wf-clamp-1").await;
+
+    // Seed 101 workflows — one more than MAX_PAGE_LIMIT (100) — so an
+    // unclamped handler would return all 101 while a clamped one caps at 100.
+    for i in 0..101 {
+        let body = json!({"name": format!("wf-{i:03}"), "trigger_type": "manual"});
+        let resp = app
+            .execute(authed(
+                &token,
+                Method::POST,
+                "/api/v1/ai/workflows",
+                Some(body),
+                org_id,
+            ))
+            .await;
+        assert_eq!(resp.status, StatusCode::CREATED, "seed workflow {i}");
+    }
+
+    let resp = app
+        .execute(authed(
+            &token,
+            Method::GET,
+            "/api/v1/ai/workflows?limit=1000000",
+            None,
+            org_id,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "list workflows with hostile limit"
+    );
+    let body = resp.json_value();
+    let count = body["workflows"].as_array().map(|a| a.len()).unwrap_or(0);
+    assert_eq!(
+        count, 100,
+        "hostile ?limit=1000000 must be clamped to MAX_PAGE_LIMIT (100), got {count}"
+    );
+}
