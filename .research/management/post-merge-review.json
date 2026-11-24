@@ -1,9 +1,32 @@
 {
-  "generated": "2026-11-23T02:38:38Z",
+  "generated": "2026-11-24T04:28:51Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-24T04:28:51Z",
+      "prs_scanned": 15,
+      "clean": [
+        3767,
+        3765,
+        3764,
+        3768,
+        3766,
+        3763,
+        3758,
+        3760,
+        3761,
+        3759,
+        3762,
+        3757,
+        3756,
+        3755,
+        3752
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-11-10), base=dev, max_prs=15, labels=follow-up,from-merged-review. No Task fan-out tool available; all 15 diffs reviewed inline. Scanned the 15 newest unreviewed dev merges (none carrying post-merge-reviewed/no-review-needed), merged 2026-11-23..24; 16 older unreviewed in-window PRs (#3754,#3753,#3751,#3750,#3749,#3748,#3747,#3746,#3745,#3744,#3743,#3742,#3741,#3740,#3739,#3736) roll to the next run (newest-15 cap). 15 clean, 0 follow-ups. Backend/security sweep all solid w/ regression tests: #3768 clamps hostile ?limit on AI workflows/executions list at the handler boundary (MAX_PAGE_LIMIT) w/ 101-row clamp test; #3763 new GET /admin/capabilities/{cap}/holders double-gated by AuditRead (layer + extractor), 404 on unknown cap, filters revoked/expired grants, +403/404/happy-path tests + admin-web HoldersList; #3761 reality-server feed-subscription create/update now run validate_external_url (SSRF parity with import-job handlers) w/ metadata/loopback/RFC1918/file:// rejection tests + a public-https-passes positive; #3760 centralizes voice-webhook RLS acquire->process->release into run_voice_command so the connection is released on EVERY path (incl. the early error branch that previously relied on best-effort Drop) w/ a tracing-capture regression asserting no 'without calling release' warning; #3758 documents the in-process rate-limiter's non-distributed limitation (TODO(dist-ratelimit)) + pins per-process behaviour with separate_limiter_instances_do_not_share_state so a future Redis-backed impl flips the test; #3762 accounting payment-match closest_due_date tiebreak among equal-confidence candidates (ties retained) w/ unit tests, + admin-web capability gates tightened to match server gates (memberships page->memberships_revoke, impersonation card->users_impersonate) and feature-flags 404-swallow replaced by surfaced error + readOnly form. Auth: #3759 ppt-web getAccessToken now proactively single-flight-refreshes an expired JWT mid-session (fire-and-forget, stable callback via ref, opaque tokens untouched) w/ 3 tests; #3765 mobile useApi refresh+retry once on 401 (single-flight dedup, one-retry cap, surfaces original 401 when unrecoverable) w/ 4 tests. Frontend UX/error-surfacing: #3767 AI chat delete error banner (deleteSession.isError) replacing a swallowed catch + real-axios-adapter test + 6-locale i18n; #3766 moderation action_type runtime narrowing guard isModerationActionType replacing unchecked `as` cast + tests; #3764 reality-web journal newsletter stops faking success (disabled 'not live yet' state, no endpoint exists) + regression test; #3755 RegistryPage six nav handlers window.location.href -> react-router navigate() (preserves SPA state) + 6 nav tests. i18n burn-downs with robust guards: #3757 forms feature (FormBuilder/List/Card/Renderer/SubmissionList + 4 pages) w/ 3-way guard test (useTranslation presence + no hardcoded JSX/placeholder/aria-label + per-locale key presence across 6 bundles); #3756 GuestReportSubmissionPage i18n (6 locales +74 keys each) w/ dedicated guard test. Docs: #3752 screen-map drift reconcile report-listing.md for PR #3695 (apiStatus partial->complete), docs-only. No JSON-key-case (PR #473) regressions: Rust test diffs use pure-fn asserts or snake_case json accessors against DTOs without rename_all=camelCase (e.g. CapabilityHolder). PR labels applied via GitHub MCP (gh writes are 403 in cloud). DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to orchestrator Phase 6."
+    },
     {
       "run_at": "2026-11-23T02:38:38Z",
       "prs_scanned": 15,
@@ -595,21 +618,6 @@
         }
       ],
       "note": "Dispatcher Tier-1d demand-driven backlog generator run (buffer starved: claimable=9 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-21), base=dev, max_prs=15, labels=follow-up,from-merged-review. Scanned the 15 most-recently-merged in-window dev merges lacking post-merge-reviewed/no-review-needed: #3291 plus the 16:23:52Z R4 batch (#3260,#3289,#3287,#3286,#3285,#3281,#3270,#3269,#3268,#3264,#3259,#3258,#3253,#3252). 11 follow-ups opened (#3304,#3305,#3306,#3307,#3308,#3309,#3310,#3311,#3312,#3314,#3315); 4 clean (#3285,#3270,#3259,#3258). No Task fan-out tool available to this subagent, so all diffs reviewed inline. GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc), merged detected by non-null merged_at; diffs via pull_request_read get_diff. Cross-cutting themes filed once to avoid duplicates: per-file require_manager helper duplication (filed on #3287/#3306) also appears in #3286; the cs/sk i18n reorder churn (filed on #3260/#3309) also appears in #3270/#3264/#3252 which were marked clean or carried a distinct finding. All 15 PRs labeled post-merge-reviewed (none had prior labels, so label-set writes clobbered nothing) + a breadcrumb comment left where an issue was opened. Every issue/comment body ends with the required _Generated by [Claude Code](https://claude.ai/code)_ footer."
-    },
-    {
-      "run_at": "2026-11-02T14:45:34Z",
-      "prs_scanned": 8,
-      "clean": [
-        3218,
-        3220,
-        3217,
-        3213,
-        3216,
-        3219,
-        3192,
-        3184
-      ],
-      "with_issues": []
     }
   ]
 }

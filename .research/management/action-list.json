@@ -357,24 +357,6 @@
       "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
-      "id": "code-review-ppt-web-ui-ai-chat-ocr-fetch-no-auth",
-      "action": "ppt web ui ai chat ocr fetch no auth",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-20T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-ai-chat-querykey-paging",
       "action": "ppt web ui ai chat querykey paging",
       "owner_role": "pm-backend",
@@ -481,28 +463,6 @@
         "vector": "bug",
         "generated": "2026-08-15T13:20:00Z"
       }
-    },
-    {
-      "id": "pm-scrum-master-i18n-flip-countdown-8d-2026-11-23",
-      "action": "i18n warn→error flip is 2026-12-01 (8 days). Promote-or-close drafts #3740/#3741 (reality-web locale), #3739 (realtor/[id] parity), #3742 (ppt-web Registry Rules i18n), #3676 (mobile-rn raw status). Any slip past 2026-11-29 forces a formal defer.",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": "2026-12-01",
-      "source": "2026-11-23 pm-analysis"
-    },
-    {
-      "id": "pm-scrum-master-draft-3676-mobile-rn-raw-status-untranslated-2026-11-23",
-      "action": "Draft #3676 (code-review-mobile-rn-raw-status-untranslated) is NOT draft but open with updatedAt 2026-11-22 — 22h stale. Nudge author or promote to ready-for-review.",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "2026-11-23 pm-analysis"
     },
     {
       "id": "code-review-api-core-apns-410-body-parse-stale-missed",
@@ -697,20 +657,6 @@
         "vector": "bug",
         "generated": "2026-08-12T18:00:00Z"
       }
-    },
-    {
-      "id": "risky-churn-pr-3524-pl-json-retry1",
-      "action": "PR #3524 i18n leaf-parity fix on top-churn pl.json without a parity test — follow-up #3531 re-opened the same gap [retry 1/2 of failed risky-churn-pr-3524-pl-json]",
-      "owner_role": "pm-qa",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-24T00:24:46Z (retry_of=risky-churn-pr-3524-pl-json reason=failed-no-pr cooldown_ok newest_failure=2026-11-16T20:39:26Z)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-24T00:24:46Z",
-      "retry_of": "risky-churn-pr-3524-pl-json",
-      "retry_round": 1
     },
     {
       "id": "code-review-reality-web-layoutsections-dup-key",

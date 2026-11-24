@@ -29595,6 +29595,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-devops-push-subtree-codeowners-2026-11-24",
+      "branch": "auto-impl/pm-devops-push-subtree-codeowners-2026-1-bf9a4b50",
+      "status": "failed",
+      "claimed_at": "2026-11-24T04:34:55Z",
+      "last_updated": "2026-11-24T04:43:22Z",
+      "status_changed_at": "2026-11-24T04:43:22Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=devops scope_drift=false code_reuse_warn=none note=no-real-pm-backend/pm-qa-github-handle-in-CODEOWNERS;only-@martin-janci;refused-to-invent-handles [implementer returned blocked — needs operator to create @org/pm-backend + @org/pm-qa teams]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-devops-stale-routine-watch-2026-11-13",
       "branch": "auto-impl/pm-devops-stale-routine-watch-2026-11-13-02ad3962",
       "status": "merged",
@@ -34846,5 +34868,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T03:49:39Z"
+  "archived_at": "2026-11-24T04:44:47Z"
 }
