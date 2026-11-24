@@ -369,24 +369,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-langswitcher-aria-i18n",
-      "action": "ppt web ui langswitcher aria i18n",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=i18n)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "i18n",
-        "generated": "2026-08-16T08:21:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-langswitcher-promise",
       "action": "ppt web ui langswitcher promise",
       "owner_role": "pm-tech-lead",
@@ -764,30 +746,6 @@
       }
     },
     {
-      "id": "pm-scrum-master-i18n-flip-countdown-7d-2026-11-24",
-      "action": "i18n warn→error flip countdown T-7d (2026-12-01). Promote-or-close the two remaining mobile-RN drafts #3676 (raw status) + #3677 (hardcoded button labels) by 2026-11-29 (5 days).",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": "2026-11-29",
-      "source": "pm-analysis 2026-11-24",
-      "first_open_at": "2026-11-24T10:28:53Z"
-    },
-    {
-      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-nonmechanical-2026-11-24",
-      "action": "Resolve dispatcher stall #3357 non-mechanical remainder — #3718 landed the mechanical key-union resolver; reviewer-approved PRs across two merge waves (82+) still blocked.",
-      "owner_role": "pm-tech-lead",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-24",
-      "first_open_at": "2026-11-24T10:28:53Z"
-    },
-    {
       "id": "pm-scrum-master-unblock-kmp-and-swagger-ui-egress-2652-2966-2026-11-24",
       "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable.",
       "owner_role": "pm-devops",
@@ -822,6 +780,25 @@
       "deadline": null,
       "source": "pm-analysis 2026-11-24",
       "first_open_at": "2026-11-24T10:28:53Z"
+    },
+    {
+      "id": "gh-issue-3781",
+      "action": "dispatcher: auto-rebase silently exhausts rebase_attempts in a shallow clone (no merge-base) — unshallow before rebasing (Closes #3781)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-24T16:27:28Z (#3781)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T16:27:28Z",
+      "issue_ref": {
+        "number": 3781,
+        "url": "https://github.com/martin-janci/property-management/issues/3781",
+        "labels": [
+          "follow-up"
+        ]
+      }
     }
   ],
   "generated": "2026-11-24T04:19:35Z"
