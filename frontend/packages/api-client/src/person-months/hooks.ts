@@ -9,6 +9,7 @@ import type {
   BulkUpsertPersonMonthsRequest,
   CalculatePersonMonthRequest,
   GetUnitPersonMonthsQuery,
+  PersonMonthSubmissionStatus,
   UpdatePersonMonthRequest,
   UpsertPersonMonthRequest,
 } from './types';
@@ -32,6 +33,8 @@ export const personMonthKeys = {
     [...personMonthKeys.building(buildingId), 'list', query] as const,
   buildingSummary: (buildingId: string, query: BuildingPersonMonthsQuery) =>
     [...personMonthKeys.building(buildingId), 'summary', query] as const,
+  buildingSubmissions: (buildingId: string, status: string) =>
+    [...personMonthKeys.building(buildingId), 'submissions', status] as const,
 };
 
 // ============================================================================
@@ -159,5 +162,44 @@ export function useCalculateFromResidents(buildingId: string, unitId: string) {
   return useMutation({
     mutationFn: (body: CalculatePersonMonthRequest) =>
       api.calculateFromResidents(buildingId, unitId, body),
+  });
+}
+
+// ============================================================================
+// Resident submissions (UC-10)
+// ============================================================================
+
+/** Manager: a building's submissions (default: pending). */
+export function useBuildingPersonMonthSubmissions(
+  buildingId: string | undefined,
+  status: PersonMonthSubmissionStatus | 'all' = 'pending'
+) {
+  return useQuery({
+    queryKey: personMonthKeys.buildingSubmissions(buildingId ?? '', status),
+    queryFn: () => api.listBuildingSubmissions(buildingId as string, status),
+    enabled: !!buildingId,
+  });
+}
+
+/** Manager: approve or reject a submission; refreshes the building's data. */
+export function useDecidePersonMonthSubmission(buildingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      submissionId,
+      decision,
+      note,
+    }: {
+      submissionId: string;
+      decision: 'approve' | 'reject';
+      note?: string;
+    }) =>
+      decision === 'approve'
+        ? api.approvePersonMonthSubmission(buildingId, submissionId, note)
+        : api.rejectPersonMonthSubmission(buildingId, submissionId, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: personMonthKeys.building(buildingId) });
+      queryClient.invalidateQueries({ queryKey: [...personMonthKeys.all, 'unit'] });
+    },
   });
 }

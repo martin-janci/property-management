@@ -618,16 +618,25 @@
   },
   "personMonths": {
     "title": "Személyhónapok",
-    "subtitle": "Adja meg, hány személy lakott az egységében havonta a költségfelosztáshoz.",
-    "invalidTitle": "Érvénytelen érték",
-    "invalidMessage": "Adjon meg egy egész számot 0 és 20 között.",
-    "bulkEntry": "Tömeges bevitel…",
+    "subtitle": "Hány személyt vettek figyelembe havonta a lakásában a költségfelosztáshoz. Jelentsen be változást, a kezelő elbírálja.",
+    "loadError": "A személyhónapokat nem sikerült betölteni.",
+    "noUnit": "A fiókjához nincs lakás rendelve.",
+    "empty": "Erre az évre nincs rögzített személyhónap.",
+    "previousYear": "Előző év",
+    "nextYear": "Következő év",
     "personCount_one": "{{count}} személy",
     "personCount_other": "{{count}} személy",
-    "status": {
-      "draft": "Piszkozat",
-      "submitted": "Beküldve",
-      "confirmed": "Megerősítve"
+    "notRecorded": "Még nincs rögzítve",
+    "pendingCount": "Bejelentve: {{count}}, jóváhagyásra vár",
+    "report": "Változás bejelentése",
+    "reportLabel": "Személyek száma",
+    "send": "Küldés",
+    "approvalHint": "A bejelentések csak az épületkezelő jóváhagyása után érvényesek.",
+    "submitFailed": "A bejelentést nem sikerült elküldeni. Próbálja újra.",
+    "invalidMessage": "Adjon meg egy 0 és 50 közötti egész számot.",
+    "submissionStatus": {
+      "pending": "Jóváhagyásra vár",
+      "rejected": "Elutasítva"
     }
   },
   "outages": {

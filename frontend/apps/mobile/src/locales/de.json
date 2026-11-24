@@ -618,16 +618,25 @@
   },
   "personMonths": {
     "title": "Personenmonate",
-    "subtitle": "Geben Sie an, wie viele Personen jeden Monat in Ihrer Wohneinheit gelebt haben, zur Kostenverteilung.",
-    "invalidTitle": "Ungültiger Wert",
-    "invalidMessage": "Geben Sie eine ganze Zahl zwischen 0 und 20 ein.",
-    "bulkEntry": "Sammeleingabe…",
+    "subtitle": "Wie viele Personen in Ihrer Einheit pro Monat für die Kostenverteilung gezählt wurden. Melden Sie eine Änderung, die Verwaltung prüft sie.",
+    "loadError": "Personenmonate konnten nicht geladen werden.",
+    "noUnit": "Ihrem Konto ist keine Einheit zugeordnet.",
+    "empty": "Für dieses Jahr sind keine Personenmonate erfasst.",
+    "previousYear": "Vorheriges Jahr",
+    "nextYear": "Nächstes Jahr",
     "personCount_one": "{{count}} Person",
     "personCount_other": "{{count}} Personen",
-    "status": {
-      "draft": "Entwurf",
-      "submitted": "Eingereicht",
-      "confirmed": "Bestätigt"
+    "notRecorded": "Noch nicht erfasst",
+    "pendingCount": "Gemeldet: {{count}}, wartet auf Genehmigung",
+    "report": "Änderung melden",
+    "reportLabel": "Anzahl Personen",
+    "send": "Senden",
+    "approvalHint": "Meldungen gelten erst nach Genehmigung durch die Hausverwaltung.",
+    "submitFailed": "Die Meldung konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "invalidMessage": "Geben Sie eine ganze Zahl zwischen 0 und 50 ein.",
+    "submissionStatus": {
+      "pending": "Wartet auf Genehmigung",
+      "rejected": "Abgelehnt"
     }
   },
   "outages": {

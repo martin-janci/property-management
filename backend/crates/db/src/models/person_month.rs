@@ -128,3 +128,45 @@ pub struct BuildingPersonMonthSummary {
     pub total_count: i64,
     pub unit_count: i64,
 }
+
+/// Status values of a resident person-month submission.
+pub mod person_month_submission_status {
+    pub const PENDING: &str = "pending";
+    pub const APPROVED: &str = "approved";
+    pub const REJECTED: &str = "rejected";
+}
+
+/// A resident-proposed person-month count awaiting (or after) manager review.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct PersonMonthSubmission {
+    pub id: Uuid,
+    pub unit_id: Uuid,
+    pub year: i32,
+    pub month: i32,
+    pub count: i32,
+    pub note: Option<String>,
+    pub status: String,
+    pub submitted_by: Uuid,
+    pub submitted_at: DateTime<Utc>,
+    pub decided_by: Option<Uuid>,
+    pub decided_at: Option<DateTime<Utc>>,
+    pub decision_note: Option<String>,
+}
+
+/// A submission joined with its unit designation and submitter email, for
+/// the manager review list.
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct PersonMonthSubmissionWithUnit {
+    pub id: Uuid,
+    pub unit_id: Uuid,
+    pub unit_designation: String,
+    pub year: i32,
+    pub month: i32,
+    pub count: i32,
+    pub current_count: Option<i32>,
+    pub note: Option<String>,
+    pub status: String,
+    pub submitted_by: Uuid,
+    pub submitter_email: Option<String>,
+    pub submitted_at: DateTime<Utc>,
+}

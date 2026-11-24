@@ -662,18 +662,27 @@
   },
   "personMonths": {
     "title": "Osobomesiace",
-    "subtitle": "Nahláste, koľko osôb bývalo vo vašej jednotke každý mesiac na účely rozúčtovania nákladov.",
-    "invalidTitle": "Neplatná hodnota",
-    "invalidMessage": "Zadajte celé číslo od 0 do 20.",
-    "bulkEntry": "Hromadné zadanie…",
+    "subtitle": "Koľko osôb bolo v jednotlivých mesiacoch započítaných vo vašom byte pre rozúčtovanie nákladov. Zmenu môžete nahlásiť, správca ju posúdi.",
+    "loadError": "Osobomesiace sa nepodarilo načítať.",
+    "noUnit": "K vášmu účtu nie je priradený žiadny byt.",
+    "empty": "Pre tento rok nie sú zaznamenané žiadne osobomesiace.",
+    "previousYear": "Predchádzajúci rok",
+    "nextYear": "Nasledujúci rok",
     "personCount_one": "{{count}} osoba",
+    "personCount_other": "{{count}} osôb",
     "personCount_few": "{{count}} osoby",
     "personCount_many": "{{count}} osoby",
-    "personCount_other": "{{count}} osôb",
-    "status": {
-      "draft": "Koncept",
-      "submitted": "Odoslané",
-      "confirmed": "Potvrdené"
+    "notRecorded": "Zatiaľ nezadané",
+    "pendingCount": "Nahlásené: {{count}}, čaká na schválenie",
+    "report": "Nahlásiť zmenu",
+    "reportLabel": "Počet osôb",
+    "send": "Odoslať",
+    "approvalHint": "Nahlásené zmeny platia až po schválení správcom domu.",
+    "submitFailed": "Nahlásenie sa nepodarilo odoslať. Skúste to znova.",
+    "invalidMessage": "Zadajte celé číslo od 0 do 50.",
+    "submissionStatus": {
+      "pending": "Čaká na schválenie",
+      "rejected": "Zamietnuté"
     }
   },
   "outages": {

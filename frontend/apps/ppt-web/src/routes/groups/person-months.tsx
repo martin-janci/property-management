@@ -22,8 +22,10 @@ import {
   calculateFromResidents,
   personMonthKeys,
   useBuilding,
+  useBuildingPersonMonthSubmissions,
   useBuildingPersonMonths,
   useBulkUpsertPersonMonths,
+  useDecidePersonMonthSubmission,
   useDeletePersonMonth,
   useUnitPersonMonths,
   useUnitYearlySummary,
@@ -35,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { Route, useNavigate, useParams } from 'react-router-dom';
 import { ProtectedRoute, useToast } from '../../components';
 import { useAuth } from '../../contexts';
+import { PendingSubmissionsPanel } from '../../features/person-months/components/PendingSubmissionsPanel';
 import type { PersonMonth as UiPersonMonth } from '../../features/person-months/components/PersonMonthCard';
 import type { YearlySummary as UiYearlySummary } from '../../features/person-months/components/YearlySummaryChart';
 import type {
@@ -176,6 +179,31 @@ function PersonMonthsPageRoute() {
   const buildingQuery = useBuilding(buildingId);
   const { units, isLoading: unitsLoading } = useBuildingUnits(buildingId);
   const entriesQuery = useBuildingPersonMonths(buildingId, { year, month });
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  // Resident submissions awaiting review (UC-10) — managers only.
+  const submissionsQuery = useBuildingPersonMonthSubmissions(isManager ? buildingId : undefined);
+  const decide = useDecidePersonMonthSubmission(buildingId);
+  const onDecide = (submissionId: string, decision: 'approve' | 'reject') =>
+    decide.mutate(
+      { submissionId, decision },
+      {
+        onSuccess: () =>
+          showToast({
+            type: 'success',
+            title:
+              decision === 'approve'
+                ? t('personMonths.submissions.approvedToast')
+                : t('personMonths.submissions.rejectedToast'),
+          }),
+        onError: (err) =>
+          showToast({
+            type: 'error',
+            title: t('personMonths.submissions.decideFailed'),
+            message: err instanceof Error ? err.message : undefined,
+          }),
+      }
+    );
 
   const buildingName = buildingQuery.data?.name ?? '';
   const summary = buildBuildingSummary(
@@ -207,6 +235,16 @@ function PersonMonthsPageRoute() {
         isManager ? () => navigate(`/buildings/${buildingId}/person-months/bulk`) : undefined
       }
       onBack={() => navigate(`/buildings/${buildingId}`)}
+      submissionsPanel={
+        isManager ? (
+          <PendingSubmissionsPanel
+            submissions={submissionsQuery.data ?? []}
+            isDeciding={decide.isPending}
+            onApprove={(id) => onDecide(id, 'approve')}
+            onReject={(id) => onDecide(id, 'reject')}
+          />
+        ) : undefined
+      }
     />
   );
 }

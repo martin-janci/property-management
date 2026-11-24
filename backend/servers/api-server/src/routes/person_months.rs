@@ -14,7 +14,8 @@ use axum::{
 };
 use common::errors::ErrorResponse;
 use db::models::person_month::{
-    person_month_source, BulkPersonMonthEntry, CreatePersonMonth, PersonMonth, PersonMonthWithUnit,
+    person_month_source, person_month_submission_status, BulkPersonMonthEntry, CreatePersonMonth,
+    PersonMonth, PersonMonthSubmission, PersonMonthSubmissionWithUnit, PersonMonthWithUnit,
     UpdatePersonMonth, YearlyPersonMonthSummary,
 };
 use serde::{Deserialize, Serialize};
@@ -134,6 +135,9 @@ pub fn router() -> Router<AppState> {
         .route("/{id}", delete(delete_person_month))
         .route("/yearly", get(get_yearly_summary))
         .route("/calculate", post(calculate_from_residents))
+        // Resident submissions awaiting manager approval (UC-10)
+        .route("/submissions", get(list_unit_submissions))
+        .route("/submissions", post(submit_person_month))
 }
 
 /// Create building-level person months router.
@@ -143,6 +147,16 @@ pub fn building_router() -> Router<AppState> {
         .route("/", get(list_building_person_months))
         .route("/bulk", post(bulk_upsert_person_months))
         .route("/summary", get(get_building_summary))
+        // Manager review of resident submissions (UC-10)
+        .route("/submissions", get(list_building_submissions))
+        .route(
+            "/submissions/{submission_id}/approve",
+            post(approve_submission),
+        )
+        .route(
+            "/submissions/{submission_id}/reject",
+            post(reject_submission),
+        )
 }
 
 // ==================== Request/Response Types ====================
@@ -1221,4 +1235,424 @@ pub async fn get_building_summary(
             Json(ErrorResponse::new("NOT_FOUND", "No data found")),
         )),
     }
+}
+
+// ==================== Resident submissions (UC-10) ====================
+//
+// Residents propose the person count for a month of their own unit; a manager
+// approves (the count is written to `person_months`) or rejects it.
+
+fn pm_err(status: StatusCode, code: &str, msg: &str) -> PersonMonthApiError {
+    (status, Json(ErrorResponse::new(code, msg)))
+}
+
+fn pm_db_err(e: sqlx::Error) -> PersonMonthApiError {
+    tracing::error!(error = %e, "person-month submission DB error");
+    pm_err(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "DB_ERROR",
+        "Database error",
+    )
+}
+
+/// The building must be in the caller's tenant and the unit in the building
+/// (404 otherwise). The caller must then be a current resident of the unit,
+/// or — when `allow_manager` — a manager of the organization.
+async fn authorize_unit_resident(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    user_id: Uuid,
+    building_id: Uuid,
+    unit_id: Uuid,
+    allow_manager: bool,
+) -> Result<(), PersonMonthApiError> {
+    let building = state
+        .building_repo
+        .find_by_id_rls(&mut **rls.conn(), building_id)
+        .await
+        .map_err(pm_db_err)?
+        .filter(|b| b.organization_id == rls.tenant_id());
+    if building.is_none() {
+        return Err(pm_err(
+            StatusCode::NOT_FOUND,
+            "NOT_FOUND",
+            "Building not found",
+        ));
+    }
+    let belongs = state
+        .unit_repo
+        .belongs_to_building(unit_id, building_id)
+        .await
+        .map_err(pm_db_err)?;
+    if !belongs {
+        return Err(pm_err(
+            StatusCode::NOT_FOUND,
+            "NOT_FOUND",
+            "Unit not found in this building",
+        ));
+    }
+    let is_resident = state
+        .person_month_repo
+        .is_active_resident(unit_id, user_id)
+        .await
+        .map_err(pm_db_err)?;
+    if is_resident || (allow_manager && rls.role().is_manager()) {
+        return Ok(());
+    }
+    Err(pm_err(
+        StatusCode::FORBIDDEN,
+        "NOT_RESIDENT",
+        "Only a current resident of this unit can do this",
+    ))
+}
+
+/// Resident submission request.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct SubmitPersonMonthRequest {
+    pub year: i32,
+    /// Month (1-12)
+    pub month: i32,
+    /// Number of persons (0-50)
+    pub count: i32,
+    /// Optional note for the manager
+    pub note: Option<String>,
+}
+
+/// Query for listing a unit's submissions.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct UnitSubmissionsQuery {
+    pub year: i32,
+}
+
+/// Query for the manager review list.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct BuildingSubmissionsQuery {
+    /// `pending` (default), `approved`, `rejected` or `all`
+    pub status: Option<String>,
+}
+
+/// Optional manager note when deciding.
+#[derive(Debug, Default, Deserialize, ToSchema)]
+pub struct DecideSubmissionRequest {
+    pub note: Option<String>,
+}
+
+fn validate_submission(req: &SubmitPersonMonthRequest) -> Result<(), PersonMonthApiError> {
+    use chrono::Datelike;
+    let today = chrono::Utc::now().date_naive();
+    if !(1..=12).contains(&req.month) {
+        return Err(pm_err(
+            StatusCode::BAD_REQUEST,
+            "INVALID_MONTH",
+            "Month must be 1-12",
+        ));
+    }
+    if !(0..=50).contains(&req.count) {
+        return Err(pm_err(
+            StatusCode::BAD_REQUEST,
+            "INVALID_COUNT",
+            "Count must be between 0 and 50",
+        ));
+    }
+    // Only the current or a past month, at most two years back.
+    let period = req.year * 12 + req.month;
+    let now = today.year() * 12 + today.month() as i32;
+    if period > now || period < now - 24 {
+        return Err(pm_err(
+            StatusCode::BAD_REQUEST,
+            "INVALID_PERIOD",
+            "Only the current month or the last 24 months can be submitted",
+        ));
+    }
+    if req.note.as_deref().is_some_and(|n| n.chars().count() > 500) {
+        return Err(pm_err(
+            StatusCode::BAD_REQUEST,
+            "NOTE_TOO_LONG",
+            "Note must be at most 500 characters",
+        ));
+    }
+    Ok(())
+}
+
+/// Submit a person-month count for the caller's unit (resident).
+#[utoipa::path(
+    post,
+    path = "/api/v1/buildings/{building_id}/units/{unit_id}/person-months/submissions",
+    tag = "Person Months",
+    request_body = SubmitPersonMonthRequest,
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 201, description = "Submission recorded (replaces a pending one)", body = PersonMonthSubmission),
+        (status = 400, description = "Invalid input", body = ErrorResponse),
+        (status = 403, description = "Not a resident of this unit", body = ErrorResponse),
+        (status = 404, description = "Unit not found", body = ErrorResponse)
+    )
+)]
+pub async fn submit_person_month(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    mut rls: RlsConnection,
+    Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
+    Json(req): Json<SubmitPersonMonthRequest>,
+) -> Result<impl IntoResponse, PersonMonthApiError> {
+    let auth_res =
+        authorize_unit_resident(&state, &mut rls, auth.user_id, building_id, unit_id, false).await;
+    rls.release().await;
+    auth_res?;
+    validate_submission(&req)?;
+
+    let note = req
+        .note
+        .map(|n| n.trim().to_string())
+        .filter(|n| !n.is_empty());
+    let submission = state
+        .person_month_repo
+        .submit(unit_id, req.year, req.month, req.count, note, auth.user_id)
+        .await
+        .map_err(pm_db_err)?;
+    Ok((StatusCode::CREATED, Json(submission)))
+}
+
+/// List a unit's submissions for a year (resident of the unit or manager).
+#[utoipa::path(
+    get,
+    path = "/api/v1/buildings/{building_id}/units/{unit_id}/person-months/submissions",
+    tag = "Person Months",
+    params(UnitSubmissionsQuery),
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Submissions", body = Vec<PersonMonthSubmission>),
+        (status = 403, description = "Not authorized", body = ErrorResponse),
+        (status = 404, description = "Unit not found", body = ErrorResponse)
+    )
+)]
+pub async fn list_unit_submissions(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    mut rls: RlsConnection,
+    Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
+    Query(query): Query<UnitSubmissionsQuery>,
+) -> Result<Json<Vec<PersonMonthSubmission>>, PersonMonthApiError> {
+    let auth_res =
+        authorize_unit_resident(&state, &mut rls, auth.user_id, building_id, unit_id, true).await;
+    rls.release().await;
+    auth_res?;
+    let rows = state
+        .person_month_repo
+        .list_unit_submissions(unit_id, query.year)
+        .await
+        .map_err(pm_db_err)?;
+    Ok(Json(rows))
+}
+
+/// List a building's submissions for review (manager).
+#[utoipa::path(
+    get,
+    path = "/api/v1/buildings/{building_id}/person-months/submissions",
+    tag = "Person Months",
+    params(BuildingSubmissionsQuery),
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Submissions", body = Vec<PersonMonthSubmissionWithUnit>),
+        (status = 400, description = "Invalid status filter", body = ErrorResponse),
+        (status = 403, description = "Manager role required", body = ErrorResponse),
+        (status = 404, description = "Building not found", body = ErrorResponse)
+    )
+)]
+pub async fn list_building_submissions(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    mut rls: RlsConnection,
+    Path(building_id): Path<Uuid>,
+    Query(query): Query<BuildingSubmissionsQuery>,
+) -> Result<Json<Vec<PersonMonthSubmissionWithUnit>>, PersonMonthApiError> {
+    authorize_building(&state, &mut rls, auth.user_id, building_id, None, true).await?;
+    rls.release().await;
+
+    let status = match query.status.as_deref().unwrap_or("pending") {
+        "all" => None,
+        s @ (person_month_submission_status::PENDING
+        | person_month_submission_status::APPROVED
+        | person_month_submission_status::REJECTED) => Some(s),
+        _ => {
+            return Err(pm_err(
+                StatusCode::BAD_REQUEST,
+                "INVALID_STATUS",
+                "status must be pending, approved, rejected or all",
+            ))
+        }
+    };
+    let rows = state
+        .person_month_repo
+        .list_building_submissions(building_id, status)
+        .await
+        .map_err(pm_db_err)?;
+    Ok(Json(rows))
+}
+
+/// Load a submission and check it belongs to a unit of `building_id`.
+async fn load_building_submission(
+    state: &AppState,
+    building_id: Uuid,
+    submission_id: Uuid,
+) -> Result<PersonMonthSubmission, PersonMonthApiError> {
+    let submission = state
+        .person_month_repo
+        .find_submission(submission_id)
+        .await
+        .map_err(pm_db_err)?
+        .ok_or_else(|| pm_err(StatusCode::NOT_FOUND, "NOT_FOUND", "Submission not found"))?;
+    let belongs = state
+        .unit_repo
+        .belongs_to_building(submission.unit_id, building_id)
+        .await
+        .map_err(pm_db_err)?;
+    if !belongs {
+        return Err(pm_err(
+            StatusCode::NOT_FOUND,
+            "NOT_FOUND",
+            "Submission not found",
+        ));
+    }
+    Ok(submission)
+}
+
+fn already_decided() -> PersonMonthApiError {
+    pm_err(
+        StatusCode::CONFLICT,
+        "ALREADY_DECIDED",
+        "This submission was already approved or rejected",
+    )
+}
+
+async fn approve_submission_inner(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+    submission_id: Uuid,
+    note: Option<String>,
+) -> Result<Json<PersonMonthSubmission>, PersonMonthApiError> {
+    authorize_building(state, rls, auth.user_id, building_id, None, true).await?;
+    let submission = load_building_submission(state, building_id, submission_id).await?;
+
+    // Mark decided and write the count in one transaction, so a submission is
+    // never approved without its value landing in `person_months`.
+    let mut tx = sqlx::Connection::begin(&mut **rls.conn())
+        .await
+        .map_err(pm_db_err)?;
+    let decided = state
+        .person_month_repo
+        .decide_submission(
+            &mut tx,
+            submission_id,
+            person_month_submission_status::APPROVED,
+            auth.user_id,
+            note,
+        )
+        .await
+        .map_err(pm_db_err)?
+        .ok_or_else(already_decided)?;
+    state
+        .person_month_repo
+        .upsert(
+            &mut tx,
+            CreatePersonMonth {
+                unit_id: submission.unit_id,
+                year: submission.year,
+                month: submission.month,
+                count: submission.count,
+                source: person_month_source::MANUAL.to_string(),
+                notes: Some(match submission.note.as_deref() {
+                    Some(n) => format!("Submitted by resident: {n}"),
+                    None => "Submitted by resident".to_string(),
+                }),
+            },
+            auth.user_id,
+        )
+        .await
+        .map_err(pm_db_err)?;
+    tx.commit().await.map_err(pm_db_err)?;
+    Ok(Json(decided))
+}
+
+/// Approve a pending submission (manager): writes its count to person-months.
+#[utoipa::path(
+    post,
+    path = "/api/v1/buildings/{building_id}/person-months/submissions/{submission_id}/approve",
+    tag = "Person Months",
+    request_body = DecideSubmissionRequest,
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Approved", body = PersonMonthSubmission),
+        (status = 403, description = "Manager role required", body = ErrorResponse),
+        (status = 404, description = "Submission not found", body = ErrorResponse),
+        (status = 409, description = "Already decided", body = ErrorResponse)
+    )
+)]
+pub async fn approve_submission(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    mut rls: RlsConnection,
+    Path((building_id, submission_id)): Path<(Uuid, Uuid)>,
+    body: Option<Json<DecideSubmissionRequest>>,
+) -> Result<Json<PersonMonthSubmission>, PersonMonthApiError> {
+    let note = body.and_then(|Json(b)| b.note);
+    let out =
+        approve_submission_inner(&state, &auth, &mut rls, building_id, submission_id, note).await;
+    rls.release().await;
+    out
+}
+
+async fn reject_submission_inner(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+    submission_id: Uuid,
+    note: Option<String>,
+) -> Result<Json<PersonMonthSubmission>, PersonMonthApiError> {
+    authorize_building(state, rls, auth.user_id, building_id, None, true).await?;
+    load_building_submission(state, building_id, submission_id).await?;
+    let decided = state
+        .person_month_repo
+        .decide_submission(
+            rls.conn(),
+            submission_id,
+            person_month_submission_status::REJECTED,
+            auth.user_id,
+            note,
+        )
+        .await
+        .map_err(pm_db_err)?
+        .ok_or_else(already_decided)?;
+    Ok(Json(decided))
+}
+
+/// Reject a pending submission (manager).
+#[utoipa::path(
+    post,
+    path = "/api/v1/buildings/{building_id}/person-months/submissions/{submission_id}/reject",
+    tag = "Person Months",
+    request_body = DecideSubmissionRequest,
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Rejected", body = PersonMonthSubmission),
+        (status = 403, description = "Manager role required", body = ErrorResponse),
+        (status = 404, description = "Submission not found", body = ErrorResponse),
+        (status = 409, description = "Already decided", body = ErrorResponse)
+    )
+)]
+pub async fn reject_submission(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    mut rls: RlsConnection,
+    Path((building_id, submission_id)): Path<(Uuid, Uuid)>,
+    body: Option<Json<DecideSubmissionRequest>>,
+) -> Result<Json<PersonMonthSubmission>, PersonMonthApiError> {
+    let note = body.and_then(|Json(b)| b.note);
+    let out =
+        reject_submission_inner(&state, &auth, &mut rls, building_id, submission_id, note).await;
+    rls.release().await;
+    out
 }

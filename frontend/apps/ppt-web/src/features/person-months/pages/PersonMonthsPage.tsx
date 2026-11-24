@@ -3,7 +3,7 @@
  * Shows person-month data for all units in a building for a selected month.
  */
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type PersonMonth, PersonMonthCard } from '../components/PersonMonthCard';
 import type { ExportFormat } from '../types';
@@ -37,6 +37,8 @@ interface PersonMonthsPageProps {
   onNavigateToBulkEntry?: () => void;
   onExport?: (format: ExportFormat, year: number, month: number) => void;
   onBack: () => void;
+  /** Managers only: resident submissions awaiting review (UC-10). */
+  submissionsPanel?: ReactNode;
 }
 
 const currentYear = new Date().getFullYear();
@@ -71,6 +73,7 @@ export function PersonMonthsPage({
   onNavigateToBulkEntry,
   onExport,
   onBack,
+  submissionsPanel,
 }: PersonMonthsPageProps) {
   const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState(summary.year || currentYear);
@@ -166,6 +169,8 @@ export function PersonMonthsPage({
           </div>
         </div>
       </div>
+
+      {submissionsPanel}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">

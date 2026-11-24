@@ -7299,6 +7299,16 @@
       "failedToSave": "A személyhónap-adatok mentése nem sikerült",
       "failedToDelete": "A személyhónap-adatok törlése nem sikerült",
       "failedToExport": "Az adatok exportálása nem sikerült"
+    },
+    "submissions": {
+      "title_one": "{{count}} lakói bejelentés elbírálásra",
+      "title_other": "{{count}} lakói bejelentés elbírálásra",
+      "proposed": "Javasolt létszám: {{count}} fő (jelenleg {{current}})",
+      "approve": "Jóváhagyás",
+      "reject": "Elutasítás",
+      "approvedToast": "Bejelentés jóváhagyva",
+      "rejectedToast": "Bejelentés elutasítva",
+      "decideFailed": "A döntést nem sikerült menteni"
     }
   },
   "accounting": {

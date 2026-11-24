@@ -658,16 +658,25 @@
   },
   "personMonths": {
     "title": "Person-months",
-    "subtitle": "Declare how many people lived in your unit each month for cost allocation.",
-    "invalidTitle": "Invalid value",
-    "invalidMessage": "Enter a whole number between 0 and 20.",
-    "bulkEntry": "Bulk entry…",
+    "subtitle": "How many people were counted in your unit each month for cost allocation. Report a change and your manager will review it.",
+    "loadError": "Could not load person-months.",
+    "noUnit": "No unit is linked to your account.",
+    "empty": "No person-months recorded for this year.",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
     "personCount_one": "{{count}} person",
     "personCount_other": "{{count}} persons",
-    "status": {
-      "draft": "Draft",
-      "submitted": "Submitted",
-      "confirmed": "Confirmed"
+    "notRecorded": "Not recorded yet",
+    "pendingCount": "Reported: {{count}}, awaiting approval",
+    "report": "Report a change",
+    "reportLabel": "Number of persons",
+    "send": "Send",
+    "approvalHint": "Reports are reviewed by your building manager before they count.",
+    "submitFailed": "The report could not be sent. Try again.",
+    "invalidMessage": "Enter a whole number between 0 and 50.",
+    "submissionStatus": {
+      "pending": "Awaiting approval",
+      "rejected": "Rejected"
     }
   },
   "outages": {

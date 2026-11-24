@@ -1,23 +1,26 @@
 /**
  * PersonMonthsScreen (UC-10).
  *
- * Lets a resident view and edit the number of person-months declared per
- * unit per month, used for cost-allocation.
+ * Shows the person-months recorded for the signed-in resident's unit(s), used
+ * for cost allocation, and lets the resident report a different count for a
+ * month. A report is a proposal: the building manager approves it (the count
+ * is then recorded) or rejects it, so the resident sees each month's recorded
+ * value next to the status of their latest report.
  *
- * NOTE: still backed by mock data. The read endpoint
- * (`GET /api/v1/buildings/{building_id}/units/{unit_id}/person-months?year=…`)
- * needs both a building id and a unit id plus a year, and its `PersonMonth`
- * rows carry no per-entry draft/submitted/confirmed status — the field this
- * screen's editing flow depends on. Wiring it cleanly needs a resident-scoped
- * "my person-months" endpoint (or a status column) on the backend, so it is
- * intentionally left on mock data (tracked as a backend follow-up). Sibling
- * list/detail screens (Meters, Leases, Forms, Threads) are already wired.
+ * Data:
+ * - `GET /api/v1/users/me/units` (camelCase `MyUnit[]`) resolves the caller's
+ *   own units, which supplies the building and unit ids.
+ * - `GET /api/v1/buildings/{b}/units/{u}/person-months?year=` (snake_case
+ *   `PersonMonthResponse[]`) returns the recorded months.
+ * - `GET|POST /api/v1/buildings/{b}/units/{u}/person-months/submissions`
+ *   lists the resident's reports for the year and creates a new one (a new
+ *   report replaces a pending one for the same month).
  */
 
+import type { MyUnit } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -26,68 +29,154 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useApiMutation, useApiQuery } from '../../hooks/useApi';
 import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-interface PersonMonthEntry {
+/** One `PersonMonthResponse` row from the api-server. */
+export interface PersonMonthRow {
   id: string;
-  month: string; // ISO YYYY-MM
-  declaredPersons: number;
-  status: 'draft' | 'submitted' | 'confirmed';
+  unit_id: string;
+  year: number;
+  month: number;
+  count: number;
+  source: string;
+  notes: string | null;
 }
 
-const MOCK_ENTRIES: PersonMonthEntry[] = [
-  { id: 'pm-2026-04', month: '2026-04', declaredPersons: 3, status: 'draft' },
-  { id: 'pm-2026-03', month: '2026-03', declaredPersons: 3, status: 'confirmed' },
-  { id: 'pm-2026-02', month: '2026-02', declaredPersons: 2, status: 'confirmed' },
-  { id: 'pm-2026-01', month: '2026-01', declaredPersons: 2, status: 'confirmed' },
-];
+/** One resident submission (`PersonMonthSubmission`). */
+export interface SubmissionRow {
+  id: string;
+  year: number;
+  month: number;
+  count: number;
+  status: 'pending' | 'approved' | 'rejected';
+  submitted_at: string;
+  decision_note: string | null;
+}
 
-function formatMonth(month: string): string {
-  const [year, m] = month.split('-').map(Number);
-  return formatDate(new Date(year, (m ?? 1) - 1, 1), {
-    month: 'long',
-    year: 'numeric',
-  });
+/** Validate the raw response and sort newest month first. Exported for tests. */
+export function parsePersonMonths(data: unknown): PersonMonthRow[] {
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter(
+      (r): r is PersonMonthRow =>
+        !!r &&
+        typeof r === 'object' &&
+        typeof (r as PersonMonthRow).id === 'string' &&
+        typeof (r as PersonMonthRow).month === 'number' &&
+        typeof (r as PersonMonthRow).year === 'number' &&
+        typeof (r as PersonMonthRow).count === 'number'
+    )
+    .sort((a, b) => b.year - a.year || b.month - a.month);
+}
+
+/** Latest submission per month (input is newest-first from the server). */
+export function latestSubmissionByMonth(data: unknown): Map<number, SubmissionRow> {
+  const out = new Map<number, SubmissionRow>();
+  if (!Array.isArray(data)) return out;
+  for (const r of data as SubmissionRow[]) {
+    if (!r || typeof r.month !== 'number' || typeof r.status !== 'string') continue;
+    const prev = out.get(r.month);
+    if (!prev || r.submitted_at > prev.submitted_at) out.set(r.month, r);
+  }
+  return out;
+}
+
+/** Months to show for `year`: up to the current month, newest first. */
+export function visibleMonths(year: number, today = new Date()): number[] {
+  const thisYear = today.getFullYear();
+  if (year > thisYear) return [];
+  const last = year === thisYear ? today.getMonth() + 1 : 12;
+  return Array.from({ length: last }, (_, i) => last - i);
+}
+
+/** The server accepts reports for the current month and the 24 before it. */
+export function canReport(year: number, month: number, today = new Date()): boolean {
+  const period = year * 12 + month;
+  const now = today.getFullYear() * 12 + today.getMonth() + 1;
+  return period <= now && period >= now - 24;
+}
+
+function formatMonth(year: number, month: number): string {
+  return formatDate(new Date(year, month - 1, 1), { month: 'long', year: 'numeric' });
 }
 
 interface PersonMonthsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
+export function PersonMonthsScreen(_props: PersonMonthsScreenProps) {
   const { t } = useTranslation();
-  const [refreshing, setRefreshing] = useState(false);
-  const [entries, setEntries] = useState<PersonMonthEntry[]>(MOCK_ENTRIES);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftValue, setDraftValue] = useState('');
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const [editingMonth, setEditingMonth] = useState<number | null>(null);
+  const [draft, setDraft] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
+  const unitsQuery = useApiQuery<MyUnit[]>(['my-units', 'list'], '/api/v1/users/me/units', {
+    staleTime: 60_000,
+  });
+  const units = Array.isArray(unitsQuery.data) ? unitsQuery.data : [];
+  const current = units.find((u) => u.unit.id === selectedUnitId) ?? units[0];
+  const buildingId = current?.unit.buildingId;
+  const unitId = current?.unit.id;
+  const base = `/api/v1/buildings/${buildingId ?? ''}/units/${unitId ?? ''}/person-months`;
+  const enabled = !!buildingId && !!unitId;
+
+  const monthsQuery = useApiQuery<unknown>(
+    ['person-months', buildingId, unitId, year],
+    `${base}?year=${year}`,
+    { staleTime: 30_000, enabled }
+  );
+  const submissionsQuery = useApiQuery<unknown>(
+    ['person-months', 'submissions', buildingId, unitId, year],
+    `${base}/submissions?year=${year}`,
+    { staleTime: 30_000, enabled }
+  );
+  const submit = useApiMutation<SubmissionRow, { year: number; month: number; count: number }>(
+    `${base}/submissions`,
+    'POST'
+  );
+
+  const recorded = new Map(parsePersonMonths(monthsQuery.data).map((r) => [r.month, r]));
+  const latest = latestSubmissionByMonth(submissionsQuery.data);
+  const months = visibleMonths(year);
+
+  const { refetch: refetchUnits } = unitsQuery;
+  const { refetch: refetchMonths } = monthsQuery;
+  const { refetch: refetchSubmissions } = submissionsQuery;
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setRefreshing(false);
-  }, []);
+    await Promise.all([refetchUnits(), refetchMonths(), refetchSubmissions()]);
+  }, [refetchUnits, refetchMonths, refetchSubmissions]);
 
-  const startEdit = (entry: PersonMonthEntry) => {
-    if (entry.status === 'confirmed') return;
-    setEditingId(entry.id);
-    setDraftValue(String(entry.declaredPersons));
+  const startReport = (month: number) => {
+    setEditingMonth(month);
+    setDraft(String(recorded.get(month)?.count ?? ''));
+    setFormError(null);
   };
 
-  const saveEdit = (entry: PersonMonthEntry) => {
-    const next = Number(draftValue);
-    if (!Number.isInteger(next) || next < 0 || next > 20) {
-      Alert.alert(t('personMonths.invalidTitle'), t('personMonths.invalidMessage'));
+  const sendReport = (month: number) => {
+    const count = Number(draft);
+    if (draft.trim() === '' || !Number.isInteger(count) || count < 0 || count > 50) {
+      setFormError(t('personMonths.invalidMessage'));
       return;
     }
-    setEntries((prev) =>
-      prev.map((e) =>
-        e.id === entry.id ? { ...e, declaredPersons: next, status: 'submitted' } : e
-      )
+    submit.mutate(
+      { year, month, count },
+      {
+        onSuccess: () => {
+          setEditingMonth(null);
+          setDraft('');
+          void refetchSubmissions();
+        },
+        onError: () => setFormError(t('personMonths.submitFailed')),
+      }
     );
-    setEditingId(null);
-    setDraftValue('');
   };
+
+  const loading = unitsQuery.isLoading || (enabled && monthsQuery.isLoading);
+  const failed = unitsQuery.error || monthsQuery.error;
 
   return (
     <View style={s.container}>
@@ -98,72 +187,160 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={unitsQuery.isFetching || monthsQuery.isFetching}
+            onRefresh={onRefresh}
+          />
+        }
       >
-        {entries.map((entry) => {
-          const isEditing = entry.id === editingId;
-          return (
-            <View key={entry.id} style={s.card}>
-              <View style={s.cardHeader}>
-                <Text style={s.cardTitle}>{formatMonth(entry.month)}</Text>
-                <View
-                  style={[
-                    s.badge,
-                    entry.status === 'confirmed' && styles.badgeConfirmed,
-                    entry.status === 'submitted' && styles.badgeSubmitted,
-                    entry.status === 'draft' && styles.badgeDraft,
-                  ]}
+        {units.length > 1 && (
+          <View style={styles.chipRow}>
+            {units.map((u) => {
+              const active = u.unit.id === unitId;
+              return (
+                <Pressable
+                  key={u.unit.id}
+                  style={[s.filterChip, active && s.filterChipActive]}
+                  onPress={() => {
+                    setSelectedUnitId(u.unit.id);
+                    setEditingMonth(null);
+                  }}
                 >
-                  <Text
-                    style={[
-                      s.badgeText,
-                      entry.status === 'confirmed' && styles.badgeConfirmedText,
-                      entry.status === 'submitted' && styles.badgeSubmittedText,
-                      entry.status === 'draft' && styles.badgeDraftText,
-                    ]}
-                  >
-                    {t(`personMonths.status.${entry.status}`)}
+                  <Text style={[s.filterText, active && s.filterTextActive]}>
+                    {u.unit.designation}
                   </Text>
-                </View>
-              </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
-              {isEditing ? (
-                <View style={styles.editRow}>
-                  <TextInput
-                    style={styles.editInput}
-                    value={draftValue}
-                    onChangeText={setDraftValue}
-                    keyboardType="number-pad"
-                  />
-                  <Pressable
-                    style={[s.primaryButton, styles.saveButton]}
-                    onPress={() => saveEdit(entry)}
-                  >
-                    <Text style={s.primaryButtonText}>{t('common.save')}</Text>
-                  </Pressable>
-                  <Pressable style={styles.cancelButton} onPress={() => setEditingId(null)}>
-                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <View style={styles.viewRow}>
-                  <Text style={styles.value}>
-                    {t('personMonths.personCount', { count: entry.declaredPersons })}
-                  </Text>
-                  {entry.status !== 'confirmed' && (
-                    <Pressable onPress={() => startEdit(entry)} style={styles.editLink}>
-                      <Text style={styles.editLinkText}>{t('common.edit')}</Text>
-                    </Pressable>
+        <View style={styles.yearRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('personMonths.previousYear')}
+            onPress={() => {
+              setYear((y) => y - 1);
+              setEditingMonth(null);
+            }}
+            style={styles.yearButton}
+          >
+            <Text style={styles.yearButtonText}>‹</Text>
+          </Pressable>
+          <Text style={styles.yearText}>{year}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('personMonths.nextYear')}
+            disabled={year >= new Date().getFullYear()}
+            onPress={() => {
+              setYear((y) => y + 1);
+              setEditingMonth(null);
+            }}
+            style={styles.yearButton}
+          >
+            <Text style={styles.yearButtonText}>›</Text>
+          </Pressable>
+        </View>
+
+        {loading ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>{t('common.loading')}</Text>
+          </View>
+        ) : failed ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>{t('personMonths.loadError')}</Text>
+          </View>
+        ) : !current ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>🏠</Text>
+            <Text style={s.emptyTitle}>{t('personMonths.noUnit')}</Text>
+          </View>
+        ) : months.length === 0 ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>👥</Text>
+            <Text style={s.emptyTitle}>{t('personMonths.empty')}</Text>
+          </View>
+        ) : (
+          months.map((month) => {
+            const row = recorded.get(month);
+            const sub = latest.get(month);
+            const isEditing = editingMonth === month;
+            return (
+              <View key={month} style={s.card}>
+                <View style={s.cardHeader}>
+                  <Text style={s.cardTitle}>{formatMonth(year, month)}</Text>
+                  {sub && sub.status !== 'approved' && (
+                    <View
+                      style={[
+                        s.badge,
+                        sub.status === 'pending' ? styles.badgePending : styles.badgeRejected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          s.badgeText,
+                          sub.status === 'pending'
+                            ? styles.badgePendingText
+                            : styles.badgeRejectedText,
+                        ]}
+                      >
+                        {t(`personMonths.submissionStatus.${sub.status}`)}
+                      </Text>
+                    </View>
                   )}
                 </View>
-              )}
-            </View>
-          );
-        })}
+                <Text style={styles.value}>
+                  {row
+                    ? t('personMonths.personCount', { count: row.count })
+                    : t('personMonths.notRecorded')}
+                </Text>
+                {sub?.status === 'pending' && (
+                  <Text style={styles.subline}>
+                    {t('personMonths.pendingCount', { count: sub.count })}
+                  </Text>
+                )}
+                {sub?.status === 'rejected' && sub.decision_note ? (
+                  <Text style={styles.subline}>{sub.decision_note}</Text>
+                ) : null}
 
-        <Pressable style={s.primaryButton} onPress={() => onNavigate?.('PersonMonthsBulk')}>
-          <Text style={s.primaryButtonText}>{t('personMonths.bulkEntry')}</Text>
-        </Pressable>
+                {isEditing ? (
+                  <View style={styles.editRow}>
+                    <TextInput
+                      style={styles.editInput}
+                      value={draft}
+                      onChangeText={setDraft}
+                      keyboardType="number-pad"
+                      accessibilityLabel={t('personMonths.reportLabel')}
+                      maxLength={2}
+                    />
+                    <Pressable
+                      style={[s.primaryButton, styles.sendButton]}
+                      disabled={submit.isPending}
+                      onPress={() => sendReport(month)}
+                    >
+                      <Text style={s.primaryButtonText}>{t('personMonths.send')}</Text>
+                    </Pressable>
+                    <Pressable onPress={() => setEditingMonth(null)} style={styles.linkButton}>
+                      <Text style={styles.linkText}>{t('common.cancel')}</Text>
+                    </Pressable>
+                    {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
+                  </View>
+                ) : (
+                  canReport(year, month) && (
+                    <Pressable onPress={() => startReport(month)} style={styles.linkButton}>
+                      <Text style={styles.linkText}>{t('personMonths.report')}</Text>
+                    </Pressable>
+                  )
+                )}
+              </View>
+            );
+          })
+        )}
+
+        {current && <Text style={styles.hint}>{t('personMonths.approvalHint')}</Text>}
 
         <View style={s.bottomSpacer} />
       </ScrollView>
@@ -172,26 +349,37 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  badgeDraft: { backgroundColor: colors.warningBg },
-  badgeDraftText: { color: colors.warningDark },
-  badgeSubmitted: { backgroundColor: colors.accentSoft },
-  badgeSubmittedText: { color: colors.accentDark },
-  badgeConfirmed: { backgroundColor: colors.successBg },
-  badgeConfirmedText: { color: colors.successDark },
-  viewRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  value: { fontSize: 18, fontWeight: '600', color: colors.text },
-  editLink: { padding: 8 },
-  editLinkText: { color: colors.accent, fontWeight: '500' },
-  editRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  editInput: {
-    flex: 1,
-    minWidth: 80,
-    padding: 12,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: 8,
-    fontSize: 16,
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  yearRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 12,
   },
-  saveButton: { marginTop: 0, paddingHorizontal: 16, paddingVertical: 12 },
-  cancelButton: { padding: 12 },
-  cancelButtonText: { color: colors.textMuted, fontWeight: '500' },
+  yearButton: { paddingHorizontal: 12, paddingVertical: 4 },
+  yearButtonText: { fontSize: 22, color: colors.accent },
+  yearText: { fontSize: 17, fontWeight: '600', color: colors.text },
+  value: { fontSize: 15, color: colors.textSecondary, marginTop: 4 },
+  subline: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  badgePending: { backgroundColor: colors.warningBg },
+  badgePendingText: { color: colors.warningDark },
+  badgeRejected: { backgroundColor: colors.dangerBg },
+  badgeRejectedText: { color: colors.dangerDark },
+  editRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 },
+  editInput: {
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minWidth: 64,
+    fontSize: 16,
+    color: colors.text,
+  },
+  sendButton: { paddingVertical: 8, paddingHorizontal: 16, marginTop: 0 },
+  linkButton: { paddingVertical: 8, alignSelf: 'flex-start' },
+  linkText: { color: colors.accent, fontWeight: '500' },
+  errorText: { color: colors.dangerDark, fontSize: 13, width: '100%' },
+  hint: { fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: 8 },
 });
