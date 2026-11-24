@@ -7245,6 +7245,7 @@
     "submissions": {
       "title_one": "{{count}} návrh od obyvateľa na posúdenie",
       "title_few": "{{count}} návrhy od obyvateľov na posúdenie",
+      "title_many": "{{count}} návrhu od obyvateľov na posúdenie",
       "title_other": "{{count}} návrhov od obyvateľov na posúdenie",
       "proposed": "Navrhuje {{count}} osôb (aktuálne {{current}})",
       "approve": "Schváliť",
