@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-23 04:17 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-24 04:24 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -48,8 +48,12 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs` (+2) | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
+| 2 | test-gap | PR #3762 (payment-match date tiebreak + admin-web capability gates) added 70 LoC to accounting.rs with no test diff | `backend/servers/api-server/src/services/accounting.rs` | PR #3762 | 2026-11-24 | open | — |
+| 2 | test-gap | screen-map drift: PR #3764 changed reality-web /journal route without touching docs/screens/reality/journal.md | `docs/screens/reality/journal.md` (+1) | PR #3764 | 2026-11-24 | open | — |
+| 2 | test-gap | screen-map drift: PR #3740 changed reality-web /realtor/analytics without touching docs/screens/reality/realtor-analytics.md | `docs/screens/reality/realtor-analytics.md` (+1) | PR #3740 | 2026-11-24 | open | — |
+| 2 | bug | ppt-web AppShell UserMenu declares role="menu" but missing arrow-key navigation + focus return — SR users cannot operate | `frontend/apps/ppt-web/src/components/AppShell/AppShell.tsx` | rotating-expert-review ppt-web-ui 2026-11-24 | 2026-11-24 | open | — |
 | 2 | bug | api-server push/apns.rs loses APNs 410-Gone eviction signal when error body fails to parse — stale tokens stay in device_push_tokens | `backend/servers/api-server/src/services/push/apns.rs` | rotating-expert-review api-core 2026-11-23 | 2026-11-23 | open | — |
-| 2 | test-gap | screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` (+1) | PR #3695 | 2026-11-22 | open | — |
+| 2 | test-gap | screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` (+1) | PR #3695 | 2026-11-22 | done | — |
 | 2 | test-gap | screen-map drift: PR #3700 changed ppt-web routes/groups/leases.tsx without touching docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/leases.tsx` (+1) | PR #3700 | 2026-11-22 | done | — |
 | 2 | bug | ppt-web ViolationDetailPage tenant dispute branch is wrapped in MANAGER_ROLES ProtectedRoute — dead for its audience | `frontend/apps/ppt-web/src/routes/groups/leases.tsx` (+1) | Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend) | 2026-11-22 | done | — |
 | 2 | refactor | voice_webhooks.rs is a 5-run repeated-churn hotspot (3066 LoC, 5 runs_seen) — module boundaries needed | `backend/servers/api-server/src/routes/voice_webhooks.rs` | commits 2026-11-19..20 (16 merged PRs window) (+3) | 2026-11-21 | done | — |
@@ -292,11 +296,16 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs` (+2) | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs` (+4) | issue #160 (+2) | 2026-05-23 | done | — |
+| 1 | refactor | Churn hotspot: ppt-web buildingsI18n.test.ts — 379 LoC in PR #3745 (i18n regression lock) | `frontend/apps/ppt-web/src/i18n/buildingsI18n.test.ts` | PR #3745 | 2026-11-24 | open | — |
+| 1 | refactor | Churn hotspot: ppt-web GuestReportSubmissionPage.tsx — 283 LoC in PR #3756 (i18n route-through) | `frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx` | PR #3756 | 2026-11-24 | open | — |
+| 1 | refactor | Churn hotspot: api-server voice_webhooks/handlers.rs — 265 LoC in PR #3760 (RLS release fix) | `backend/servers/api-server/src/routes/voice_webhooks/handlers.rs` | PR #3760 | 2026-11-24 | open | — |
+| 1 | bug | ppt-web Toast.tsx role="alert" is unconditional — success/info toasts interrupt SR reading | `frontend/apps/ppt-web/src/components/Toast.tsx` | rotating-expert-review ppt-web-ui 2026-11-24 | 2026-11-24 | open | — |
+| 1 | bug | ppt-web ConfirmationDialog hardcodes DOM ids — two concurrent instances break aria-labelledby/-describedby pairing | `frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx` | rotating-expert-review ppt-web-ui 2026-11-24 | 2026-11-24 | open | — |
 | 1 | refactor | Churn hotspot: routes/voice_webhooks/oauth.rs — 2 commits this run (voice OAuth 503 mapping + rate-limit test) | `backend/servers/api-server/src/routes/voice_webhooks/oauth.rs` | PR #3737 (+1) | 2026-11-23 | open | — |
 | 1 | refactor | Churn hotspot: services/push/apns.rs — 2 commits this run (push stack instability under watch) | `backend/servers/api-server/src/services/push/apns.rs` | PR #3724 (+1) | 2026-11-23 | open | — |
 | 1 | refactor | Churn hotspot: services/push/fcm.rs — 2 commits this run (push stack instability under watch) | `backend/servers/api-server/src/services/push/fcm.rs` | PR #3724 (+1) | 2026-11-23 | open | — |
 | 1 | refactor | Churn hotspot: voice_oauth.rs — 240 LoC in PR #3689 (RFC 6749 §5.2 OAuth error bodies) | `backend/servers/api-server/src/services/voice_oauth.rs` | PR #3689 | 2026-11-22 | done | — |
-| 1 | refactor | Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix) | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx` | PR #3703 | 2026-11-22 | open | — |
+| 1 | refactor | Churn hotspot: AccountingInvoiceDetail.tsx — 237 LoC in PR #3703 (wire-format fix) | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx` | PR #3703 | 2026-11-22 | done | — |
 | 1 | bug | ppt-web AccountingInvoiceDetail classifies paid/partial via JS float + 0.005 epsilon on decimal strings | `frontend/apps/ppt-web/src/features/accounting/components/AccountingInvoiceDetail.tsx` | Phase 1.5 rotating expert review 2026-11-22 ppt-web-ui (churn-aligned; frontend) | 2026-11-22 | done | — |
 | 1 | bug | push/fcm.rs: 2xx FCM response with unexpected body shape triggers retry — duplicate-delivery risk | `backend/servers/api-server/src/services/push/fcm.rs` | rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d) | 2026-11-21 | done | — |
 | 1 | security | push/combined.rs + apns.rs leak raw sqlx::Error display into NotificationError::PushFailed | `backend/servers/api-server/src/services/push/combined.rs` (+1) | rotating-expert-review 2026-11-21 api-core (dispatcher Tier-1d) | 2026-11-21 | done | — |

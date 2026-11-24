@@ -173,3 +173,13 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-11-23, pm-scrum-master):** Promote-or-close deadline for the 7 draft i18n PRs (#3739/#3740/#3741/#3742 reality-web+ppt-web locale work, #3676 mobile-rn raw status) — set 2026-11-29 as the hard date to leave a weekend of CI drainage before the 2026-12-01 lint flip. Owner: pm-scrum-master + pm-frontend.
 - **NEW (2026-11-23, pm-qa):** Mandate a #[cfg(test)] block (or paired *_tests.rs diff) for every PR touching push/apns.rs, push/fcm.rs, or push/worker.rs — three single-file source-only fixes landed this window (#3725, #3726, #3731). Owner: pm-qa + pm-backend.
 - **NEW (2026-11-23, pm-qa):** Investigate the 50% no-test-diff rate on this window's merged PRs (12/24). Some are legitimately test-less (screen-doc, locale JSON) but the push-stack cluster + #3735 (email dispatch), #3737 (voice OAuth 503), #3722 (voice OAuth rate limiter — commit message claims tests but the diff shows source-only) need per-PR classification. Owner: pm-qa.
+
+---
+
+## Decisions logged 2026-11-24 (Phase 1.6 — pm-scrum-master + pm-devops)
+
+- **NEW (2026-11-24, pm-scrum-master):** Mobile-RN i18n flip carve-out policy — if drafts #3676 (raw status) + #3677 (hardcoded button labels) do not land by 2026-11-29, do we flip warn→error anyway and quarantine those two files via a scoped lint carve-out, or extend the 2026-12-01 deadline by one sprint? Owner: pm-frontend (sign-off: pm-scrum-master).
+- **NEW (2026-11-24, pm-scrum-master):** push/* test-diff mandate — require `#[cfg(test)]` inline block OR paired `*_tests.rs` diff for every PR touching services/push/apns.rs, services/push/fcm.rs, or services/push/worker.rs. Owners: pm-qa + pm-backend.
+- **NEW (2026-11-24, pm-devops):** KMP + swagger-ui cloud-runner unblock path — pick between (a) vendor swagger-ui assets locally, (b) allowlist the egress target in the proxy, or (c) pre-cache the dist in the sandbox base image. Each unblocks 4+ structurally unclaimable items. Owner: pm-devops.
+- **NEW (2026-11-24, pm-devops):** Quarantine burn-down cadence — fixed per-week quota vs. sprint-boundary flush vs. per-owner contracts (193 pm-backend / 6 pm-devops / 2 pm-security rows, all due 2027-02-19). Owner: pm-devops (with pm-tech-lead).
+- **NEW (2026-11-24, pm-devops):** push/* CODEOWNERS entry (pm-backend + pm-qa) — add a reviewer-attachment rule so push-subtree PRs auto-request the right pair. Owner: pm-devops.

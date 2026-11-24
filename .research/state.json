@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-23T04:19:35Z",
-  "last_run_ms": 900000,
-  "last_pr_seen": 3737,
+  "last_run_iso": "2026-11-24T04:23:02Z",
+  "last_run_ms": 1200000,
+  "last_pr_seen": 3768,
   "last_issue_seen": 3738,
-  "last_commit_sha": "ef1c6542560117b40864487290015b8d9fb3718a",
+  "last_commit_sha": "7b4bfa473acaf61420c7956cc4048beb060425e0",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -786,6 +786,21 @@
       "runs_seen": 1,
       "last_seen": "2026-11-23",
       "recent_churn": 2
+    },
+    "frontend/apps/ppt-web/src/i18n/buildingsI18n.test.ts": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-24",
+      "recent_churn": 379
+    },
+    "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-24",
+      "recent_churn": 283
+    },
+    "backend/servers/api-server/src/routes/voice_webhooks/handlers.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-24",
+      "recent_churn": 265
     }
   },
   "seen_signals": [
@@ -1552,22 +1567,32 @@
     "churn-hotspot-backend/servers/api-server/src/routes/voice_webhooks/oauth.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push/apns.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push/fcm.rs",
-    "code-review-api-core-apns-410-body-parse-stale-missed"
+    "code-review-api-core-apns-410-body-parse-stale-missed",
+    "churn-hotspot-frontend-apps-ppt-web-src-i18n-buildings-i18n-test-ts",
+    "churn-hotspot-frontend-apps-ppt-web-src-features-government-portal-pages-guest-report-submission-page-tsx",
+    "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-handlers-rs",
+    "hotfix-no-test-pr-3762",
+    "screen-map-drift-pr-3764-reality",
+    "screen-map-drift-pr-3740-reality",
+    "dep-update-noise-2026-11-24-grouped",
+    "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",
+    "code-review-ppt-web-ui-toast-role-alert-mismatch",
+    "code-review-ppt-web-ui-confirm-dialog-static-ids"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-11-20",
     "api-core": "2026-11-23",
     "reality-server": "2026-11-16",
-    "ppt-web-ui": "2026-11-22",
+    "ppt-web-ui": "2026-11-24",
     "ppt-web-core": "2026-11-04",
     "reality-web": "2026-11-19",
     "mobile-rn": "2026-11-15",
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 127,
-    "vectors_created": 577,
+    "runs": 128,
+    "vectors_created": 586,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1583,20 +1608,20 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 4,
+    "next_index": 5,
     "role_last_run": {
       "pm-tech-lead": "2026-11-20",
       "pm-backend": "2026-11-21",
       "pm-frontend": "2026-11-22",
       "pm-qa": "2026-11-23",
-      "pm-devops": "2026-11-13",
+      "pm-devops": "2026-11-24",
       "pm-security": "2026-11-16",
       "pm-data": "2026-11-17",
       "pm-integration": "2026-11-19",
-      "pm-scrum-master": "2026-11-23"
+      "pm-scrum-master": "2026-11-24"
     }
   },
   "coverage_cursor": {
-    "next_index": 10
+    "next_index": 11
   }
 }

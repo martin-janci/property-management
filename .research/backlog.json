@@ -17031,6 +17031,191 @@
       "created_at": "2026-11-23",
       "updated_at": "2026-11-23",
       "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-i18n-buildings-i18n-test-ts",
+      "title": "Churn hotspot: ppt-web buildingsI18n.test.ts — 379 LoC in PR #3745 (i18n regression lock)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3745"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/i18n/buildingsI18n.test.ts — 379 lines churn this run (PR #3745 — regression i18n lock for buildings pages)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/i18n/buildingsI18n.test.ts"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-government-portal-pages-guest-report-submission-page-tsx",
+      "title": "Churn hotspot: ppt-web GuestReportSubmissionPage.tsx — 283 LoC in PR #3756 (i18n route-through)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3756"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx — 283 lines churn in PR #3756 (guest-report submission i18n route-through)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-handlers-rs",
+      "title": "Churn hotspot: api-server voice_webhooks/handlers.rs — 265 LoC in PR #3760 (RLS release fix)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3760"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/voice_webhooks/handlers.rs — 265 lines churn in PR #3760 (release RLS connection consistently on the voice webhook path)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/voice_webhooks/handlers.rs"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "test-gap-pr-3762-payment-match-no-test-diff",
+      "title": "PR #3762 (payment-match date tiebreak + admin-web capability gates) added 70 LoC to accounting.rs with no test diff",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3762"
+      ],
+      "evidence": [
+        "PR #3762 fix(payment-match date tiebreak + admin-web capability gates) added 70 lines to backend/servers/api-server/src/services/accounting.rs and 4 admin-web TSX files with 0 test file touched — tie-break behaviour and capability gating unsorted-covered"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/accounting.rs"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-journal-pr-3764",
+      "title": "screen-map drift: PR #3764 changed reality-web /journal route without touching docs/screens/reality/journal.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3764"
+      ],
+      "evidence": [
+        "PR #3764 modified frontend/apps/reality-web/src/app/[locale]/journal/page.tsx without updating docs/screens/reality/journal.md"
+      ],
+      "files": [
+        "docs/screens/reality/journal.md",
+        "frontend/apps/reality-web/src/app/[locale]/journal/page.tsx"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-realtor-analytics-pr-3740",
+      "title": "screen-map drift: PR #3740 changed reality-web /realtor/analytics without touching docs/screens/reality/realtor-analytics.md",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3740"
+      ],
+      "evidence": [
+        "PR #3740 modified frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx without updating docs/screens/reality/realtor-analytics.md"
+      ],
+      "files": [
+        "docs/screens/reality/realtor-analytics.md",
+        "frontend/apps/reality-web/src/app/[locale]/realtor/analytics/page.tsx"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",
+      "title": "ppt-web AppShell UserMenu declares role=\"menu\" but missing arrow-key navigation + focus return — SR users cannot operate",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-11-24"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/AppShell/AppShell.tsx:101-121 — <div role=\"menu\"> with Link role=\"menuitem\" items but onKeyDown only closes on Escape; no Up/Down/Home/End handling, no focus returned to trigger on close, no roving tabindex",
+        "ARIA Authoring Practices require arrow-key navigation + explicit focus management for role=\"menu\""
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/AppShell/AppShell.tsx"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-toast-role-alert-mismatch",
+      "title": "ppt-web Toast.tsx role=\"alert\" is unconditional — success/info toasts interrupt SR reading",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-11-24"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx:288 — <output role=\"alert\" aria-live={ariaLive}> sets role=\"alert\" unconditionally for every toast type",
+        "aria-live is \"polite\" for success/info/warning, but role=\"alert\" implies assertive in NVDA/VoiceOver, so routine toasts interrupt SR reading"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/Toast.tsx"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "code-review-ppt-web-ui-confirm-dialog-static-ids",
+      "title": "ppt-web ConfirmationDialog hardcodes DOM ids — two concurrent instances break aria-labelledby/-describedby pairing",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "rotating-expert-review ppt-web-ui 2026-11-24"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx:150-151,156,159 — id=\"confirmation-dialog-title\" and id=\"confirmation-dialog-description\" are hardcoded instead of useId()",
+        "two simultaneously-open ConfirmationDialog instances produce duplicate DOM IDs; PromptDialog.tsx:65-67 already uses useId() correctly — fix pattern in-repo"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConfirmationDialog.tsx"
+      ],
+      "created_at": "2026-11-24",
+      "updated_at": "2026-11-24",
+      "plan": null
     }
   ]
 }

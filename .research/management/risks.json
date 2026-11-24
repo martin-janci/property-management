@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-23T04:10:00Z",
+  "generated": "2026-11-24T04:19:35Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -814,6 +814,36 @@
       "mitigation": "Daily scrum-master status line on the i18n action-list slice; hard promote-or-close by 2026-11-29 to leave one weekend of drainage before the 12-01 lint flip",
       "owner_role": "pm-qa",
       "trigger": "Drafts > 48h old AND lint-flip T-9d or less",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-i18n-flip-slip-risk-2026-11-24",
+      "risk": "i18n warn→error flip is 2026-12-01 (T-7d). Two mobile-RN drafts (#3676 raw status, #3677 hardcoded button labels) are ≥22h stale with no reviewDecision and 5 days from promote-or-close. If both miss, CI breaks on flip day.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Nudge today; if no owner response by 2026-11-27, close-and-defer with a scoped lint carve-out for the two files",
+      "owner_role": "pm-scrum-master",
+      "trigger": "No reviewDecision on #3676 OR #3677 by 2026-11-27",
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-push-subtree-churn-concentration-2026-11-24",
+      "risk": "services/push/apns.rs + services/push/fcm.rs are both in open hotspot PRs this run (#3771/#3772) on top of multi-file push-stack edits across the week. Three post-split modules, one post-merge review — drift risk across the three push code paths",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Land push/* CODEOWNERS (pm-backend + pm-qa) and the push/* test-diff mandate; add a weekly post-merge review for the push subtree",
+      "owner_role": "pm-devops",
+      "trigger": "A 4th push-subtree PR within one dispatcher cycle",
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-quarantine-burndown-trajectory-2026-11-24",
+      "risk": "201 quarantined #[ignore]d Rust tests due 2027-02-19 (87 days out). Zero rows burned down in two weeks. The failure mode is a cliff (CI red the day a due passes), not gradual",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Per-owner weekly quota (193 pm-backend / 6 pm-devops / 2 pm-security) + sprint-dashboard metric; prefer fix+delete over bumping due dates",
+      "owner_role": "pm-devops",
+      "trigger": "Zero burn-down in any 14-day window",
       "status": "open"
     }
   ]

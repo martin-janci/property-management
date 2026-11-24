@@ -29,7 +29,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=3 conf=high vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-10-21T22:25:48Z",
       "backlog_ref": {
@@ -46,7 +46,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-10-21T22:25:48Z (score=3 conf=high vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-10-21T22:25:48Z",
       "backlog_ref": {
@@ -63,7 +63,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-10-25T08:29:08Z (score=2 conf=medium vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-10-25T08:29:08Z",
       "backlog_ref": {
@@ -80,7 +80,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-10-25T08:29:08Z (score=1 conf=medium vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-10-25T08:29:08Z",
       "backlog_ref": {
@@ -97,7 +97,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-11-04T04:24:45Z (score=2 conf=medium vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-04T04:24:45Z",
       "backlog_ref": {
@@ -126,7 +126,7 @@
       "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-core score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-15T16:26:57Z",
       "signal_ref": {
@@ -144,7 +144,7 @@
       "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-15T16:26:57Z (tier1d api-handlers score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-15T16:26:57Z",
       "signal_ref": {
@@ -171,10 +171,8 @@
       "action": "Verify #3609 property_type i18n helper keeps API filter contract on stable enum codes across sk/cs/de/en; localize labels only in display fields",
       "owner_role": "pm-integration",
       "priority": "low",
-      "dependency": "pm-qa",
-      "depends_on": [
-        "UNRESOLVED:pm-qa"
-      ],
+      "dependency": "none",
+      "depends_on": [],
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-19",
@@ -185,10 +183,8 @@
       "action": "Fix env-var leak in tests/suites/airbnb_install_routes_tests.rs (set_var without cleanup) causing airbnb_oauth_routes_tests flake in parallel suite_1",
       "owner_role": "pm-scrum-master",
       "priority": "medium",
-      "dependency": "pm-qa",
-      "depends_on": [
-        "UNRESOLVED:pm-qa"
-      ],
+      "dependency": "none",
+      "depends_on": [],
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-19",
@@ -202,7 +198,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d mobile-rn score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-19T22:25:12Z",
       "signal_ref": {
@@ -220,7 +216,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d mobile-rn score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-19T22:25:12Z",
       "signal_ref": {
@@ -250,7 +246,7 @@
       "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d mobile-rn score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-20T18:26:06Z",
       "signal_ref": {
@@ -268,7 +264,7 @@
       "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-20T18:26:06Z (tier1d ppt-web-ui score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-20T18:26:06Z",
       "signal_ref": {
@@ -286,7 +282,7 @@
       "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-20T22:27:28Z (tier1d api-handlers score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-20T22:27:28Z",
       "signal_ref": {
@@ -329,7 +325,7 @@
       "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-11-21T18:26:24Z (retry_of=code-review-ppt-web-core-logout-purge-disputes-leases-iot reason=failed-no-pr cooldown_ok newest_failure=2026-11-13T22:36:12Z)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-21T18:26:24Z",
       "retry_of": "code-review-ppt-web-core-logout-purge-disputes-leases-iot",
@@ -368,7 +364,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T04:28:04Z",
       "signal_ref": {
@@ -386,7 +382,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T04:28:04Z",
       "signal_ref": {
@@ -404,7 +400,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=i18n)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T04:28:04Z",
       "signal_ref": {
@@ -422,7 +418,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=i18n)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T04:28:04Z",
       "signal_ref": {
@@ -440,7 +436,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=i18n)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T04:28:04Z",
       "signal_ref": {
@@ -458,7 +454,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=quality)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T04:28:04Z",
       "signal_ref": {
@@ -476,7 +472,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d reality-web score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T04:28:04Z",
       "signal_ref": {
@@ -491,11 +487,9 @@
       "action": "i18n warn→error flip is 2026-12-01 (8 days). Promote-or-close drafts #3740/#3741 (reality-web locale), #3739 (realtor/[id] parity), #3742 (ppt-web Registry Rules i18n), #3676 (mobile-rn raw status). Any slip past 2026-11-29 forces a formal defer.",
       "owner_role": "pm-scrum-master",
       "priority": "high",
-      "dependency": "pm-frontend",
-      "depends_on": [
-        "UNRESOLVED:pm-frontend"
-      ],
-      "status": "open",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
       "deadline": "2026-12-01",
       "source": "2026-11-23 pm-analysis"
     },
@@ -504,11 +498,9 @@
       "action": "Draft #3676 (code-review-mobile-rn-raw-status-untranslated) is NOT draft but open with updatedAt 2026-11-22 — 22h stale. Nudge author or promote to ready-for-review.",
       "owner_role": "pm-scrum-master",
       "priority": "medium",
-      "dependency": "pm-frontend",
-      "depends_on": [
-        "UNRESOLVED:pm-frontend"
-      ],
-      "status": "open",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
       "deadline": null,
       "source": "2026-11-23 pm-analysis"
     },
@@ -520,7 +512,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=2 conf=medium vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T12:28:04Z",
       "backlog_ref": {
@@ -537,7 +529,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T12:28:04Z",
       "backlog_ref": {
@@ -554,7 +546,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T12:28:04Z",
       "backlog_ref": {
@@ -571,7 +563,7 @@
       "status": "open",
       "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T12:28:04Z",
       "backlog_ref": {
@@ -588,7 +580,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d mobile-rn score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T18:28:58Z",
       "signal_ref": {
@@ -606,7 +598,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d mobile-rn score=1 vector=test)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T18:28:58Z",
       "signal_ref": {
@@ -624,7 +616,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T18:28:58Z",
       "signal_ref": {
@@ -642,7 +634,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T18:28:58Z",
       "signal_ref": {
@@ -660,7 +652,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-server score=1 vector=refactor)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T18:28:58Z",
       "signal_ref": {
@@ -678,7 +670,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=1 vector=i18n)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T18:28:58Z",
       "signal_ref": {
@@ -696,7 +688,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-23T18:28:58Z",
       "signal_ref": {
@@ -714,7 +706,7 @@
       "status": "open",
       "source": "dispatcher-retry-remint 2026-11-24T00:24:46Z (retry_of=risky-churn-pr-3524-pl-json reason=failed-no-pr cooldown_ok newest_failure=2026-11-16T20:39:26Z)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:46Z",
       "retry_of": "risky-churn-pr-3524-pl-json",
@@ -728,7 +720,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d reality-web score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -746,7 +738,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d reality-web score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -764,7 +756,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d mobile-rn score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -782,7 +774,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d mobile-rn score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -800,7 +792,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-handlers score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -818,7 +810,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-core score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -836,7 +828,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-handlers score=1 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -854,7 +846,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-core score=3 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -872,7 +864,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-core score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -890,7 +882,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-core score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -908,7 +900,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-ui score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -926,7 +918,7 @@
       "status": "open",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-ui score=2 vector=bug)",
       "deadline": null,
-      "dependency": null,
+      "dependency": "none",
       "depends_on": [],
       "first_open_at": "2026-11-24T00:24:47Z",
       "signal_ref": {
@@ -935,7 +927,106 @@
         "vector": "bug",
         "generated": "2026-08-09T00:00:00Z"
       }
+    },
+    {
+      "id": "pm-scrum-master-i18n-flip-countdown-7d-2026-11-24",
+      "action": "i18n warn→error flip countdown T-7d (2026-12-01). Promote-or-close the two remaining mobile-RN drafts #3676 (raw status) + #3677 (hardcoded button labels) by 2026-11-29 (5 days).",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": "2026-11-29",
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-nonmechanical-2026-11-24",
+      "action": "Resolve dispatcher stall #3357 non-mechanical remainder — #3718 landed the mechanical key-union resolver; reviewer-approved PRs across two merge waves (82+) still blocked.",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-scrum-master-unblock-kmp-and-swagger-ui-egress-2652-2966-2026-11-24",
+      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable.",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-scrum-master-characterize-push-voice-hotspots-2026-11-24",
+      "action": "Characterize high-churn hotspots surfaced this run: voice_webhooks/handlers.rs (265), services/push/apns.rs + services/push/fcm.rs (open PRs #3771/#3772) — split successors to legacy voice_webhooks.rs + push_fanout.rs hotspots.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-scrum-master-dependabot-3441-axum-test-2026-11-24",
+      "action": "Dependabot #3441 (axum-test 21.0.0 → 21.1.0) open since 2026-11-23 — trivial patch bump, land next cycle.",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-devops-dependabot-3441-axum-test-land-2026-11-24",
+      "action": "Dependabot #3441 (axum-test 21.0.0 → 21.1.0) open since 2026-11-23 — trivial patch, land with normal gate.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-devops-push-subtree-codeowners-2026-11-24",
+      "action": "Add a push/* CODEOWNERS entry (pm-backend + pm-qa) so push-subtree PRs (#3771 fcm, #3772 voice-webhook, future apns) get automatic reviewer attachment.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-devops-quarantine-burndown-cadence-2026-11-24",
+      "action": "Draft a quarantine burn-down cadence (track 2 of active sprint, 201 rows, due 2027-02-19, zero progress in 2 weeks). Weekly dispatcher-visible metric + first-wave batch per owner (193/6/2).",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": "2027-02-19",
+      "source": "pm-analysis 2026-11-24"
+    },
+    {
+      "id": "pm-devops-security-test-gate-path-filter-2026-11-24",
+      "action": "Verify security-test-gate.yml still fires on the right PR paths after the voice_webhooks/* routes split; silent no-op would explain low signal.",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24"
     }
   ],
-  "generated": "2026-11-23T04:10:00Z"
+  "generated": "2026-11-24T04:19:35Z"
 }
