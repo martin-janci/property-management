@@ -5,6 +5,7 @@
  */
 
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type DsaReportStatus = 'draft' | 'generated' | 'published' | 'archived';
 
@@ -53,21 +54,6 @@ export interface DsaTransparencyReportCardProps {
   showActions?: boolean;
 }
 
-const getStatusLabel = (status: DsaReportStatus): string => {
-  switch (status) {
-    case 'draft':
-      return 'Draft';
-    case 'generated':
-      return 'Generated';
-    case 'published':
-      return 'Published';
-    case 'archived':
-      return 'Archived';
-    default:
-      return status;
-  }
-};
-
 const formatDate = (dateStr: string): string => {
   return new Date(dateStr).toLocaleDateString('en-GB', {
     year: 'numeric',
@@ -89,7 +75,10 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
   onDownload,
   showActions = true,
 }) => {
+  const { t } = useTranslation();
   const { summary } = report;
+
+  const statusLabel = t(`dsa.card.status.${report.status}`, { defaultValue: report.status });
 
   const resolutionRate =
     summary.user_reports_received > 0
@@ -105,96 +94,97 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
     <div className="dsa-report-card">
       <div className="dsa-report-header">
         <div className="dsa-report-title">
-          <h3>DSA Transparency Report</h3>
-          <span className={`dsa-status-badge ${report.status}`}>
-            {getStatusLabel(report.status)}
-          </span>
+          <h3>{t('dsa.card.title')}</h3>
+          <span className={`dsa-status-badge ${report.status}`}>{statusLabel}</span>
         </div>
         <div className="dsa-report-period">
           <span>
-            Period: {formatDate(report.period_start)} - {formatDate(report.period_end)}
+            {t('dsa.card.period', {
+              start: formatDate(report.period_start),
+              end: formatDate(report.period_end),
+            })}
           </span>
         </div>
       </div>
 
       {/* Summary Statistics */}
       <div className="dsa-summary-section">
-        <h4>Summary Statistics</h4>
+        <h4>{t('dsa.card.summary.title')}</h4>
         <div className="dsa-stats-grid">
           <div className="dsa-stat-card">
             <div className="dsa-stat-value">{summary.total_moderation_actions}</div>
-            <div className="dsa-stat-label">Total Moderation Actions</div>
+            <div className="dsa-stat-label">{t('dsa.card.summary.totalModerationActions')}</div>
           </div>
           <div className="dsa-stat-card">
             <div className="dsa-stat-value">{summary.user_reports_received}</div>
-            <div className="dsa-stat-label">User Reports Received</div>
+            <div className="dsa-stat-label">{t('dsa.card.summary.userReportsReceived')}</div>
           </div>
           <div className="dsa-stat-card">
             <div className="dsa-stat-value">{resolutionRate}%</div>
-            <div className="dsa-stat-label">Resolution Rate</div>
+            <div className="dsa-stat-label">{t('dsa.card.summary.resolutionRate')}</div>
           </div>
           <div className="dsa-stat-card">
             <div className="dsa-stat-value">
-              {summary.avg_resolution_time_hours?.toFixed(1) || 'N/A'}h
+              {summary.avg_resolution_time_hours?.toFixed(1) ?? t('dsa.card.summary.notAvailable')}h
             </div>
-            <div className="dsa-stat-label">Avg Resolution Time</div>
+            <div className="dsa-stat-label">{t('dsa.card.summary.avgResolutionTime')}</div>
           </div>
         </div>
       </div>
 
       {/* Action Breakdown */}
       <div className="dsa-actions-section">
-        <h4>Moderation Actions</h4>
+        <h4>{t('dsa.card.actions.title')}</h4>
         <div className="dsa-actions-grid">
           <div className="dsa-action-item removed">
             <span className="dsa-action-count">{summary.content_removed}</span>
-            <span className="dsa-action-label">Content Removed</span>
+            <span className="dsa-action-label">{t('dsa.card.actions.contentRemoved')}</span>
           </div>
           <div className="dsa-action-item restricted">
             <span className="dsa-action-count">{summary.content_restricted}</span>
-            <span className="dsa-action-label">Content Restricted</span>
+            <span className="dsa-action-label">{t('dsa.card.actions.contentRestricted')}</span>
           </div>
           <div className="dsa-action-item warned">
             <span className="dsa-action-count">{summary.warnings_issued}</span>
-            <span className="dsa-action-label">Warnings Issued</span>
+            <span className="dsa-action-label">{t('dsa.card.actions.warningsIssued')}</span>
           </div>
         </div>
       </div>
 
       {/* Automated Decisions */}
       <div className="dsa-automated-section">
-        <h4>Automated Decisions</h4>
+        <h4>{t('dsa.card.automated.title')}</h4>
         <div className="dsa-automated-stats">
           <div className="dsa-automated-item">
             <span className="dsa-automated-value">{summary.automated_decisions}</span>
-            <span className="dsa-automated-label">Total Automated Decisions</span>
+            <span className="dsa-automated-label">{t('dsa.card.automated.total')}</span>
           </div>
           <div className="dsa-automated-item">
             <span className="dsa-automated-value">{summary.automated_decisions_overturned}</span>
-            <span className="dsa-automated-label">Overturned by Human Review</span>
+            <span className="dsa-automated-label">{t('dsa.card.automated.overturned')}</span>
           </div>
         </div>
       </div>
 
       {/* Appeals */}
       <div className="dsa-appeals-section">
-        <h4>Appeals</h4>
+        <h4>{t('dsa.card.appeals.title')}</h4>
         <div className="dsa-appeals-stats">
           <div className="dsa-appeals-item">
             <span className="dsa-appeals-value">{summary.appeals_received}</span>
-            <span className="dsa-appeals-label">Appeals Received</span>
+            <span className="dsa-appeals-label">{t('dsa.card.appeals.received')}</span>
           </div>
           <div className="dsa-appeals-item upheld">
             <span className="dsa-appeals-value">{summary.appeals_upheld}</span>
-            <span className="dsa-appeals-label">Appeals Upheld</span>
+            <span className="dsa-appeals-label">{t('dsa.card.appeals.upheld')}</span>
           </div>
           <div className="dsa-appeals-item rejected">
             <span className="dsa-appeals-value">{summary.appeals_rejected}</span>
-            <span className="dsa-appeals-label">Appeals Rejected</span>
+            <span className="dsa-appeals-label">{t('dsa.card.appeals.rejected')}</span>
           </div>
           <div className="dsa-appeals-item rate">
             <span className="dsa-appeals-value">{appealUpheldRate}%</span>
-            <span className="dsa-appeals-label">Upheld Rate</span>
+            <span className="dsa-appeals-label">{t('dsa.card.appeals.upheldRate')}</span>
           </div>
         </div>
       </div>
@@ -202,7 +192,7 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
       {/* Violation Type Breakdown */}
       {report.violation_type_breakdown.length > 0 && (
         <div className="dsa-violation-section">
-          <h4>By Violation Type</h4>
+          <h4>{t('dsa.card.violationType.title')}</h4>
           <ul className="dsa-violation-list">
             {report.violation_type_breakdown.map((item, index) => (
               <li key={index} className="dsa-violation-item">
@@ -219,7 +209,7 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
       {/* Content Type Breakdown */}
       {report.content_type_breakdown.length > 0 && (
         <div className="dsa-content-type-section">
-          <h4>By Content Type</h4>
+          <h4>{t('dsa.card.contentType.title')}</h4>
           <ul className="dsa-content-type-list">
             {report.content_type_breakdown.map((item, index) => (
               <li key={index} className="dsa-content-type-item">
@@ -240,7 +230,7 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
               className="dsa-action-button primary"
               onClick={() => onPublish(report.id)}
             >
-              Publish Report
+              {t('dsa.card.publish')}
             </button>
           )}
           {report.download_url && onDownload && (
@@ -249,7 +239,7 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
               className="dsa-action-button secondary"
               onClick={() => onDownload(report.id)}
             >
-              Download PDF
+              {t('dsa.card.download')}
             </button>
           )}
         </div>
@@ -258,7 +248,7 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
       {/* Publication Info */}
       {report.published_at && (
         <div className="dsa-published-info">
-          <span>Published on {formatDate(report.published_at)}</span>
+          <span>{t('dsa.card.publishedOn', { date: formatDate(report.published_at) })}</span>
         </div>
       )}
     </div>

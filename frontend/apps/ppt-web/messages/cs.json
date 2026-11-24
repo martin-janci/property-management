@@ -149,6 +149,51 @@
       "appealsText": "Vykazujte přijatá odvolání a jejich výsledky.",
       "timelinessLabel": "Včasnost:",
       "timelinessText": "Zprávy by se měly zveřejňovat alespoň jednou ročně pro platformy s významnou uživatelskou základnou v EU."
+    },
+    "card": {
+      "title": "Zpráva o transparentnosti DSA",
+      "period": "Období: {{start}} - {{end}}",
+      "status": {
+        "draft": "Koncept",
+        "generated": "Vygenerováno",
+        "published": "Zveřejněno",
+        "archived": "Archivováno"
+      },
+      "summary": {
+        "title": "Souhrnné statistiky",
+        "totalModerationActions": "Celkový počet moderačních akcí",
+        "userReportsReceived": "Přijatá hlášení uživatelů",
+        "resolutionRate": "Míra vyřešení",
+        "avgResolutionTime": "Průměrná doba vyřešení",
+        "notAvailable": "N/A"
+      },
+      "actions": {
+        "title": "Moderační akce",
+        "contentRemoved": "Odstraněný obsah",
+        "contentRestricted": "Omezený obsah",
+        "warningsIssued": "Vydaná upozornění"
+      },
+      "automated": {
+        "title": "Automatizovaná rozhodnutí",
+        "total": "Celkový počet automatizovaných rozhodnutí",
+        "overturned": "Zrušeno lidskou kontrolou"
+      },
+      "appeals": {
+        "title": "Odvolání",
+        "received": "Přijatá odvolání",
+        "upheld": "Vyhovená odvolání",
+        "rejected": "Zamítnutá odvolání",
+        "upheldRate": "Míra vyhovění"
+      },
+      "violationType": {
+        "title": "Podle typu porušení"
+      },
+      "contentType": {
+        "title": "Podle typu obsahu"
+      },
+      "publish": "Zveřejnit zprávu",
+      "download": "Stáhnout PDF",
+      "publishedOn": "Zveřejněno dne {{date}}"
     }
   },
   "forms": {

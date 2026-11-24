@@ -149,6 +149,51 @@
       "appealsText": "Raportuj otrzymane odwołania i ich wyniki.",
       "timelinessLabel": "Terminowość:",
       "timelinessText": "Raporty powinny być publikowane co najmniej raz w roku dla platform ze znaczącą bazą użytkowników w UE."
+    },
+    "card": {
+      "title": "Raport przejrzystości DSA",
+      "period": "Okres: {{start}} - {{end}}",
+      "status": {
+        "draft": "Wersja robocza",
+        "generated": "Wygenerowano",
+        "published": "Opublikowano",
+        "archived": "Zarchiwizowano"
+      },
+      "summary": {
+        "title": "Statystyki podsumowujące",
+        "totalModerationActions": "Łączna liczba działań moderacyjnych",
+        "userReportsReceived": "Otrzymane zgłoszenia użytkowników",
+        "resolutionRate": "Wskaźnik rozwiązań",
+        "avgResolutionTime": "Śr. czas rozwiązania",
+        "notAvailable": "Nd."
+      },
+      "actions": {
+        "title": "Działania moderacyjne",
+        "contentRemoved": "Usunięte treści",
+        "contentRestricted": "Ograniczone treści",
+        "warningsIssued": "Wydane ostrzeżenia"
+      },
+      "automated": {
+        "title": "Decyzje automatyczne",
+        "total": "Łączna liczba decyzji automatycznych",
+        "overturned": "Uchylone przez weryfikację człowieka"
+      },
+      "appeals": {
+        "title": "Odwołania",
+        "received": "Otrzymane odwołania",
+        "upheld": "Uwzględnione odwołania",
+        "rejected": "Odrzucone odwołania",
+        "upheldRate": "Wskaźnik uwzględnień"
+      },
+      "violationType": {
+        "title": "Według typu naruszenia"
+      },
+      "contentType": {
+        "title": "Według typu treści"
+      },
+      "publish": "Opublikuj raport",
+      "download": "Pobierz PDF",
+      "publishedOn": "Opublikowano dnia {{date}}"
     }
   },
   "forms": {
