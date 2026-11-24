@@ -1529,6 +1529,28 @@
       "merge_attempted_at": "2026-06-24T02:25:33Z"
     },
     {
+      "task_id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-oauth-rs",
+      "branch": "auto-impl/churn-hotspot-backend-servers-api-server-8d3cdb12",
+      "status": "merged",
+      "claimed_at": "2026-11-24T02:32:07Z",
+      "last_updated": "2026-11-24T10:37:17Z",
+      "status_changed_at": "2026-11-24T10:37:17Z",
+      "pr_number": 3772,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3772",
+      "merged_at": "2026-11-24T10:35:09Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3772 status=done(local-DB-blocked) specialist=rust-backend scope_drift=true(nominal) note=2 voice-OAuth handler error-channel tests; fmt/clippy green; cargo test DB-blocked (22 pre-existing); PR opened by dispatcher from pushed branch",
+      "reviewer_summary": "verdict=approve head_oid=83edb71750cb6758bd2adf314cf0fba6fbaa6543 note=test-only coverage of VoiceOAuthHandlerError into_response; CI green except shard-4 in-progress; approve posted as COMMENT",
+      "last_reviewed_oid": "83edb71750cb6758bd2adf314cf0fba6fbaa6543",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "churn-hotspot-backend-servers-api-server-src-services-notification-digest-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-22745448",
       "status": "merged",
@@ -3669,6 +3691,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-13T10:39:13Z"
+    },
+    {
+      "task_id": "code-review-api-core-apns-410-body-parse-stale-missed",
+      "branch": "auto-impl/code-review-api-core-apns-410-body-parse-bf0a4035",
+      "status": "merged",
+      "claimed_at": "2026-11-24T02:32:07Z",
+      "last_updated": "2026-11-24T10:37:17Z",
+      "status_changed_at": "2026-11-24T10:37:17Z",
+      "pr_number": 3769,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3769",
+      "merged_at": "2026-11-24T10:34:42Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3769 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=APNs 410 evicts even on unparseable body; 3 new tests; IG3 two-commit; cargo test -p api-server 848p/1 unrelated DNS-rebinding env fail",
+      "reviewer_summary": "verdict=approve head_oid=f91afb7ae65065aa2039965c42dc49548a794fa6 note=410-eviction-correct+caller-wiring-verified+3-new-IG3-tests+CI-green",
+      "last_reviewed_oid": "f91afb7ae65065aa2039965c42dc49548a794fa6",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T08:36:52Z"
     },
     {
       "task_id": "code-review-api-core-apns-jwt-per-send-mint",
@@ -29615,6 +29659,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-devops-dependabot-3441-axum-test-land-2026-11-24",
+      "branch": "auto-impl/pm-devops-dependabot-3441-axum-test-land-37a2eb6f",
+      "status": "merged",
+      "claimed_at": "2026-11-24T04:34:55Z",
+      "last_updated": "2026-11-24T10:37:17Z",
+      "status_changed_at": "2026-11-24T10:37:17Z",
+      "pr_number": 3773,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3773",
+      "merged_at": "2026-11-24T10:36:30Z",
+      "specialist": null,
+      "implementer_summary": " [Phase 5.7 respawn round 1: regenerate Cargo.lock minimally (axum-test 21.1.0 only, drop gratuitous socket2/windows-sys/http moves)]",
+      "reviewer_summary": "verdict=approve head_oid=727f2575a87c57ce974a9ccb26e5823f0d4a1643 note=minimal-lockfile-bump-axum-test-21.1.0-ci-green (posted as COMMENT; bot self-approve blocked)",
+      "last_reviewed_oid": "727f2575a87c57ce974a9ccb26e5823f0d4a1643",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-devops-dependabot-major-bumps-review-2026-11-13",
       "branch": "auto-impl/pm-devops-dependabot-major-bumps-review-02d3a4f1",
       "status": "merged",
@@ -29655,6 +29721,28 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-devops-quarantine-burndown-cadence-2026-11-24",
+      "branch": "auto-impl/pm-devops-quarantine-burndown-cadence-20-f5b66550",
+      "status": "merged",
+      "claimed_at": "2026-11-24T06:32:51Z",
+      "last_updated": "2026-11-24T10:37:17Z",
+      "status_changed_at": "2026-11-24T10:37:17Z",
+      "pr_number": 3774,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3774",
+      "merged_at": "2026-11-24T10:35:16Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=5341958a00e3eb64731164bc04ae6e55cea11595 note=burndown-metric-clean-selftest-green-approve-posted-as-comment(self-approval-blocked)",
+      "last_reviewed_oid": "5341958a00e3eb64731164bc04ae6e55cea11595",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
@@ -34934,5 +35022,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T08:37:01Z"
+  "archived_at": "2026-11-24T10:37:17Z"
 }
