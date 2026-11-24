@@ -516,23 +516,6 @@
       }
     },
     {
-      "id": "churn-hotspot-backend-servers-api-server-src-services-push-fcm-rs",
-      "action": "Churn hotspot: services/push/fcm.rs — 2 commits this run (push stack instability under watch)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T12:28:04Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-auth-unvalidated-token-body",
       "action": "mobile rn auth unvalidated token body",
       "owner_role": "pm-backend",
@@ -865,7 +848,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": "2026-11-29",
-      "source": "pm-analysis 2026-11-24"
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
       "id": "pm-scrum-master-resolve-dispatcher-stall-3357-nonmechanical-2026-11-24",
@@ -876,7 +860,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-24"
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
       "id": "pm-scrum-master-unblock-kmp-and-swagger-ui-egress-2652-2966-2026-11-24",
@@ -887,7 +872,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-24"
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
       "id": "pm-scrum-master-characterize-push-voice-hotspots-2026-11-24",
@@ -898,7 +884,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-24"
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
       "id": "pm-scrum-master-dependabot-3441-axum-test-2026-11-24",
@@ -909,7 +896,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-24"
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
       "id": "pm-devops-dependabot-3441-axum-test-land-2026-11-24",
@@ -920,7 +908,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-24"
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
       "id": "pm-devops-quarantine-burndown-cadence-2026-11-24",
@@ -931,18 +920,8 @@
       "depends_on": [],
       "status": "open",
       "deadline": "2027-02-19",
-      "source": "pm-analysis 2026-11-24"
-    },
-    {
-      "id": "pm-devops-security-test-gate-path-filter-2026-11-24",
-      "action": "Verify security-test-gate.yml still fires on the right PR paths after the voice_webhooks/* routes split; silent no-op would explain low signal.",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-24"
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z"
     }
   ],
   "generated": "2026-11-24T04:19:35Z"

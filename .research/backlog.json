@@ -16997,7 +16997,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3724",
         "PR #3725"
@@ -17010,7 +17010,12 @@
       ],
       "created_at": "2026-11-23",
       "updated_at": "2026-11-23",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-24T10:24:48Z",
+        "assignment_status": "merged",
+        "pr_number": 3771
+      }
     },
     {
       "id": "code-review-api-core-apns-410-body-parse-stale-missed",
