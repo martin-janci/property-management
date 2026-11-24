@@ -5408,6 +5408,28 @@
       "merge_attempted_at": "2026-11-21T00:30:13Z"
     },
     {
+      "task_id": "code-review-api-handlers-ai-list-unclamped-limit",
+      "branch": "auto-impl/code-review-api-handlers-ai-list-unclamp-2d5b3ea2",
+      "status": "merged",
+      "claimed_at": "2026-11-23T22:28:27Z",
+      "last_updated": "2026-11-24T00:38:51Z",
+      "status_changed_at": "2026-11-24T00:38:51Z",
+      "pr_number": 3768,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3768",
+      "merged_at": "2026-11-24T00:35:32Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3768 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=clamped ?limit in AI list_workflows+list_executions via clamp_limit(query.limit,50); fmt+clippy green; 21 DB-env test fails pre-existing; IG3 two-commit",
+      "reviewer_summary": "verdict=approve head_oid=03a7451e9faf7b177eb145aac38ce2d4f4731bdb note=clamp-via-shared-clamp_limit-both-handlers-ig3-test-ci-green; review posted as COMMENT",
+      "last_reviewed_oid": "03a7451e9faf7b177eb145aac38ce2d4f4731bdb",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T00:33:46Z"
+    },
+    {
       "task_id": "code-review-api-handlers-ai-upstream-error-leak",
       "branch": "auto-impl/code-review-api-handlers-ai-upstream-err-73654150",
       "status": "merged",
@@ -9122,6 +9144,28 @@
       "merge_attempted_at": "2026-08-03T20:20:00Z"
     },
     {
+      "task_id": "code-review-mobile-rn-useapi-401-no-refresh",
+      "branch": "auto-impl/code-review-mobile-rn-useapi-401-no-refr-7ae26cfc",
+      "status": "merged",
+      "claimed_at": "2026-11-23T22:28:27Z",
+      "last_updated": "2026-11-24T00:38:51Z",
+      "status_changed_at": "2026-11-24T00:38:51Z",
+      "pr_number": 3765,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3765",
+      "merged_at": "2026-11-24T00:37:08Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3765 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=RN useApi single-flight refresh + retry once on 401 (reused readTokenPair); 977/977 mobile tests green VERIFY OK; drift=owner-hint mismatch",
+      "reviewer_summary": "verdict=approve head_oid=d375817d852eb0fb693933e1e6b20cf531b63106 note=401-refresh-retry-correct-scoped-reuses-readTokenPair-CI-green; posted as COMMENT (self-approve blocked)",
+      "last_reviewed_oid": "d375817d852eb0fb693933e1e6b20cf531b63106",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T00:33:46Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
       "branch": "auto-impl/code-review-mobile-rn-voice-cmd-hardcode-5527d8ad",
       "status": "merged",
@@ -12126,6 +12170,28 @@
       "merge_attempted_at": "2026-07-22T22:21:44Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-ai-chat-delete-swallows-err",
+      "branch": "auto-impl/code-review-ppt-web-ui-ai-chat-delete-sw-3d91229a",
+      "status": "merged",
+      "claimed_at": "2026-11-23T22:28:27Z",
+      "last_updated": "2026-11-24T00:38:51Z",
+      "status_changed_at": "2026-11-24T00:38:51Z",
+      "pr_number": 3767,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3767",
+      "merged_at": "2026-11-24T00:38:28Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3767 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=added deleteSession.isError banner + aiChat.deleteError 6 locales; TDD; verify green 15942 (unrelated rentals flake documented)",
+      "reviewer_summary": "verdict=approve head_oid=8f0c6a44820bbc4bd560c3365a4a2e6e428ba178 note=tight-scoped delete-error banner + regression test, CI green, scope_drift false-positive from pm-backend hint; posted as COMMENT",
+      "last_reviewed_oid": "8f0c6a44820bbc4bd560c3365a4a2e6e428ba178",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T00:33:46Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-aichat-first-message-settimeout-race",
       "branch": "auto-impl/code-review-ppt-web-ui-aichat-first-mess-f1db274b",
       "status": "merged",
@@ -14016,6 +14082,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "branch": "auto-impl/code-review-ppt-web-ui-moderation-prompt-d4b9a9b1",
+      "status": "merged",
+      "claimed_at": "2026-11-23T22:28:27Z",
+      "last_updated": "2026-11-24T00:38:51Z",
+      "status_changed_at": "2026-11-24T00:38:51Z",
+      "pr_number": 3766,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3766",
+      "merged_at": "2026-11-24T00:35:26Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3766 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=replaced unchecked as-cast in TakeModerationActionDialog with isModerationActionType guard; IG3 two-commit; verify green 15945 tests",
+      "reviewer_summary": "verdict=approve head_oid=159f3a5ec2dc0b938b6f60a69b76a68b61b08e5d note=clean-tight-fix-runtime-guard-replaces-unchecked-cast-CI-green-posted-as-COMMENT-bot-cannot-self-approve",
+      "last_reviewed_oid": "159f3a5ec2dc0b938b6f60a69b76a68b61b08e5d",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T00:33:46Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-move-folder-dialog-hardcoded-sk",
@@ -18004,6 +18092,28 @@
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-04T00:36:05Z",
       "owner_role": "pm-tech-lead"
+    },
+    {
+      "task_id": "code-review-reality-web-journal-newsletter-fake-submit",
+      "branch": "auto-impl/code-review-reality-web-journal-newslett-43ae3fac",
+      "status": "merged",
+      "claimed_at": "2026-11-23T22:28:27Z",
+      "last_updated": "2026-11-24T00:38:51Z",
+      "status_changed_at": "2026-11-24T00:38:51Z",
+      "pr_number": 3764,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3764",
+      "merged_at": "2026-11-24T00:37:03Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3764 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=honest disabled newsletter state (no endpoint); drift=owner-hint-wrong all in reality-web; verify green 638/638",
+      "reviewer_summary": "verdict=approve head_oid=462bfbb6151517c72c77aa28e50e3bc0607c586b note=honest-disabled-newsletter-form-no-endpoint-exists-scope-drift-justified-CI-green-review-posted-as-COMMENT-self-approval-blocked",
+      "last_reviewed_oid": "462bfbb6151517c72c77aa28e50e3bc0607c586b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T00:33:46Z"
     },
     {
       "task_id": "code-review-reality-web-json-guard-array-gap",
@@ -31123,6 +31233,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16-retry1",
+      "branch": "auto-impl/pm-scrum-master-triage-stalled-reviews-2-5c38f401",
+      "status": "failed",
+      "claimed_at": "2026-11-24T00:27:21Z",
+      "last_updated": "2026-11-24T00:31:12Z",
+      "status_changed_at": "2026-11-24T00:31:12Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "pm-scrum-master",
+      "implementer_summary": "pr=none status=blocked specialist=pm-scrum-master scope_drift=false code_reuse_warn=none note=triage-only-merge/close/defer-of-existing-PRs-2555-2559-not-an-implementer-code-deliverable",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-upgrade-refresh-token-confidence-2026-11-09",
       "branch": "auto-impl/pm-scrum-master-upgrade-refresh-token-co-b111e059",
       "status": "merged",
@@ -34670,5 +34802,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-23T22:41:53Z"
+  "archived_at": "2026-11-24T00:39:09Z"
 }

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-23T22:29:12Z",
+  "archived_at": "2026-11-24T00:39:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5483,6 +5483,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-ai-list-unclamped-limit",
+      "action": "api handlers ai list unclamped limit",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-24T00:39:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-13T19:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3768,
+        "merged_at": "2026-11-24T00:35:32Z",
+        "at": "2026-11-24T00:39:24Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-ai-upstream-error-leak",
       "action": "api-handlers: the raw upstream LLM-provider error is forwarded verbatim into the client-f...",
       "owner_role": "pm-security",
@@ -6162,6 +6187,31 @@
         "merged_pr": 3141,
         "merged_at": "2026-10-22T16:41:47Z",
         "at": "2026-10-22T16:42:56Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-inproc-ratelimit-not-distributed",
+      "action": "api handlers inproc ratelimit not distributed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-24T00:23:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-22T05:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3758,
+        "merged_at": "2026-11-23T22:39:37Z",
+        "at": "2026-11-24T00:23:53Z"
       }
     },
     {
@@ -7241,6 +7291,31 @@
         "commit": "d84baaed10055a6a16a225088e9307b034db7737",
         "subject": "code-review-api-handlers-voice-webhook-default-secret-retry2: voice webhook HMAC fails closed on empty secret (#2806)",
         "at": "2026-08-20T10:27:25Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-webhook-rls-release-inconsistent",
+      "action": "api handlers voice webhook rls release inconsistent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d api-handlers score=1 vector=bug) | gc1-reconcile 2026-11-24T00:23:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-21T10:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3760,
+        "merged_at": "2026-11-23T22:39:37Z",
+        "at": "2026-11-24T00:23:53Z"
       }
     },
     {
@@ -9213,6 +9288,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-useapi-401-no-refresh",
+      "action": "mobile rn useapi 401 no refresh",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-24T00:39:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T04:28:04Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-14T22:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3765,
+        "merged_at": "2026-11-24T00:37:08Z",
+        "at": "2026-11-24T00:39:24Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
       "action": "Voice-assistant confirmation/error strings are hardcoded English (i18n gap across the voice UX)",
       "owner_role": "pm-tech-lead",
@@ -10030,6 +10130,31 @@
         "commit": "caadf93d591033b067304f379340664a802772de",
         "subject": "code-review-ppt-web-core-authctx-no-boot-expiry-check: validate JWT exp at cold boot (#2941)",
         "at": "2026-09-06T12:25:53Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-authctx-no-token-expiry-check",
+      "action": "ppt web core authctx no token expiry check",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-22T20:26:41Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-24T00:23:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-22T20:26:41Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-21T16:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3759,
+        "merged_at": "2026-11-23T22:39:37Z",
+        "at": "2026-11-24T00:23:53Z"
       }
     },
     {
@@ -12325,6 +12450,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-ai-chat-delete-swallows-err",
+      "action": "ppt web ui ai chat delete swallows err",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-24T00:39:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T04:28:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-20T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3767,
+        "merged_at": "2026-11-24T00:38:28Z",
+        "at": "2026-11-24T00:39:24Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-aichat-first-message-settimeout-race",
       "action": "ppt web ui aichat first message settimeout race",
       "owner_role": "pm-backend",
@@ -14314,6 +14464,31 @@
       "last_updated": "2026-08-17T10:45:00Z"
     },
     {
+      "id": "code-review-ppt-web-ui-moderation-prompt-cast",
+      "action": "ppt web ui moderation prompt cast",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-24T00:39:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T04:28:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-20T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3766,
+        "merged_at": "2026-11-24T00:35:26Z",
+        "at": "2026-11-24T00:39:24Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-move-folder-dialog-hardcoded-sk",
       "action": "ppt web ui move folder dialog hardcoded sk",
       "owner_role": "pm-backend",
@@ -16012,6 +16187,31 @@
         "merged_pr": 3610,
         "merged_at": "2026-11-18T12:42:17Z",
         "at": "2026-11-18T14:23:52Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-imports-feed-url-ssrf",
+      "action": "reality server imports feed url ssrf",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-server score=3 vector=bug) | gc1-reconcile 2026-11-24T00:23:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-08-13T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3761,
+        "merged_at": "2026-11-23T22:39:37Z",
+        "at": "2026-11-24T00:23:53Z"
       }
     },
     {
@@ -18394,6 +18594,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-journal-newsletter-fake-submit",
+      "action": "reality web journal newsletter fake submit",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-24T00:39:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T04:28:04Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-15T13:20:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3764,
+        "merged_at": "2026-11-24T00:37:03Z",
+        "at": "2026-11-24T00:39:24Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-json-guard-array-gap",
       "action": "reality web json guard array gap",
       "owner_role": "pm-backend",
@@ -19076,6 +19301,31 @@
         "merged_pr": 3159,
         "merged_at": "2026-10-25T18:39:16Z",
         "at": "2026-10-25T20:24:58Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-contact-fake-submit",
+      "action": "reality web realtor contact fake submit",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-24T00:23:53Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-12T18:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-24T00:23:53Z"
       }
     },
     {
@@ -33589,6 +33839,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-16T22:23:18Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16-retry1",
+      "action": "Triage the stalled reviews #2555 and #2559 (110 days). Merge them, close them, or explicitly defer them. [retry 1/2 of failed pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-24T00:24:46Z (retry_of=pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16 reason=failed-no-pr cooldown_ok newest_failure=2026-11-16T20:39:26Z) | gc1-reconcile 2026-11-24T00:39:24Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T00:24:46Z",
+      "retry_of": "pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-24T00:39:24Z"
       }
     },
     {
