@@ -259,11 +259,23 @@ impl ApnsHttpAdapter {
             return (true, false);
         }
 
-        // Non-200 → parse the APNs error body to decide on stale-token eviction.
+        // A 410 Gone is authoritative on its own: APNs returns it only for an
+        // `Unregistered` device token (the app was uninstalled). The eviction
+        // signal therefore lives in the HTTP status, NOT in the JSON error body
+        // — so a stale token must be evicted even when that body is missing,
+        // empty, or unparseable. Gating eviction on a successful body parse
+        // (the pre-fix behaviour) silently leaked stale tokens into
+        // `device_push_tokens` whenever APNs returned a 410 with a body we
+        // could not deserialize (code-review `apns-410-body-parse`).
+        let status_indicates_stale = status.as_u16() == 410;
+
+        // Non-200 → parse the APNs error body to refine the eviction decision.
+        // The body's `reason` additionally catches `BadDeviceToken` (HTTP 400),
+        // but a parse failure must never override the status-based 410 signal.
         match resp.json::<ApnsErrorBody>().await {
             Ok(err_body) => {
                 let reason = err_body.reason.as_deref().unwrap_or("UNKNOWN");
-                let expired = apns_reason_indicates_stale(reason);
+                let expired = status_indicates_stale || apns_reason_indicates_stale(reason);
                 tracing::warn!(
                     apns_reason = %reason,
                     http_status = %status,
@@ -275,10 +287,12 @@ impl ApnsHttpAdapter {
             Err(e) => {
                 tracing::warn!(
                     http_status = %status,
+                    token_expired = status_indicates_stale,
                     error = %e,
-                    "[8A-3] Failed to parse APNs error body"
+                    "[8A-3] Failed to parse APNs error body — \
+                     falling back to HTTP status for stale-token decision"
                 );
-                (false, false)
+                (false, status_indicates_stale)
             }
         }
     }
