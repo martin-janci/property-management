@@ -13928,6 +13928,28 @@
       "merge_attempted_at": "2026-11-06T08:29:17Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-langswitcher-aria-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-langswitcher-aria-10cce92d",
+      "status": "failed",
+      "claimed_at": "2026-11-24T14:36:00Z",
+      "last_updated": "2026-11-24T14:42:00Z",
+      "status_changed_at": "2026-11-24T14:42:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web note=already-fixed-on-dev(025cf5daa 2026-11-23): LanguageSwitcher aria already t('aria.selectLanguage') + 6 locales + 2 tests; empty diff; stale code-review finding",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-leases-dispute-unreachable",
       "branch": "auto-impl/code-review-ppt-web-ui-leases-dispute-un-ada214dc",
       "status": "merged",
@@ -30781,6 +30803,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "pm-scrum-master-i18n-flip-countdown-7d-2026-11-24",
+      "branch": "auto-impl/pm-scrum-master-i18n-flip-countdown-7d-2-c6f6f4bc",
+      "status": "failed",
+      "claimed_at": "2026-11-24T14:36:00Z",
+      "last_updated": "2026-11-24T14:42:00Z",
+      "status_changed_at": "2026-11-24T14:42:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=none note=coordination/assessment task (no code deliverable); #3676+#3677 both dirty needs-rebase; T-7d flip risk LOW if sibling rebase lands by 2026-11-29",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-land-the-2026-12-01-i18n-warn-error-lint-flip-burn-down-merg-2026-11-22",
       "branch": "auto-impl/pm-scrum-master-land-the-2026-12-01-i18n-a53c07cc",
       "status": "failed",
@@ -35088,5 +35132,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T13:53:28Z"
+  "archived_at": "2026-11-24T14:40:35Z"
 }
