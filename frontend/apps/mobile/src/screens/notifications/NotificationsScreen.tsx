@@ -42,6 +42,40 @@ export interface AppNotification {
   body: string;
   receivedAt: string;
   read: boolean;
+  /** The entity the group is about; a tap opens it (see `notificationTarget`). */
+  entityId: string;
+}
+
+/** Where a tap on a notification leads. Faults, announcements and votes open
+ *  the entity itself; messages and meters open their list, because the group's
+ *  entity id is not guaranteed to be a thread or meter id. `system` rows have
+ *  nowhere to go and return `null` (the row is only marked read). Before this
+ *  the tap navigated to a `NotificationDetail` screen that does not exist and
+ *  landed on the Dashboard. Exported for unit testing. */
+export function notificationTarget(
+  notification: Pick<AppNotification, 'category' | 'entityId'>
+): { screen: string; params?: Record<string, unknown> } | null {
+  const { category, entityId } = notification;
+  switch (category) {
+    case 'fault':
+      return entityId
+        ? { screen: 'FaultDetail', params: { faultId: entityId } }
+        : { screen: 'Faults' };
+    case 'announcement':
+      return entityId
+        ? { screen: 'AnnouncementDetail', params: { announcementId: entityId } }
+        : { screen: 'Announcements' };
+    case 'vote':
+      return entityId
+        ? { screen: 'VoteDetail', params: { voteId: entityId } }
+        : { screen: 'Voting' };
+    case 'message':
+      return { screen: 'Messages' };
+    case 'meter':
+      return { screen: 'Meters' };
+    default:
+      return null;
+  }
 }
 
 const INBOX_BASE_PATH = '/api/v1/users/me/notification-preferences/granular';
@@ -94,6 +128,7 @@ export function toAppNotification(item: InboxGroupWithNotifications): AppNotific
     body: latest?.body ?? latest?.title ?? '',
     receivedAt: group.latestNotificationAt,
     read: group.isRead,
+    entityId: group.entityId ?? '',
   };
 }
 
@@ -178,7 +213,10 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
       if (!notification.read) {
         markOne.mutate(notification.id, { onSuccess: () => void refetch() });
       }
-      onNavigate?.('NotificationDetail', { id: notification.id });
+      const target = notificationTarget(notification);
+      if (target) {
+        onNavigate?.(target.screen, target.params);
+      }
     },
     [markOne, refetch, onNavigate]
   );

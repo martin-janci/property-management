@@ -23,6 +23,7 @@ import {
   DocumentPreviewScreen,
   DocumentsScreen,
   DocumentUploadScreen,
+  FaultDetailScreen,
   FaultsListScreen,
   FormsScreen,
   LeaseDetailScreen,
@@ -148,6 +149,13 @@ function MainApp() {
         return <DashboardScreen onNavigate={handleNavigate} />;
       case 'Faults':
         return <FaultsListScreen onNavigate={handleNavigate} />;
+      case 'FaultDetail':
+        return (
+          <FaultDetailScreen
+            faultId={screenParams?.faultId as string | undefined}
+            onBack={() => handleNavigate('Faults')}
+          />
+        );
       case 'ReportFault':
         return (
           <ReportFaultScreen
@@ -324,7 +332,11 @@ function MainApp() {
         <NavButton
           icon="🔧"
           label={t('tabs.faults')}
-          isActive={currentScreen === 'Faults' || currentScreen === 'ReportFault'}
+          isActive={
+            currentScreen === 'Faults' ||
+            currentScreen === 'ReportFault' ||
+            currentScreen === 'FaultDetail'
+          }
           onPress={() => handleNavigate('Faults')}
         />
         <NavButton

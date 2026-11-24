@@ -72,9 +72,17 @@ describe('resolveDeepLinkTarget — guards & sibling detail routes', () => {
     });
   });
 
-  it('passes 1:1 routes through verbatim with their params', () => {
+  it('routes faults/:id to FaultDetail and bare faults to the list', () => {
     expect(resolveDeepLinkTarget(link({ screen: 'Faults', params: { id: '7' } }))).toEqual({
-      screen: 'Faults',
+      screen: 'FaultDetail',
+      params: { faultId: '7' },
+    });
+    expect(resolveDeepLinkTarget(link({ screen: 'Faults' }))).toEqual({ screen: 'Faults' });
+  });
+
+  it('passes 1:1 routes through verbatim with their params', () => {
+    expect(resolveDeepLinkTarget(link({ screen: 'Outages', params: { id: '7' } }))).toEqual({
+      screen: 'Outages',
       params: { id: '7' },
     });
   });

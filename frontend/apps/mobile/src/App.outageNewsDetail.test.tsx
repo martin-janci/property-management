@@ -89,6 +89,7 @@ jest.mock('./screens', () => {
     DocumentPreviewScreen: () => null,
     DocumentsScreen: () => null,
     DocumentUploadScreen: () => null,
+    FaultDetailScreen: () => null,
     FaultsListScreen: () => null,
     FormsScreen: () => null,
     LeaseDetailScreen: () => null,

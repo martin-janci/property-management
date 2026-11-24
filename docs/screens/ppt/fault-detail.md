@@ -42,6 +42,8 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: gap-audit-r13 — mobile gained a read-only FaultDetail screen (`screens/faults/FaultDetailScreen.tsx`, GET /faults/{id}: status, priority, place, reporter, resolution, public timeline). List taps, `ppt://faults/<id>` deep links and fault push taps open it; before they fell through to the Dashboard. No ppt-web change.
+
 - 2026-11-18 — agent: screen-map-drift-pr-3606-ppt — reconciled with merged PR #3606: the previously-bare `/faults/:faultId` detail route is now wrapped in `<ProtectedRoute>` (auth-only) in `routes/groups/faults.tsx`; anonymous deep-links redirect to `/login` (return URL captured). No route/component/status change — docs-only.
 
 - 2026-11-09 — agent: gap-audit-r7 — photo upload enabled (presigned documents/upload-url → PUT → POST attachments; server now requires an org-scoped storage key and returns presigned read URLs); reporter can withdraw a `new` fault (POST /faults/{id}/withdraw); attachment contract fixed (client read file_url/file_name, server sends storage_url/original_filename).
