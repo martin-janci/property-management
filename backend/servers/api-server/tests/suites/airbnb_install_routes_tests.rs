@@ -289,6 +289,42 @@ fn is_protected(status: StatusCode) -> bool {
 }
 
 // ===========================================================================
+// Env-isolation regression (parallel-suite flake)
+// ===========================================================================
+
+/// Regression: building the install test app must NOT mutate the process-global
+/// `AIRBNB_*` environment variables.
+///
+/// This file and `airbnb_oauth_routes_tests.rs` are compiled into the **same**
+/// test binary (`tests/suite_1.rs`, build-experience roadmap item 8 consolidated
+/// the former per-file binaries). The sibling
+/// `token_exchange_returns_503_when_not_configured` case relies on
+/// `AIRBNB_CLIENT_ID` staying empty/unset to hit the `NOT_CONFIGURED` branch.
+/// The previous harness set those vars process-wide via
+/// `std::env::set_var` with no cleanup, so whenever an install case raced ahead
+/// of the oauth 503 case's `AppState::new`, the 503 test saw configured
+/// credentials and flaked. The app must now get its Airbnb config injected
+/// in-process (`TestApp::with_airbnb_config`) and leave the environment
+/// untouched.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn install_app_does_not_leak_airbnb_env(pool: PgPool) {
+    let _app = test_app(&pool).await;
+
+    for var in [
+        "AIRBNB_CLIENT_ID",
+        "AIRBNB_CLIENT_SECRET",
+        "AIRBNB_REDIRECT_URI",
+    ] {
+        assert!(
+            std::env::var(var).unwrap_or_default().is_empty(),
+            "install test harness must not set process-global {var} — it leaks \
+             into the sibling token_exchange_returns_503_when_not_configured \
+             test in the same suite_1 binary (parallel flake)"
+        );
+    }
+}
+
+// ===========================================================================
 // Route-existence smoke test — all three routes must be mounted
 // ===========================================================================
 
