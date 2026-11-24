@@ -655,7 +655,7 @@ MGMT_DIR="${MGMT_DIR:-.research/management}"
 declare -a T27_SPECS=(
   "pr-reviewer-prompt.md::You are a code reviewer::verdict=<approve|changes>::head_oid"
   "premerge-autofix-prompt.md::pre-merge mechanical autofixer::premerge=<applied|skipped|failed>::ppt-pr-merge"
-  "rebaser-prompt.md::PR rebaser::rebased=<true|false>"
+  "rebaser-prompt.md::PR rebaser::rebased=<true|false>::--is-shallow-repository"
   "pr-followup-prompt.md::PR follow-up driver::ppt-pr-followup::followup="
 )
 for spec in "${T27_SPECS[@]}"; do
