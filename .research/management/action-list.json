@@ -941,17 +941,6 @@
       "source": "pm-analysis 2026-11-24"
     },
     {
-      "id": "pm-devops-push-subtree-codeowners-2026-11-24",
-      "action": "Add a push/* CODEOWNERS entry (pm-backend + pm-qa) so push-subtree PRs (#3771 fcm, #3772 voice-webhook, future apns) get automatic reviewer attachment.",
-      "owner_role": "pm-devops",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-24"
-    },
-    {
       "id": "pm-devops-quarantine-burndown-cadence-2026-11-24",
       "action": "Draft a quarantine burn-down cadence (track 2 of active sprint, 201 rows, due 2027-02-19, zero progress in 2 weeks). Weekly dispatcher-visible metric + first-wave batch per owner (193/6/2).",
       "owner_role": "pm-devops",

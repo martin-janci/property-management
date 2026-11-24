@@ -4652,6 +4652,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-rls-context-pool-not-conn",
+      "branch": "auto-impl/code-review-api-core-rls-context-pool-no-95a3af95",
+      "status": "merged",
+      "claimed_at": "2026-11-24T02:32:07Z",
+      "last_updated": "2026-11-24T06:34:37Z",
+      "status_changed_at": "2026-11-24T06:34:37Z",
+      "pr_number": 3770,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3770",
+      "merged_at": "2026-11-24T06:27:37Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3770 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=seed pool single-conn no-clear binds RLS ctx to query connection; fmt+clippy(8)+IG3 regression green; full DB test matrix disk-blocked -> CI",
+      "reviewer_summary": "verdict=approve head_oid=ebd36bf1196804118366567c3c9cbb60bcac3545 note=rls-seed-pool-fix-correct-ci-green-approve-posted-as-comment(self-pr-cannot-formal-approve)",
+      "last_reviewed_oid": "ebd36bf1196804118366567c3c9cbb60bcac3545",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-rls-ctx-mw-dead-xtenant-only",
       "branch": "auto-impl/code-review-api-core-rls-ctx-mw-dead-xte-c3c11cf5",
       "status": "merged",
@@ -34868,5 +34890,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T04:44:47Z"
+  "archived_at": "2026-11-24T06:34:37Z"
 }

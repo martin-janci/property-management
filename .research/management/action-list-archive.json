@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-24T04:33:06Z",
+  "archived_at": "2026-11-24T06:33:04Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -32077,6 +32077,24 @@
         "commit": "64f3409c629e08df295d1e199d72489bcd85c0d3",
         "subject": "pm-devops-pre-push-fmt-gate-scope: ADR — pre-push fmt/clippy gate scope is \"both\" (#1529)",
         "at": "2026-06-17T18:10:05Z"
+      }
+    },
+    {
+      "id": "pm-devops-push-subtree-codeowners-2026-11-24",
+      "action": "Add a push/* CODEOWNERS entry (pm-backend + pm-qa) so push-subtree PRs (#3771 fcm, #3772 voice-webhook, future apns) get automatic reviewer attachment.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24 | gc1-reconcile 2026-11-24T06:27:05Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-24T06:27:05Z"
       }
     },
     {
