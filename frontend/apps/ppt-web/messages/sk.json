@@ -149,6 +149,51 @@
       "appealsText": "Vykazujte prijaté odvolania a ich výsledky.",
       "timelinessLabel": "Včasnosť:",
       "timelinessText": "Správy by sa mali zverejňovať aspoň raz ročne pre platformy s významnou používateľskou základňou v EÚ."
+    },
+    "card": {
+      "title": "Správa o transparentnosti DSA",
+      "period": "Obdobie: {{start}} - {{end}}",
+      "status": {
+        "draft": "Koncept",
+        "generated": "Vygenerované",
+        "published": "Zverejnené",
+        "archived": "Archivované"
+      },
+      "summary": {
+        "title": "Súhrnné štatistiky",
+        "totalModerationActions": "Celkový počet moderačných akcií",
+        "userReportsReceived": "Prijaté nahlásenia používateľov",
+        "resolutionRate": "Miera vyriešenia",
+        "avgResolutionTime": "Priemerný čas vyriešenia",
+        "notAvailable": "N/A"
+      },
+      "actions": {
+        "title": "Moderačné akcie",
+        "contentRemoved": "Odstránený obsah",
+        "contentRestricted": "Obmedzený obsah",
+        "warningsIssued": "Vydané upozornenia"
+      },
+      "automated": {
+        "title": "Automatizované rozhodnutia",
+        "total": "Celkový počet automatizovaných rozhodnutí",
+        "overturned": "Zrušené ľudskou kontrolou"
+      },
+      "appeals": {
+        "title": "Odvolania",
+        "received": "Prijaté odvolania",
+        "upheld": "Vyhovené odvolania",
+        "rejected": "Zamietnuté odvolania",
+        "upheldRate": "Miera vyhovenia"
+      },
+      "violationType": {
+        "title": "Podľa typu porušenia"
+      },
+      "contentType": {
+        "title": "Podľa typu obsahu"
+      },
+      "publish": "Zverejniť správu",
+      "download": "Stiahnuť PDF",
+      "publishedOn": "Zverejnené dňa {{date}}"
     }
   },
   "forms": {

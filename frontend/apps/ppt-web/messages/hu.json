@@ -149,6 +149,51 @@
       "appealsText": "Jelentse a beérkezett fellebbezéseket és azok kimenetelét.",
       "timelinessLabel": "Időszerűség:",
       "timelinessText": "A jelentéseket legalább évente közzé kell tenni a jelentős uniós felhasználói bázissal rendelkező platformok esetében."
+    },
+    "card": {
+      "title": "DSA átláthatósági jelentés",
+      "period": "Időszak: {{start}} - {{end}}",
+      "status": {
+        "draft": "Vázlat",
+        "generated": "Elkészítve",
+        "published": "Közzétéve",
+        "archived": "Archiválva"
+      },
+      "summary": {
+        "title": "Összefoglaló statisztika",
+        "totalModerationActions": "Moderálási műveletek összesen",
+        "userReportsReceived": "Beérkezett felhasználói bejelentések",
+        "resolutionRate": "Megoldási arány",
+        "avgResolutionTime": "Átlagos megoldási idő",
+        "notAvailable": "N/A"
+      },
+      "actions": {
+        "title": "Moderálási műveletek",
+        "contentRemoved": "Eltávolított tartalom",
+        "contentRestricted": "Korlátozott tartalom",
+        "warningsIssued": "Kiadott figyelmeztetések"
+      },
+      "automated": {
+        "title": "Automatizált döntések",
+        "total": "Automatizált döntések összesen",
+        "overturned": "Emberi felülvizsgálat által megváltoztatva"
+      },
+      "appeals": {
+        "title": "Fellebbezések",
+        "received": "Beérkezett fellebbezések",
+        "upheld": "Helyben hagyott fellebbezések",
+        "rejected": "Elutasított fellebbezések",
+        "upheldRate": "Helybenhagyási arány"
+      },
+      "violationType": {
+        "title": "Jogsértés típusa szerint"
+      },
+      "contentType": {
+        "title": "Tartalomtípus szerint"
+      },
+      "publish": "Jelentés közzététele",
+      "download": "PDF letöltése",
+      "publishedOn": "Közzétéve: {{date}}"
     }
   },
   "forms": {

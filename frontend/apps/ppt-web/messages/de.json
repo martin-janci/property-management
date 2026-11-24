@@ -149,6 +149,51 @@
       "appealsText": "Melden Sie eingegangene Widersprüche und deren Ergebnisse.",
       "timelinessLabel": "Fristgerechtigkeit:",
       "timelinessText": "Berichte sollten mindestens jährlich für Plattformen mit erheblicher Nutzerbasis in der EU veröffentlicht werden."
+    },
+    "card": {
+      "title": "DSA-Transparenzbericht",
+      "period": "Zeitraum: {{start}} - {{end}}",
+      "status": {
+        "draft": "Entwurf",
+        "generated": "Erstellt",
+        "published": "Veröffentlicht",
+        "archived": "Archiviert"
+      },
+      "summary": {
+        "title": "Zusammenfassende Statistik",
+        "totalModerationActions": "Moderationsmaßnahmen gesamt",
+        "userReportsReceived": "Eingegangene Nutzermeldungen",
+        "resolutionRate": "Lösungsquote",
+        "avgResolutionTime": "Durchschn. Bearbeitungszeit",
+        "notAvailable": "k. A."
+      },
+      "actions": {
+        "title": "Moderationsmaßnahmen",
+        "contentRemoved": "Entfernte Inhalte",
+        "contentRestricted": "Eingeschränkte Inhalte",
+        "warningsIssued": "Ausgesprochene Verwarnungen"
+      },
+      "automated": {
+        "title": "Automatisierte Entscheidungen",
+        "total": "Automatisierte Entscheidungen gesamt",
+        "overturned": "Durch menschliche Prüfung aufgehoben"
+      },
+      "appeals": {
+        "title": "Widersprüche",
+        "received": "Eingegangene Widersprüche",
+        "upheld": "Stattgegebene Widersprüche",
+        "rejected": "Abgelehnte Widersprüche",
+        "upheldRate": "Erfolgsquote"
+      },
+      "violationType": {
+        "title": "Nach Verstoßtyp"
+      },
+      "contentType": {
+        "title": "Nach Inhaltstyp"
+      },
+      "publish": "Bericht veröffentlichen",
+      "download": "PDF herunterladen",
+      "publishedOn": "Veröffentlicht am {{date}}"
     }
   },
   "forms": {

@@ -149,6 +149,51 @@
       "appealsText": "Report on appeals received and their outcomes.",
       "timelinessLabel": "Timeliness:",
       "timelinessText": "Reports should be published at least annually for platforms with significant EU user bases."
+    },
+    "card": {
+      "title": "DSA Transparency Report",
+      "period": "Period: {{start}} - {{end}}",
+      "status": {
+        "draft": "Draft",
+        "generated": "Generated",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "summary": {
+        "title": "Summary Statistics",
+        "totalModerationActions": "Total Moderation Actions",
+        "userReportsReceived": "User Reports Received",
+        "resolutionRate": "Resolution Rate",
+        "avgResolutionTime": "Avg Resolution Time",
+        "notAvailable": "N/A"
+      },
+      "actions": {
+        "title": "Moderation Actions",
+        "contentRemoved": "Content Removed",
+        "contentRestricted": "Content Restricted",
+        "warningsIssued": "Warnings Issued"
+      },
+      "automated": {
+        "title": "Automated Decisions",
+        "total": "Total Automated Decisions",
+        "overturned": "Overturned by Human Review"
+      },
+      "appeals": {
+        "title": "Appeals",
+        "received": "Appeals Received",
+        "upheld": "Appeals Upheld",
+        "rejected": "Appeals Rejected",
+        "upheldRate": "Upheld Rate"
+      },
+      "violationType": {
+        "title": "By Violation Type"
+      },
+      "contentType": {
+        "title": "By Content Type"
+      },
+      "publish": "Publish Report",
+      "download": "Download PDF",
+      "publishedOn": "Published on {{date}}"
     }
   },
   "forms": {
