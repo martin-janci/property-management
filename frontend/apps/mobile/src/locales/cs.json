@@ -640,11 +640,20 @@
     "placeholderBody": "Tato sekce momentálně není dostupná."
   },
   "buildings": {
+    "backToList": "Budovy",
+    "detailLoadError": "Budovu se nepodařilo načíst.",
+    "yearBuilt": "Rok výstavby",
+    "floors": "Podlaží",
+    "entrances": "Vchody",
+    "amenities": "Vybavení",
     "loadError": "Nepodařilo se načíst budovy",
     "emptyTitle": "Žádné budovy",
     "emptyText": "K vašemu účtu zatím nejsou přiřazeny žádné nemovitosti."
   },
   "messages": {
+    "newMessage": "+ Nová zpráva",
+    "recipientLabel": "Komu",
+    "noRecipients": "Zatím není komu napsat. Sousedé se zobrazí, až se přidají do adresáře.",
     "unreadCount_one": "{{count}} nepřečtená zpráva",
     "unreadCount_few": "{{count}} nepřečtené zprávy",
     "unreadCount_many": "{{count}} nepřečtených zpráv",

@@ -179,7 +179,7 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
         )}
 
         <Pressable style={s.primaryButton} onPress={() => onNavigate?.('NewMessage')}>
-          <Text style={s.primaryButtonText}>+ New message</Text>
+          <Text style={s.primaryButtonText}>{t('messages.newMessage')}</Text>
         </Pressable>
 
         <View style={s.bottomSpacer} />

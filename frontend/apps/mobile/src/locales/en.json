@@ -638,11 +638,20 @@
     "placeholderBody": "This section is currently not available."
   },
   "buildings": {
+    "backToList": "Buildings",
+    "detailLoadError": "Could not load this building.",
+    "yearBuilt": "Year built",
+    "floors": "Floors",
+    "entrances": "Entrances",
+    "amenities": "Amenities",
     "loadError": "Couldn't load buildings",
     "emptyTitle": "No buildings",
     "emptyText": "No properties are linked to your account yet."
   },
   "messages": {
+    "newMessage": "+ New message",
+    "recipientLabel": "To",
+    "noRecipients": "No neighbours are available to message yet.",
     "unreadCount_one": "{{count}} unread message",
     "unreadCount_other": "{{count}} unread messages",
     "loadError": "Couldn't load messages",

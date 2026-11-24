@@ -68,6 +68,9 @@ jest.mock('./screens', () => {
     AnnouncementsScreen: () => null,
     AnnouncementDetailScreen: () => null,
     ArticleDetailScreen: () => null,
+    BuildingDetailScreen: ({ buildingId }: { buildingId?: string }) => (
+      <RNText>{`building-detail:${buildingId}`}</RNText>
+    ),
     BuildingsScreen: () => null,
     DocumentDetailScreen: () => null,
     DocumentPermissionsScreen: () => null,
@@ -85,6 +88,7 @@ jest.mock('./screens', () => {
     LeaseSignatureScreen: () => null,
     LeasesScreen: () => null,
     MessagesScreen: () => null,
+    NewMessageScreen: () => null,
     MeterDetailScreen: ({ meterId }: { meterId?: string }) => (
       <RNText>{`meter-detail:${meterId}`}</RNText>
     ),
@@ -140,6 +144,7 @@ describe('MainApp detail screens receive their id param', () => {
   });
 
   it.each([
+    ['BuildingDetail', { buildingId: 'b-1' }, 'building-detail:b-1'],
     ['FaultDetail', { faultId: 'f-1' }, 'fault-detail:f-1'],
     ['LeaseDetail', { leaseId: 'l-1' }, 'lease-detail:l-1'],
     ['MeterDetail', { meterId: 'm-1' }, 'meter-detail:m-1'],

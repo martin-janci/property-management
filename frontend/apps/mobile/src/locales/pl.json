@@ -600,11 +600,20 @@
     "placeholderBody": "Ta sekcja jest obecnie niedostępna."
   },
   "buildings": {
+    "backToList": "Budynki",
+    "detailLoadError": "Nie udało się wczytać budynku.",
+    "yearBuilt": "Rok budowy",
+    "floors": "Piętra",
+    "entrances": "Wejścia",
+    "amenities": "Udogodnienia",
     "loadError": "Nie można załadować budynków",
     "emptyTitle": "Brak budynków",
     "emptyText": "Do Twojego konta nie przypisano jeszcze żadnych nieruchomości."
   },
   "messages": {
+    "newMessage": "+ Nowa wiadomość",
+    "recipientLabel": "Do",
+    "noRecipients": "Nie ma jeszcze sąsiadów, do których można napisać.",
     "unreadCount_one": "{{count}} nieprzeczytana wiadomość",
     "unreadCount_few": "{{count}} nieprzeczytane wiadomości",
     "unreadCount_many": "{{count}} nieprzeczytanych wiadomości",

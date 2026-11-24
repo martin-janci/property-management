@@ -598,11 +598,20 @@
     "placeholderBody": "Dieser Abschnitt ist derzeit nicht verfügbar."
   },
   "buildings": {
+    "backToList": "Gebäude",
+    "detailLoadError": "Das Gebäude konnte nicht geladen werden.",
+    "yearBuilt": "Baujahr",
+    "floors": "Etagen",
+    "entrances": "Eingänge",
+    "amenities": "Ausstattung",
     "loadError": "Gebäude konnten nicht geladen werden",
     "emptyTitle": "Keine Gebäude",
     "emptyText": "Mit Ihrem Konto sind noch keine Immobilien verknüpft."
   },
   "messages": {
+    "newMessage": "+ Neue Nachricht",
+    "recipientLabel": "An",
+    "noRecipients": "Noch keine Nachbarn verfügbar, denen Sie schreiben können.",
     "unreadCount_one": "{{count}} ungelesene Nachricht",
     "unreadCount_other": "{{count}} ungelesene Nachrichten",
     "loadError": "Nachrichten konnten nicht geladen werden",

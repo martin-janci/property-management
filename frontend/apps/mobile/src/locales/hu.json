@@ -598,11 +598,20 @@
     "placeholderBody": "Ez a szakasz jelenleg nem elérhető."
   },
   "buildings": {
+    "backToList": "Épületek",
+    "detailLoadError": "Az épület nem tölthető be.",
+    "yearBuilt": "Építés éve",
+    "floors": "Emeletek",
+    "entrances": "Bejáratok",
+    "amenities": "Felszereltség",
     "loadError": "Az épületek nem tölthetők be",
     "emptyTitle": "Nincsenek épületek",
     "emptyText": "Fiókjához még nincs ingatlan társítva."
   },
   "messages": {
+    "newMessage": "+ Új üzenet",
+    "recipientLabel": "Címzett",
+    "noRecipients": "Még nincs szomszéd, akinek írhatna.",
     "unreadCount_one": "{{count}} olvasatlan üzenet",
     "unreadCount_other": "{{count}} olvasatlan üzenet",
     "loadError": "Az üzenetek nem tölthetők be",

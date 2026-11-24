@@ -640,11 +640,20 @@
     "placeholderBody": "Táto sekcia momentálne nie je dostupná."
   },
   "buildings": {
+    "backToList": "Budovy",
+    "detailLoadError": "Budovu sa nepodarilo načítať.",
+    "yearBuilt": "Rok výstavby",
+    "floors": "Podlažia",
+    "entrances": "Vchody",
+    "amenities": "Vybavenie",
     "loadError": "Nepodarilo sa načítať budovy",
     "emptyTitle": "Žiadne budovy",
     "emptyText": "K vášmu účtu zatiaľ nie sú priradené žiadne nehnuteľnosti."
   },
   "messages": {
+    "newMessage": "+ Nová správa",
+    "recipientLabel": "Komu",
+    "noRecipients": "Zatiaľ nie je komu napísať. Susedia sa zobrazia, keď sa pridajú do adresára.",
     "unreadCount_one": "{{count}} neprečítaná správa",
     "unreadCount_few": "{{count}} neprečítané správy",
     "unreadCount_many": "{{count}} neprečítaných správ",

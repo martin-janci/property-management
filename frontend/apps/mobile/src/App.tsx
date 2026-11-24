@@ -16,6 +16,7 @@ import {
   AnnouncementsScreen,
   ArticleDetailScreen,
   AuthFlow,
+  BuildingDetailScreen,
   BuildingsScreen,
   DashboardScreen,
   DocumentDetailScreen,
@@ -34,6 +35,7 @@ import {
   MeterReadingScreen,
   MetersScreen,
   NeighborsScreen,
+  NewMessageScreen,
   NewsScreen,
   NotificationsScreen,
   OutageDetailScreen,
@@ -245,6 +247,15 @@ function MainApp() {
         return <TwoFactorScreen onDonePress={() => handleNavigate('Profile')} />;
       case 'Messages':
         return <MessagesScreen onNavigate={handleNavigate} />;
+      case 'NewMessage':
+        return (
+          <NewMessageScreen
+            onCancel={() => handleNavigate('Messages')}
+            onSent={(threadId) =>
+              threadId ? handleNavigate('ThreadDetail', { threadId }) : handleNavigate('Messages')
+            }
+          />
+        );
       case 'ThreadDetail':
         return (
           <ThreadDetailScreen
@@ -280,6 +291,13 @@ function MainApp() {
         return <FormsScreen onNavigate={handleNavigate} />;
       case 'Buildings':
         return <BuildingsScreen onNavigate={handleNavigate} />;
+      case 'BuildingDetail':
+        return (
+          <BuildingDetailScreen
+            buildingId={screenParams?.buildingId as string | undefined}
+            onBack={() => handleNavigate('Buildings')}
+          />
+        );
       case 'Leases':
         return <LeasesScreen onNavigate={handleNavigate} />;
       case 'LeaseDetail':

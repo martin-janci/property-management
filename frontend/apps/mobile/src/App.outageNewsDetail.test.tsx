@@ -83,6 +83,7 @@ jest.mock('./screens', () => {
       capturedArticleBack = onBack;
       return <RNText>{`article-detail:${articleId}`}</RNText>;
     },
+    BuildingDetailScreen: () => null,
     BuildingsScreen: () => null,
     DocumentDetailScreen: () => null,
     DocumentPermissionsScreen: () => null,
@@ -96,6 +97,7 @@ jest.mock('./screens', () => {
     LeaseSignatureScreen: () => null,
     LeasesScreen: () => null,
     MessagesScreen: () => null,
+    NewMessageScreen: () => null,
     MeterDetailScreen: () => null,
     MeterReadingScreen: () => null,
     MetersScreen: () => null,
