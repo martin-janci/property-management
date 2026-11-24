@@ -33,9 +33,10 @@ const BUNDLES: Record<string, Json> = { en, sk, cs, de, pl, hu };
 const RESULT: QuestionResult = {
   question_id: 'q1',
   question_text: 'Approve the roof repair?',
-  total_responses: 3,
+  total_votes: 3,
+  weighted_total: 3,
   winner: 'opt-yes',
-  options: [
+  results: [
     { option_id: 'opt-yes', option_text: 'Yes', count: 2, percentage: 66.6 },
     { option_id: 'opt-no', option_text: 'No', count: 1, percentage: 33.3 },
   ],

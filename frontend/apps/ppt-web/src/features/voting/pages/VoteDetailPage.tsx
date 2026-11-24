@@ -328,7 +328,8 @@ export function VoteDetailPage({ voteId, onBack }: VoteDetailPageProps) {
             <h2 className="text-sm font-semibold text-gray-900">{t('voting.detail.results')}</h2>
             <span className="text-xs text-gray-500">
               {t('voting.detail.turnout', {
-                percent: Math.round(results.participation_rate * 100),
+                // The server already sends a percentage (0–100), not a fraction.
+                percent: Math.round(results.participation_rate),
               })}{' '}
               ·{' '}
               {results.quorum_met ? t('voting.detail.quorumMet') : t('voting.detail.quorumNotMet')}

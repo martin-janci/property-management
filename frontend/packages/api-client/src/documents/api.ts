@@ -19,10 +19,12 @@ import type {
   DocumentListResponse,
   DocumentSearchRequest,
   DocumentSearchResponse,
+  DocumentSearchResult,
   FolderTreeNode,
   FolderWithCount,
   GenerateSummaryRequest,
   OcrReprocessResponse,
+  SearchHighlight,
   ShareListResponse,
   SummarizationResponse,
   UpdateDocumentRequest,
@@ -168,13 +170,63 @@ export async function reprocessOcr(id: string): Promise<OcrReprocessResponse> {
 }
 
 // Story 28.2: Full-text search
+
+/** One hit as api-server sends it (`db::models::document::DocumentSearchResult`). */
+interface ServerSearchResult {
+  document: DocumentSearchResult['document'];
+  rank?: number | null;
+  headline?: string | null;
+  matched_fields?: string[] | null;
+}
+
+/** Server `matched_fields` value → the highlight field the UI labels. */
+function highlightField(matched: string[] | null | undefined): SearchHighlight['field'] {
+  const first = matched?.[0];
+  if (first === 'title') return 'title';
+  if (first === 'description') return 'description';
+  // 'content' (OCR-extracted text) and anything unknown: the headline is cut
+  // from the extracted text first, so label it as document content.
+  return 'ocr_text';
+}
+
+/**
+ * Map the server search response onto the client shape.
+ *
+ * The server sends `{ document, rank, headline, matched_fields }` per hit and
+ * no timing; the UI reads `score` / `highlights` / `took_ms`. Without this the
+ * result card called `score.toFixed()` and `highlights.map()` on `undefined`
+ * and the documents page crashed on the first hit.
+ */
+export function mapSearchResponse(raw: unknown, tookMs: number): DocumentSearchResponse {
+  const body = (raw ?? {}) as { results?: ServerSearchResult[] | null; total?: number | null };
+  const results = (body.results ?? []).map((hit): DocumentSearchResult => {
+    const rank = typeof hit.rank === 'number' && Number.isFinite(hit.rank) ? hit.rank : 0;
+    const headline = hit.headline?.trim();
+    return {
+      document: hit.document,
+      // `ts_rank_cd` is not bounded to 1; clamp so "% match" stays within 0–100.
+      score: Math.min(1, Math.max(0, rank)),
+      highlights: headline
+        ? [{ field: highlightField(hit.matched_fields), snippet: headline }]
+        : [],
+    };
+  });
+  return { results, total: body.total ?? results.length, took_ms: tookMs };
+}
+
 export async function searchDocuments(
   request: DocumentSearchRequest
 ): Promise<DocumentSearchResponse> {
-  return fetchApi(`${API_BASE}/search`, {
+  const started = Date.now();
+  const raw = await fetchApi<unknown>(`${API_BASE}/search`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: JSON.stringify({
+      ...request,
+      // The server filters on a single `category`; send the first selected one.
+      category: request.categories?.[0],
+    }),
   });
+  return mapSearchResponse(raw, Date.now() - started);
 }
 
 // Story 28.3: Classification

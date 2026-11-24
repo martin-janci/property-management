@@ -129,6 +129,7 @@ UC-08 central document repository. Manager-side CRUD; resident-side filtered rea
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: ppt-web: search maps server hits (`rank`, `headline`, `matched_fields`) to `score`/`highlights`; the result card crashed on the first hit.
 - 2026-08-31 — agent: screen-map-drift-pr-2889-ppt — reconcile drift from PR #2889 (realtime ws→query-invalidation fix). ppt-web `WebSocketContext` re-keyed cache invalidation to canonical `domain.action` events and its `notification.created` subscriber routes by `payload.category`, so `category=documents` now invalidates the `documents` root; `App.tsx` wires `onEntityEvent → queryClient.invalidateQueries`. No route/component/endpoint/status change — frontmatter unchanged; docs-only.
 
 - 2026-05-27 — agent: gap-7a-4 review fixes — extracted useDocumentDownload hook (error toast on failure, blob URL); download now shared between RowDownloadButton and DownloadButton via single hook

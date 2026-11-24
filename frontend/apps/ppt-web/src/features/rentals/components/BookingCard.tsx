@@ -205,10 +205,11 @@ export function BookingCard({
               {t('rentals.checkOut')}
             </button>
           )}
-          {!isPast && booking.status !== 'cancelled' && (
+          {/* Only offer actions the host page actually handles. */}
+          {onEdit && !isPast && booking.status !== 'cancelled' && (
             <button
               type="button"
-              onClick={() => onEdit?.(booking.id)}
+              onClick={() => onEdit(booking.id)}
               className="p-1 text-gray-400 hover:text-gray-600"
               title={t('common.edit')}
             >
@@ -228,10 +229,10 @@ export function BookingCard({
               </svg>
             </button>
           )}
-          {canCancel && (
+          {onCancel && canCancel && (
             <button
               type="button"
-              onClick={() => onCancel?.(booking.id)}
+              onClick={() => onCancel(booking.id)}
               className="p-1 text-gray-400 hover:text-red-600"
               title={t('common.cancel')}
             >
