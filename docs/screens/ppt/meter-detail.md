@@ -39,6 +39,7 @@ already built but unrouted; this screen is now reachable on web.
   stub/empty data pending the meters+leases api-client module.
 
 ## Agent Log
+- 2026-11-24 — agent: mobile: App.tsx forwards `meterId` (screen was stuck on Loading).
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 12).
 - 2026-08-18 — agent: screen-map-drift-pr-2647 — noted i18n update in PR #2647: the shared `MeterLoadingNotice` fallback in `frontend/apps/ppt-web/src/routes/groups/meters.tsx` (rendered by the meter detail / edit-reading / submit-reading route wrappers when the meter is absent) now renders via `t('errors.meterNotFound', 'Meter not found')` (was hardcoded English); `useTranslation()` hook added inside the notice component; `errors.meterNotFound` key added to all locale bundles. No route or component change.
 - 2026-11-04 — agent: `MeterLoadingNotice` translated (`meters.notice.*`); `meters` namespace fully translated into sk/cs/de/pl/hu.

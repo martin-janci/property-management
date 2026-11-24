@@ -11,7 +11,7 @@ export type FaultCategory =
   | 'plumbing'
   | 'electrical'
   | 'structural'
-  | 'hvac'
+  | 'heating'
   | 'elevator'
   | 'security'
   | 'other';
@@ -61,7 +61,7 @@ const FAULT_CATEGORIES: readonly FaultCategory[] = [
   'plumbing',
   'electrical',
   'structural',
-  'hvac',
+  'heating',
   'elevator',
   'security',
   'other',
@@ -115,7 +115,7 @@ const categoryIcon: Record<FaultCategory, string> = {
   plumbing: '🚿',
   electrical: '⚡',
   structural: '🏗️',
-  hvac: '❄️',
+  heating: '❄️',
   elevator: '🛗',
   security: '🔒',
   other: '🔧',

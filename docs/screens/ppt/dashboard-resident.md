@@ -45,4 +45,5 @@ Note: existing `ppt/dashboard` screen-map is mobile-only — this is the web-onl
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: mobile: announcements read from /announcements/published (manager-only list 403'd residents), votes parsed from the bare array, announcement cards open the detail.
 - 2026-11-04 — agent: action queue hidden outside DEV mock mode (no /api/v1/action-queue backend) instead of a false 'all caught up'; meter item links to /meters (was /meters/reading → matched /meters/:meterId)

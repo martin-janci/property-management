@@ -39,5 +39,6 @@ already built but unrouted; this screen is now reachable on web.
   stub/empty data pending the meters+leases api-client module.
 
 ## Agent Log
+- 2026-11-24 — agent: mobile: reading is submitted against a real meter (`meter_id`) picked from the resident's meters; the old `meterType`/`unit` body was a 422 on every sync.
 - 2026-06-08 — CTO: created on route mount (PAP-20, Epic 12).
 - 2026-11-04 — agent: `MeterLoadingNotice` translated (`meters.notice.*`).

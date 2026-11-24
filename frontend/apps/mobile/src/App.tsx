@@ -216,6 +216,7 @@ function MainApp() {
       case 'MeterReading':
         return (
           <MeterReadingScreen
+            meterId={screenParams?.meterId as string | undefined}
             onSuccess={() => handleNavigate('Meters')}
             onCancel={() => handleNavigate('Meters')}
           />
@@ -224,7 +225,11 @@ function MainApp() {
         return <MetersScreen onNavigate={handleNavigate} />;
       case 'MeterDetail':
         return (
-          <MeterDetailScreen onBack={() => handleNavigate('Meters')} onNavigate={handleNavigate} />
+          <MeterDetailScreen
+            meterId={screenParams?.meterId as string | undefined}
+            onBack={() => handleNavigate('Meters')}
+            onNavigate={handleNavigate}
+          />
         );
       case 'Profile':
         return <ProfileScreen onTwoFactorPress={() => handleNavigate('TwoFactor')} />;
@@ -233,7 +238,12 @@ function MainApp() {
       case 'Messages':
         return <MessagesScreen onNavigate={handleNavigate} />;
       case 'ThreadDetail':
-        return <ThreadDetailScreen onBack={() => handleNavigate('Messages')} />;
+        return (
+          <ThreadDetailScreen
+            threadId={screenParams?.threadId as string | undefined}
+            onBack={() => handleNavigate('Messages')}
+          />
+        );
       case 'Neighbors':
         return <NeighborsScreen onNavigate={handleNavigate} />;
       case 'Notifications':
@@ -266,7 +276,11 @@ function MainApp() {
         return <LeasesScreen onNavigate={handleNavigate} />;
       case 'LeaseDetail':
         return (
-          <LeaseDetailScreen onBack={() => handleNavigate('Leases')} onNavigate={handleNavigate} />
+          <LeaseDetailScreen
+            leaseId={screenParams?.leaseId as string | undefined}
+            onBack={() => handleNavigate('Leases')}
+            onNavigate={handleNavigate}
+          />
         );
       case 'LeaseSignature':
         return (

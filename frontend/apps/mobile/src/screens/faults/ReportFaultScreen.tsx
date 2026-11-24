@@ -72,7 +72,7 @@ const categories: Array<{ value: FaultCategory; labelKey: string; icon: string }
   { value: 'plumbing', labelKey: 'categoryPlumbing', icon: '🚿' },
   { value: 'electrical', labelKey: 'categoryElectrical', icon: '⚡' },
   { value: 'structural', labelKey: 'categoryStructural', icon: '🏗️' },
-  { value: 'hvac', labelKey: 'categoryHvac', icon: '❄️' },
+  { value: 'heating', labelKey: 'categoryHvac', icon: '❄️' },
   { value: 'elevator', labelKey: 'categoryElevator', icon: '🛗' },
   { value: 'security', labelKey: 'categorySecurity', icon: '🔒' },
   { value: 'other', labelKey: 'categoryOther', icon: '🔧' },

@@ -46,4 +46,5 @@ already built but unrouted; this screen is now reachable on web.
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: mobile: list resolves the resident's units via GET /users/me/units (session carries no unitId, so the screen always showed 'no unit').
 - 2026-11-04 — agent: manager-only 'Pending validations' button → /meters/validations

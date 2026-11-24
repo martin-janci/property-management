@@ -522,6 +522,7 @@
     "readingPlaceholder": "0,00",
     "readingRequired": "Prosim zadajte odpocet",
     "readingInvalid": "Zadajte platne cislo",
+    "meterRequired": "Vyberte merač",
     "photo": "Fotografia (volitelne)",
     "submit": "Odoslat odpocet",
     "submitSuccess": "Odpocet meraca bol uspesne odoslany",

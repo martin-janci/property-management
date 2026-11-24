@@ -36,6 +36,21 @@ jest.mock('../../components/sync', () => ({
   PendingSyncIndicator: () => null,
 }));
 
+// The resident's meters come from the API (GET /users/me/units + per-unit
+// meters); serve one cold-water meter so a reading has a meter to target.
+jest.mock('./useMyMeters', () => ({
+  useMyMeters: () => ({
+    data: {
+      unitIds: ['unit-1'],
+      meters: [
+        { id: 'meter-1', meter_number: 'CW-001', meter_type: 'cold_water', unit_of_measure: 'm³' },
+      ],
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 import { MeterReadingScreen } from './MeterReadingScreen';
 
 describe('MeterReadingScreen numeric-validation guard', () => {
@@ -91,7 +106,9 @@ describe('MeterReadingScreen numeric-validation guard', () => {
         // `submitReading` posts to the same path. The old "/api/v1/meter-readings"
         // did not exist and 404'd on sync.
         endpoint: '/api/v1/meters/readings',
-        body: expect.objectContaining({ reading: '142.4' }),
+        // `SubmitReading` requires `meter_id`; the old `meterType`/`unit`
+        // body was rejected with 422 on every sync.
+        body: { meter_id: 'meter-1', reading: '142.4', photo_url: undefined },
       })
     );
   });

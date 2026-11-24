@@ -480,6 +480,7 @@
     "readingPlaceholder": "0,00",
     "readingRequired": "Kerem adja meg az allast",
     "readingInvalid": "Adjon meg egy ervenyes szamot",
+    "meterRequired": "Válasszon mérőórát",
     "photo": "Foto (opcionalis)",
     "submit": "Allas elkuldese",
     "submitSuccess": "Meroora allas sikeresen elkuldve",
