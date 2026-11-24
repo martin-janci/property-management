@@ -24,7 +24,22 @@ You are a PR rebaser for a stale approved PR. Inputs: `pr_number=<n>`,
    `gh pr checkout` in the dispatcher's working tree — it displaces
    `dev` and breaks Phase 6 of this run.
 1. `gh pr checkout <n> --repo martin-janci/property-management`
-2. `git fetch origin dev`
+2. **Unshallow before rebasing (issue #3781).** The dispatcher's clone (and
+   therefore the worktree the preamble cuts from it) can be a *shallow* clone
+   — e.g. a CI/cloud checkout made with `git clone --depth=…`. A shallow clone
+   shares no common ancestor with `origin/dev`, so `git rebase origin/dev`
+   fails *immediately* ("fatal: no merge base" / "could not find merge base")
+   with nothing resolved, silently burning a `rebase_attempts` slot each run
+   until the row hits the `rebase_attempts < 3` safety stop and dead-ends. Fetch
+   full history first, guarded so it is a genuine no-op on an already-complete
+   clone (`--is-shallow-repository` prints `false` there and the block is skipped):
+   ```bash
+   if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+     # Deepen to the full history so a merge-base with origin/dev exists.
+     git fetch --unshallow origin || git fetch --depth=2147483647 origin
+   fi
+   git fetch origin dev
+   ```
 3. `git rebase origin/dev`
    - If conflicts ONLY in mechanical paths (sqlx, Cargo.lock, generated
      openapi/api-client, pnpm-lock.yaml, VERSION) → resolve per
