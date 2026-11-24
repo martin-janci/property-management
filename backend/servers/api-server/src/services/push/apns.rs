@@ -640,6 +640,117 @@ mod tests {
         assert!(!apns_reason_indicates_stale("baddevicetoken")); // case-sensitive
     }
 
+    // ------------------------------------------------------------------
+    // HTTP-level stale eviction gating (code-review `apns-410-body-parse`).
+    //
+    // The pure `apns_reason_indicates_stale` function only sees a *parsed*
+    // `reason`. The bug lived one layer up in `send_apns_one`: a 410 Gone whose
+    // JSON error body could not be deserialized fell into the body-parse `Err`
+    // arm, which returned `(false, false)` — so the stale token was NEVER
+    // evicted from `device_push_tokens`. These tests drive the real HTTP path
+    // against a mock gateway to pin that eviction is gated on the HTTP STATUS,
+    // not on a successful body parse.
+    // ------------------------------------------------------------------
+
+    /// Build an adapter whose HTTP client speaks plain HTTP/1.1 (not the
+    /// production HTTP/2-prior-knowledge profile) so it can talk to the
+    /// HTTP/1.1 `wiremock` gateway, pointed at `base_url`. The `token_repo`
+    /// is backed by an unreachable pool: `send_apns_one` never touches the DB,
+    /// so the repo is only a structural dependency here.
+    fn apns_adapter_against(base_url: String) -> ApnsHttpAdapter {
+        ApnsHttpAdapter {
+            token_repo: DevicePushTokenRepository::new(failing_pool()),
+            apns_config: ApnsConfig {
+                apns_base_url: Some(base_url),
+                ..configured_apns()
+            },
+            http: Some(
+                build_push_http_client(Duration::from_secs(5), false)
+                    .expect("HTTP/1.1 test client builds"),
+            ),
+        }
+    }
+
+    /// The regression under test: a 410 Gone whose error body is NOT valid JSON
+    /// for `ApnsErrorBody` must STILL mark the token expired (→ eviction). APNs
+    /// returns 410 only for an `Unregistered` token, so the eviction signal is
+    /// the status, not the body. Pre-fix the body-parse `Err` arm returned
+    /// `(false, false)`, leaking the stale token — this fails against the old
+    /// behaviour and passes against the fix.
+    #[tokio::test]
+    async fn send_apns_410_with_unparseable_body_still_evicts_token() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(
+                // 410 Gone, but a body that is NOT valid JSON for ApnsErrorBody.
+                wiremock::ResponseTemplate::new(410).set_body_string("not json at all"),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_against(server.uri());
+        let (success, expired) = adapter
+            .send_apns_one("dummy-jwt", "device-token-123", &apns_test_notification())
+            .await;
+
+        assert!(!success, "a 410 response is never a successful delivery");
+        assert!(
+            expired,
+            "a 410 Gone must evict the stale token even when the error body \
+             cannot be parsed — the eviction signal is the HTTP status"
+        );
+    }
+
+    /// Companion case: a 410 Gone with an entirely EMPTY body (zero-length)
+    /// must also evict. `serde_json` fails on an empty input, so this likewise
+    /// exercises the body-parse `Err` arm.
+    #[tokio::test]
+    async fn send_apns_410_with_empty_body_still_evicts_token() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(wiremock::ResponseTemplate::new(410).set_body_string(""))
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_against(server.uri());
+        let (success, expired) = adapter
+            .send_apns_one("dummy-jwt", "device-token-123", &apns_test_notification())
+            .await;
+
+        assert!(!success);
+        assert!(
+            expired,
+            "a 410 Gone with an empty body must still evict the stale token"
+        );
+    }
+
+    /// Boundary guard: a NON-410 rejection (e.g. 503 Service Unavailable) whose
+    /// body we cannot parse must NOT evict the token — it is a recoverable,
+    /// retryable failure. Pins the fix as narrow (only the 410 status forces
+    /// eviction) so a future over-correction that evicts on any unparseable
+    /// error body regresses here and drops still-valid tokens.
+    #[tokio::test]
+    async fn send_apns_non_410_with_unparseable_body_does_not_evict() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(
+                wiremock::ResponseTemplate::new(503).set_body_string("upstream unavailable"),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_against(server.uri());
+        let (success, expired) = adapter
+            .send_apns_one("dummy-jwt", "device-token-123", &apns_test_notification())
+            .await;
+
+        assert!(!success);
+        assert!(
+            !expired,
+            "a non-410 unparseable rejection is recoverable and must keep the token"
+        );
+    }
+
     #[test]
     fn apns_error_body_parses_reason_and_defaults_to_unknown() {
         // Characterize the wire-shape parsing that feeds the eviction decision:
