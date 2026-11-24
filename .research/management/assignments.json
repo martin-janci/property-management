@@ -135,18 +135,18 @@
     {
       "task_id": "code-review-ppt-web-ui-langswitcher-promise",
       "branch": "auto-impl/code-review-ppt-web-ui-langswitcher-prom-1eff8f55",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-24T16:31:18Z",
-      "last_updated": "2026-11-24T16:31:18Z",
-      "status_changed_at": "2026-11-24T16:31:18Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-24T16:45:20Z",
+      "status_changed_at": "2026-11-24T16:45:20Z",
+      "pr_number": 3785,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3785",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3785 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=floating promise confirmed; LanguageSwitcher.tsx now void i18n.changeLanguage().catch(console.error); IG3 two-commit split; verify green (15954 tests); draft PR #3785",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -155,5 +155,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-24T16:43:27Z"
+  "generated": "2026-11-24T16:45:20Z"
 }
