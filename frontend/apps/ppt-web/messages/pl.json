@@ -6260,6 +6260,22 @@
         "colActions": "Akcje",
         "notAssigned": "Nie przypisano"
       }
+    },
+    "review": {
+      "titlePet": "Sprawdź rejestrację zwierzęcia",
+      "titleVehicle": "Sprawdź rejestrację pojazdu",
+      "chooseAction": "Wybierz działanie:",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "infoIconLabel": "Informacja",
+      "approveConfirm": "Czy na pewno chcesz zatwierdzić tę rejestrację? Właściciel zostanie powiadomiony.",
+      "confirmApproval": "Potwierdź zatwierdzenie",
+      "approving": "Zatwierdzanie...",
+      "rejectionReasonLabel": "Powód odrzucenia",
+      "rejectionPlaceholder": "Podaj powód odrzucenia tej rejestracji...",
+      "rejectionHint": "Zostanie to wysłane do właściciela.",
+      "confirmRejection": "Potwierdź odrzucenie",
+      "rejecting": "Odrzucanie..."
     }
   },
   "community": {

@@ -8431,6 +8431,22 @@
         "colActions": "Actions",
         "notAssigned": "Not assigned"
       }
+    },
+    "review": {
+      "titlePet": "Review Pet Registration",
+      "titleVehicle": "Review Vehicle Registration",
+      "chooseAction": "Choose action:",
+      "approve": "Approve",
+      "reject": "Reject",
+      "infoIconLabel": "Info",
+      "approveConfirm": "Are you sure you want to approve this registration? The owner will be notified.",
+      "confirmApproval": "Confirm Approval",
+      "approving": "Approving...",
+      "rejectionReasonLabel": "Reason for rejection",
+      "rejectionPlaceholder": "Please provide a reason for rejecting this registration...",
+      "rejectionHint": "This will be sent to the owner.",
+      "confirmRejection": "Confirm Rejection",
+      "rejecting": "Rejecting..."
     }
   },
   "community": {

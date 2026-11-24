@@ -6626,6 +6626,22 @@
         "colActions": "Akcie",
         "notAssigned": "Nepriradené"
       }
+    },
+    "review": {
+      "titlePet": "Posúdiť registráciu zvieraťa",
+      "titleVehicle": "Posúdiť registráciu vozidla",
+      "chooseAction": "Vyberte akciu:",
+      "approve": "Schváliť",
+      "reject": "Zamietnuť",
+      "infoIconLabel": "Informácie",
+      "approveConfirm": "Naozaj chcete schváliť túto registráciu? Vlastník bude upozornený.",
+      "confirmApproval": "Potvrdiť schválenie",
+      "approving": "Schvaľuje sa...",
+      "rejectionReasonLabel": "Dôvod zamietnutia",
+      "rejectionPlaceholder": "Uveďte dôvod zamietnutia tejto registrácie...",
+      "rejectionHint": "Toto bude odoslané vlastníkovi.",
+      "confirmRejection": "Potvrdiť zamietnutie",
+      "rejecting": "Zamieta sa..."
     }
   },
   "community": {
