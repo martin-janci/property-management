@@ -153,6 +153,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-reality-server-dup-url-validators",
+      "branch": "auto-impl/code-review-reality-server-dup-url-valid-8ed649c4",
+      "status": "in-progress",
+      "claimed_at": "2026-11-24T18:30:58Z",
+      "last_updated": "2026-11-24T18:30:58Z",
+      "status_changed_at": "2026-11-24T18:30:58Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ],
   "generated": "2026-11-24T16:45:20Z"
