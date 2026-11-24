@@ -655,11 +655,36 @@ async fn generate_document(
     // Generate content by replacing placeholders
     let generated_content = template.generate_content(&req.values);
 
-    // Create a document with the generated content
-    // Note: In a full implementation, this would create an actual file (e.g., PDF)
-    // For now, we store the content as a text file reference
+    // Store the generated Markdown, then create the document row pointing at it.
     let file_key = format!("generated/{}/{}.md", org_id, uuid::Uuid::new_v4());
     let file_name = format!("{}.md", req.title.replace(['/', '\\'], "_"));
+
+    // Upload BEFORE inserting the row: the row used to be created with a
+    // `file_key` nothing had ever written, so the new document's download and
+    // preview pointed at a missing object. The content is server-produced, so
+    // it goes through the system-artifact path (the user-upload MIME allowlist
+    // does not apply). Mirrors the direct-upload handler: skipped only when no
+    // S3 client is configured (local/dev and tests).
+    if let Some(storage) = state.storage_service.as_ref().filter(|s| s.has_s3_client()) {
+        if let Err(e) = storage
+            .upload_system_artifact(
+                &file_key,
+                generated_content.clone().into_bytes(),
+                "text/markdown",
+            )
+            .await
+        {
+            tracing::error!(error = %e, file_key = %file_key, "Failed to store generated document");
+            rls.release().await;
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "STORAGE_ERROR",
+                    "Failed to store the generated document. Please try again.",
+                )),
+            ));
+        }
+    }
 
     let create_doc = db::models::CreateDocument {
         organization_id: org_id,
