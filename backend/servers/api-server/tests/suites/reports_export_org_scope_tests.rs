@@ -152,3 +152,55 @@ async fn get_export_job_status_for_own_org_is_allowed(pool: PgPool) {
         resp.status
     );
 }
+
+/// An async export (any non-CSV format) must hand back a status URL for the job
+/// row that was actually inserted. The handler used to return a locally
+/// generated id that `background_jobs` never saw, so polling the URL was always
+/// a 404.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn async_export_status_url_points_at_the_created_job(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let (token, _org_a, org_b) = setup(&pool, &app).await;
+
+    let body = json!({
+        "organization_id": org_b,
+        "report_type": "faults",
+        "format": "pdf"
+    });
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/reports/export")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_b.to_string())
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap();
+    let resp = app.execute(req).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::ACCEPTED,
+        "a pdf export is queued, got {}",
+        resp.status
+    );
+
+    let payload: serde_json::Value = serde_json::from_slice(&resp.body).expect("json body");
+    let status_url = payload["download_url"]
+        .as_str()
+        .expect("download_url in async response")
+        .to_string();
+
+    let req = Request::builder()
+        .method(Method::GET)
+        .uri(&status_url)
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_b.to_string())
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.execute(req).await;
+    assert_eq!(
+        resp.status,
+        StatusCode::OK,
+        "the returned status URL must resolve to the queued job, got {}",
+        resp.status
+    );
+}
