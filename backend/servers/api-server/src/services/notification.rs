@@ -20,7 +20,11 @@ use thiserror::Error;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
+use common::notifications::pipeline::PushTransport;
+use common::notifications::{Notification as PushNotification, NotificationCategory};
+
 use super::email::EmailService;
+use super::push::CombinedPushAdapter;
 
 /// Notification service errors.
 #[derive(Debug, Error)]
@@ -178,6 +182,9 @@ pub struct NotificationService {
     notification_pref_repo: NotificationPreferenceRepository,
     granular_notification_repo: GranularNotificationRepository,
     config: NotificationServiceConfig,
+    /// FCM/APNs delivery. Defaults to the env-configured combined adapter,
+    /// which reports the channel as skipped when no provider is configured.
+    push_transport: Arc<dyn PushTransport>,
     /// Deduplication cache to prevent sending duplicate notifications.
     dedup_cache: Arc<RwLock<std::collections::HashMap<DedupKey, DedupEntry>>>,
 }
@@ -193,11 +200,18 @@ impl NotificationService {
             user_repo: UserRepository::new(pool.clone()),
             notification_pref_repo: NotificationPreferenceRepository::new(pool.clone()),
             granular_notification_repo: GranularNotificationRepository::new(pool.clone()),
+            push_transport: Arc::new(CombinedPushAdapter::from_env(pool.clone())),
             pool,
             email_service,
             config,
             dedup_cache: Arc::new(RwLock::new(std::collections::HashMap::new())),
         }
+    }
+
+    /// Replace the push transport (tests, or a shared pre-built adapter).
+    pub fn with_push_transport(mut self, push_transport: Arc<dyn PushTransport>) -> Self {
+        self.push_transport = push_transport;
+        self
     }
 
     /// Create a development notification service (logs instead of sending).
@@ -365,13 +379,27 @@ impl NotificationService {
                     }
                 }
                 NotificationChannel::Push => {
-                    // Push notifications would integrate with FCM/APNs
-                    // For now, just log
-                    tracing::info!(
-                        user_id = %user_id,
-                        title = %notification.title,
-                        "Push notification (integration pending)"
-                    );
+                    // Deliver through the FCM/APNs transport. This branch used
+                    // to only log, so scheduled events (vote started/closed,
+                    // announcement published, meter and payment reminders)
+                    // never reached a device. A failure here is logged and
+                    // does not stop the remaining channels.
+                    let push = to_push_notification(user_id, notification, entity_id);
+                    match self.push_transport.send(user_id, &push).await {
+                        Ok(()) => {}
+                        // No provider configured, or the user has no device
+                        // registered: an expected skip, already logged by the
+                        // adapter.
+                        Err(common::notifications::NotificationError::PushNotConfigured) => {}
+                        Err(e) => {
+                            tracing::warn!(
+                                user_id = %user_id,
+                                notification_type = ?notification.notification_type,
+                                error = %e,
+                                "Push notification not delivered"
+                            );
+                        }
+                    }
                 }
                 NotificationChannel::InApp => {
                     // Create in-app notification using granular notification repository
@@ -723,9 +751,125 @@ pub struct NotificationMetrics {
     pub failed: u64,
 }
 
+/// Category the push payload is filed under, by notification type.
+fn push_category(notification_type: NotificationType) -> NotificationCategory {
+    match notification_type {
+        NotificationType::AnnouncementPublished
+        | NotificationType::AnnouncementAcknowledgmentRequired => {
+            NotificationCategory::Announcements
+        }
+        NotificationType::VoteStarted
+        | NotificationType::VoteEndingSoon
+        | NotificationType::VoteClosed
+        | NotificationType::VoteResultsAvailable
+        | NotificationType::VoteReminderNotVoted => NotificationCategory::Votes,
+        NotificationType::PaymentDue | NotificationType::PaymentOverdue => {
+            NotificationCategory::Financial
+        }
+        NotificationType::MeterReadingDue
+        | NotificationType::SessionExpiringSoon
+        | NotificationType::WorkflowAction => NotificationCategory::System,
+    }
+}
+
+/// Entity kind the mobile app routes a tap on (`data.type`), when the
+/// notification points at one. The app maps it to a list or detail screen.
+fn push_entity_type(notification_type: NotificationType) -> Option<&'static str> {
+    match push_category(notification_type) {
+        NotificationCategory::Announcements => Some("announcement"),
+        NotificationCategory::Votes => Some("vote"),
+        _ => None,
+    }
+}
+
+/// Build the transport-level push payload from a service notification. The
+/// event type and entity id ride along in `data`, together with the
+/// `type` / `id` pair the mobile app reads to open the matching screen.
+fn to_push_notification(
+    user_id: Uuid,
+    notification: &Notification,
+    entity_id: Option<Uuid>,
+) -> PushNotification {
+    let mut push = PushNotification::new(
+        user_id,
+        push_category(notification.notification_type),
+        notification.title.clone(),
+        notification.body.clone(),
+    );
+    let mut data = match &notification.data {
+        serde_json::Value::Object(map) => map.clone(),
+        _ => serde_json::Map::new(),
+    };
+    data.insert(
+        "event_type".to_string(),
+        serde_json::Value::String(notification.notification_type.as_event_type().to_string()),
+    );
+    let entity_type = push_entity_type(notification.notification_type);
+    if let Some(entity_type) = entity_type {
+        data.insert(
+            "type".to_string(),
+            serde_json::Value::String(entity_type.to_string()),
+        );
+    }
+    if let Some(id) = entity_id {
+        data.insert(
+            "entity_id".to_string(),
+            serde_json::Value::String(id.to_string()),
+        );
+        if entity_type.is_some() {
+            data.insert("id".to_string(), serde_json::Value::String(id.to_string()));
+        }
+    }
+    push.data = Some(serde_json::Value::Object(data));
+    push
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn push_payload_carries_title_body_category_and_routing_data() {
+        let user_id = Uuid::new_v4();
+        let vote_id = Uuid::new_v4();
+        let notification = Notification {
+            notification_type: NotificationType::VoteStarted,
+            title: "New vote".to_string(),
+            body: "Roof repair".to_string(),
+            data: serde_json::json!({ "vote_id": vote_id }),
+            channels: vec![NotificationChannel::Push],
+        };
+
+        let push = to_push_notification(user_id, &notification, Some(vote_id));
+
+        assert_eq!(push.user_id, user_id);
+        assert_eq!(push.title, "New vote");
+        assert_eq!(push.body, "Roof repair");
+        assert_eq!(push.category, NotificationCategory::Votes);
+        let data = push.data.expect("data payload");
+        assert_eq!(data["event_type"], "vote.started");
+        assert_eq!(data["entity_id"], vote_id.to_string());
+        assert_eq!(data["vote_id"], vote_id.to_string());
+        // The pair the mobile app reads to open the vote on tap.
+        assert_eq!(data["type"], "vote");
+        assert_eq!(data["id"], vote_id.to_string());
+    }
+
+    #[test]
+    fn push_category_covers_every_reminder_type() {
+        assert_eq!(
+            push_category(NotificationType::AnnouncementPublished),
+            NotificationCategory::Announcements
+        );
+        assert_eq!(
+            push_category(NotificationType::PaymentOverdue),
+            NotificationCategory::Financial
+        );
+        assert_eq!(
+            push_category(NotificationType::VoteReminderNotVoted),
+            NotificationCategory::Votes
+        );
+    }
 
     #[test]
     fn test_notification_type_event_type() {
