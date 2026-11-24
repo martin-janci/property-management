@@ -3,19 +3,20 @@
  *
  * Platform-wide settings (operator-facing, never tenant-facing).
  *
- * NOTE: there is no backend write endpoint for these settings yet — no
- * `PATCH /api/v1/platform-admin/settings` exists. The form is therefore
- * rendered read-only via `SettingsForm`'s `readOnly` prop with an explanatory
- * notice, rather than presenting a Save button that fires at a non-existent
- * endpoint and silently no-ops. Re-enable writes (and restore the
- * maintenance-mode audit-reason flow) once the endpoint lands.
+ * Reads and writes the singleton `platform_settings` row through
+ * `GET` / `PATCH /api/v1/platform-admin/settings`. The wire keys are the
+ * dotted form keys (`platform.maintenance_mode`, ...), so the form values are
+ * sent as-is. The values are stored and audited (`updated_at` / `updated_by`)
+ * but nothing on the platform enforces them yet, which the notice says.
  */
 
 import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
 import type React from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
+import { useSettingsResource } from '../lib/settingsResource';
 
 interface PlatformValues extends Record<string, unknown> {
   'platform.maintenance_mode': boolean;
@@ -23,13 +24,12 @@ interface PlatformValues extends Record<string, unknown> {
   'platform.support_email': string;
 }
 
-const initialValues: PlatformValues = {
-  'platform.maintenance_mode': false,
-  'platform.signup_enabled': true,
-  'platform.support_email': '',
-};
+interface PlatformSettingsDoc extends PlatformValues {
+  updated_at?: string;
+}
 
-const noop = () => {};
+const SETTINGS_URL = '/api/v1/platform-admin/settings';
+const SETTINGS_KEY = ['admin', 'platform', 'settings'] as const;
 
 // ---------------------------------------------------------------------------
 // Page
@@ -37,6 +37,26 @@ const noop = () => {};
 
 const PlatformPage: React.FC = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
+  const { query, save } = useSettingsResource<PlatformSettingsDoc, PlatformValues>(
+    SETTINGS_URL,
+    SETTINGS_KEY
+  );
+
+  const handleSubmit = useCallback(
+    async (values: PlatformValues) => {
+      await save.mutateAsync({
+        'platform.maintenance_mode': values['platform.maintenance_mode'],
+        'platform.signup_enabled': values['platform.signup_enabled'],
+        'platform.support_email': values['platform.support_email'].trim(),
+      });
+      showToast({
+        type: 'success',
+        title: t('admin.platform.saved', { defaultValue: 'Platform settings saved.' }),
+      });
+    },
+    [save, showToast, t]
+  );
 
   const fields = useMemo<ReadonlyArray<SettingsField>>(
     () => [
@@ -72,9 +92,9 @@ const PlatformPage: React.FC = () => {
         fontSize: 13,
       }}
     >
-      {t('admin.platform.readOnlyNotice', {
+      {t('admin.platform.storedOnlyNotice', {
         defaultValue:
-          'Saving is not available yet — the platform settings write endpoint is not implemented. These values are shown for reference only.',
+          'These settings are saved and audited, but the platform does not enforce them yet: turning on maintenance mode or turning off sign-up here has no effect on users.',
       })}
     </span>
   );
@@ -85,14 +105,28 @@ const PlatformPage: React.FC = () => {
         {t('admin.platform.title')}
         <HelpTooltip text={t('admin.platform.helpTooltip')} />
       </h1>
-      <SettingsForm<PlatformValues>
-        fields={fields}
-        initialValues={initialValues}
-        capability="site_settings_write"
-        readOnly
-        notice={notice}
-        onSubmit={noop}
-      />
+      {query.isLoading ? (
+        <p role="status">{t('admin.platform.loading', { defaultValue: 'Loading settings…' })}</p>
+      ) : query.isError || !query.data ? (
+        <p role="alert">
+          {t('admin.platform.loadError', { defaultValue: 'Could not load platform settings.' })}{' '}
+          {query.error?.message}
+        </p>
+      ) : (
+        <SettingsForm<PlatformValues>
+          // Remount on every stored version so the form shows what was saved.
+          key={query.data.updated_at ?? 'initial'}
+          fields={fields}
+          initialValues={{
+            'platform.maintenance_mode': !!query.data['platform.maintenance_mode'],
+            'platform.signup_enabled': !!query.data['platform.signup_enabled'],
+            'platform.support_email': query.data['platform.support_email'] ?? '',
+          }}
+          capability="site_settings_write"
+          notice={notice}
+          onSubmit={handleSubmit}
+        />
+      )}
     </section>
   );
 };
