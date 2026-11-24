@@ -44,10 +44,14 @@ Checks (all over the committed tree, not just the diff)
 Modes
 -----
   (default)     scan the tree, print findings, exit 1 on any FAIL
+  --summary     print the weekly burn-down metric (never fails) — a one-line
+                QUARANTINE-BURNDOWN token line for the dispatcher plus a
+                markdown table (owner breakdown, deadline, required rows/week).
+                See .github/quarantine/cadence.md.
   --census      print the discovered quarantine census as TOML rows (used to
                 regenerate the registry after releasing/adding quarantines)
   --self-test   run the built-in fixture suite over the parser + policy logic
-  --today DATE  override "today" (YYYY-MM-DD) — used by --self-test only
+  --today DATE  override "today" (YYYY-MM-DD) — used by --summary and --self-test
 
 The scan is DB-free and fast: pure text, no cargo, no network.
 """
@@ -255,6 +259,109 @@ def evaluate(census: dict[str, dict], registry: dict[str, dict], today: _dt.date
     return findings
 
 
+def resolve_effective(
+    census: dict[str, dict], registry: dict[str, dict]
+) -> list[tuple[str, str | None, _dt.date | None]]:
+    """Yield (key, owner, due_date) per quarantine, inline-wins-then-registry.
+
+    Mirrors the source-selection in ``evaluate`` but keeps only the two fields
+    the burn-down metric needs. ``owner``/``due`` may be ``None`` when a test is
+    unregistered — the gate (``evaluate``) is what FAILs on that; the metric
+    merely counts it under ``(unassigned)`` so a hole in the registry is still
+    visible in the weekly number rather than silently dropped.
+    """
+    out: list[tuple[str, str | None, _dt.date | None]] = []
+    for key, info in census.items():
+        owner = info["inline_owner"]
+        due_str = info["inline_due"]
+        if owner is None or due_str is None:
+            row = registry.get(key, {})
+            owner = owner or row.get("owner")
+            due_str = due_str or row.get("due")
+        out.append((key, owner, parse_date(str(due_str)) if due_str else None))
+    return out
+
+
+def summarize(
+    census: dict[str, dict], registry: dict[str, dict], today: _dt.date
+) -> dict:
+    """Compute the weekly burn-down metric from the current census + registry.
+
+    Returns a dict with the headline total, a per-owner breakdown, the nearest
+    (soonest) deadline across all rows, the days/weeks left until it, and the
+    rows-per-week burn rate required to reach the target of zero by then.
+    """
+    eff = resolve_effective(census, registry)
+    total = len(eff)
+
+    by_owner: dict[str, int] = {}
+    for _key, owner, _due in eff:
+        label = owner or "(unassigned)"
+        by_owner[label] = by_owner.get(label, 0) + 1
+
+    dues = [d for _k, _o, d in eff if d is not None]
+    nearest = min(dues) if dues else None
+    days_left = (nearest - today).days if nearest is not None else None
+    weeks_left = round(days_left / 7, 1) if days_left is not None else None
+
+    # Required rows/week to hit zero by the nearest deadline. If the deadline is
+    # already here or past, the whole remaining backlog is "due now".
+    if total == 0:
+        need_per_week = 0.0
+    elif days_left is not None and days_left > 0:
+        need_per_week = round(total / (days_left / 7), 1)
+    else:
+        need_per_week = float(total)
+
+    return {
+        "total": total,
+        "by_owner": by_owner,
+        "nearest_due": nearest.isoformat() if nearest else None,
+        "days_left": days_left,
+        "weeks_left": weeks_left,
+        "need_per_week": need_per_week,
+        "target": 0,
+    }
+
+
+def format_summary(metric: dict) -> str:
+    """Render the burn-down metric as a one-line token string + a markdown table.
+
+    The first line is grep-friendly for the dispatcher (a single
+    ``QUARANTINE-BURNDOWN ...`` token line it can lift verbatim into the
+    pm-devops rotation / project-state). The table below it is for humans and
+    for the workflow step summary. Per-owner tokens/rows are emitted in a
+    deterministic (sorted) order so the line is diff-stable week to week.
+    """
+    owners = sorted(metric["by_owner"].items())
+    owner_tokens = " ".join(f"{o}={n}" for o, n in owners)
+    line = (
+        f"QUARANTINE-BURNDOWN total={metric['total']} {owner_tokens} "
+        f"nearest_due={metric['nearest_due']} days_left={metric['days_left']} "
+        f"weeks_left={metric['weeks_left']} need_per_week={metric['need_per_week']} "
+        f"target={metric['target']}"
+    )
+
+    rows = "\n".join(f"| {o} | {n} |" for o, n in owners)
+    table = (
+        "\n### Quarantine burn-down\n\n"
+        f"- **Open quarantined tests:** {metric['total']} (target {metric['target']})\n"
+        f"- **Nearest deadline:** {metric['nearest_due']} "
+        f"({metric['days_left']} days / {metric['weeks_left']} weeks left)\n"
+        f"- **Required burn rate:** {metric['need_per_week']} rows/week to clear by the deadline\n\n"
+        "| Owner | Open rows |\n|---|---|\n"
+        f"{rows}\n"
+    )
+    return line + "\n" + table
+
+
+def run_summary(today: _dt.date) -> int:
+    census = scan_tree(REPO_ROOT)
+    registry = load_registry(REGISTRY_PATH)
+    print(format_summary(summarize(census, registry, today)))
+    return 0
+
+
 def print_census(census: dict[str, dict]) -> None:
     print("# Generated by check-quarantine-age.py --census")
     print("# Fill in owner (a pm-* role) and due (YYYY-MM-DD) for each row.\n")
@@ -388,6 +495,48 @@ async fn multiline_reason() {}
     check("registry-backed past deadline fails", "a.rs::registry_past" in fk and "aged out" in fk["a.rs::registry_past"].msg)
     check("stale registry row warns", "a.rs::stale" in wk)
 
+    # ---- metric: summarize() over the same census/registry ----
+    # Deadlines: inline_future 2027-02-19, inline_past 2026-01-01,
+    # inline_bad_owner 2027-02-19, from_registry 2027-02-19,
+    # registry_past 2025-01-01. Nearest across all = 2025-01-01 (past).
+    metric = summarize(census, registry, today)
+    check("metric counts every quarantine", metric["total"] == 6)
+    check(
+        "metric owner breakdown sums to total",
+        sum(metric["by_owner"].values()) == metric["total"],
+    )
+    check(
+        "metric buckets unregistered under (unassigned)",
+        metric["by_owner"].get("(unassigned)") == 1,
+    )
+    check(
+        "metric picks the nearest (soonest) deadline",
+        metric["nearest_due"] == "2025-01-01",
+    )
+    check(
+        "metric past-deadline burn rate = whole backlog",
+        metric["days_left"] < 0 and metric["need_per_week"] == 6.0,
+    )
+
+    # Future-only deadline -> a finite positive per-week rate.
+    future = {
+        "x.rs::a": {"path": "x.rs", "line": 1, "reason": "", "fn": "a",
+                    "inline_owner": "pm-devops", "inline_due": "2027-02-19"},
+        "x.rs::b": {"path": "x.rs", "line": 2, "reason": "", "fn": "b",
+                    "inline_owner": "pm-backend", "inline_due": "2027-02-19"},
+    }
+    fmetric = summarize(future, {}, today)
+    check("metric future deadline yields positive need_per_week", fmetric["need_per_week"] > 0)
+    check("metric line carries the token header", format_summary(fmetric).startswith("QUARANTINE-BURNDOWN total=2"))
+    check(
+        "metric owner tokens are sorted (pm-backend before pm-devops)",
+        format_summary(fmetric).index("pm-backend=") < format_summary(fmetric).index("pm-devops="),
+    )
+
+    # Empty census -> zero target met, no crash.
+    empty = summarize({}, {}, today)
+    check("metric empty census has total 0 and need 0", empty["total"] == 0 and empty["need_per_week"] == 0.0)
+
     if failures:
         print(f"\n{failures} self-test assertion(s) failed", file=sys.stderr)
         return 1
@@ -404,6 +553,8 @@ def main(argv: list[str]) -> int:
         del args[i:i + 2]
     if args and args[0] == "--self-test":
         return self_test()
+    if args and args[0] == "--summary":
+        return run_summary(today)
     if args and args[0] == "--census":
         print_census(scan_tree(REPO_ROOT))
         return 0
