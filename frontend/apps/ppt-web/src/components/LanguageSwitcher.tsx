@@ -8,7 +8,9 @@ export function LanguageSwitcher() {
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newLocale = event.target.value as Locale;
-    i18n.changeLanguage(newLocale);
+    void i18n.changeLanguage(newLocale).catch((error: unknown) => {
+      console.error('Failed to change language:', error);
+    });
   };
 
   return (
