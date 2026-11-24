@@ -30,15 +30,22 @@
 //!
 //! # Airbnb configuration in this binary
 //!
-//! `connect_airbnb` reads `state.airbnb_config` (loaded from env once per
-//! `AppState::new`). To exercise the happy path (200 + auth URL) rather than
-//! the 503 NOT_CONFIGURED short-circuit, this binary sets
-//! `AIRBNB_CLIENT_ID` / `AIRBNB_CLIENT_SECRET` / `AIRBNB_REDIRECT_URI` once,
-//! process-wide, before any `TestApp` is built (see [`ensure_airbnb_env`]).
-//! Each integration-test file is its own binary, so this does not leak into
-//! `airbnb_oauth_routes_tests.rs` (which relies on the vars being unset for
-//! its 503 test). Consequently this file must NOT assert any NOT_CONFIGURED
-//! (503) branch.
+//! `connect_airbnb` reads `state.airbnb_config` (an [`AirbnbAppConfig`] carried
+//! on `AppState`). To exercise the happy path (200 + auth URL) rather than the
+//! 503 NOT_CONFIGURED short-circuit, [`test_app`] builds the app with an
+//! explicit non-empty config via [`TestApp::with_airbnb_config`] — injected
+//! in-process, **without** touching the `AIRBNB_*` environment variables.
+//!
+//! This matters because this file and `airbnb_oauth_routes_tests.rs` are now
+//! compiled into the *same* test binary (`tests/suite_1.rs` — build-experience
+//! roadmap item 8 consolidated the former per-file binaries). The earlier
+//! harness set `AIRBNB_CLIENT_ID` / `AIRBNB_CLIENT_SECRET` / `AIRBNB_REDIRECT_URI`
+//! process-wide and never cleaned them up, which raced the sibling
+//! `token_exchange_returns_503_when_not_configured` case (it needs the
+//! credentials to stay empty) and flaked `suite_1`. In-process injection keeps
+//! each case's config local to its own `AppState`, so there is no shared
+//! mutable env to race. Consequently this file must NOT assert any
+//! NOT_CONFIGURED (503) branch.
 //!
 //! # Role gates — deliberate behaviour pin
 //!
@@ -69,25 +76,30 @@ use crate::common::{seed_membership, TestApp};
 const JWT_SECRET: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
 
 const TEST_AIRBNB_CLIENT_ID: &str = "test-airbnb-client-id";
+const TEST_AIRBNB_CLIENT_SECRET: &str = "test-airbnb-client-secret";
 const TEST_AIRBNB_REDIRECT_URI: &str = "https://ppt.test/integrations/airbnb/callback";
 
-/// Set the Airbnb OAuth env vars exactly once for this test binary, BEFORE
-/// the first `AppState::new` runs (`AirbnbAppConfig::from_env` snapshots the
-/// env per app instance). Gated behind `Once` for the same glibc
-/// `set_var`/`getenv` race reason as `TestApp::with_config`.
-fn ensure_airbnb_env() {
-    static AIRBNB_ENV_ONCE: std::sync::Once = std::sync::Once::new();
-    AIRBNB_ENV_ONCE.call_once(|| {
-        std::env::set_var("AIRBNB_CLIENT_ID", TEST_AIRBNB_CLIENT_ID);
-        std::env::set_var("AIRBNB_CLIENT_SECRET", "test-airbnb-client-secret");
-        std::env::set_var("AIRBNB_REDIRECT_URI", TEST_AIRBNB_REDIRECT_URI);
-    });
+/// The Airbnb config injected into every app in this file. Non-empty
+/// credentials so the connect happy path produces a 200 + auth URL instead of
+/// the 503 NOT_CONFIGURED short-circuit. `api_base` is the production default
+/// (never hit — connect is pure local string building and sync short-circuits
+/// on the 404 connection-lookup branch before any HTTP call). Built here rather
+/// than via `set_var` so no process-global `AIRBNB_*` env is mutated (see module
+/// docs: the vars are shared with the sibling 503 case in the same binary).
+fn airbnb_test_config() -> api_server::state::AirbnbAppConfig {
+    api_server::state::AirbnbAppConfig {
+        client_id: TEST_AIRBNB_CLIENT_ID.to_string(),
+        client_secret: TEST_AIRBNB_CLIENT_SECRET.to_string(),
+        redirect_uri: TEST_AIRBNB_REDIRECT_URI.to_string(),
+        webhook_secret: String::new(),
+        api_base: integrations::AIRBNB_API_BASE.to_string(),
+    }
 }
 
-/// Build the test app with Airbnb OAuth config present (see module docs).
+/// Build the test app with Airbnb OAuth config present (see module docs),
+/// injected in-process so no process-global env is touched.
 async fn test_app(pool: &PgPool) -> TestApp {
-    ensure_airbnb_env();
-    TestApp::new(pool.clone()).await
+    TestApp::with_airbnb_config(pool.clone(), airbnb_test_config()).await
 }
 
 // ---------------------------------------------------------------------------
