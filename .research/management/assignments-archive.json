@@ -30201,6 +30201,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-integration-property-type-enum-stability",
+      "branch": "auto-impl/pm-integration-property-type-enum-stabil-d1ab3b55",
+      "status": "merged",
+      "claimed_at": "2026-11-24T10:28:53Z",
+      "last_updated": "2026-11-24T12:36:43Z",
+      "status_changed_at": "2026-11-24T12:36:43Z",
+      "pr_number": 3776,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3776",
+      "merged_at": "2026-11-24T12:36:10Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3776 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=characterization: property_type filter contract already correct on dev; added reality-web ListingFilters i18n locking test (sk/cs/de/en) proving filter uses stable enum code not localized label; verify green 643 tests; drift is test-only file outside pm-integration owner area (task is actually reality-web)",
+      "reviewer_summary": "verdict=approve head_oid=bf1588de8e90ab88acfa33f8d5f4d52c834e917b note=test-only-i18n-filter-lock-verified; scope_drift benign (new reality-web test, justified); contract correct on dev; leak-guard meaningful in all 4 locales; COMMENT review (bot cannot self-approve)",
+      "last_reviewed_oid": "bf1588de8e90ab88acfa33f8d5f4d52c834e917b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-24T12:34:56Z"
+    },
+    {
       "task_id": "pm-integration-slug-client-propagation",
       "branch": "auto-impl/pm-integration-slug-client-propagation-90b2d707",
       "status": "merged",
@@ -35022,5 +35044,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T10:37:17Z"
+  "archived_at": "2026-11-24T12:37:00Z"
 }

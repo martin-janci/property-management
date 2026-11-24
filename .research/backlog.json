@@ -16955,7 +16955,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3737",
         "PR #3722"
@@ -16968,7 +16968,12 @@
       ],
       "created_at": "2026-11-23",
       "updated_at": "2026-11-23",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-24T12:24:53Z",
+        "assignment_status": "merged",
+        "pr_number": 3772
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-services-push-apns-rs",
@@ -17023,7 +17028,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review api-core 2026-11-23"
       ],
@@ -17035,7 +17040,12 @@
       ],
       "created_at": "2026-11-23",
       "updated_at": "2026-11-23",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-24T12:24:53Z",
+        "assignment_status": "merged",
+        "pr_number": 3769
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-i18n-buildings-i18n-test-ts",

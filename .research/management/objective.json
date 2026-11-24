@@ -5,7 +5,7 @@
   "last_action": "keep",
   "reason": "current target still has claimable work",
   "stats_at_selection": {
-    "open": 3,
+    "open": 1,
     "claimable": 1
   }
 }

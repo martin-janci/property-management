@@ -465,40 +465,6 @@
       }
     },
     {
-      "id": "code-review-api-core-apns-410-body-parse-stale-missed",
-      "action": "api-server push/apns.rs loses APNs 410-Gone eviction signal when error body fails to parse — stale tokens stay in device_push_tokens",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=2 conf=medium vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T12:28:04Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 2,
-        "vector": "bug"
-      }
-    },
-    {
-      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-oauth-rs",
-      "action": "Churn hotspot: routes/voice_webhooks/oauth.rs — 2 commits this run (voice OAuth 503 mapping + rate-limit test)",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-backlog-refill 2026-11-23T12:28:04Z (score=1 conf=high vector=refactor)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T12:28:04Z",
-      "backlog_ref": {
-        "plan": null,
-        "score": 1,
-        "vector": "refactor"
-      }
-    },
-    {
       "id": "churn-hotspot-backend-servers-api-server-src-services-push-apns-rs",
       "action": "Churn hotspot: services/push/apns.rs — 2 commits this run (push stack instability under watch)",
       "owner_role": "pm-tech-lead",
@@ -896,30 +862,6 @@
       "depends_on": [],
       "status": "open",
       "deadline": null,
-      "source": "pm-analysis 2026-11-24",
-      "first_open_at": "2026-11-24T10:28:53Z"
-    },
-    {
-      "id": "pm-devops-dependabot-3441-axum-test-land-2026-11-24",
-      "action": "Dependabot #3441 (axum-test 21.0.0 → 21.1.0) open since 2026-11-23 — trivial patch, land with normal gate.",
-      "owner_role": "pm-devops",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-24",
-      "first_open_at": "2026-11-24T10:28:53Z"
-    },
-    {
-      "id": "pm-devops-quarantine-burndown-cadence-2026-11-24",
-      "action": "Draft a quarantine burn-down cadence (track 2 of active sprint, 201 rows, due 2027-02-19, zero progress in 2 weeks). Weekly dispatcher-visible metric + first-wave batch per owner (193/6/2).",
-      "owner_role": "pm-devops",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": "2027-02-19",
       "source": "pm-analysis 2026-11-24",
       "first_open_at": "2026-11-24T10:28:53Z"
     }
