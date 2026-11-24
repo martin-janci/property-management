@@ -49,15 +49,15 @@
       "branch": "auto-impl/pm-scrum-master-airbnb-env-leak-flake-20-6174a29b",
       "status": "review",
       "claimed_at": "2026-11-24T10:28:53Z",
-      "last_updated": "2026-11-24T11:46:47Z",
+      "last_updated": "2026-11-24T11:49:18Z",
       "status_changed_at": "2026-11-24T11:46:47Z",
       "pr_number": 3778,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3778",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3778 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=airbnb env-leak fix: replaced set_var leak with TestApp::with_airbnb_config injection; IG3 two-commit proven; suite_1 314/0; single test file changed, no prod code; full-gate reds are pre-existing/env-only (DNS-rebinding proxy artifact + suite_4 esign set_var flake), unrelated to changed file",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=6513330e9491a2ea507c148e50e68f508e02c030 note=env-leak-fix-verified-root-cause-removed (set_var deleted, uses with_airbnb_config injection); confined to 1 test file; reds pre-existing/unrelated; COMMENT review (bot self-approve blocked)",
+      "last_reviewed_oid": "6513330e9491a2ea507c148e50e68f508e02c030",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -89,5 +89,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-24T11:46:47Z"
+  "generated": "2026-11-24T11:49:18Z"
 }
