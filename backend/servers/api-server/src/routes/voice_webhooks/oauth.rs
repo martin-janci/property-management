@@ -723,4 +723,152 @@ mod tests {
         assert!(!voice_refresh_attempt_allowed(user_a));
         assert!(voice_refresh_attempt_allowed(user_b));
     }
+
+    // --- VoiceOAuthHandlerError response channel ------------------------
+    //
+    // Both handlers funnel every failure through `VoiceOAuthHandlerError`, which
+    // carries two distinct wire shapes (see the type's doc comment): the
+    // sanitized upstream exchange/refresh failure is an RFC 6749 §5.2 OAuth
+    // error body (`{error, error_description}`), while every other failure
+    // (rate limit, bad platform, no-org, DB/encryption) is the PPT
+    // `{code, message}` envelope. The service-level tests in
+    // `services::voice_oauth` pin the `(StatusCode, Json<_>)` tuples the
+    // handlers build; these pin that the handler's error enum (1) routes each
+    // tuple shape to the correct variant via its `From` impls and (2) preserves
+    // the status AND renders the right body shape once it reaches
+    // `into_response()` — the exact bytes the HTTP client receives. That
+    // boundary lives in this module and had no direct coverage.
+
+    /// Drive a `VoiceOAuthHandlerError` through `into_response()` and collect
+    /// the rendered `(status, body-as-utf8)` the client would see.
+    async fn rendered(err: VoiceOAuthHandlerError) -> (StatusCode, String) {
+        let resp = err.into_response();
+        let status = resp.status();
+        let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("collect response body");
+        (
+            status,
+            String::from_utf8(bytes.to_vec()).expect("utf8 body"),
+        )
+    }
+
+    /// Upstream-failure → RFC 6749 §5.2 status mapping, end to end through the
+    /// handler error channel: a transient transport fault (DNS/connect/timeout)
+    /// surfaces as HTTP 503 `temporarily_unavailable`, a provider grant
+    /// rejection as HTTP 400 `invalid_grant`. Both must render the spec OAuth
+    /// body (never the PPT envelope) and must not echo the upstream detail that
+    /// `voice_oauth_error_response` logs server-side (hosts, client ids,
+    /// bearer tokens).
+    #[tokio::test]
+    async fn upstream_failure_renders_rfc6749_status_and_body() {
+        use integrations::VoiceOAuthError as E;
+
+        let sensitive = "connect error: dns failure for secret-internal-host.oauth.example:443 \
+             (bearer AKIA-LEAKED-SECRET)";
+
+        // A relative URL (no base) yields a real `reqwest::Error` synchronously
+        // via `RequestBuilder::build` — a genuine transport fault, no network.
+        let http_err = reqwest::Client::new()
+            .get("/relative-url-without-base")
+            .build()
+            .expect_err("a relative URL must produce a reqwest::Error");
+
+        // (VoiceOAuthError, expected RFC code, expected HTTP status). Each goes
+        // through the exact path the handlers take: classify -> sanitized
+        // response tuple -> `?`-converted into `VoiceOAuthHandlerError`.
+        let exchange_err = E::ExchangeFailed("provider rejected the code".into());
+        let cases: [(E, &str, StatusCode); 2] = [
+            (
+                E::Http(http_err),
+                "temporarily_unavailable",
+                StatusCode::SERVICE_UNAVAILABLE,
+            ),
+            (exchange_err, "invalid_grant", StatusCode::BAD_REQUEST),
+        ];
+
+        for (upstream, expected_code, expected_status) in cases {
+            let err: VoiceOAuthHandlerError = voice_oauth_error_response(
+                classify_voice_oauth_error(&upstream, OAUTH_REFRESH_FAILED_MESSAGE),
+                sensitive,
+            )
+            .into();
+
+            // The `(StatusCode, Json<OAuthError>)` tuple routes to the OAuth arm.
+            assert!(
+                matches!(err, VoiceOAuthHandlerError::OAuth(..)),
+                "an OAuthError tuple must become the OAuth variant"
+            );
+
+            let (status, body) = rendered(err).await;
+            assert_eq!(
+                status, expected_status,
+                "RFC 6749 §5.2 status for {expected_code}"
+            );
+
+            let json: serde_json::Value = serde_json::from_str(&body).expect("json body");
+            assert_eq!(
+                json.get("error").and_then(|v| v.as_str()),
+                Some(expected_code),
+                "spec `error` code in rendered body: {body}"
+            );
+            assert_eq!(
+                json.get("error_description").and_then(|v| v.as_str()),
+                Some(OAUTH_REFRESH_FAILED_MESSAGE),
+                "`error_description` must be the static client message: {body}"
+            );
+            assert!(
+                json.get("code").is_none() && json.get("message").is_none(),
+                "upstream-failure body must be the RFC OAuth shape, not the PPT envelope: {body}"
+            );
+            for needle in ["secret-internal-host", "AKIA-LEAKED-SECRET", "dns failure"] {
+                assert!(
+                    !body.contains(needle),
+                    "rendered body leaked upstream detail `{needle}`: {body}"
+                );
+            }
+        }
+    }
+
+    /// Rate-limit path → the throttle both handlers apply
+    /// (`voice_exchange_attempt_allowed` / `voice_refresh_attempt_allowed`)
+    /// returns the `(429, Json<ErrorResponse>)` tuple. Through the handler error
+    /// channel it must route to the `Standard` variant and render as HTTP 429
+    /// with the PPT `{code, message}` envelope — NOT the RFC OAuth shape.
+    #[tokio::test]
+    async fn rate_limit_rejection_renders_429_ppt_envelope() {
+        // The exact tuple both handlers build when the per-user throttle trips.
+        let err: VoiceOAuthHandlerError = (
+            StatusCode::TOO_MANY_REQUESTS,
+            Json(ErrorResponse::new(
+                "RATE_LIMITED",
+                "Too many token refresh attempts; try again later",
+            )),
+        )
+            .into();
+
+        // The `(StatusCode, Json<ErrorResponse>)` tuple routes to the Standard arm.
+        assert!(
+            matches!(err, VoiceOAuthHandlerError::Standard(..)),
+            "an ErrorResponse tuple must become the Standard variant"
+        );
+
+        let (status, body) = rendered(err).await;
+        assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+
+        let json: serde_json::Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!(
+            json.get("code").and_then(|v| v.as_str()),
+            Some("RATE_LIMITED"),
+            "rate-limit body must carry the PPT `code`: {body}"
+        );
+        assert!(
+            json.get("message").and_then(|v| v.as_str()).is_some(),
+            "rate-limit body must carry a human-readable `message`: {body}"
+        );
+        assert!(
+            json.get("error").is_none(),
+            "rate-limit body must be the PPT envelope, not an RFC OAuth error: {body}"
+        );
+    }
 }
