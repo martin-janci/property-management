@@ -153,6 +153,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-triage-stalled-reviews-2555-2559-2026-11-16-retry1",
+      "branch": "auto-impl/pm-scrum-master-triage-stalled-reviews-2-5c38f401",
+      "status": "in-progress",
+      "claimed_at": "2026-11-24T00:27:21Z",
+      "last_updated": "2026-11-24T00:27:21Z",
+      "status_changed_at": "2026-11-24T00:27:21Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ],
   "generated": "2026-11-23T23:09:17Z"
