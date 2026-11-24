@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-24T12:34:00Z",
+  "archived_at": "2026-11-24T14:35:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12594,6 +12594,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-24T04:33:05Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-ai-chat-querykey-paging",
+      "action": "ppt web ui ai chat querykey paging",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-24T14:30:34Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-23T04:28:04Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-20T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3779,
+        "merged_at": "2026-11-24T13:51:49Z",
+        "at": "2026-11-24T14:30:34Z"
       }
     },
     {
@@ -32663,6 +32688,25 @@
       }
     },
     {
+      "id": "pm-integration-property-type-enum-stability",
+      "action": "Verify #3609 property_type i18n helper keeps API filter contract on stable enum codes across sk/cs/de/en; localize labels only in display fields",
+      "owner_role": "pm-integration",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19 | gc1-reconcile 2026-11-24T14:30:34Z",
+      "first_open_at": "2026-11-20T10:30:27Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3776,
+        "merged_at": "2026-11-24T12:36:10Z",
+        "at": "2026-11-24T14:30:34Z"
+      }
+    },
+    {
       "id": "pm-integration-rustsec-exception-policy-ci-surface",
       "action": "[CASCADED-DROP: depends_on gh-issue-3124 terminal-failed] Surface the RUSTSEC-exception policy in the cargo-deny CI gate description so #3124-class blockers are triaged faster next time (bounded deadline, approver captured in the exception row)",
       "owner_role": "pm-integration",
@@ -33259,6 +33303,25 @@
         "merged_pr": 3588,
         "merged_at": "2026-11-17T06:33:46Z",
         "at": "2026-11-17T06:36:04Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-airbnb-env-leak-flake-2026-11-19",
+      "action": "Fix env-var leak in tests/suites/airbnb_install_routes_tests.rs (set_var without cleanup) causing airbnb_oauth_routes_tests flake in parallel suite_1",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-19 | gc1-reconcile 2026-11-24T14:30:34Z",
+      "first_open_at": "2026-11-20T10:30:27Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3778,
+        "merged_at": "2026-11-24T12:58:36Z",
+        "at": "2026-11-24T14:30:34Z"
       }
     },
     {

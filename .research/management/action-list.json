@@ -167,30 +167,6 @@
       "first_open_at": "2026-11-20T10:30:27Z"
     },
     {
-      "id": "pm-integration-property-type-enum-stability",
-      "action": "Verify #3609 property_type i18n helper keeps API filter contract on stable enum codes across sk/cs/de/en; localize labels only in display fields",
-      "owner_role": "pm-integration",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
-      "id": "pm-scrum-master-airbnb-env-leak-flake-2026-11-19",
-      "action": "Fix env-var leak in tests/suites/airbnb_install_routes_tests.rs (set_var without cleanup) causing airbnb_oauth_routes_tests flake in parallel suite_1",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-19",
-      "first_open_at": "2026-11-20T10:30:27Z"
-    },
-    {
       "id": "code-review-mobile-rn-hardcoded-button-labels",
       "action": "mobile rn hardcoded button labels",
       "owner_role": "pm-backend",
@@ -355,24 +331,6 @@
       "deadline": null,
       "source": "pm-analysis 2026-11-22",
       "first_open_at": "2026-11-22T04:28:21Z"
-    },
-    {
-      "id": "code-review-ppt-web-ui-ai-chat-querykey-paging",
-      "action": "ppt web ui ai chat querykey paging",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T04:28:04Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T04:28:04Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-20T00:00:00Z"
-      }
     },
     {
       "id": "code-review-ppt-web-ui-dsa-reports-i18n",
