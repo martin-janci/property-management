@@ -157,22 +157,21 @@ export async function register(input: {
   return postJson('/api/v1/users/register', input);
 }
 
-export async function requestPasswordReset(_email: string): Promise<void> {
-  // TODO: wire when reality-server exposes /api/v1/users/password-reset.
-  throw new AuthApiError(
-    'Password reset is not available yet. Please contact support.',
-    501,
-    'NOT_IMPLEMENTED'
-  );
+/**
+ * Starts the reset flow via `POST /api/v1/users/password-reset`. The server
+ * answers identically whether or not the email has an account (no account
+ * enumeration) and emails a link to `/auth/reset-password?token=…`.
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  await postJson<{ message: string }>('/api/v1/users/password-reset', { email });
 }
 
-export async function confirmPasswordReset(_token: string, _newPassword: string): Promise<void> {
-  // TODO: wire when reality-server exposes /api/v1/users/password-reset/confirm.
-  throw new AuthApiError(
-    'Password reset is not available yet. Please contact support.',
-    501,
-    'NOT_IMPLEMENTED'
-  );
+/** Completes the reset via `POST /api/v1/users/password-reset/confirm`. */
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+  await postJson<{ message: string }>('/api/v1/users/password-reset/confirm', {
+    token,
+    new_password: newPassword,
+  });
 }
 
 export async function changePassword(

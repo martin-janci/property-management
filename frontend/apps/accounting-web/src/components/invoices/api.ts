@@ -18,7 +18,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getAccountingApiBase } from '@/lib/accountingClient';
+import { authedFetch } from '@/lib/authedFetch';
 import type {
   AccInvoiceExt,
   CreateInvoice,
@@ -27,24 +27,6 @@ import type {
   IssueInvoiceRequest,
   UpdateInvoice,
 } from './types';
-
-const API = () => `${getAccountingApiBase()}/api/v1`;
-
-async function authedFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API()}${path}`, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-    ...init,
-  });
-  if (!res.ok) {
-    throw new Error(`Request failed (${res.status})`);
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
-}
 
 export const invoiceKeys = {
   all: ['acc', 'invoices'] as const,
