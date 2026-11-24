@@ -1707,4 +1707,72 @@ BjoqgEdIaMmiy1bJKyDvIng=
             _ => panic!("expected Failed(PushFailed(..)) after an UNREGISTERED rejection"),
         }
     }
+
+    // ------------------------------------------------------------------
+    // Outbound request contract (characterization).
+    //
+    // The existing wiremock tests match only method + path; none inspect the
+    // request the adapter actually PUTS on the wire. This captures it and locks
+    // the FCM HTTP v1 payload shape (`message.token`, `message.notification`,
+    // `message.data`) plus the `Authorization: Bearer` header, so a refactor of
+    // `send_fcm_v1`'s `serde_json` body or the bearer wiring surfaces as a test
+    // diff rather than a message FCM silently rejects in production.
+    // ------------------------------------------------------------------
+    #[tokio::test]
+    async fn send_fcm_v1_posts_expected_payload_and_bearer() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .and(wiremock::matchers::path(
+                "/v1/projects/test-project/messages:send",
+            ))
+            .respond_with(
+                wiremock::ResponseTemplate::new(200).set_body_json(
+                    serde_json::json!({ "name": "projects/test-project/messages/1" }),
+                ),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = FcmHttpAdapter::with_token_provider(
+            failing_pool(),
+            configured_fcm_config(Some(server.uri())),
+            FcmTokenProvider::Static("oauth-bearer-xyz".into()),
+        );
+
+        let notification = fcm_test_notification();
+        let (delivered, expired) = adapter
+            .send_fcm_v1("test-project", "device-token-abc", &notification)
+            .await;
+        assert!(delivered, "a parseable 200 success is delivered");
+        assert!(!expired, "a success never evicts the token");
+
+        let requests = server
+            .received_requests()
+            .await
+            .expect("wiremock records requests");
+        assert_eq!(requests.len(), 1, "exactly one FCM POST is sent");
+        let req = &requests[0];
+
+        assert_eq!(
+            req.headers
+                .get("authorization")
+                .and_then(|v| v.to_str().ok()),
+            Some("Bearer oauth-bearer-xyz"),
+            "FCM v1 send must carry the OAuth2 access token as a Bearer header"
+        );
+
+        let body: serde_json::Value = serde_json::from_slice(&req.body).expect("FCM body is JSON");
+        assert_eq!(body["message"]["token"], "device-token-abc");
+        assert_eq!(body["message"]["notification"]["title"], "Building update");
+        assert_eq!(
+            body["message"]["notification"]["body"],
+            "The lift will be serviced tomorrow."
+        );
+        assert_eq!(
+            body["message"]["data"]["notification_id"],
+            notification.id.to_string()
+        );
+        assert_eq!(body["message"]["data"]["category"], "announcements");
+        assert_eq!(body["message"]["data"]["priority"], "normal");
+    }
 }

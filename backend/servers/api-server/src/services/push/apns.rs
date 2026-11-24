@@ -781,4 +781,286 @@ mod tests {
         assert_eq!(reason, "UNKNOWN");
         assert!(!apns_reason_indicates_stale(reason));
     }
+
+    // ------------------------------------------------------------------
+    // Outbound request contract (characterization).
+    //
+    // No existing test pins what the adapter actually PUTS on the wire for a
+    // send — the FCM side has body-matching wiremock tests, APNs did not.
+    // These capture the real request against a mock gateway and lock the APNs
+    // payload shape + headers so a refactor of `send_apns_one`'s `serde_json`
+    // body or the `apns-topic` / `apns-priority` / bearer headers surfaces as a
+    // test diff rather than a silently malformed push Apple rejects in prod.
+    // ------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn send_apns_one_posts_expected_payload_and_headers() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(wiremock::ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_against(server.uri());
+        let notification = apns_test_notification();
+        let (success, expired) = adapter
+            .send_apns_one("jwt-token-xyz", "device-token-abc", &notification)
+            .await;
+        assert!(success, "200 is a successful delivery");
+        assert!(!expired, "a 200 never evicts the token");
+
+        let requests = server
+            .received_requests()
+            .await
+            .expect("wiremock records requests");
+        assert_eq!(requests.len(), 1, "exactly one APNs POST is sent");
+        let req = &requests[0];
+
+        // Path is /3/device/{token}.
+        assert_eq!(
+            req.url.path(),
+            "/3/device/device-token-abc",
+            "APNs device path carries the raw device token"
+        );
+
+        // Headers: topic = bundle id, priority 10 (foreground), bearer JWT.
+        let header = |name: &str| {
+            req.headers
+                .get(name)
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("")
+                .to_string()
+        };
+        assert_eq!(header("apns-topic"), "three.two.bit.ppt.management");
+        assert_eq!(header("apns-priority"), "10");
+        assert_eq!(header("authorization"), "Bearer jwt-token-xyz");
+
+        // Body: aps alert dictionary + custom data fields, verbatim.
+        let body: serde_json::Value = serde_json::from_slice(&req.body).expect("APNs body is JSON");
+        assert_eq!(body["aps"]["alert"]["title"], "Building update");
+        assert_eq!(
+            body["aps"]["alert"]["body"],
+            "The lift will be serviced tomorrow."
+        );
+        assert_eq!(body["aps"]["sound"], "default");
+        assert_eq!(body["notification_id"], notification.id.to_string());
+        assert_eq!(body["category"], "announcements");
+        assert_eq!(body["priority"], "normal");
+    }
+
+    /// A 200 OK through the real HTTP path reports delivered and never evicts.
+    /// The existing HTTP-path tests only cover rejection statuses (410/503);
+    /// this pins the success arm of `send_apns_one`.
+    #[tokio::test]
+    async fn send_apns_200_reports_delivered_without_eviction() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(wiremock::ResponseTemplate::new(200).set_body_string("{}"))
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_against(server.uri());
+        let (success, expired) = adapter
+            .send_apns_one("dummy-jwt", "device-token-123", &apns_test_notification())
+            .await;
+
+        assert!(success, "a 200 is a successful delivery");
+        assert!(!expired, "a 200 must never evict the token");
+    }
+
+    /// A 400 whose parseable error body carries `BadDeviceToken` must evict the
+    /// token via the *reason* path (`apns_reason_indicates_stale`), NOT the
+    /// status path (400 is not 410). This complements the 410-status eviction
+    /// tests and pins that a malformed-token 400 still purges the dead token.
+    #[tokio::test]
+    async fn send_apns_400_bad_device_token_reason_evicts() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(
+                wiremock::ResponseTemplate::new(400)
+                    .set_body_json(serde_json::json!({ "reason": "BadDeviceToken" })),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_against(server.uri());
+        let (success, expired) = adapter
+            .send_apns_one("dummy-jwt", "device-token-123", &apns_test_notification())
+            .await;
+
+        assert!(!success, "a 400 rejection is not a delivery");
+        assert!(
+            expired,
+            "a 400 BadDeviceToken must evict the stale token via the reason path"
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // deliver() orchestration (characterization — mirrors the FCM `deliver`
+    // tests). The fanout-facing entry point had no direct APNs coverage: the
+    // NotConfigured / NoTargets short-circuits, the mint-failure branch
+    // (APNs-specific — FCM has no equivalent), the success → Delivered path,
+    // and the stale-token eviction loop were only reachable through the live
+    // fanout worker. These pin that orchestration.
+    // ------------------------------------------------------------------
+
+    /// A valid prime256v1 EC key in PKCS#8 PEM — used ONLY so `mint_apns_jwt`
+    /// produces a signable JWT in the `deliver()` happy-path tests. It is a
+    /// throwaway key generated for the test and grants access to nothing; the
+    /// mock gateway never validates the JWT signature.
+    const TEST_APNS_P8_PEM: &str = "-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgouhvmqFFQxGBGDj7
+ebAjCqRdDUQniux2HI0ZO8XfEKShRANCAAQErsx2TJ0whali69aC1sxfEB1azI9S
+jBTBh5EfKCiMh0lbOCisTPZ8/d+a2wMaM92YQzR6CTstOFZklwTXF7Dz
+-----END PRIVATE KEY-----";
+
+    /// Like [`apns_adapter_against`] but with a *valid* ES256 signing key so
+    /// `deliver()` can mint a JWT and reach the HTTP send. The `token_repo` is
+    /// still backed by the unreachable pool (eviction DB calls fail and are
+    /// swallowed, exactly as in production best-effort cleanup).
+    fn apns_adapter_with_valid_key_against(base_url: String) -> ApnsHttpAdapter {
+        ApnsHttpAdapter {
+            token_repo: DevicePushTokenRepository::new(failing_pool()),
+            apns_config: ApnsConfig {
+                p8_key_pem: Some(TEST_APNS_P8_PEM.to_string()),
+                key_id: Some("ABCDE12345".to_string()),
+                team_id: Some("TEAM123456".to_string()),
+                topic: "three.two.bit.ppt.management".to_string(),
+                apns_base_url: Some(base_url),
+            },
+            http: Some(
+                build_push_http_client(Duration::from_secs(5), false)
+                    .expect("HTTP/1.1 test client builds"),
+            ),
+        }
+    }
+
+    /// `deliver()` returns `NotConfigured` (attempting nothing — no JWT minted,
+    /// no HTTP call) when the APNs credentials are absent.
+    #[tokio::test]
+    async fn deliver_returns_not_configured_when_unconfigured() {
+        let adapter = ApnsHttpAdapter::new(
+            failing_pool(),
+            ApnsConfig {
+                p8_key_pem: None,
+                key_id: None,
+                team_id: None,
+                topic: "three.two.bit.ppt.management".to_string(),
+                apns_base_url: None,
+            },
+        );
+
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &[], &apns_test_notification())
+            .await;
+
+        assert!(
+            matches!(outcome, ProviderOutcome::NotConfigured),
+            "missing APNs credentials must yield NotConfigured"
+        );
+    }
+
+    /// `deliver()` returns `NoTargets` (configured, but nothing to send) when
+    /// the shared token set holds no APNs tokens — e.g. an Android-only user.
+    /// This short-circuits BEFORE the ES256 JWT mint, so a deliberately invalid
+    /// signing key never matters here.
+    #[tokio::test]
+    async fn deliver_returns_no_targets_for_fcm_only_token_set() {
+        let adapter = ApnsHttpAdapter::new(failing_pool(), configured_apns());
+
+        let tokens = vec![crate::services::push::stored_token("fcm-only", "fcm", None)];
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &tokens, &apns_test_notification())
+            .await;
+
+        assert!(
+            matches!(outcome, ProviderOutcome::NoTargets),
+            "an APNs-tokenless set must yield NoTargets"
+        );
+    }
+
+    /// APNs-specific branch (no FCM counterpart): when there IS an APNs target
+    /// but the P8 key cannot be parsed into a signing key, `mint_apns_jwt`
+    /// returns `None` and `deliver()` fails with the fixed "failed to mint APNs
+    /// JWT" message — no HTTP call is attempted.
+    #[tokio::test]
+    async fn deliver_fails_when_jwt_cannot_be_minted() {
+        // `configured_apns()` carries an invalid ("--- not a real key ---") P8
+        // key, so it is_configured() == true but mint fails.
+        let adapter = ApnsHttpAdapter::new(failing_pool(), configured_apns());
+
+        let tokens = vec![crate::services::push::stored_token("apns-1", "apns", None)];
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &tokens, &apns_test_notification())
+            .await;
+
+        match outcome {
+            ProviderOutcome::Failed(NotificationError::PushFailed(msg)) => {
+                assert_eq!(msg, "failed to mint APNs JWT");
+            }
+            _ => panic!("expected Failed(PushFailed(\"failed to mint APNs JWT\"))"),
+        }
+    }
+
+    /// Happy path through `deliver()`: one APNs token, gateway accepts (200) →
+    /// `Delivered`. No eviction, so the (unreachable) DB is never touched.
+    #[tokio::test]
+    async fn deliver_reports_delivered_on_apns_accept() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(wiremock::ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_with_valid_key_against(server.uri());
+        let tokens = vec![crate::services::push::stored_token(
+            "apns-live-token",
+            "apns",
+            None,
+        )];
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &tokens, &apns_test_notification())
+            .await;
+
+        assert!(
+            matches!(outcome, ProviderOutcome::Delivered),
+            "an accepted APNs send must report Delivered"
+        );
+    }
+
+    /// Permanent-failure path through `deliver()`: the single APNs token is
+    /// rejected with 410 Gone, so (a) the overall outcome is `Failed` and (b)
+    /// the stale-token eviction loop runs. Eviction is best-effort — against the
+    /// failing pool the delete errors and is swallowed with a warn — but
+    /// exercising the loop pins that an expired token drives the eviction branch
+    /// and that an eviction DB failure neither changes the outcome nor panics
+    /// the fanout worker.
+    #[tokio::test]
+    async fn deliver_reports_failed_and_attempts_eviction_on_410() {
+        let server = wiremock::MockServer::start().await;
+        wiremock::Mock::given(wiremock::matchers::method("POST"))
+            .respond_with(
+                wiremock::ResponseTemplate::new(410)
+                    .set_body_json(serde_json::json!({ "reason": "Unregistered" })),
+            )
+            .mount(&server)
+            .await;
+
+        let adapter = apns_adapter_with_valid_key_against(server.uri());
+        let tokens = vec![crate::services::push::stored_token(
+            "apns-dead-token",
+            "apns",
+            None,
+        )];
+        let outcome = adapter
+            .deliver(Uuid::new_v4(), &tokens, &apns_test_notification())
+            .await;
+
+        match outcome {
+            ProviderOutcome::Failed(NotificationError::PushFailed(msg)) => {
+                assert_eq!(msg, "all APNs delivery attempts failed");
+            }
+            _ => panic!("expected Failed(PushFailed(\"all APNs delivery attempts failed\"))"),
+        }
+    }
 }
