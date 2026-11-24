@@ -24,19 +24,42 @@ import type {
 // the interceptor and go out unauthenticated (401 in prod).
 const API_BASE = '/ai/chat';
 
-/** Query keys for AI chat */
+/**
+ * Query keys for AI chat.
+ *
+ * The paged reads (`sessions`, `messages`, `escalated`) are split into a
+ * *scope* key and a *paged* key: the scope key (`sessions()`,
+ * `messages(sessionId)`, `escalated()`) is the invalidation prefix, and the
+ * paged key (`sessionsList(limit, offset)`, …) folds the `{ limit, offset }`
+ * pagination inputs into the key as the last element — mirroring the repo's
+ * `queryKeys.ts` factory convention (`list: (filters) => [...lists(), filters]`).
+ *
+ * This matters because the query functions read `limit`/`offset`: if the key
+ * omitted them, two different pages (e.g. offset 0 and offset 100) would
+ * collide on the same cache entry and TanStack Query would serve the first
+ * page's cached rows for the second page's inputs. Folding the inputs into the
+ * key gives each page its own cache entry. Invalidating the scope key still
+ * prefix-matches every page, so `invalidateQueries({ queryKey: sessions() })`
+ * continues to refresh all pages.
+ */
 export const aiChatKeys = {
   all: ['ai-chat'] as const,
   sessions: () => [...aiChatKeys.all, 'sessions'] as const,
+  sessionsList: (limit: number, offset: number) =>
+    [...aiChatKeys.sessions(), { limit, offset }] as const,
   session: (id: string) => [...aiChatKeys.all, 'session', id] as const,
   messages: (sessionId: string) => [...aiChatKeys.all, 'messages', sessionId] as const,
+  messagesList: (sessionId: string, limit: number, offset: number) =>
+    [...aiChatKeys.messages(sessionId), { limit, offset }] as const,
   escalated: () => [...aiChatKeys.all, 'escalated'] as const,
+  escalatedList: (limit: number, offset: number) =>
+    [...aiChatKeys.escalated(), { limit, offset }] as const,
 };
 
 /** Fetch user's chat sessions */
 export function useAiChatSessions(limit = 50, offset = 0) {
   return useQuery({
-    queryKey: aiChatKeys.sessions(),
+    queryKey: aiChatKeys.sessionsList(limit, offset),
     queryFn: async () => {
       const res = await getApiClient().get<{ sessions: ChatSessionSummary[] }>(
         `${API_BASE}/sessions`,
@@ -64,7 +87,7 @@ export function useAiChatSession(sessionId: string | null) {
 /** Fetch messages for a session */
 export function useAiChatMessages(sessionId: string | null, limit = 100, offset = 0) {
   return useQuery({
-    queryKey: aiChatKeys.messages(sessionId ?? ''),
+    queryKey: aiChatKeys.messagesList(sessionId ?? '', limit, offset),
     queryFn: async () => {
       if (!sessionId) return [];
       const res = await getApiClient().get<{ messages: ChatMessage[] }>(
@@ -114,11 +137,19 @@ export function useSendMessage() {
       return res.data;
     },
     onSuccess: (data, { sessionId }) => {
-      // Update messages cache with new messages
-      queryClient.setQueryData<ChatMessage[]>(aiChatKeys.messages(sessionId), (old) => {
-        if (!old) return [data.userMessage, data.assistantMessage];
-        return [...old, data.userMessage, data.assistantMessage];
-      });
+      // Append the new messages to every cached page of this session. Message
+      // pages are now keyed by `{ limit, offset }`, so the optimistic write
+      // targets the `messages(sessionId)` scope prefix via `setQueriesData`
+      // (plural) rather than a single fixed key — otherwise the write would
+      // land on a stale key that no live query reads and the new turn would
+      // not appear until a refetch.
+      queryClient.setQueriesData<ChatMessage[]>(
+        { queryKey: aiChatKeys.messages(sessionId) },
+        (old) => {
+          if (!old) return [data.userMessage, data.assistantMessage];
+          return [...old, data.userMessage, data.assistantMessage];
+        }
+      );
       // Also invalidate to ensure we have latest
       queryClient.invalidateQueries({ queryKey: aiChatKeys.sessions() });
     },
@@ -159,7 +190,7 @@ export function useMessageFeedback() {
 /** Fetch escalated messages */
 export function useEscalatedMessages(limit = 50, offset = 0) {
   return useQuery({
-    queryKey: aiChatKeys.escalated(),
+    queryKey: aiChatKeys.escalatedList(limit, offset),
     queryFn: async () => {
       const res = await getApiClient().get<{ messages: ChatMessage[] }>(`${API_BASE}/escalated`, {
         params: { limit, offset },
