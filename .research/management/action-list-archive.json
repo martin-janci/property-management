@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-25T10:44:08Z",
+  "archived_at": "2026-11-25T11:28:26Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -32157,6 +32157,33 @@
         "merged_pr": 3784,
         "merged_at": "2026-11-24T18:41:51Z",
         "at": "2026-11-24T18:45:41Z"
+      }
+    },
+    {
+      "id": "gh-issue-3791",
+      "action": "Follow-up: DSA report card dates are hardcoded to en-GB despite full string localization (PR #3783) (Closes #3791)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-25T10:38:25Z (#3791) | gc1-reconcile 2026-11-25T11:28:26Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T10:38:25Z",
+      "issue_ref": {
+        "number": 3791,
+        "url": "https://github.com/martin-janci/property-management/issues/3791",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3795,
+        "merged_at": "2026-11-25T11:28:25Z",
+        "at": "2026-11-25T11:28:26Z"
       }
     },
     {

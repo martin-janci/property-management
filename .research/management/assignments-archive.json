@@ -29675,6 +29675,28 @@
       "merge_attempted_at": "2026-11-24T18:45:34Z"
     },
     {
+      "task_id": "gh-issue-3791",
+      "branch": "auto-impl/gh-issue-3791-4032f994",
+      "status": "merged",
+      "claimed_at": "2026-11-25T10:41:18Z",
+      "last_updated": "2026-11-25T11:28:25Z",
+      "status_changed_at": "2026-11-25T11:28:25Z",
+      "pr_number": 3795,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3795",
+      "merged_at": "2026-11-25T11:28:25Z",
+      "specialist": "ppt-web",
+      "implementer_summary": "pr=3795 status=done specialist=ppt-web scope_drift=false note=Localized DSA report card dates via i18n.language (was hardcoded en-GB); fixed sibling DsaReportsPage; IG3 test+fix split; biome/tsc/vitest green. [2026-11-25: reviewer approved; marked ready; CI still in-progress at review time → Phase 5.5 merge deferred to next cycle (ci-in-progress skip).]",
+      "reviewer_summary": "verdict=approve head_oid=14d671163e82e3441e9f583721ae10a394cc3de3 note=clean-i18n-date-fix-ig3-test-ci-green",
+      "last_reviewed_oid": "14d671163e82e3441e9f583721ae10a394cc3de3",
+      "scope_drift": false,
+      "code_reuse_warn": "en-GB formatDate helper duplicated in EddRecordCard/ModerationCaseCard/government-portal — shared util would dedupe (out of scope for #3791)",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "hotfix-no-test-pr-3497",
       "branch": "auto-impl/hotfix-no-test-pr-3497-ecc94f46",
       "status": "done",
@@ -35462,5 +35484,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-25T10:44:07Z"
+  "archived_at": "2026-11-25T11:28:25Z"
 }
