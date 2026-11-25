@@ -101,8 +101,13 @@ export interface LayoutSectionsProps {
 export function LayoutSections({ layout, listing, registry, onSectionClick }: LayoutSectionsProps) {
   return (
     <div className="layout-sections">
-      {layout.sections.map((section) => {
+      {layout.sections.map((section, index) => {
         const def = registry[section.type];
+        // A resolved layout may repeat a section type, so `type` alone is not a
+        // unique key. The section list is a stable, server-ordered sequence
+        // (no client-side reorder/insert), so `type` + position is both stable
+        // and unique for reconciliation.
+        const key = `${section.type}-${index}`;
         if (!def) {
           if (!warnedTypes.has(section.type)) {
             warnedTypes.add(section.type);
@@ -121,22 +126,14 @@ export function LayoutSections({ layout, listing, registry, onSectionClick }: La
 
         if (section.presentation === 'placeholder') {
           return (
-            <div
-              key={section.type}
-              data-layout-section={section.type}
-              onClickCapture={handleClickCapture}
-            >
+            <div key={key} data-layout-section={section.type} onClickCapture={handleClickCapture}>
               <Placeholder />
             </div>
           );
         }
         const Component = def.component;
         return (
-          <div
-            key={section.type}
-            data-layout-section={section.type}
-            onClickCapture={handleClickCapture}
-          >
+          <div key={key} data-layout-section={section.type} onClickCapture={handleClickCapture}>
             <SectionBoundary>
               <Component listing={listing} mode={section.mode} props={section.props} />
             </SectionBoundary>
