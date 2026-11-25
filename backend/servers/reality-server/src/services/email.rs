@@ -31,6 +31,12 @@ use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
 
+use db::models::{ListingInquiry, ViewingSchedule};
+use db::repositories::RealityPortalRepository;
+use uuid::Uuid;
+
+use crate::handlers::inquiries::{InquiryNotifier, LogInquiryNotifier};
+
 use super::search_alert_drainer::{
     AlertDelivery, AlertEmailTransport, AlertNotification, LogEmailTransport,
 };
@@ -311,6 +317,123 @@ pub fn build_alert_email_transport() -> Arc<dyn AlertEmailTransport> {
     })
 }
 
+fn inquiry_response_subject(locale: &Locale) -> &'static str {
+    match locale {
+        Locale::Slovak => "Maklér odpovedal na váš dopyt",
+        Locale::Czech => "Makléř odpověděl na váš dotaz",
+        Locale::German => "Der Makler hat auf Ihre Anfrage geantwortet",
+        Locale::English => "The agent replied to your inquiry",
+    }
+}
+
+fn inquiry_response_body(name: &str, url: &str, locale: &Locale) -> String {
+    match locale {
+        Locale::Slovak => format!(
+            "Dobrý deň {name},\n\nmaklér odpovedal na váš dopyt. Odpoveď si prečítate tu:\n\n{url}\n\nS pozdravom,\nTím Reality Portál",
+        ),
+        Locale::Czech => format!(
+            "Dobrý den {name},\n\nmakléř odpověděl na váš dotaz. Odpověď si přečtete zde:\n\n{url}\n\nS pozdravem,\nTým Reality Portál",
+        ),
+        Locale::German => format!(
+            "Guten Tag {name},\n\nder Makler hat auf Ihre Anfrage geantwortet. Die Antwort finden Sie hier:\n\n{url}\n\nMit freundlichen Grüßen,\nDas Reality-Portal-Team",
+        ),
+        Locale::English => format!(
+            "Hello {name},\n\nThe agent replied to your inquiry. You can read the reply here:\n\n{url}\n\nBest regards,\nThe Reality Portal Team",
+        ),
+    }
+}
+
+/// Compose the "your inquiry was answered" notification. The reply text itself
+/// is not included: the inquirer reads it in the portal after signing in.
+fn inquiry_response_notification(
+    base_url: &str,
+    name: &str,
+    locale: Option<&str>,
+) -> AlertNotification {
+    let locale = Locale::parse(locale.unwrap_or_default());
+    let url = format!("{}/{}/inquiries", base_url, locale.as_str());
+    AlertNotification {
+        subject: inquiry_response_subject(&locale).to_string(),
+        body: inquiry_response_body(name, &url, &locale),
+        locale: locale.as_str().to_string(),
+    }
+}
+
+/// SMTP-backed [`InquiryNotifier`]: emails the inquirer when a realtor answers.
+/// New-inquiry and viewing-reminder notifications still go to the logging stub.
+pub struct SmtpInquiryNotifier {
+    repo: RealityPortalRepository,
+    transport: AsyncSmtpTransport<Tokio1Executor>,
+    from: String,
+    base_url: String,
+}
+
+#[async_trait]
+impl InquiryNotifier for SmtpInquiryNotifier {
+    async fn notify_new_inquiry(
+        &self,
+        inquiry: &ListingInquiry,
+    ) -> std::result::Result<(), String> {
+        LogInquiryNotifier.notify_new_inquiry(inquiry).await
+    }
+
+    async fn notify_inquiry_response(&self, inquiry_id: Uuid) -> std::result::Result<(), String> {
+        let Some((email, name, locale)) = self
+            .repo
+            .get_inquiry_response_recipient(inquiry_id)
+            .await
+            .map_err(|_| "failed to load the inquiry recipient".to_string())?
+        else {
+            return Ok(());
+        };
+        let notification = inquiry_response_notification(&self.base_url, &name, locale.as_deref());
+        let message = build_alert_message(&self.from, &email, &name, &notification)
+            .map_err(|e| e.to_string())?;
+        self.transport
+            .send(message)
+            .await
+            .map_err(|e| format!("SMTP send failed: {e}"))?;
+        Ok(())
+    }
+
+    async fn notify_viewing_reminder(
+        &self,
+        viewing: &ViewingSchedule,
+    ) -> std::result::Result<(), String> {
+        LogInquiryNotifier.notify_viewing_reminder(viewing).await
+    }
+}
+
+/// Select the inquiry notifier from the environment: SMTP when the `SMTP_*`
+/// variables are present, the logging stub otherwise.
+pub fn build_inquiry_notifier(repo: RealityPortalRepository) -> Arc<dyn InquiryNotifier> {
+    let Some(settings) = SmtpSettings::from_env() else {
+        return Arc::new(LogInquiryNotifier);
+    };
+    let from = format!("{} <{}>", settings.from_name, settings.from_address);
+    let creds = Credentials::new(settings.username.clone(), settings.password.clone());
+    let builder = if settings.use_tls {
+        match AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&settings.host) {
+            Ok(builder) => builder,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "Failed to build SMTP transport for inquiry notifications; using the logging stub"
+                );
+                return Arc::new(LogInquiryNotifier);
+            }
+        }
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&settings.host)
+    };
+    Arc::new(SmtpInquiryNotifier {
+        repo,
+        transport: builder.port(settings.port).credentials(creds).build(),
+        from,
+        base_url: reset_base_url_from_env(),
+    })
+}
+
 /// Local/dev fallback: logs the reset link instead of sending it, and reports
 /// itself as **not** configured so the request handler never claims delivery.
 pub struct LogPasswordResetMailer {
@@ -398,6 +521,19 @@ mod tests {
             body: "Your saved search has new matches.".to_string(),
             locale: "en".to_string(),
         }
+    }
+
+    #[test]
+    fn inquiry_response_notification_is_localized_and_links_to_the_inbox() {
+        let sk = inquiry_response_notification("https://portal.example", "Jana", Some("sk"));
+        assert_eq!(sk.subject, "Maklér odpovedal na váš dopyt");
+        assert!(sk.body.contains("Dobrý deň Jana"));
+        assert!(sk.body.contains("https://portal.example/sk/inquiries"));
+
+        // Anonymous inquirers have no account locale: fall back to English.
+        let en = inquiry_response_notification("https://portal.example", "Jane", None);
+        assert_eq!(en.subject, "The agent replied to your inquiry");
+        assert!(en.body.contains("https://portal.example/en/inquiries"));
     }
 
     #[test]

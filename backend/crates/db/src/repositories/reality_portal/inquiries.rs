@@ -153,6 +153,26 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// Who to tell that a realtor answered: the inquirer's contact from the
+    /// inquiry row, plus the account locale when the inquiry was sent by a
+    /// signed-in portal user (anonymous inquirers have none).
+    pub async fn get_inquiry_response_recipient(
+        &self,
+        inquiry_id: Uuid,
+    ) -> Result<Option<(String, String, Option<String>)>, SqlxError> {
+        sqlx::query_as::<_, (String, String, Option<String>)>(
+            r#"
+            SELECT i.email, i.name, u.locale::text
+            FROM listing_inquiries i
+            LEFT JOIN users u ON u.id = i.user_id
+            WHERE i.id = $1
+            "#,
+        )
+        .bind(inquiry_id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
     /// List the persisted conversation messages for an inquiry, oldest first.
     ///
     /// Ownership is expected to be verified by the caller (the detail handler

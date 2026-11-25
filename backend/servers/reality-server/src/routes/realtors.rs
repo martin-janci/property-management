@@ -301,6 +301,9 @@ pub async fn respond_to_inquiry(
             )
         })?;
 
+    // Best-effort: email the inquirer that an answer is waiting.
+    state.inquiries_handler.notify_response(id).await;
+
     Ok((axum::http::StatusCode::CREATED, Json(message)))
 }
 

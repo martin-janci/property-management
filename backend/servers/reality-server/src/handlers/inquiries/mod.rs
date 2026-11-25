@@ -413,6 +413,13 @@ impl InquiriesHandler {
         Ok(response)
     }
 
+    /// Best-effort: tell the inquirer that the realtor answered. For callers
+    /// that persist the response themselves (the two `respond` routes), which
+    /// used to skip the notifier entirely.
+    pub async fn notify_response(&self, inquiry_id: Uuid) {
+        Self::dispatch_inquiry_response(self.notifier.as_ref(), inquiry_id).await;
+    }
+
     /// Best-effort: dispatch the new-inquiry notification through `notifier`.
     /// A transport failure is logged and swallowed — the inquiry is already
     /// persisted, so notification delivery must never fail the request.
