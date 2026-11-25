@@ -43,28 +43,6 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "pm-scrum-master-verify-3357-after-3784-2026-11-25",
-      "branch": "auto-impl/pm-scrum-master-verify-3357-after-3784-2-d9074a30",
-      "status": "in-progress",
-      "claimed_at": "2026-11-25T16:29:16Z",
-      "last_updated": "2026-11-25T16:29:16Z",
-      "status_changed_at": "2026-11-25T16:29:16Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     }
   ],
   "generated": "2026-11-25T15:36:28Z"

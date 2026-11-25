@@ -32075,6 +32075,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-verify-3357-after-3784-2026-11-25",
+      "branch": "auto-impl/pm-scrum-master-verify-3357-after-3784-2-d9074a30",
+      "status": "failed",
+      "claimed_at": "2026-11-25T16:29:16Z",
+      "last_updated": "2026-11-25T16:46:56Z",
+      "status_changed_at": "2026-11-25T16:46:56Z",
+      "pr_number": 3804,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3804",
+      "merged_at": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=3804 status=done specialist=react-native scope_drift=true: verified #3357 after #3784 (confirmed #3784 unshallow-fix resolved the disjoint-history root cause; #3677 merged, #3676 last orphan). Resolution PR #3804 re-landed #3676's 5 clean screens — but this was a BYTE-IDENTICAL DUPLICATE of #3803 (same verify tree ca6436af) produced by the sibling promote-close task. [dispatcher: closed #3804 as duplicate of #3803; verification value recorded; no unique landable artifact → failed. Two coordination tasks converged on the same #3676 resolution — Phase-3 dedup couldn't catch it (no plan files, output-level overlap).]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
       "branch": "auto-impl/pm-scrum-master-violations-xtenant-404-c-1eb5c687",
       "status": "merged",
@@ -35710,5 +35732,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-25T16:44:25Z"
+  "archived_at": "2026-11-25T16:46:56Z"
 }
