@@ -1564,5 +1564,11 @@
     "errorTitle": "Valami elromlott",
     "errorDescription": "Kérjük, próbálja újra. Ha a probléma továbbra is fennáll, forduljon az ügyfélszolgálathoz.",
     "retry": "Újrapróbálás"
+  },
+  "authError": {
+    "errorNetwork": "Hálózati hiba. Kérjük, próbálja újra.",
+    "errorMalformed": "A szerver váratlan választ adott. Kérjük, próbálja újra.",
+    "errorRequestFailed": "A kérés sikertelen ({status}). Kérjük, próbálja újra.",
+    "errorNotImplemented": "Ez a funkció még nem érhető el. Kérjük, lépjen kapcsolatba az ügyfélszolgálattal."
   }
 }

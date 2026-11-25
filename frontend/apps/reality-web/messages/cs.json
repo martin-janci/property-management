@@ -1571,5 +1571,11 @@
     "errorTitle": "Něco se pokazilo",
     "errorDescription": "Zkuste to prosím znovu. Pokud problém přetrvává, kontaktujte podporu.",
     "retry": "Zkusit znovu"
+  },
+  "authError": {
+    "errorNetwork": "Chyba sítě. Zkuste to znovu.",
+    "errorMalformed": "Server vrátil neočekávanou odpověď. Zkuste to znovu.",
+    "errorRequestFailed": "Požadavek selhal ({status}). Zkuste to znovu.",
+    "errorNotImplemented": "Tato funkce zatím není dostupná. Kontaktujte podporu."
   }
 }
