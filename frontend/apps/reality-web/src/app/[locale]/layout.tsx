@@ -12,6 +12,7 @@ import { TenantProvider } from '@/providers/TenantProvider';
 import { CookieConsentBanner } from '../../components/CookieConsentBanner';
 import { ComparisonTray } from '../../components/comparison';
 import { DevPanelMount } from '../../components/DevPanelMount';
+import { MaintenanceNotice } from '../../components/MaintenanceNotice';
 import { StyledJsxRegistry } from '../../components/StyledJsxRegistry';
 import { type Locale, locales } from '../../i18n/config';
 
@@ -137,28 +138,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   // during maintenance.
   const killSwitch = tenantConfig.feature_flags[FeatureFlags.BUILDING_DISABLED];
   if (killSwitch?.enabled) {
-    return (
-      <html lang={locale}>
-        <head>
-          <title>Service temporarily unavailable</title>
-          <meta name="robots" content="noindex" />
-        </head>
-        <body>
-          <main
-            style={{
-              fontFamily: 'system-ui, sans-serif',
-              padding: '2rem',
-              maxWidth: 600,
-              margin: '4rem auto',
-              textAlign: 'center',
-            }}
-          >
-            <h1>Service temporarily unavailable</h1>
-            <p>{tenantConfig.name} is offline for maintenance. Please check back shortly.</p>
-          </main>
-        </body>
-      </html>
-    );
+    return <MaintenanceNotice locale={locale} tenantName={tenantConfig.name} />;
   }
 
   // React style object carrying `--ppt-*` CSS custom properties from the
