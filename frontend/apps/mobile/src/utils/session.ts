@@ -111,9 +111,19 @@ export function buildSessionUser(
       : undefined;
 
   if (embedded && typeof embedded === 'object' && str(embedded.id)) {
-    const user = { ...embedded } as unknown as SessionUser;
-    if (!user.organizationId && tenantId) user.organizationId = tenantId;
-    if (!user.organizationName && active?.tenantName) user.organizationName = active.tenantName;
+    // Narrow each field off the response body instead of casting the whole
+    // object into a SessionUser: a non-string / missing field (or junk key)
+    // must not be trusted verbatim, and the role must still pass through
+    // toAppRole() rather than leak an arbitrary server string.
+    const user: SessionUser = {
+      id: str(embedded.id) ?? '',
+      email: str(embedded.email) ?? str(claims.email) ?? '',
+      firstName: str(embedded.firstName) ?? '',
+      lastName: str(embedded.lastName) ?? '',
+      role: toAppRole(str(embedded.role) ?? str(claims.role) ?? active?.role),
+      organizationId: str(embedded.organizationId) ?? tenantId ?? undefined,
+      organizationName: str(embedded.organizationName) ?? active?.tenantName,
+    };
     return { user, tenantId };
   }
 
