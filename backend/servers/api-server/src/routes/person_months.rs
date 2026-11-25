@@ -120,7 +120,7 @@ async fn authorize_building_inner(
     };
     let is_resident = state
         .person_month_repo
-        .is_active_resident(unit_id, user_id)
+        .is_active_resident(rls.conn(), unit_id, user_id)
         .await
         .map_err(db_err)?;
     if !is_resident {
@@ -1323,7 +1323,7 @@ async fn authorize_unit_resident(
     }
     let is_resident = state
         .person_month_repo
-        .is_active_resident(unit_id, user_id)
+        .is_active_resident(rls.conn(), unit_id, user_id)
         .await
         .map_err(pm_db_err)?;
     if is_resident || (allow_manager && rls.role().is_manager()) {
@@ -1425,10 +1425,20 @@ pub async fn submit_person_month(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<SubmitPersonMonthRequest>,
 ) -> Result<impl IntoResponse, PersonMonthApiError> {
-    let auth_res =
-        authorize_unit_resident(&state, &mut rls, auth.user_id, building_id, unit_id, false).await;
+    let out = submit_person_month_inner(&state, &auth, &mut rls, building_id, unit_id, req).await;
     rls.release().await;
-    auth_res?;
+    out
+}
+
+async fn submit_person_month_inner(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+    unit_id: Uuid,
+    req: SubmitPersonMonthRequest,
+) -> Result<(StatusCode, Json<PersonMonthSubmission>), PersonMonthApiError> {
+    authorize_unit_resident(state, rls, auth.user_id, building_id, unit_id, false).await?;
     validate_submission(&req)?;
 
     let note = req
@@ -1437,7 +1447,15 @@ pub async fn submit_person_month(
         .filter(|n| !n.is_empty());
     let submission = state
         .person_month_repo
-        .submit(unit_id, req.year, req.month, req.count, note, auth.user_id)
+        .submit(
+            rls.conn(),
+            unit_id,
+            req.year,
+            req.month,
+            req.count,
+            note,
+            auth.user_id,
+        )
         .await
         .map_err(pm_db_err)?;
     Ok((StatusCode::CREATED, Json(submission)))
@@ -1463,13 +1481,24 @@ pub async fn list_unit_submissions(
     Path((building_id, unit_id)): Path<(Uuid, Uuid)>,
     Query(query): Query<UnitSubmissionsQuery>,
 ) -> Result<Json<Vec<PersonMonthSubmission>>, PersonMonthApiError> {
-    let auth_res =
-        authorize_unit_resident(&state, &mut rls, auth.user_id, building_id, unit_id, true).await;
+    let out =
+        list_unit_submissions_inner(&state, &auth, &mut rls, building_id, unit_id, query).await;
     rls.release().await;
-    auth_res?;
+    out
+}
+
+async fn list_unit_submissions_inner(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+    unit_id: Uuid,
+    query: UnitSubmissionsQuery,
+) -> Result<Json<Vec<PersonMonthSubmission>>, PersonMonthApiError> {
+    authorize_unit_resident(state, rls, auth.user_id, building_id, unit_id, true).await?;
     let rows = state
         .person_month_repo
-        .list_unit_submissions(unit_id, query.year)
+        .list_unit_submissions(rls.conn(), unit_id, query.year)
         .await
         .map_err(pm_db_err)?;
     Ok(Json(rows))
@@ -1496,8 +1525,19 @@ pub async fn list_building_submissions(
     Path(building_id): Path<Uuid>,
     Query(query): Query<BuildingSubmissionsQuery>,
 ) -> Result<Json<Vec<PersonMonthSubmissionWithUnit>>, PersonMonthApiError> {
-    authorize_building(&state, &mut rls, auth.user_id, building_id, None, true).await?;
+    let out = list_building_submissions_inner(&state, &auth, &mut rls, building_id, query).await;
     rls.release().await;
+    out
+}
+
+async fn list_building_submissions_inner(
+    state: &AppState,
+    auth: &AuthUser,
+    rls: &mut RlsConnection,
+    building_id: Uuid,
+    query: BuildingSubmissionsQuery,
+) -> Result<Json<Vec<PersonMonthSubmissionWithUnit>>, PersonMonthApiError> {
+    authorize_building(state, rls, auth.user_id, building_id, None, true).await?;
 
     let status = match query.status.as_deref().unwrap_or("pending") {
         "all" => None,
@@ -1514,7 +1554,7 @@ pub async fn list_building_submissions(
     };
     let rows = state
         .person_month_repo
-        .list_building_submissions(building_id, status)
+        .list_building_submissions(rls.conn(), building_id, status)
         .await
         .map_err(pm_db_err)?;
     Ok(Json(rows))
@@ -1523,12 +1563,13 @@ pub async fn list_building_submissions(
 /// Load a submission and check it belongs to a unit of `building_id`.
 async fn load_building_submission(
     state: &AppState,
+    conn: &mut sqlx::postgres::PgConnection,
     building_id: Uuid,
     submission_id: Uuid,
 ) -> Result<PersonMonthSubmission, PersonMonthApiError> {
     let submission = state
         .person_month_repo
-        .find_submission(submission_id)
+        .find_submission(conn, submission_id)
         .await
         .map_err(pm_db_err)?
         .ok_or_else(|| pm_err(StatusCode::NOT_FOUND, "NOT_FOUND", "Submission not found"))?;
@@ -1564,7 +1605,8 @@ async fn approve_submission_inner(
     note: Option<String>,
 ) -> Result<Json<PersonMonthSubmission>, PersonMonthApiError> {
     authorize_building(state, rls, auth.user_id, building_id, None, true).await?;
-    let submission = load_building_submission(state, building_id, submission_id).await?;
+    let submission =
+        load_building_submission(state, rls.conn(), building_id, submission_id).await?;
 
     // Mark decided and write the count in one transaction, so a submission is
     // never approved without its value landing in `person_months`.
@@ -1643,7 +1685,7 @@ async fn reject_submission_inner(
     note: Option<String>,
 ) -> Result<Json<PersonMonthSubmission>, PersonMonthApiError> {
     authorize_building(state, rls, auth.user_id, building_id, None, true).await?;
-    load_building_submission(state, building_id, submission_id).await?;
+    load_building_submission(state, rls.conn(), building_id, submission_id).await?;
     let decided = state
         .person_month_repo
         .decide_submission(

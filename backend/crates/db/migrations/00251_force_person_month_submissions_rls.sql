@@ -1,0 +1,39 @@
+-- Migration: 00251_force_person_month_submissions_rls
+-- Security Fix (pm-security): FORCE row-level security on person_month_submissions.
+--
+-- Background
+-- ----------
+-- 00250 created `person_month_submissions` (resident-proposed person-month
+-- counts awaiting manager approval, UC-10) with `ENABLE ROW LEVEL SECURITY`
+-- and an organization-scoping policy (`person_month_submissions_org`), but it
+-- never issued `FORCE ROW LEVEL SECURITY`.
+--
+-- `ENABLE` (without `FORCE`) is bypassed for the table owner and for
+-- superuser/`BYPASSRLS` roles. The api-server connects to Postgres as the table
+-- owner and relies on the `RlsConnection` extractor to set
+-- `app.current_org_id` / `app.current_user_id` per request; the database RLS
+-- policy is meant as defense-in-depth behind the handler-layer residency /
+-- manager checks. With only `ENABLE`, that defense is silently ineffective for
+-- any query the owner connection runs — exactly the gap 00171 closed for the
+-- messaging tables (#898) and 00159 for device_push_tokens.
+--
+-- This migration brings `person_month_submissions` in line: owner-bypass is
+-- closed so cross-tenant reads/writes are refused at the database even if a
+-- handler check is ever missed. The accompanying repository change moves every
+-- submission query (`submit`, `find_submission`, `list_unit_submissions`,
+-- `list_building_submissions`, `is_active_resident`) onto the request's
+-- `RlsConnection`, so the policy has the tenant context it needs.
+--
+-- The policy itself is unchanged — only owner-bypass is closed.
+--
+-- NOTE on person_months: `person_months` is intentionally NOT forced here. Its
+-- repository still runs most CRUD methods (find_by_id, find_by_unit_year,
+-- get_building_summary, update, delete, calculate_from_residents,
+-- get_occupancy_report, ...) on the pool connection, which carries no RLS
+-- context; forcing RLS on that table without first moving those methods onto
+-- the RLS connection would make every such query return zero rows / fail its
+-- WITH CHECK. Forcing `person_months` is therefore a separate, larger task
+-- (migrate all its repo methods to RLS, then FORCE) and is left for a dedicated
+-- follow-up rather than silently breaking manager person-month CRUD.
+
+ALTER TABLE person_month_submissions FORCE ROW LEVEL SECURITY;
