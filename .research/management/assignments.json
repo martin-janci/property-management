@@ -11,7 +11,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3800",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3800 status=done scope_drift=true: UC-10 submission edge-case BE tests (NOTE_TOO_LONG/INVALID_PERIOD/INVALID_STATUS filter/approve-after-reject 409, suite_7) + mobile submissionStatus i18n (6 locales) + screen-map log; FE green, BE compiles clean (sqlx in CI). [5.7 respawn round1: reviewer verdict=changes — cargo fmt --check red on new test lines; respawned to run cargo fmt --all + push] [5.5 merge attempt: dirty/real-conflict in person_month_submissions_tests.rs vs sibling suite_7 tests; draft->ready promoted; needs rebase (status_changed_at<4h so Phase 5.6 defers to next run)]",
+      "implementer_summary": "pr=3800 status=done scope_drift=true: UC-10 submission edge-case BE tests (NOTE_TOO_LONG/INVALID_PERIOD/INVALID_STATUS filter/approve-after-reject 409, suite_7) + mobile submissionStatus i18n (6 locales) + screen-map log; FE green, BE compiles clean (sqlx in CI). [5.7 respawn round1: reviewer verdict=changes \u2014 cargo fmt --check red on new test lines; respawned to run cargo fmt --all + push] [5.5 merge attempt: dirty/real-conflict in person_month_submissions_tests.rs vs sibling suite_7 tests; draft->ready promoted; needs rebase (status_changed_at<4h so Phase 5.6 defers to next run)]",
       "reviewer_summary": "verdict=approve head_oid=2d223e7e9ee3db1c2e1988fe5e3bf4ed04b53731 note=fmt-fixed-reformat-only-rustfmt-check-green; re-review after 5.7 round1 clean",
       "last_reviewed_oid": "2d223e7e9ee3db1c2e1988fe5e3bf4ed04b53731",
       "scope_drift": true,
@@ -77,7 +77,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3806",
       "merged_at": null,
       "specialist": "react-native",
-      "implementer_summary": "pr=3806 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=WidgetDataProvider.apiRequest swallowed fetch errors (returned {} as T); now re-throws after __DEV__ log; IG3 two-commit split; VERIFY OK (1054 tests). NOTE: shares WidgetDataProvider.ts with PR #3805 (sibling claim) — sequential merge/rebase needed",
+      "implementer_summary": "pr=3806 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=WidgetDataProvider.apiRequest swallowed fetch errors (returned {} as T); now re-throws after __DEV__ log; IG3 two-commit split; VERIFY OK (1054 tests). NOTE: shares WidgetDataProvider.ts with PR #3805 (sibling claim) \u2014 sequential merge/rebase needed",
       "reviewer_summary": "verdict=approve head_oid=990fa0dc1b8b4ff64db76d543e7ae5354286de85 note=clean-rn-fix-rethrows-apirequest-errors;fallback-paths-live;IG3-sound;scope-drift-justified;shares-WidgetDataProvider.ts-with-#3805-rebase-second(non-blocking);COMMENT-review",
       "last_reviewed_oid": "990fa0dc1b8b4ff64db76d543e7ae5354286de85",
       "scope_drift": true,
@@ -113,18 +113,18 @@
     {
       "task_id": "code-review-reality-web-maint-fallback-i18n",
       "branch": "auto-impl/code-review-reality-web-maint-fallback-i-34bc7a31",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-25T20:27:06Z",
-      "last_updated": "2026-11-25T20:27:06Z",
-      "status_changed_at": "2026-11-25T20:27:06Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-25T21:03:07Z",
+      "status_changed_at": "2026-11-25T21:03:07Z",
+      "pr_number": 3809,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3809",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3809 status=done specialist=nextjs-web scope_drift=true code_reuse_warn=none note=reality-web maintenance kill-switch fallback routed through next-intl (getTranslations('layout.maintenance')) + dedicated i18n/maintenance-messages catalog merged in request.ts with locale fallback; IG3 two-commit split verified; just verify green (665 tests); drift=mislabeled pm-backend owner hint",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -133,5 +133,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-25T20:35:42Z"
+  "generated": "2026-11-25T21:03:07Z"
 }
