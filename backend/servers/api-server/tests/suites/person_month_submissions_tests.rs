@@ -354,6 +354,22 @@ async fn seed_tenant_with_submission(
 /// Regression guard: before FORCE (ENABLE only), the owner connection bypassed
 /// RLS and saw every tenant's rows — this test would then observe two rows
 /// under org B and fail.
+///
+/// Why this test switches roles
+/// ----------------------------
+/// `#[sqlx::test]` connects as the Postgres SUPERUSER, which bypasses RLS
+/// entirely — even `FORCE ROW LEVEL SECURITY` does NOT apply to a superuser or
+/// the table owner. To exercise the policy the assertions run under a plain
+/// `NOSUPERUSER NOBYPASSRLS` role reached with `SET ROLE`, mirroring the
+/// established pattern in `esg_force_rls_cross_tenant_tests.rs` and
+/// `payment_webhook_dead_letter_rls_manager_tests.rs`. The `app.current_org_id`
+/// GUC is set with `set_request_context` (which survives `SET ROLE`) while
+/// still the superuser, then the role is assumed for the read.
+///
+/// The role needs SELECT on `person_month_submissions` plus the tables the
+/// `person_month_submissions_org` policy's EXISTS subquery reads (`units`,
+/// `buildings`), and EXECUTE on the RLS helper functions those tables'
+/// tenant-isolation policies call.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn force_rls_hides_other_tenant_submissions(pool: PgPool) {
     let (org_a, _building_a, unit_a, _res_a) =
@@ -361,20 +377,52 @@ async fn force_rls_hides_other_tenant_submissions(pool: PgPool) {
     let (org_b, _building_b, unit_b, _res_b) =
         seed_tenant_with_submission(&pool, "cross-b", 5).await;
 
-    // Open a pooled connection in org B's RLS context — the same path the
-    // request extractor uses — and read the submissions table directly.
+    // --- Create a NOSUPERUSER NOBYPASSRLS role so FORCE actually binds. ---
+    let role = format!("pm_sub_rls_test_{}", &Uuid::new_v4().to_string()[..8]);
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "CREATE ROLE \"{role}\" NOSUPERUSER NOBYPASSRLS"
+    )))
+    .execute(&pool)
+    .await
+    .expect("create test role");
+    for stmt in [
+        format!("GRANT SELECT ON person_month_submissions TO \"{role}\""),
+        format!("GRANT SELECT ON units TO \"{role}\""),
+        format!("GRANT SELECT ON buildings TO \"{role}\""),
+        format!("GRANT SELECT ON organizations TO \"{role}\""),
+        format!(
+            "GRANT EXECUTE ON FUNCTION get_current_org_id(), is_super_admin(), \
+             get_current_org_not_deleted() TO \"{role}\""
+        ),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .expect("grant to test role");
+    }
+
+    // All role-bound work runs on ONE dedicated connection: the context GUC and
+    // SET ROLE are session state that must stay together.
     let mut conn = pool.acquire().await.expect("acquire");
+
+    // Open org B's RLS context (as superuser), then assume the unprivileged
+    // role so FORCE RLS applies, and read the submissions table directly.
     db::set_request_context(&mut *conn, Some(org_b), None, false)
         .await
         .expect("set ctx B");
+    sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
+        .execute(&mut *conn)
+        .await
+        .expect("set role B");
     let visible: Vec<(Uuid, Uuid)> =
         sqlx::query_as("SELECT id, unit_id FROM person_month_submissions ORDER BY submitted_at")
             .fetch_all(&mut *conn)
             .await
             .expect("select under org B");
-    db::clear_request_context(&mut *conn)
+    sqlx::query("RESET ROLE")
+        .execute(&mut *conn)
         .await
-        .expect("clear ctx B");
+        .expect("reset role B");
 
     assert_eq!(
         visible.len(),
@@ -391,10 +439,18 @@ async fn force_rls_hides_other_tenant_submissions(pool: PgPool) {
     db::set_request_context(&mut *conn, Some(org_a), None, false)
         .await
         .expect("set ctx A");
+    sqlx::query(sqlx::AssertSqlSafe(format!("SET ROLE \"{role}\"")))
+        .execute(&mut *conn)
+        .await
+        .expect("set role A");
     let visible_a: Vec<Uuid> = sqlx::query_scalar("SELECT unit_id FROM person_month_submissions")
         .fetch_all(&mut *conn)
         .await
         .expect("select under org A");
+    sqlx::query("RESET ROLE")
+        .execute(&mut *conn)
+        .await
+        .expect("reset role A");
     db::clear_request_context(&mut *conn)
         .await
         .expect("clear ctx A");
@@ -403,4 +459,20 @@ async fn force_rls_hides_other_tenant_submissions(pool: PgPool) {
         vec![unit_a],
         "org A must see only its own submission"
     );
+
+    // Release the dedicated connection before dropping the role so no session
+    // still holds it.
+    drop(conn);
+
+    // --- Cleanup: DROP OWNED severs every grant (incl. function EXECUTE that a
+    // plain REVOKE misses) so DROP ROLE does not fail with dependent objects.
+    for stmt in [
+        format!("DROP OWNED BY \"{role}\""),
+        format!("DROP ROLE IF EXISTS \"{role}\""),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(stmt))
+            .execute(&pool)
+            .await
+            .ok();
+    }
 }
