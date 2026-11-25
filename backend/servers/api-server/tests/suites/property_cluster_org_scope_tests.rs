@@ -633,8 +633,39 @@ async fn person_months_resident_cannot_write_manager_can(pool: PgPool) {
     let body = json!({ "year": 2026, "month": 2, "count": 3, "source": "manual" });
     let resp = call(&app, "POST", &base, &w.res_a, Some(body.clone())).await;
     expect(&resp, StatusCode::FORBIDDEN, "resident upsert person month");
+    // Residents read person counts only for a unit they live in (UC-10).
     let resp = call(&app, "GET", &format!("{base}?year=2026"), &w.res_a, None).await;
-    expect(&resp, StatusCode::OK, "resident list person months");
+    expect(
+        &resp,
+        StatusCode::FORBIDDEN,
+        "non-resident member list person months",
+    );
+    let building_list = format!(
+        "/api/v1/buildings/{}/person-months?year=2026&month=1",
+        w.bld_a
+    );
+    let resp = call(&app, "GET", &building_list, &w.res_a, None).await;
+    expect(
+        &resp,
+        StatusCode::FORBIDDEN,
+        "resident list building person months",
+    );
+    sqlx::query(
+        "INSERT INTO unit_residents (unit_id, user_id, resident_type) VALUES ($1, $2, 'tenant')",
+    )
+    .bind(w.unit_a)
+    .bind(w.res_a.user_id)
+    .execute(&pool)
+    .await
+    .expect("seed unit resident");
+    let resp = call(&app, "GET", &format!("{base}?year=2026"), &w.res_a, None).await;
+    expect(
+        &resp,
+        StatusCode::OK,
+        "resident list own unit person months",
+    );
+    let resp = call(&app, "GET", &building_list, &w.mgr_a, None).await;
+    expect(&resp, StatusCode::OK, "manager list building person months");
     let resp = call(&app, "POST", &base, &w.mgr_a, Some(body)).await;
     expect(&resp, StatusCode::OK, "manager upsert person month");
 

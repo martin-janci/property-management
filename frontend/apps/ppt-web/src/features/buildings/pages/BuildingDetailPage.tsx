@@ -153,12 +153,14 @@ export function BuildingDetailPage({ buildingId }: BuildingDetailPageProps) {
                 {t('buildings.form.editTitle')}
               </Link>
             )}
-            <Link
-              to={`/buildings/${buildingId}/person-months`}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"
-            >
-              {t('buildings.detail.personMonths')}
-            </Link>
+            {canManage && (
+              <Link
+                to={`/buildings/${buildingId}/person-months`}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"
+              >
+                {t('buildings.detail.personMonths')}
+              </Link>
+            )}
             <Link
               to={`/buildings/${buildingId}/facilities`}
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100"

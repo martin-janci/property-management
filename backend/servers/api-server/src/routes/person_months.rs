@@ -31,8 +31,9 @@ type PersonMonthApiError = (StatusCode, Json<ErrorResponse>);
 ///
 /// The building must belong to the caller's tenant and the unit, if given, to
 /// the building — 404 otherwise. `person_months` RLS is not FORCE'd, so these
-/// predicates are explicit. When `require_manager` is set the caller's DB
-/// membership role must be manager-level (403 otherwise).
+/// predicates are explicit. Managers pass. When `require_manager` is set,
+/// anyone else gets 403. Otherwise (reads) a non-manager may only read a unit
+/// they currently live in; building-wide reads are manager-only.
 async fn authorize_building_inner(
     state: &AppState,
     rls: &mut RlsConnection,
@@ -93,12 +94,41 @@ async fn authorize_building_inner(
         }
     }
 
-    if require_manager && !rls.role().is_manager() {
+    if rls.role().is_manager() {
+        return Ok(());
+    }
+    if require_manager {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
                 "INSUFFICIENT_ROLE",
                 "Manager role required to modify person months",
+            )),
+        ));
+    }
+
+    // Non-managers may read person counts only for a unit they currently
+    // live in; building-wide views stay manager-only.
+    let Some(unit_id) = unit_id else {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "INSUFFICIENT_ROLE",
+                "Manager role required to view building person months",
+            )),
+        ));
+    };
+    let is_resident = state
+        .person_month_repo
+        .is_active_resident(unit_id, user_id)
+        .await
+        .map_err(db_err)?;
+    if !is_resident {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "NOT_RESIDENT",
+                "You can only view person months for your own unit",
             )),
         ));
     }
