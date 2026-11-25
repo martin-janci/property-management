@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-25T16:29:32Z",
+  "archived_at": "2026-11-25T18:26:57Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4732,6 +4732,31 @@
       }
     },
     {
+      "id": "code-review-api-core-require-auth-guest-default",
+      "action": "api core require auth guest default",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-25T18:23:52Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-24T00:24:47Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3802,
+        "merged_at": "2026-11-25T16:40:40Z",
+        "at": "2026-11-25T18:23:52Z"
+      }
+    },
+    {
       "id": "code-review-api-core-resolved-rs-leaks-db-error",
       "action": "SECURITY-LITE: layout/resolved.rs err500 handler leaks raw sqlx/serde error text on public GET /layout/resolved/{screen} — 8 sites, no server-side log",
       "owner_role": "pm-backend",
@@ -9334,6 +9359,31 @@
         "merged_pr": 3398,
         "merged_at": "2026-11-10T20:30:01Z",
         "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-raw-status-untranslated",
+      "action": "mobile rn raw status untranslated",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-25T18:23:52Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-19T22:25:12Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-26T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 3676,
+        "merged_at": null,
+        "at": "2026-11-25T18:23:52Z"
       }
     },
     {
@@ -34643,6 +34693,24 @@
       }
     },
     {
+      "id": "pm-scrum-master-verify-3357-after-3784-2026-11-25",
+      "action": "Verify dispatcher stall #3357 status after #3784 and resolve remaining non-mechanical conflicts.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25 | gc1-reconcile 2026-11-25T18:23:52Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": 3804,
+        "merged_at": null,
+        "at": "2026-11-25T18:23:52Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-violations-xtenant-404-contract-sweep-2026-10-28",
       "action": "Sweep remaining violations mutation handlers for the 403-vs-404 cross-tenant contract (#3187 revealed assign still returns 403) — pattern audit across moderation.rs/aml_dsa.rs after PR #3183 fixed most but not assign",
       "owner_role": "pm-scrum-master",
@@ -34737,6 +34805,24 @@
       }
     },
     {
+      "id": "pm-security-audit-non-force-rls-pool-bypass-2026-11-25",
+      "action": "Repo-wide audit of the pool-instead-of-RLS-conn pattern and RLS tables that are not FORCE'd. Rank by sensitivity; file a backlog plan.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25 | gc1-reconcile 2026-11-25T18:23:52Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3799,
+        "merged_at": "2026-11-25T16:39:58Z",
+        "at": "2026-11-25T18:23:52Z"
+      }
+    },
+    {
       "id": "pm-security-audit-null-unit-scope-authorization-2026-11-16",
       "action": "Audit routes with optional unit_id or null-scope for the missing-owner-check pattern from #3554, and add a negative cross-owner test",
       "owner_role": "pm-security",
@@ -34773,6 +34859,24 @@
       }
     },
     {
+      "id": "pm-security-force-rls-person-month-submissions-2026-11-25",
+      "action": "Add ALTER TABLE person_month_submissions (and person_months if not already) FORCE ROW LEVEL SECURITY; move submission repo methods (submit, find_submission, list_*_submissions, is_active_resident) onto the RLS connection; add cross-tenant integration test.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25 | gc1-reconcile 2026-11-25T18:23:52Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3797,
+        "merged_at": "2026-11-25T16:42:33Z",
+        "at": "2026-11-25T18:23:52Z"
+      }
+    },
+    {
       "id": "pm-security-merge-gdpr-raw-db-error-leak-2026-11-16",
       "action": "Merge #3560 after confirming gdpr routes return generic errors with no sqlx/db strings, and grep other routes for raw e.to_string() in responses",
       "owner_role": "pm-security",
@@ -34788,6 +34892,24 @@
         "merged_pr": 3569,
         "merged_at": "2026-11-16T14:30:57Z",
         "at": "2026-11-16T14:38:35Z"
+      }
+    },
+    {
+      "id": "pm-security-negative-authz-tests-person-months-2026-11-25",
+      "action": "Add negative authz tests to person_months_happy_path_tests.rs: non-resident submit 403, resident approve 403, cross-building submission_id 404, double-approve 409, out-of-range period 400.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25 | gc1-reconcile 2026-11-25T18:23:52Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3801,
+        "merged_at": "2026-11-25T16:42:06Z",
+        "at": "2026-11-25T18:23:52Z"
       }
     },
     {
