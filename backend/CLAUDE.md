@@ -81,6 +81,11 @@ Key workspace dependencies:
 | `SREALITY_WEBHOOK_SECRET` | If receiving Sreality webhooks | Per-portal HMAC secret for `/api/v1/webhooks/portals/sreality/...`; same family as above |
 | `BEZREALITKY_WEBHOOK_SECRET` | If receiving Bezrealitky webhooks | Per-portal HMAC secret for `/api/v1/webhooks/portals/bezrealitky/...`; same family as above |
 | `NEHNUTELNOSTI_WEBHOOK_SECRET` | If receiving Nehnutelnosti webhooks | Per-portal HMAC secret for `/api/v1/webhooks/portals/nehnutelnosti/...`; same family as above |
+| `REPORT_WORKER_ENABLED` | No | `false` disables the report worker that turns pending scheduled executions and queued export jobs into files (default on). Needs S3 storage configured; without it executions fail with `STORAGE_NOT_CONFIGURED` and small exports are generated inline. |
+| `REPORT_WORKER_INTERVAL_SECS` | No | Report worker poll interval (default 30) |
+| `AUTOMATION_WORKER_ENABLED` | No | `false` disables the automation worker (scheduled rules, condition checks, delayed actions); event-triggered rules still run from the request path (default on) |
+| `AUTOMATION_WORKER_INTERVAL_SECS` | No | Automation worker poll interval for due scheduled rules and delayed actions (default 60) |
+| `AUTOMATION_CONDITION_INTERVAL_SECS` | No | How often condition rules re-evaluate open faults / unpaid invoices (default 900) |
 
 ```bash
 # Required

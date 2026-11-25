@@ -152,11 +152,14 @@ RUN RUST_TARGET=$(cat /tmp/rust-target) && \
 # =============================================================================
 FROM debian:bookworm-slim AS runtime-base
 
-# Install runtime dependencies
+# Install runtime dependencies. fonts-liberation provides the TrueType fonts
+# the PDF exports (reports, votes, financial statements) load from
+# /usr/share/fonts/truetype/liberation.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libssl3 \
     curl \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user

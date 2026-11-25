@@ -156,7 +156,12 @@ export async function updateScheduleCron(
 }
 
 export async function deleteSchedule(id: string): Promise<void> {
-  await fetchApi(`${API_BASE}/schedules/${id}`, { method: 'DELETE' });
+  // 204 No Content: no body to parse.
+  const response = await authenticatedFetch(`${API_BASE}/schedules/${id}`, { method: 'DELETE' });
+  if (!response.ok) {
+    const error = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
+    throw new ApiError(response.status, error.message || `HTTP ${response.status}`, error.code);
+  }
 }
 
 export async function toggleSchedule(id: string, isActive: boolean): Promise<ReportSchedule> {
@@ -166,8 +171,14 @@ export async function toggleSchedule(id: string, isActive: boolean): Promise<Rep
   });
 }
 
-export async function runScheduleNow(id: string): Promise<ReportRun> {
-  return fetchApi(`${API_BASE}/schedules/${id}/run`, { method: 'POST' });
+/**
+ * Queue an immediate run of a schedule. The report worker picks the pending
+ * execution up within its poll interval; returns the queued execution.
+ */
+export async function runScheduleNow(id: string): Promise<ReportExecution> {
+  return normalizeReportExecution(
+    await fetchApi(`${API_BASE}/schedules/${id}/run`, { method: 'POST' })
+  );
 }
 
 export async function listScheduleRuns(scheduleId: string, limit?: number): Promise<ReportRun[]> {
@@ -205,6 +216,48 @@ import type {
 } from './types';
 
 /**
+ * The api-server serialises executions, history pages and download URLs in
+ * snake_case (`schedule_id`, `has_more`, `file_name`, ...), while the UI types
+ * are camelCase. Normalise at the client boundary so the execution history
+ * table and the download button read real values instead of `undefined`.
+ * Both spellings are accepted so MSW fixtures written in camelCase keep working.
+ */
+type RawRecord = Record<string, unknown>;
+
+function pick<T>(raw: RawRecord, snake: string, camel: string): T | undefined {
+  const value = raw[snake] ?? raw[camel];
+  return (value ?? undefined) as T | undefined;
+}
+
+export function normalizeReportExecution(input: unknown): ReportExecution {
+  const raw = (input ?? {}) as RawRecord;
+  const errorCode = pick<string>(raw, 'error_code', 'errorCode');
+  const errorMessage = pick<string>(raw, 'error_message', 'errorMessage');
+  const nestedError = raw.error as ReportExecution['error'] | undefined;
+  return {
+    id: String(raw.id ?? ''),
+    scheduleId: pick<string>(raw, 'schedule_id', 'scheduleId') ?? '',
+    status: (raw.status as ReportExecution['status']) ?? 'pending',
+    startedAt: pick<string>(raw, 'started_at', 'startedAt') ?? '',
+    completedAt: pick<string>(raw, 'completed_at', 'completedAt'),
+    durationMs: pick<number>(raw, 'duration_ms', 'durationMs'),
+    fileKey: pick<string>(raw, 'file_key', 'fileKey'),
+    fileName: pick<string>(raw, 'file_name', 'fileName'),
+    fileSize: pick<number>(raw, 'file_size', 'fileSize'),
+    error:
+      nestedError ??
+      (errorCode || errorMessage
+        ? {
+            code: errorCode ?? 'UNKNOWN',
+            message: errorMessage ?? '',
+            details: pick<string>(raw, 'error_details', 'errorDetails'),
+          }
+        : undefined),
+    createdAt: pick<string>(raw, 'created_at', 'createdAt') ?? '',
+  };
+}
+
+/**
  * Get execution history for a schedule (Story 81.2).
  */
 export async function getReportExecutionHistory(
@@ -219,30 +272,44 @@ export async function getReportExecutionHistory(
 
   const queryString = searchParams.toString();
   const url = `${API_BASE}/schedules/${params.scheduleId}/executions${queryString ? `?${queryString}` : ''}`;
-  return fetchApi(url);
+  const raw = await fetchApi<RawRecord>(url);
+  const executions = Array.isArray(raw.executions) ? raw.executions : [];
+  return {
+    executions: executions.map(normalizeReportExecution),
+    total: Number(raw.total ?? executions.length),
+    hasMore: Boolean(pick<boolean>(raw, 'has_more', 'hasMore')),
+  };
 }
 
 /**
  * Get a single execution details (Story 81.2).
  */
 export async function getExecution(executionId: string): Promise<ReportExecution> {
-  return fetchApi(`${API_BASE}/executions/${executionId}`);
+  return normalizeReportExecution(await fetchApi(`${API_BASE}/executions/${executionId}`));
 }
 
 /**
- * Get download URL for a completed execution (Story 81.2).
+ * Get a presigned download URL for a completed execution (Story 81.2).
  */
 export async function getReportExecutionDownloadUrl(
   executionId: string
 ): Promise<ReportDownloadUrlResponse> {
-  return fetchApi(`${API_BASE}/executions/${executionId}/download`);
+  const raw = await fetchApi<RawRecord>(`${API_BASE}/executions/${executionId}/download`);
+  return {
+    url: String(raw.url ?? ''),
+    expiresAt: pick<string>(raw, 'expires_at', 'expiresAt') ?? '',
+    fileName: pick<string>(raw, 'file_name', 'fileName') ?? 'report',
+    contentType: pick<string>(raw, 'content_type', 'contentType') ?? 'application/octet-stream',
+  };
 }
 
 /**
  * Retry a failed report execution (Story 81.2).
  */
 export async function retryReportExecution(executionId: string): Promise<ReportExecution> {
-  return fetchApi(`${API_BASE}/executions/${executionId}/retry`, { method: 'POST' });
+  return normalizeReportExecution(
+    await fetchApi(`${API_BASE}/executions/${executionId}/retry`, { method: 'POST' })
+  );
 }
 
 // NOTE: the dashboard analytics + trend-analysis client functions
@@ -431,11 +498,46 @@ export interface ConsumptionReportResponse {
   anomalies: ConsumptionAnomaly[];
 }
 
-/** Export report response. */
+/**
+ * Async export response (202): `download_url` is the job status URL
+ * (`/api/v1/reports/export/{job_id}/status`) to poll until the file is ready.
+ */
 export interface ExportReportResponse {
   download_url: string;
   format: string;
   expires_at: string;
+}
+
+/** Sync export response (200): the generated file inline, base64-encoded. */
+export interface SyncExportReportResponse {
+  data: string;
+  filename: string;
+  content_type: string;
+  format: string;
+}
+
+export type ExportReportResult = ExportReportResponse | SyncExportReportResponse;
+
+/** Export job status, polled for async exports. */
+export interface ExportJobStatusResponse {
+  job_id: string;
+  status:
+    | 'pending'
+    | 'scheduled'
+    | 'running'
+    | 'retrying'
+    | 'completed'
+    | 'failed'
+    | 'cancelled'
+    | 'timed_out';
+  download_url?: string | null;
+  expires_at?: string | null;
+  error_message?: string | null;
+  progress_percent?: number | null;
+}
+
+export function isSyncExport(result: ExportReportResult): result is SyncExportReportResponse {
+  return typeof (result as SyncExportReportResponse).data === 'string';
 }
 
 // ============================================================================
@@ -549,13 +651,19 @@ export async function getConsumptionReport(
 /**
  * Export a report to PDF/Excel/CSV (Story 55.5).
  */
-export async function exportAdvancedReport(
-  data: ExportReportRequest
-): Promise<ExportReportResponse> {
+export async function exportAdvancedReport(data: ExportReportRequest): Promise<ExportReportResult> {
   return fetchApi(`${API_BASE}/export`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+/**
+ * Poll an async export job (Story 84.1). `download_url` is a presigned link
+ * once `status` is `completed`.
+ */
+export async function getExportJobStatus(jobId: string): Promise<ExportJobStatusResponse> {
+  return fetchApi(`${API_BASE}/export/${jobId}/status`);
 }
 
 // ============================================================================

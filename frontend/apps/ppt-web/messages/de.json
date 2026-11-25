@@ -3821,7 +3821,11 @@
           "invalidEmails": "Ungültige E-Mail(s): {{emails}}",
           "timeRequired": "Uhrzeit ist erforderlich"
         }
-      }
+      },
+      "deleted": "Zeitplan gelöscht.",
+      "deleteFailed": "Zeitplan konnte nicht gelöscht werden.",
+      "runQueued": "Berichtsausführung eingeplant. Sie erscheint in Kürze im Verlauf.",
+      "runFailed": "Berichtsausführung konnte nicht gestartet werden."
     },
     "builtin": {
       "faults": "Störungsstatistik",
@@ -3854,7 +3858,6 @@
         "reports": "Berichte",
         "schedules": "Zeitpläne"
       },
-      "newReport": "+ Neuer Bericht",
       "newSchedule": "+ Neuer Zeitplan",
       "keyMetrics": "Kennzahlen",
       "trends": "Trends",
@@ -3862,12 +3865,25 @@
       "analytics": "Analysen",
       "monthlyPerformance": "Monatliche Entwicklung",
       "buildingPerformance": "Gebäudekennzahlen",
-      "savedReports": "Gespeicherte Berichte",
-      "noReports": "Noch keine Berichte erstellt",
-      "createFirstReport": "Ersten Bericht erstellen",
-      "createdOn": "Erstellt am {{date}}",
-      "public": "Öffentlich",
-      "createSchedule": "Zeitplan erstellen"
+      "createSchedule": "Zeitplan erstellen",
+      "generate": {
+        "title": "Bericht erstellen",
+        "description": "Wählen Sie einen Bericht, einen Zeitraum und ein Format. Kleine Berichte werden sofort heruntergeladen, größere im Hintergrund vorbereitet und danach heruntergeladen.",
+        "report": "Bericht",
+        "format": "Format",
+        "from": "Von",
+        "to": "Bis",
+        "submit": "Erstellen und herunterladen",
+        "generating": "Wird erstellt…",
+        "success": "Bericht erstellt.",
+        "failed": "Bericht konnte nicht erstellt werden.",
+        "invalidRange": "Das Startdatum muss vor oder gleich dem Enddatum sein."
+      },
+      "deleteSchedule": {
+        "title": "Zeitplan löschen?",
+        "message": "Der Zeitplan „{{name}}“ und sein Ausführungsverlauf werden gelöscht.",
+        "confirm": "Löschen"
+      }
     }
   },
   "leases": {
@@ -6170,10 +6186,12 @@
       "pausedMessage": "„{{name}}“ wurde pausiert.",
       "updateErrorTitle": "Aktualisierung fehlgeschlagen",
       "updateErrorMessage": "Die Automatisierungsregel konnte nicht aktualisiert werden.",
-      "runSuccessTitle": "Regel ausgelöst",
+      "runSuccessTitle": "Regel ausgeführt",
       "runSuccessMessage": "„{{name}}“ wird jetzt ausgeführt.",
-      "runErrorTitle": "Ausführung fehlgeschlagen",
-      "runErrorMessage": "Die Automatisierungsregel konnte nicht ausgeführt werden."
+      "runErrorTitle": "Regelausführung fehlgeschlagen",
+      "runErrorMessage": "Die Regel konnte nicht ausgeführt werden.",
+      "runPartialTitle": "Regel mit Fehlern ausgeführt",
+      "runMessage": "„{{name}}“ hat {{count}} Aktion(en) ausgeführt. Details im Ausführungsprotokoll."
     },
     "ruleCard": {
       "unknownTrigger": "Unbekannter Auslöser",
@@ -6245,10 +6263,6 @@
       "categoryDocuments": "Dokumente",
       "categoryAnnouncements": "Ankündigungen",
       "categoryVoting": "Abstimmung",
-      "categoryGuests": "Gäste",
-      "categoryMaintenance": "Wartung",
-      "categoryMeters": "Zähler",
-      "categoryLeases": "Mietverträge",
       "eventFaultCreated": "Störung erstellt",
       "eventFaultStatusChanged": "Störungsstatus geändert",
       "eventPaymentReceived": "Zahlung erhalten",
@@ -6256,11 +6270,7 @@
       "eventDocumentUploaded": "Dokument hochgeladen",
       "eventAnnouncementPublished": "Ankündigung veröffentlicht",
       "eventVoteStarted": "Abstimmung gestartet",
-      "eventVoteEnded": "Abstimmung beendet",
-      "eventGuestRegistered": "Gast registriert",
-      "eventMaintenanceScheduled": "Wartung geplant",
-      "eventMeterReadingDue": "Zählerablesung fällig",
-      "eventLeaseExpiring": "Mietvertrag läuft ab"
+      "eventVoteEnded": "Abstimmung beendet"
     },
     "conditionBuilder": {
       "title": "Bedingungen",
@@ -6269,7 +6279,6 @@
       "emptyBody": "Bedingungen filtern, wann die Automatisierung ausgeführt wird. Ohne Bedingungen wird sie für alle passenden Auslöser ausgeführt.",
       "and": "UND",
       "selectPlaceholder": "Auswählen...",
-      "valuePlaceholder": "Wert",
       "removeCondition": "Bedingung entfernen",
       "allMustBeTrue": "Alle Bedingungen müssen erfüllt sein, damit die Automatisierung ausgeführt wird.",
       "fieldFaultCategory": "Störungskategorie",
@@ -6280,7 +6289,6 @@
       "fieldDaysOverdue": "Tage überfällig",
       "fieldDocumentType": "Dokumenttyp",
       "fieldDocumentSize": "Dokumentgröße (MB)",
-      "fieldUserRole": "Benutzerrolle",
       "fieldBuilding": "Gebäude",
       "fieldUnit": "Einheit",
       "opEquals": "ist gleich",
@@ -6295,29 +6303,43 @@
       "opIsNotEmpty": "ist nicht leer",
       "opInList": "ist eines von",
       "opNotInList": "ist keines von",
-      "valFaultCategoryElectrical": "Elektrik",
-      "valFaultCategoryPlumbing": "Sanitär",
-      "valFaultCategoryHvac": "Heizung/Klima",
-      "valFaultCategoryStructural": "Baulich",
-      "valFaultCategoryOther": "Sonstiges",
-      "valFaultPriorityLow": "Niedrig",
-      "valFaultPriorityMedium": "Mittel",
-      "valFaultPriorityHigh": "Hoch",
-      "valFaultPriorityCritical": "Kritisch",
-      "valFaultStatusReported": "Gemeldet",
-      "valFaultStatusAcknowledged": "Bestätigt",
-      "valFaultStatusInProgress": "In Bearbeitung",
-      "valFaultStatusResolved": "Behoben",
-      "valFaultStatusClosed": "Geschlossen",
-      "valDocumentTypeContract": "Vertrag",
-      "valDocumentTypeInvoice": "Rechnung",
-      "valDocumentTypeReport": "Bericht",
-      "valDocumentTypeMinutes": "Sitzungsprotokoll",
-      "valDocumentTypeOther": "Sonstiges",
-      "valUserRoleOwner": "Eigentümer",
-      "valUserRoleTenant": "Mieter",
-      "valUserRoleManager": "Verwalter",
-      "valUserRoleAdmin": "Administrator"
+      "fieldDaysOpen": "Tage offen",
+      "faultCategory": {
+        "plumbing": "Sanitär",
+        "electrical": "Elektrik",
+        "heating": "Heizung",
+        "structural": "Bausubstanz",
+        "exterior": "Außenbereich",
+        "elevator": "Aufzug",
+        "common_area": "Gemeinschaftsbereich",
+        "security": "Sicherheit",
+        "cleaning": "Reinigung",
+        "other": "Sonstiges"
+      },
+      "faultPriority": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "urgent": "Dringend"
+      },
+      "faultStatus": {
+        "new": "Neu",
+        "triaged": "Bewertet",
+        "in_progress": "In Bearbeitung",
+        "waiting_parts": "Wartet auf Teile",
+        "scheduled": "Geplant",
+        "resolved": "Behoben",
+        "closed": "Geschlossen",
+        "reopened": "Wieder geöffnet"
+      },
+      "documentType": {
+        "contracts": "Verträge",
+        "invoices": "Rechnungen",
+        "reports": "Berichte",
+        "manuals": "Anleitungen",
+        "certificates": "Zertifikate",
+        "other": "Sonstiges"
+      }
     },
     "actionBuilder": {
       "title": "Aktionen",
@@ -6340,18 +6362,24 @@
       "typeSendNotificationDesc": "Push- oder E-Mail-Benachrichtigung senden",
       "typeSendEmail": "E-Mail senden",
       "typeSendEmailDesc": "E-Mail an angegebene Empfänger senden",
-      "typeCreateTask": "Aufgabe erstellen",
-      "typeCreateTaskDesc": "Neue Aufgabe oder neuen Arbeitsauftrag erstellen",
       "typeUpdateStatus": "Status aktualisieren",
       "typeUpdateStatusDesc": "Status eines Elements ändern",
       "typeAssignUser": "Benutzer zuweisen",
       "typeAssignUserDesc": "Einem Benutzer oder Team zuweisen",
-      "typeAddTag": "Tag hinzufügen",
-      "typeAddTagDesc": "Ein Tag oder Label hinzufügen",
       "typeWebhook": "Webhook aufrufen",
       "typeWebhookDesc": "Daten an einen externen Dienst senden",
       "typeDelay": "Verzögerung hinzufügen",
-      "typeDelayDesc": "Vor der nächsten Aktion warten"
+      "typeDelayDesc": "Vor der nächsten Aktion warten",
+      "typeGenerateReport": "Bericht erstellen",
+      "typeGenerateReportDesc": "Einen integrierten Bericht erstellen und per E-Mail senden",
+      "recipientsPlaceholder": "Empfänger: managers, reporter, assignee, unit_residents oder Benutzer-IDs",
+      "emailBodyPlaceholder": "Nachrichtentext (unterstützt Platzhalter wie {{fault.title}})",
+      "reportLabel": "Bericht",
+      "reportFormatLabel": "Berichtsformat",
+      "reportPeriodDays": "Tage zurück",
+      "statusLabel": "Neuer Status",
+      "selectStatus": "Status auswählen",
+      "assignUserPlaceholder": "Benutzer-ID der zuständigen Person"
     },
     "createPage": {
       "back": "Zurück zu den Regeln",
@@ -6503,7 +6531,7 @@
     "templates": {
       "weekly_maintenance_report": {
         "name": "Wöchentlicher Wartungsbericht",
-        "description": "Sendet den Verwaltern wöchentlich eine Übersicht offener Wartungsanfragen"
+        "description": "Sendet den Verwaltern wöchentlich einen PDF-Bericht der Störungen per E-Mail"
       },
       "overdue_payment_reminder": {
         "name": "Erinnerung an überfällige Zahlung",
@@ -6511,11 +6539,11 @@
       },
       "high_priority_fault_escalation": {
         "name": "Eskalation von Störungen mit hoher Priorität",
-        "description": "Weist Störungen mit hoher Priorität automatisch zu und benachrichtigt den Verwalter"
+        "description": "Benachrichtigt die Verwalter und sendet eine E-Mail, wenn eine Störung mit hoher Priorität gemeldet wird"
       },
       "monthly_statement_generation": {
-        "name": "Monatliche Abrechnung",
-        "description": "Erstellt und versendet die monatliche Abrechnung jeweils am 1. des Monats"
+        "name": "Monatlicher Verbrauchsbericht",
+        "description": "Sendet den Verwaltern am 1. des Monats den Verbrauchsbericht per E-Mail"
       },
       "actionTypes": {
         "generate_report": "Bericht erstellen",

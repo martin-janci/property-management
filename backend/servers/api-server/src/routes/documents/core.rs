@@ -2,6 +2,9 @@
 
 //! Document routes (Epic 7A: Basic Document Management, Epic 7B: Document Versioning, Epic 28: Document Intelligence, Epic 92: Intelligent Document Generation).
 
+use crate::services::automation_engine::{
+    document_event_data, event as automation_event, AutomationEngine,
+};
 use crate::state::AppState;
 use api_core::{extractors::RlsConnection, AuthUser, ValidatedTenantExtractor};
 use axum::{
@@ -644,6 +647,13 @@ async fn create_document(
     {
         Ok(document) => {
             rls.release().await;
+            // Gap audit 3.1: automation rules listening for new documents.
+            AutomationEngine::emit(
+                &state,
+                document.organization_id,
+                automation_event::DOCUMENT_UPLOADED,
+                document_event_data(&document),
+            );
             Ok((
                 StatusCode::CREATED,
                 Json(CreateDocumentResponse {
@@ -2231,6 +2241,13 @@ async fn upload_document(
                 org_id = %org_id,
                 user_id = %user_id,
                 "Document upload complete"
+            );
+            // Gap audit 3.1: automation rules listening for new documents.
+            AutomationEngine::emit(
+                &state,
+                document.organization_id,
+                automation_event::DOCUMENT_UPLOADED,
+                document_event_data(&document),
             );
             Ok((
                 StatusCode::CREATED,

@@ -64,6 +64,9 @@ vi.mock('@ppt/api-client', async (importOriginal) => ({
     isLoading: false,
     isError: false,
   }),
+  useDeleteSchedule: () => ({ mutateAsync: vi.fn() }),
+  useRunScheduleNow: () => ({ mutateAsync: vi.fn() }),
+  useGenerateReport: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDownloadReport: () => ({ mutate: vi.fn() }),
   useRetryReportExecution: () => ({ mutateAsync: vi.fn() }),
 }));

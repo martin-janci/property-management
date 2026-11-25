@@ -6110,7 +6110,11 @@
           "invalidEmails": "Invalid email(s): {{emails}}",
           "timeRequired": "Time is required"
         }
-      }
+      },
+      "deleted": "Schedule deleted.",
+      "deleteFailed": "Failed to delete schedule.",
+      "runQueued": "Report run queued. It will appear in the history shortly.",
+      "runFailed": "Failed to start the report run."
     },
     "builtin": {
       "faults": "Fault statistics",
@@ -6143,7 +6147,6 @@
         "reports": "Reports",
         "schedules": "Schedules"
       },
-      "newReport": "+ New report",
       "newSchedule": "+ New schedule",
       "keyMetrics": "Key metrics",
       "trends": "Trends",
@@ -6151,12 +6154,25 @@
       "analytics": "Analytics",
       "monthlyPerformance": "Monthly performance",
       "buildingPerformance": "Building performance",
-      "savedReports": "Saved reports",
-      "noReports": "No reports created yet",
-      "createFirstReport": "Create your first report",
-      "createdOn": "Created {{date}}",
-      "public": "Public",
-      "createSchedule": "Create schedule"
+      "createSchedule": "Create schedule",
+      "generate": {
+        "title": "Generate a report",
+        "description": "Pick a report, a period and a format. Small reports download right away; larger ones are prepared in the background and download when ready.",
+        "report": "Report",
+        "format": "Format",
+        "from": "From",
+        "to": "To",
+        "submit": "Generate and download",
+        "generating": "Generating…",
+        "success": "Report generated.",
+        "failed": "Failed to generate the report.",
+        "invalidRange": "The start date must be on or before the end date."
+      },
+      "deleteSchedule": {
+        "title": "Delete schedule?",
+        "message": "The schedule \"{{name}}\" and its execution history will be deleted.",
+        "confirm": "Delete"
+      }
     }
   },
   "settings": {
@@ -7911,10 +7927,12 @@
       "pausedMessage": "\"{{name}}\" was paused.",
       "updateErrorTitle": "Update failed",
       "updateErrorMessage": "The automation rule could not be updated.",
-      "runSuccessTitle": "Rule triggered",
+      "runSuccessTitle": "Rule ran",
       "runSuccessMessage": "\"{{name}}\" is now running.",
-      "runErrorTitle": "Run failed",
-      "runErrorMessage": "The automation rule could not be run."
+      "runErrorTitle": "Rule run failed",
+      "runErrorMessage": "The rule could not be run.",
+      "runPartialTitle": "Rule ran with errors",
+      "runMessage": "\"{{name}}\" ran {{count}} action(s). See the execution log for details."
     },
     "ruleCard": {
       "unknownTrigger": "Unknown trigger",
@@ -7986,10 +8004,6 @@
       "categoryDocuments": "Documents",
       "categoryAnnouncements": "Announcements",
       "categoryVoting": "Voting",
-      "categoryGuests": "Guests",
-      "categoryMaintenance": "Maintenance",
-      "categoryMeters": "Meters",
-      "categoryLeases": "Leases",
       "eventFaultCreated": "Fault Created",
       "eventFaultStatusChanged": "Fault Status Changed",
       "eventPaymentReceived": "Payment Received",
@@ -7997,11 +8011,7 @@
       "eventDocumentUploaded": "Document Uploaded",
       "eventAnnouncementPublished": "Announcement Published",
       "eventVoteStarted": "Vote Started",
-      "eventVoteEnded": "Vote Ended",
-      "eventGuestRegistered": "Guest Registered",
-      "eventMaintenanceScheduled": "Maintenance Scheduled",
-      "eventMeterReadingDue": "Meter Reading Due",
-      "eventLeaseExpiring": "Lease Expiring"
+      "eventVoteEnded": "Vote Ended"
     },
     "conditionBuilder": {
       "title": "Conditions",
@@ -8010,7 +8020,6 @@
       "emptyBody": "Conditions filter when the automation runs. Without conditions, it runs for all matching triggers.",
       "and": "AND",
       "selectPlaceholder": "Select...",
-      "valuePlaceholder": "Value",
       "removeCondition": "Remove condition",
       "allMustBeTrue": "All conditions must be true for the automation to run.",
       "fieldFaultCategory": "Fault Category",
@@ -8021,7 +8030,6 @@
       "fieldDaysOverdue": "Days Overdue",
       "fieldDocumentType": "Document Type",
       "fieldDocumentSize": "Document Size (MB)",
-      "fieldUserRole": "User Role",
       "fieldBuilding": "Building",
       "fieldUnit": "Unit",
       "opEquals": "equals",
@@ -8036,29 +8044,43 @@
       "opIsNotEmpty": "is not empty",
       "opInList": "is one of",
       "opNotInList": "is not one of",
-      "valFaultCategoryElectrical": "Electrical",
-      "valFaultCategoryPlumbing": "Plumbing",
-      "valFaultCategoryHvac": "HVAC",
-      "valFaultCategoryStructural": "Structural",
-      "valFaultCategoryOther": "Other",
-      "valFaultPriorityLow": "Low",
-      "valFaultPriorityMedium": "Medium",
-      "valFaultPriorityHigh": "High",
-      "valFaultPriorityCritical": "Critical",
-      "valFaultStatusReported": "Reported",
-      "valFaultStatusAcknowledged": "Acknowledged",
-      "valFaultStatusInProgress": "In Progress",
-      "valFaultStatusResolved": "Resolved",
-      "valFaultStatusClosed": "Closed",
-      "valDocumentTypeContract": "Contract",
-      "valDocumentTypeInvoice": "Invoice",
-      "valDocumentTypeReport": "Report",
-      "valDocumentTypeMinutes": "Meeting Minutes",
-      "valDocumentTypeOther": "Other",
-      "valUserRoleOwner": "Owner",
-      "valUserRoleTenant": "Tenant",
-      "valUserRoleManager": "Manager",
-      "valUserRoleAdmin": "Admin"
+      "fieldDaysOpen": "Days open",
+      "faultCategory": {
+        "plumbing": "Plumbing",
+        "electrical": "Electrical",
+        "heating": "Heating",
+        "structural": "Structural",
+        "exterior": "Exterior",
+        "elevator": "Elevator",
+        "common_area": "Common area",
+        "security": "Security",
+        "cleaning": "Cleaning",
+        "other": "Other"
+      },
+      "faultPriority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "faultStatus": {
+        "new": "New",
+        "triaged": "Triaged",
+        "in_progress": "In progress",
+        "waiting_parts": "Waiting for parts",
+        "scheduled": "Scheduled",
+        "resolved": "Resolved",
+        "closed": "Closed",
+        "reopened": "Reopened"
+      },
+      "documentType": {
+        "contracts": "Contracts",
+        "invoices": "Invoices",
+        "reports": "Reports",
+        "manuals": "Manuals",
+        "certificates": "Certificates",
+        "other": "Other"
+      }
     },
     "actionBuilder": {
       "title": "Actions",
@@ -8081,18 +8103,24 @@
       "typeSendNotificationDesc": "Send push or email notification",
       "typeSendEmail": "Send Email",
       "typeSendEmailDesc": "Send an email to specified recipients",
-      "typeCreateTask": "Create Task",
-      "typeCreateTaskDesc": "Create a new task or work order",
       "typeUpdateStatus": "Update Status",
       "typeUpdateStatusDesc": "Change status of an item",
       "typeAssignUser": "Assign User",
       "typeAssignUserDesc": "Assign to a user or team",
-      "typeAddTag": "Add Tag",
-      "typeAddTagDesc": "Add a tag or label",
       "typeWebhook": "Call Webhook",
       "typeWebhookDesc": "Send data to external service",
       "typeDelay": "Add Delay",
-      "typeDelayDesc": "Wait before next action"
+      "typeDelayDesc": "Wait before next action",
+      "typeGenerateReport": "Generate report",
+      "typeGenerateReportDesc": "Generate a built-in report and e-mail it",
+      "recipientsPlaceholder": "Recipients: managers, reporter, assignee, unit_residents or user IDs",
+      "emailBodyPlaceholder": "Message body (supports {{fault.title}} placeholders)",
+      "reportLabel": "Report",
+      "reportFormatLabel": "Report format",
+      "reportPeriodDays": "days back",
+      "statusLabel": "New status",
+      "selectStatus": "Select a status",
+      "assignUserPlaceholder": "User ID of the assignee"
     },
     "createPage": {
       "back": "Back to Rules",
@@ -8244,7 +8272,7 @@
     "templates": {
       "weekly_maintenance_report": {
         "name": "Weekly Maintenance Report",
-        "description": "Send weekly summary of open maintenance requests to managers"
+        "description": "E-mail managers a weekly PDF report of maintenance faults"
       },
       "overdue_payment_reminder": {
         "name": "Overdue Payment Reminder",
@@ -8252,11 +8280,11 @@
       },
       "high_priority_fault_escalation": {
         "name": "High Priority Fault Escalation",
-        "description": "Auto-assign high priority faults and notify manager"
+        "description": "Notify and e-mail managers when a high priority fault is reported"
       },
       "monthly_statement_generation": {
-        "name": "Monthly Statement Generation",
-        "description": "Generate and send monthly statements on the 1st"
+        "name": "Monthly Consumption Report",
+        "description": "E-mail the monthly consumption report to managers on the 1st"
       },
       "actionTypes": {
         "generate_report": "Generate report",

@@ -187,7 +187,7 @@ fn cron_field_matches(field: &str, value: u32, field_min: u32, field_max: u32) -
 ///
 /// Returns `None` only for a malformed expression or one with no match inside
 /// the horizon — callers leave `next_run_at` unchanged in that case.
-pub(super) fn compute_next_run_from_cron(now: DateTime<Tz>, cron: &str) -> Option<DateTime<Utc>> {
+pub(crate) fn compute_next_run_from_cron(now: DateTime<Tz>, cron: &str) -> Option<DateTime<Utc>> {
     let fields: Vec<&str> = cron.split_whitespace().collect();
     if fields.len() != 5 {
         return None;
@@ -272,7 +272,7 @@ pub(crate) fn compute_next_run_for_schedule(
 }
 
 /// Validate a 5-field UNIX cron expression (minute hour dom month dow).
-pub(super) fn validate_cron_expression(expr: &str) -> bool {
+pub(crate) fn validate_cron_expression(expr: &str) -> bool {
     let fields: Vec<&str> = expr.split_whitespace().collect();
     if fields.len() != 5 {
         return false;

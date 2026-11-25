@@ -53,13 +53,13 @@ export interface TriggerCondition {
 }
 
 // Action Types
+/** Actions the api-server automation engine executes (SUPPORTED_ACTIONS). */
 export type ActionType =
   | 'send_notification'
   | 'send_email'
-  | 'create_task'
+  | 'generate_report'
   | 'update_status'
   | 'assign_user'
-  | 'add_tag'
   | 'webhook'
   | 'delay';
 

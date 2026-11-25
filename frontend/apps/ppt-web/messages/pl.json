@@ -3905,7 +3905,11 @@
           "invalidEmails": "Nieprawidłowe adresy e-mail: {{emails}}",
           "timeRequired": "Godzina jest wymagana"
         }
-      }
+      },
+      "deleted": "Harmonogram został usunięty.",
+      "deleteFailed": "Nie udało się usunąć harmonogramu.",
+      "runQueued": "Uruchomienie raportu zostało zakolejkowane. Wkrótce pojawi się w historii.",
+      "runFailed": "Nie udało się uruchomić raportu."
     },
     "builtin": {
       "faults": "Statystyka usterek",
@@ -3938,7 +3942,6 @@
         "reports": "Raporty",
         "schedules": "Harmonogramy"
       },
-      "newReport": "+ Nowy raport",
       "newSchedule": "+ Nowy harmonogram",
       "keyMetrics": "Kluczowe wskaźniki",
       "trends": "Trendy",
@@ -3946,12 +3949,25 @@
       "analytics": "Analizy",
       "monthlyPerformance": "Wyniki miesięczne",
       "buildingPerformance": "Wyniki budynków",
-      "savedReports": "Zapisane raporty",
-      "noReports": "Nie utworzono jeszcze żadnych raportów",
-      "createFirstReport": "Utwórz pierwszy raport",
-      "createdOn": "Utworzono {{date}}",
-      "public": "Publiczny",
-      "createSchedule": "Utwórz harmonogram"
+      "createSchedule": "Utwórz harmonogram",
+      "generate": {
+        "title": "Wygeneruj raport",
+        "description": "Wybierz raport, okres i format. Małe raporty pobiorą się od razu, większe zostaną przygotowane w tle i pobrane, gdy będą gotowe.",
+        "report": "Raport",
+        "format": "Format",
+        "from": "Od",
+        "to": "Do",
+        "submit": "Wygeneruj i pobierz",
+        "generating": "Generowanie…",
+        "success": "Raport został wygenerowany.",
+        "failed": "Nie udało się wygenerować raportu.",
+        "invalidRange": "Data początkowa musi być wcześniejsza lub równa dacie końcowej."
+      },
+      "deleteSchedule": {
+        "title": "Usunąć harmonogram?",
+        "message": "Harmonogram „{{name}}” i jego historia uruchomień zostaną usunięte.",
+        "confirm": "Usuń"
+      }
     }
   },
   "settings": {
@@ -5730,8 +5746,10 @@
       "updateErrorMessage": "Nie udało się zaktualizować reguły automatyzacji.",
       "runSuccessTitle": "Reguła uruchomiona",
       "runSuccessMessage": "Reguła „{{name}}” jest teraz uruchamiana.",
-      "runErrorTitle": "Uruchomienie nie powiodło się",
-      "runErrorMessage": "Nie udało się uruchomić reguły automatyzacji."
+      "runErrorTitle": "Uruchomienie reguły nie powiodło się",
+      "runErrorMessage": "Nie udało się uruchomić reguły.",
+      "runPartialTitle": "Reguła wykonana z błędami",
+      "runMessage": "„{{name}}” wykonała {{count}} akcji. Szczegóły w dzienniku wykonań."
     },
     "ruleCard": {
       "unknownTrigger": "Nieznany wyzwalacz",
@@ -5811,10 +5829,6 @@
       "categoryDocuments": "Dokumenty",
       "categoryAnnouncements": "Ogłoszenia",
       "categoryVoting": "Głosowanie",
-      "categoryGuests": "Goście",
-      "categoryMaintenance": "Konserwacja",
-      "categoryMeters": "Liczniki",
-      "categoryLeases": "Najmy",
       "eventFaultCreated": "Utworzono usterkę",
       "eventFaultStatusChanged": "Zmieniono status usterki",
       "eventPaymentReceived": "Otrzymano płatność",
@@ -5822,11 +5836,7 @@
       "eventDocumentUploaded": "Przesłano dokument",
       "eventAnnouncementPublished": "Opublikowano ogłoszenie",
       "eventVoteStarted": "Rozpoczęto głosowanie",
-      "eventVoteEnded": "Zakończono głosowanie",
-      "eventGuestRegistered": "Zarejestrowano gościa",
-      "eventMaintenanceScheduled": "Zaplanowano konserwację",
-      "eventMeterReadingDue": "Termin odczytu licznika",
-      "eventLeaseExpiring": "Najem wygasa"
+      "eventVoteEnded": "Zakończono głosowanie"
     },
     "conditionBuilder": {
       "title": "Warunki",
@@ -5835,7 +5845,6 @@
       "emptyBody": "Warunki filtrują, kiedy automatyzacja się uruchamia. Bez warunków uruchamia się dla wszystkich pasujących wyzwalaczy.",
       "and": "ORAZ",
       "selectPlaceholder": "Wybierz...",
-      "valuePlaceholder": "Wartość",
       "removeCondition": "Usuń warunek",
       "allMustBeTrue": "Wszystkie warunki muszą być spełnione, aby automatyzacja się uruchomiła.",
       "fieldFaultCategory": "Kategoria usterki",
@@ -5846,7 +5855,6 @@
       "fieldDaysOverdue": "Dni zaległości",
       "fieldDocumentType": "Typ dokumentu",
       "fieldDocumentSize": "Rozmiar dokumentu (MB)",
-      "fieldUserRole": "Rola użytkownika",
       "fieldBuilding": "Budynek",
       "fieldUnit": "Lokal",
       "opEquals": "równa się",
@@ -5861,29 +5869,43 @@
       "opIsNotEmpty": "nie jest puste",
       "opInList": "jest jednym z",
       "opNotInList": "nie jest jednym z",
-      "valFaultCategoryElectrical": "Elektryka",
-      "valFaultCategoryPlumbing": "Hydraulika",
-      "valFaultCategoryHvac": "Ogrzewanie/Klimatyzacja",
-      "valFaultCategoryStructural": "Konstrukcyjne",
-      "valFaultCategoryOther": "Inne",
-      "valFaultPriorityLow": "Niski",
-      "valFaultPriorityMedium": "Średni",
-      "valFaultPriorityHigh": "Wysoki",
-      "valFaultPriorityCritical": "Krytyczny",
-      "valFaultStatusReported": "Zgłoszono",
-      "valFaultStatusAcknowledged": "Potwierdzono",
-      "valFaultStatusInProgress": "W toku",
-      "valFaultStatusResolved": "Rozwiązano",
-      "valFaultStatusClosed": "Zamknięto",
-      "valDocumentTypeContract": "Umowa",
-      "valDocumentTypeInvoice": "Faktura",
-      "valDocumentTypeReport": "Raport",
-      "valDocumentTypeMinutes": "Protokół zebrania",
-      "valDocumentTypeOther": "Inne",
-      "valUserRoleOwner": "Właściciel",
-      "valUserRoleTenant": "Najemca",
-      "valUserRoleManager": "Zarządca",
-      "valUserRoleAdmin": "Administrator"
+      "fieldDaysOpen": "Dni otwarte",
+      "faultCategory": {
+        "plumbing": "Hydraulika",
+        "electrical": "Elektryka",
+        "heating": "Ogrzewanie",
+        "structural": "Konstrukcja",
+        "exterior": "Elewacja",
+        "elevator": "Winda",
+        "common_area": "Część wspólna",
+        "security": "Bezpieczeństwo",
+        "cleaning": "Sprzątanie",
+        "other": "Inne"
+      },
+      "faultPriority": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "urgent": "Pilny"
+      },
+      "faultStatus": {
+        "new": "Nowa",
+        "triaged": "Oceniona",
+        "in_progress": "W realizacji",
+        "waiting_parts": "Czeka na części",
+        "scheduled": "Zaplanowana",
+        "resolved": "Rozwiązana",
+        "closed": "Zamknięta",
+        "reopened": "Ponownie otwarta"
+      },
+      "documentType": {
+        "contracts": "Umowy",
+        "invoices": "Faktury",
+        "reports": "Raporty",
+        "manuals": "Instrukcje",
+        "certificates": "Certyfikaty",
+        "other": "Inne"
+      }
     },
     "actionBuilder": {
       "title": "Akcje",
@@ -5906,18 +5928,24 @@
       "typeSendNotificationDesc": "Wyślij powiadomienie push lub e-mail",
       "typeSendEmail": "Wyślij e-mail",
       "typeSendEmailDesc": "Wyślij e-mail do określonych odbiorców",
-      "typeCreateTask": "Utwórz zadanie",
-      "typeCreateTaskDesc": "Utwórz nowe zadanie lub zlecenie pracy",
       "typeUpdateStatus": "Zaktualizuj status",
       "typeUpdateStatusDesc": "Zmień status elementu",
       "typeAssignUser": "Przypisz użytkownika",
       "typeAssignUserDesc": "Przypisz użytkownikowi lub zespołowi",
-      "typeAddTag": "Dodaj tag",
-      "typeAddTagDesc": "Dodaj tag lub etykietę",
       "typeWebhook": "Wywołaj webhook",
       "typeWebhookDesc": "Wyślij dane do usługi zewnętrznej",
       "typeDelay": "Dodaj opóźnienie",
-      "typeDelayDesc": "Poczekaj przed następną akcją"
+      "typeDelayDesc": "Poczekaj przed następną akcją",
+      "typeGenerateReport": "Wygeneruj raport",
+      "typeGenerateReportDesc": "Generuje wbudowany raport i wysyła go e-mailem",
+      "recipientsPlaceholder": "Odbiorcy: managers, reporter, assignee, unit_residents lub ID użytkowników",
+      "emailBodyPlaceholder": "Treść wiadomości (obsługuje symbole zastępcze jak {{fault.title}})",
+      "reportLabel": "Raport",
+      "reportFormatLabel": "Format raportu",
+      "reportPeriodDays": "dni wstecz",
+      "statusLabel": "Nowy status",
+      "selectStatus": "Wybierz status",
+      "assignUserPlaceholder": "ID użytkownika, któremu zostanie przypisane"
     },
     "createPage": {
       "back": "Powrót do reguł",
@@ -6073,7 +6101,7 @@
     "templates": {
       "weekly_maintenance_report": {
         "name": "Tygodniowy raport konserwacji",
-        "description": "Co tydzień wysyła zarządcom podsumowanie otwartych zgłoszeń konserwacyjnych"
+        "description": "Co tydzień wysyła zarządcom e-mailem raport PDF usterek"
       },
       "overdue_payment_reminder": {
         "name": "Przypomnienie o zaległej płatności",
@@ -6081,11 +6109,11 @@
       },
       "high_priority_fault_escalation": {
         "name": "Eskalacja usterek o wysokim priorytecie",
-        "description": "Automatycznie przydziela usterki o wysokim priorytecie i powiadamia zarządcę"
+        "description": "Powiadamia zarządców i wysyła e-mail, gdy zgłoszona zostanie usterka o wysokim priorytecie"
       },
       "monthly_statement_generation": {
-        "name": "Miesięczne rozliczenie",
-        "description": "Generuje i wysyła miesięczne rozliczenie 1. dnia każdego miesiąca"
+        "name": "Miesięczny raport zużycia",
+        "description": "1. dnia miesiąca wysyła zarządcom e-mailem raport zużycia"
       },
       "actionTypes": {
         "generate_report": "Wygeneruj raport",

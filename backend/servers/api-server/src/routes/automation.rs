@@ -37,7 +37,29 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::services::automation_engine::{validate_rule, AutomationEngine, RunSummary};
 use crate::state::AppState;
+
+fn invalid_rule(message: String) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(ErrorResponse::new("INVALID_RULE", message)),
+    )
+}
+
+/// Recompute `next_run_at` after a rule changed. Failures are logged: the
+/// worker schedules a rule with a NULL `next_run_at` on its next pass anyway.
+async fn rescheduled(state: &AppState, rule: WorkflowAutomationRule) -> WorkflowAutomationRule {
+    let engine = AutomationEngine::from_state(state);
+    if let Err(e) = engine.reschedule(&rule).await {
+        tracing::warn!(rule_id = %rule.id, error = %e, "Failed to reschedule automation rule");
+        return rule;
+    }
+    match engine.find_rule(rule.id, rule.organization_id).await {
+        Ok(Some(fresh)) => fresh,
+        _ => rule,
+    }
+}
 
 // ============================================================================
 // Helper Functions
@@ -153,6 +175,8 @@ pub fn router() -> Router<AppState> {
         .route("/rules/{id}", delete(delete_rule))
         .route("/rules/{id}/toggle", post(toggle_rule))
         .route("/rules/{id}/logs", get(get_rule_logs))
+        // Gap audit 3.1: run a rule now
+        .route("/rules/{id}/run", post(run_rule))
         // Org-wide execution monitoring
         .route("/organizations/{org_id}/executions", get(list_executions))
         .route(
@@ -282,12 +306,14 @@ pub async fn create_rule(
 ) -> ApiResult<(StatusCode, Json<WorkflowAutomationRule>)> {
     enforce_org_match(&principal, path.org_id)?;
     require_manager(&state, &principal, path.org_id).await?;
+    validate_rule(&data.trigger_type, &data.trigger_config, &data.actions).map_err(invalid_rule)?;
 
     let rule = state
         .automation_repo
         .create_rule(path.org_id, principal.user_id, data)
         .await
         .map_err(db_error("Failed to create rule"))?;
+    let rule = rescheduled(&state, rule).await;
 
     Ok((StatusCode::CREATED, Json(rule)))
 }
@@ -351,6 +377,26 @@ pub async fn update_rule(
     let org_id = require_tenant_id(&principal)?;
     require_manager(&state, &principal, org_id).await?;
 
+    // Validate the rule as it will look after the update.
+    if data.trigger_type.is_some() || data.trigger_config.is_some() || data.actions.is_some() {
+        let current = state
+            .automation_repo
+            .find_rule_for_org(path.id, org_id)
+            .await
+            .map_err(db_error("Failed to get rule"))?
+            .ok_or_else(|| not_found("Rule"))?;
+        validate_rule(
+            data.trigger_type
+                .as_deref()
+                .unwrap_or(&current.trigger_type),
+            data.trigger_config
+                .as_ref()
+                .unwrap_or(&current.trigger_config),
+            data.actions.as_ref().unwrap_or(&current.actions),
+        )
+        .map_err(invalid_rule)?;
+    }
+
     let rule = state
         .automation_repo
         .update_rule(path.id, org_id, data)
@@ -358,7 +404,7 @@ pub async fn update_rule(
         .map_err(db_error("Failed to update rule"))?;
 
     match rule {
-        Some(r) => Ok(Json(r)),
+        Some(r) => Ok(Json(rescheduled(&state, r).await)),
         None => Err(not_found("Rule")),
     }
 }
@@ -648,4 +694,67 @@ pub async fn create_from_template(
         .map_err(db_error("Failed to create rule from template"))?;
 
     Ok((StatusCode::CREATED, Json(rule)))
+}
+
+/// Optional event data for a manual run.
+#[derive(Debug, Default, Deserialize, ToSchema)]
+pub struct RunRuleRequest {
+    /// Data exposed to conditions and `{{placeholders}}` (e.g. `{"fault": {...}}`).
+    #[serde(default)]
+    pub data: Option<serde_json::Value>,
+}
+
+/// Run a rule's actions now (manual trigger, or a test run of any rule).
+#[utoipa::path(
+    post,
+    path = "/api/v1/automation/rules/{id}/run",
+    params(RuleIdPath),
+    request_body = RunRuleRequest,
+    responses(
+        (status = 200, description = "Rule ran; per-action results"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Manager role required"),
+        (status = 404, description = "Rule not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Automation"
+)]
+pub async fn run_rule(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(path): Path<RuleIdPath>,
+    body: Option<Json<RunRuleRequest>>,
+) -> ApiResult<Json<RunSummary>> {
+    let org_id = require_tenant_id(&principal)?;
+    require_manager(&state, &principal, org_id).await?;
+
+    let engine = AutomationEngine::from_state(&state);
+    let rule = engine
+        .find_rule(path.id, org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to load rule for run");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to load rule")),
+            )
+        })?
+        .ok_or_else(|| not_found("Rule"))?;
+
+    let mut data = body
+        .and_then(|Json(b)| b.data)
+        .filter(serde_json::Value::is_object)
+        .unwrap_or_else(|| serde_json::json!({}));
+    data["event"] = serde_json::json!("manual");
+    data["triggeredBy"] = serde_json::json!(principal.user_id);
+
+    let summary = engine.run_rule(&rule, data, 0).await.map_err(|e| {
+        tracing::error!(rule_id = %rule.id, error = %e, "Manual automation run failed");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("RUN_FAILED", "Failed to run rule")),
+        )
+    })?;
+    Ok(Json(summary))
 }

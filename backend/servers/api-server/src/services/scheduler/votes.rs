@@ -40,6 +40,17 @@ impl Scheduler {
                 activated.iter().map(|v| v.id).collect::<Vec<_>>()
             );
 
+            // Gap audit 3.1: automation rules listening for started votes.
+            if let Some(engine) = &self.automation {
+                for vote in &activated {
+                    engine.spawn_event(
+                        vote.organization_id,
+                        crate::services::automation_engine::event::VOTE_STARTED,
+                        crate::services::automation_engine::vote_event_data(vote),
+                    );
+                }
+            }
+
             // Update metrics
             let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());
             metrics.votes_activated += activated.len() as u64;
@@ -143,6 +154,23 @@ impl Scheduler {
                 closed_ids.len(),
                 closed_ids
             );
+
+            // Gap audit 3.1: automation rules listening for ended votes.
+            if let Some(engine) = &self.automation {
+                for id in &closed_ids {
+                    match self.vote_repo.find_poll_by_id_rls(&self.pool, *id).await {
+                        Ok(Some(vote)) => engine.spawn_event(
+                            vote.organization_id,
+                            crate::services::automation_engine::event::VOTE_ENDED,
+                            crate::services::automation_engine::vote_event_data(&vote),
+                        ),
+                        Ok(None) => {}
+                        Err(e) => {
+                            tracing::warn!(vote_id = %id, error = %e, "Failed to load closed vote for automation")
+                        }
+                    }
+                }
+            }
 
             // Update metrics
             let mut metrics = self.metrics.lock().unwrap_or_else(|e| e.into_inner());

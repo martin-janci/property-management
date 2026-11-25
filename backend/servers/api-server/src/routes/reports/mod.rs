@@ -27,14 +27,18 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::services::report_generator::{ReportFormat, ReportGenerator, ReportKind, ReportParams};
+use crate::services::report_worker::{REPORT_EXPORT_JOB, REPORT_QUEUE};
 use crate::state::AppState;
 
 mod schedule_cadence;
 
-pub(crate) use schedule_cadence::compute_next_run_for_schedule;
 use schedule_cadence::{
-    compute_first_next_run, compute_next_run_from_cron, parse_time_hhmm, validate_cron_expression,
-    DEFAULT_SCHEDULE_TIME, VALID_SCHEDULE_FORMATS, VALID_SCHEDULE_FREQUENCIES,
+    compute_first_next_run, parse_time_hhmm, DEFAULT_SCHEDULE_TIME, VALID_SCHEDULE_FORMATS,
+    VALID_SCHEDULE_FREQUENCIES,
+};
+pub(crate) use schedule_cadence::{
+    compute_next_run_for_schedule, compute_next_run_from_cron, validate_cron_expression,
 };
 
 // ============================================================================
@@ -224,8 +228,14 @@ pub fn router() -> Router<AppState> {
             "/schedules",
             axum::routing::post(create_schedule).get(list_schedules),
         )
-        // gap-81-1: Update schedule (cron expression, recipients, enabled flag)
-        .route("/schedules/{id}", axum::routing::put(update_schedule))
+        // gap-81-1: Update schedule (cron expression, recipients, enabled flag);
+        // gap audit 3.1: delete schedule
+        .route(
+            "/schedules/{id}",
+            axum::routing::put(update_schedule).delete(delete_schedule),
+        )
+        // gap audit 3.1: queue an immediate run
+        .route("/schedules/{id}/run", axum::routing::post(run_schedule_now))
         // Epic 81: Story 81.1 — Schedule pause/resume
         .route("/schedules/{id}/pause", axum::routing::put(pause_schedule))
         .route(
@@ -248,10 +258,7 @@ pub fn router() -> Router<AppState> {
 
 mod helpers;
 
-use helpers::{
-    estimate_report_row_count, generate_sync_csv_report, get_building_name,
-    get_content_type_for_format,
-};
+use helpers::{estimate_report_row_count, get_building_name};
 
 // ============================================================================
 // Handlers
@@ -886,50 +893,42 @@ pub async fn export_report(
         "Estimating report size for sync/async decision"
     );
 
-    // Story 88.5: For small reports, generate synchronously
-    // Note: Currently only CSV format is supported for sync generation
-    // PDF and Excel require additional libraries and are always async
-    if estimated_rows < SYNC_REPORT_ROW_THRESHOLD && format == "csv" {
-        tracing::info!(
-            report_type = %report_type,
-            format = %format,
-            estimated_rows = %estimated_rows,
-            organization_id = %req.organization_id,
-            "Generating small report synchronously (Story 88.5)"
-        );
-
-        // Generate CSV content synchronously
-        let csv_content = generate_sync_csv_report(
-            &state,
-            &report_type,
-            req.organization_id,
-            req.building_id,
-            req.from_date,
-            req.to_date,
+    let kind = ReportKind::parse(&report_type).ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_REPORT_TYPE",
+                "Report type must be faults, voting, occupancy, or consumption",
+            )),
         )
-        .await?;
+    })?;
+    let report_format = ReportFormat::parse(&format).ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_FORMAT",
+                "Format must be pdf, excel, or csv",
+            )),
+        )
+    })?;
+    let params = ReportParams::new(
+        kind,
+        req.organization_id,
+        req.building_id,
+        req.from_date,
+        req.to_date,
+    );
 
-        // Encode content as base64 for JSON response
-        use base64::{engine::general_purpose::STANDARD, Engine};
-        let encoded_data = STANDARD.encode(csv_content.as_bytes());
-
-        // Generate filename
-        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-        let filename = format!("{}_{}.csv", report_type, timestamp);
-
-        return Ok((
-            StatusCode::OK,
-            Json(ExportReportResponseUnion::Sync(SyncExportReportResponse {
-                data: encoded_data,
-                filename,
-                content_type: get_content_type_for_format(&format).to_string(),
-                format,
-            })),
-        ));
+    // Story 88.5: small reports are generated inline in any format. Large
+    // ones go to the report worker, which needs file storage — without it the
+    // report is generated inline too rather than queued for a worker that
+    // could never store the result.
+    if estimated_rows < SYNC_REPORT_ROW_THRESHOLD || state.storage_service.is_none() {
+        return generate_inline(&state, &params, report_format).await;
     }
 
-    // For large reports or non-CSV formats, use async processing
-    // Build job payload with all export parameters
+    // Build job payload with all export parameters (consumed by
+    // services::report_worker::ReportExportPayload).
     let job_payload = serde_json::json!({
         "report_type": report_type,
         "format": format,
@@ -941,20 +940,13 @@ pub async fn export_report(
         "requested_by": auth.user_id,
     });
 
-    let timestamp = chrono::Utc::now().timestamp();
-
-    // Create background job for report generation
-    // The job worker will:
-    // 1. Fetch data from appropriate repository
-    // 2. Generate file (CSV is simplest, PDF/Excel require additional libs)
-    // 3. Upload to S3 and create presigned URL
     let job_result = state
         .operations_repo
         .create_background_job(
             // Ignored by the repository: the row gets a DB-generated id.
             Uuid::new_v4(),
-            "report_export".to_string(),
-            "reports".to_string(),
+            REPORT_EXPORT_JOB.to_string(),
+            REPORT_QUEUE.to_string(),
             job_payload,
             Some(req.organization_id),
             Some(auth.user_id),
@@ -963,9 +955,7 @@ pub async fn export_report(
 
     match job_result {
         Ok(job) => {
-            // Track the id of the row that was actually inserted. The handler
-            // used to return a locally generated id the table never saw, so
-            // the status URL always answered "not found".
+            // Track the id of the row that was actually inserted.
             let job_id = job.id;
             tracing::info!(
                 job_id = %job_id,
@@ -976,10 +966,7 @@ pub async fn export_report(
                 "Report export job created for large report"
             );
 
-            // Return accepted status with job tracking URL
             let download_url = format!("/api/v1/reports/export/{}/status", job_id);
-
-            // Job expiration is 24 hours from creation
             let expires_at = (chrono::Utc::now() + chrono::Duration::hours(24)).to_rfc3339();
 
             Ok((
@@ -992,80 +979,44 @@ pub async fn export_report(
             ))
         }
         Err(e) => {
-            tracing::error!(error = %e, "Failed to create report export job");
-
-            // Story 88.5: Try synchronous generation as fallback when job creation fails
-            // This provides better UX than returning an error for small reports
-            if format == "csv" {
-                tracing::info!(
-                    report_type = %report_type,
-                    "Attempting synchronous CSV generation as fallback after job creation failure"
-                );
-
-                match generate_sync_csv_report(
-                    &state,
-                    &report_type,
-                    req.organization_id,
-                    req.building_id,
-                    req.from_date,
-                    req.to_date,
-                )
-                .await
-                {
-                    Ok(csv_content) => {
-                        use base64::{engine::general_purpose::STANDARD, Engine};
-                        let encoded_data = STANDARD.encode(csv_content.as_bytes());
-
-                        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-                        let filename = format!("{}_{}.csv", report_type, timestamp);
-
-                        tracing::info!(
-                            report_type = %report_type,
-                            "Synchronous fallback generation succeeded"
-                        );
-
-                        return Ok((
-                            StatusCode::OK,
-                            Json(ExportReportResponseUnion::Sync(SyncExportReportResponse {
-                                data: encoded_data,
-                                filename,
-                                content_type: get_content_type_for_format(&format).to_string(),
-                                format,
-                            })),
-                        ));
-                    }
-                    Err(sync_err) => {
-                        tracing::error!(
-                            "Synchronous fallback also failed, returning original error"
-                        );
-                        return Err(sync_err);
-                    }
-                }
-            }
-
-            // For PDF/Excel, we cannot generate synchronously, return job URL as placeholder
-            let download_url = format!(
-                "/api/v1/reports/download/{}-{}.{}",
-                report_type, timestamp, format
-            );
-
-            let expires_at = (chrono::Utc::now() + chrono::Duration::hours(24)).to_rfc3339();
-
-            tracing::warn!(
-                download_url = %download_url,
-                "Returning fallback download URL - actual report file was not generated"
-            );
-
-            Ok((
-                StatusCode::ACCEPTED,
-                Json(ExportReportResponseUnion::Async(ExportReportResponse {
-                    download_url,
-                    format,
-                    expires_at,
-                })),
-            ))
+            // Queueing failed: generate inline instead of failing the request.
+            tracing::error!(error = %e, "Failed to create report export job; generating inline");
+            generate_inline(&state, &params, report_format).await
         }
     }
+}
+
+/// Generate a report in the request and return it base64-encoded.
+async fn generate_inline(
+    state: &AppState,
+    params: &ReportParams,
+    format: ReportFormat,
+) -> Result<(StatusCode, Json<ExportReportResponseUnion>), (StatusCode, Json<ErrorResponse>)> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+
+    let report = ReportGenerator::from_pool(state.db.clone())
+        .generate(params, format)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, report_type = params.kind.as_str(), "Report generation failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "REPORT_GENERATION_FAILED",
+                    "Failed to generate report",
+                )),
+            )
+        })?;
+
+    Ok((
+        StatusCode::OK,
+        Json(ExportReportResponseUnion::Sync(SyncExportReportResponse {
+            data: STANDARD.encode(&report.bytes),
+            filename: report.file_name,
+            content_type: report.content_type.to_string(),
+            format: format.as_str().to_string(),
+        })),
+    ))
 }
 
 /// Path parameter for export job ID.
@@ -1141,12 +1092,24 @@ pub async fn get_export_job_status(
         db::models::infrastructure::BackgroundJobStatus::TimedOut => "timed_out",
     };
 
-    // Extract download URL from result if completed
-    let download_url = job.result.as_ref().and_then(|r| {
-        r.get("download_url")
-            .and_then(|v| v.as_str())
-            .map(String::from)
-    });
+    // The report worker stores the file and records its `file_key`; mint a
+    // short-lived presigned URL for it on every poll.
+    let file_key = job
+        .result
+        .as_ref()
+        .and_then(|r| r.get("file_key").and_then(|v| v.as_str()).map(String::from));
+    let download_url = match (file_key, state.storage_service.as_ref()) {
+        (Some(key), Some(storage)) => {
+            match storage.generate_presigned_download_url(&key, None).await {
+                Ok(presigned) => Some(presigned.url),
+                Err(e) => {
+                    tracing::error!(error = %e, job_id = %job.id, "Failed to presign report download");
+                    None
+                }
+            }
+        }
+        _ => None,
+    };
 
     // Calculate progress based on status
     let progress_percent = match job.status {
@@ -1610,8 +1573,31 @@ pub async fn get_execution_download_url(
         )
     })?;
 
-    let url = format!("/api/v1/reports/files/{}", file_key);
-    let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
+    // Mint a short-lived presigned S3 URL for the stored report file.
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "File storage is not configured",
+            )),
+        )
+    })?;
+    let presigned = storage
+        .generate_presigned_download_url(&file_key, None)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, execution_id = %id, "Failed to presign report download");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "STORAGE_ERROR",
+                    "Failed to create download link",
+                )),
+            )
+        })?;
+    let url = presigned.url;
+    let expires_at = presigned.expires_at;
 
     Ok(Json(ExecutionDownloadUrl {
         url,
@@ -2255,4 +2241,118 @@ pub async fn update_schedule(
             }
         })?;
     Ok(Json(updated))
+}
+
+// ============================================================================
+// Gap audit 3.1: delete schedule / run now
+// ============================================================================
+
+fn require_manager_role(rls: &RlsConnection) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if rls.role().is_manager() {
+        Ok(())
+    } else {
+        Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to manage report schedules",
+            )),
+        ))
+    }
+}
+
+/// Delete a report schedule and its execution history.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/reports/schedules/{id}",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Schedule ID")),
+    responses(
+        (status = 204, description = "Schedule deleted"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
+    )
+)]
+pub async fn delete_schedule(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    if let Err(e) = require_manager_role(&rls) {
+        rls.release().await;
+        return Err(e);
+    }
+    let org_id = rls.tenant_id();
+    let result = state
+        .report_schedule_repo
+        .delete_scoped(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+    match result {
+        Ok(true) => Ok(StatusCode::NO_CONTENT),
+        Ok(false) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "SCHEDULE_NOT_FOUND",
+                "Schedule not found",
+            )),
+        )),
+        Err(e) => {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to delete report schedule");
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to delete schedule")),
+            ))
+        }
+    }
+}
+
+/// Queue an immediate run of a report schedule. The report worker generates
+/// the file and e-mails the recipients; the new execution appears in the
+/// schedule's history as `pending` until then.
+#[utoipa::path(
+    post,
+    path = "/api/v1/reports/schedules/{id}/run",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Schedule ID")),
+    responses(
+        (status = 202, description = "Run queued", body = ReportExecution),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
+    )
+)]
+pub async fn run_schedule_now(
+    State(state): State<AppState>,
+    mut rls: RlsConnection,
+    Path(id): Path<Uuid>,
+) -> Result<(StatusCode, Json<ReportExecution>), (StatusCode, Json<ErrorResponse>)> {
+    if let Err(e) = require_manager_role(&rls) {
+        rls.release().await;
+        return Err(e);
+    }
+    let org_id = rls.tenant_id();
+    let result = state
+        .report_schedule_repo
+        .queue_run_scoped(&mut **rls.conn(), id, org_id)
+        .await;
+    rls.release().await;
+    match result {
+        Ok(Some(execution)) => Ok((StatusCode::ACCEPTED, Json(execution))),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "SCHEDULE_NOT_FOUND",
+                "Schedule not found",
+            )),
+        )),
+        Err(e) => {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to queue report run");
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to queue run")),
+            ))
+        }
+    }
 }

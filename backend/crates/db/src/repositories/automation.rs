@@ -550,6 +550,210 @@ impl AutomationRepository {
     }
 }
 
+/// Column list for `WorkflowAutomationRule` (trigger_type is an ENUM).
+macro_rules! automation_rule_columns {
+    () => {
+        "id, organization_id, name, description, trigger_type::text AS trigger_type, \
+         trigger_config, conditions, actions, is_active, last_run_at, next_run_at, \
+         run_count, error_count, last_error, created_by, created_at, updated_at"
+    };
+}
+
+/// Executor-generic queries used by the automation engine (gap audit 3.1).
+///
+/// `workflow_automation_rules` / `_logs` carry FORCE RLS (00114). Cross-org
+/// due-work reads run under the global-read context (SELECT leg added by
+/// migration 00251); everything else runs under the rule's tenant context.
+impl AutomationRepository {
+    /// Active schedule rules that are due or have never been scheduled
+    /// (`next_run_at IS NULL`). Cross-org: global-read context required.
+    pub async fn list_due_schedule_rules_in<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<WorkflowAutomationRule>, SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as::<_, WorkflowAutomationRule>(concat!(
+            "SELECT ",
+            automation_rule_columns!(),
+            " FROM workflow_automation_rules \
+             WHERE is_active = true AND trigger_type = 'schedule' \
+               AND (next_run_at IS NULL OR next_run_at <= NOW()) \
+             ORDER BY next_run_at ASC NULLS FIRST"
+        ))
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Active condition rules across all orgs. Cross-org: global-read context.
+    pub async fn list_condition_rules_in<'e, E>(
+        &self,
+        executor: E,
+    ) -> Result<Vec<WorkflowAutomationRule>, SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as::<_, WorkflowAutomationRule>(concat!(
+            "SELECT ",
+            automation_rule_columns!(),
+            " FROM workflow_automation_rules \
+             WHERE is_active = true AND trigger_type = 'condition' \
+             ORDER BY organization_id"
+        ))
+        .fetch_all(executor)
+        .await
+    }
+
+    /// Active event rules of one org listening to `event_type` (`fault_created`
+    /// or the dotted legacy form `fault.created`). Tenant context required.
+    pub async fn list_event_rules_in<'e, E>(
+        &self,
+        executor: E,
+        organization_id: Uuid,
+        event_type: &str,
+    ) -> Result<Vec<WorkflowAutomationRule>, SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as::<_, WorkflowAutomationRule>(concat!(
+            "SELECT ",
+            automation_rule_columns!(),
+            " FROM workflow_automation_rules \
+             WHERE organization_id = $1 AND is_active = true AND trigger_type = 'event' \
+               AND replace(trigger_config->>'event_type', '.', '_') = $2"
+        ))
+        .bind(organization_id)
+        .bind(event_type)
+        .fetch_all(executor)
+        .await
+    }
+
+    /// One rule of an org (tenant context required).
+    pub async fn find_rule_in<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Option<WorkflowAutomationRule>, SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query_as::<_, WorkflowAutomationRule>(concat!(
+            "SELECT ",
+            automation_rule_columns!(),
+            " FROM workflow_automation_rules WHERE id = $1 AND organization_id = $2"
+        ))
+        .bind(id)
+        .bind(organization_id)
+        .fetch_optional(executor)
+        .await
+    }
+
+    /// Store a schedule rule's next fire time (tenant context required).
+    pub async fn set_next_run_in<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        next_run_at: Option<chrono::DateTime<Utc>>,
+    ) -> Result<(), SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query("UPDATE workflow_automation_rules SET next_run_at = $2 WHERE id = $1")
+            .bind(id)
+            .bind(next_run_at)
+            .execute(executor)
+            .await?;
+        Ok(())
+    }
+
+    /// Open a `running` log row for a rule run (tenant context required).
+    pub async fn start_log_in<'e, E>(
+        &self,
+        executor: E,
+        rule_id: Uuid,
+        trigger_data: &serde_json::Value,
+    ) -> Result<Uuid, SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query_scalar(
+            "INSERT INTO workflow_automation_logs (rule_id, trigger_data, status) \
+             VALUES ($1, $2, 'running') RETURNING id",
+        )
+        .bind(rule_id)
+        .bind(trigger_data)
+        .fetch_one(executor)
+        .await
+    }
+
+    /// Close a log row and update the rule's run statistics in one statement
+    /// (tenant context required). `status` is `success`, `partial_failure`
+    /// or `failed`.
+    pub async fn finish_log_in<'e, E>(
+        &self,
+        executor: E,
+        log_id: Uuid,
+        status: &str,
+        actions_executed: &serde_json::Value,
+        error_message: Option<&str>,
+    ) -> Result<(), SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query(
+            r#"
+            WITH log AS (
+                UPDATE workflow_automation_logs SET
+                    status = $2,
+                    actions_executed = $3,
+                    error_message = $4,
+                    completed_at = NOW(),
+                    duration_ms = (EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)::INT
+                WHERE id = $1
+                RETURNING rule_id
+            )
+            UPDATE workflow_automation_rules r SET
+                run_count = r.run_count + 1,
+                error_count = r.error_count + CASE WHEN $2 = 'success' THEN 0 ELSE 1 END,
+                last_run_at = NOW(),
+                last_error = CASE WHEN $2 = 'success' THEN r.last_error ELSE $4 END
+            FROM log
+            WHERE r.id = log.rule_id
+            "#,
+        )
+        .bind(log_id)
+        .bind(status)
+        .bind(actions_executed)
+        .bind(error_message)
+        .execute(executor)
+        .await?;
+        Ok(())
+    }
+
+    /// Whether a condition rule already fired for an entity (dedupe key
+    /// stored as `trigger_data.entity_key`). Tenant context required.
+    pub async fn has_fired_for_entity_in<'e, E>(
+        &self,
+        executor: E,
+        rule_id: Uuid,
+        entity_key: &str,
+    ) -> Result<bool, SqlxError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    {
+        sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM workflow_automation_logs \
+             WHERE rule_id = $1 AND trigger_data->>'entity_key' = $2)",
+        )
+        .bind(rule_id)
+        .bind(entity_key)
+        .fetch_one(executor)
+        .await
+    }
+}
+
 /// Deep merge two JSON values, with overrides taking precedence.
 /// For objects, recursively merges nested values.
 /// For other types, override replaces base entirely.

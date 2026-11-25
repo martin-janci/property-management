@@ -150,6 +150,9 @@ pub struct Scheduler {
     lease_repo: LeaseRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
+    /// Gap audit 3.1: automation engine for scheduler-originated events
+    /// (scheduled vote start/end, invoices becoming overdue). `None` in tests.
+    automation: Option<crate::services::AutomationEngine>,
     config: SchedulerConfig,
     metrics: std::sync::Mutex<SchedulerMetrics>,
     /// Timestamp of the last successful `support_tooling_events` retention
@@ -198,6 +201,7 @@ impl Scheduler {
             announcement_repo,
             notification_service,
             email_service,
+            automation: None,
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
             last_support_tooling_prune_at: std::sync::Mutex::new(None),
@@ -232,6 +236,7 @@ impl Scheduler {
             announcement_repo,
             notification_service,
             email_service,
+            automation: None,
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
             last_support_tooling_prune_at: std::sync::Mutex::new(None),
@@ -243,6 +248,12 @@ impl Scheduler {
     /// Create a scheduler with a custom email service (for production use).
     pub fn with_email_service(mut self, email_service: EmailService) -> Self {
         self.email_service = email_service;
+        self
+    }
+
+    /// Emit scheduler-originated automation events through `engine`.
+    pub fn with_automation(mut self, engine: crate::services::AutomationEngine) -> Self {
+        self.automation = Some(engine);
         self
     }
 
@@ -1180,6 +1191,28 @@ impl Scheduler {
         let mut escalations_sent = 0u64;
 
         for invoice in &transitioned {
+            // Gap audit 3.1: automation rules listening for overdue payments.
+            if let Some(engine) = &self.automation {
+                let days_overdue = (chrono::Utc::now().date_naive() - invoice.due_date)
+                    .num_days()
+                    .max(0);
+                engine.spawn_event(
+                    invoice.organization_id,
+                    crate::services::automation_engine::event::PAYMENT_OVERDUE,
+                    serde_json::json!({
+                        "payment": {
+                            "id": invoice.id,
+                            "invoiceNumber": invoice.invoice_number,
+                            "amount": invoice.total.to_string().parse::<f64>().unwrap_or(0.0),
+                            "balanceDue": invoice.balance_due.to_string(),
+                            "currency": invoice.currency,
+                            "dueDate": invoice.due_date,
+                            "daysOverdue": days_overdue,
+                        },
+                        "unit": { "id": invoice.unit_id },
+                    }),
+                );
+            }
             let user_ids = self.get_unit_resident_user_ids(invoice.unit_id).await?;
             if user_ids.is_empty() {
                 continue;

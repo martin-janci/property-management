@@ -1,8 +1,11 @@
 /**
  * ReportsPage - Reports & schedules page.
  *
- * Combines the Story 53.x report builder and the Epic 81 schedule-management /
- * execution-history components into a unified reports interface.
+ * Combines on-demand generation of the built-in reports (gap audit 3.1) with
+ * the Epic 81 schedule-management / execution-history components. The former
+ * free-form report builder targeted `/reports/definitions` + `/preview`
+ * routes that never existed (there is no report-definitions table, #2198), so
+ * the Reports tab now generates the four built-in reports directly.
  *
  * NOTE: the former "Dashboard" analytics tab (KPIs, trend charts, building
  * metrics, period comparison) was removed — it was a Potemkin surface fed by
@@ -15,28 +18,27 @@
 import type {
   CreateReportSchedule,
   CronScheduleUpdateRequest,
-  DataSource,
-  ReportDefinition,
   ReportExecution,
   ReportSchedule,
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConfirmDialog } from '../../../components/useConfirmDialog';
 import {
   EditScheduleModal,
   ExecutionHistory,
-  ReportBuilder,
+  GenerateReportForm,
+  type GenerateReportValues,
   ScheduleForm,
   ScheduleList,
 } from '../components';
 
 interface ReportsPageProps {
-  dataSources: DataSource[];
-  reports: ReportDefinition[];
   schedules: ReportSchedule[];
   isLoading?: boolean;
-  onCreateReport?: (data: unknown) => Promise<void>;
-  onPreviewReport?: (data: unknown) => Promise<unknown>;
+  /** Generate + download a built-in report (POST /api/v1/reports/export). */
+  onGenerateReport: (values: GenerateReportValues) => Promise<void> | void;
+  isGeneratingReport?: boolean;
   onCreateSchedule?: (data: CreateReportSchedule) => Promise<void>;
   /** gap-81-1: cron-based update (cron_expression, recipients, enabled) */
   onUpdateSchedule?: (id: string, data: CronScheduleUpdateRequest) => Promise<void>;
@@ -56,12 +58,10 @@ interface ReportsPageProps {
 type Tab = 'reports' | 'schedules';
 
 export function ReportsPage({
-  dataSources,
-  reports,
   schedules,
   isLoading,
-  onCreateReport,
-  onPreviewReport,
+  onGenerateReport,
+  isGeneratingReport,
   onCreateSchedule,
   onUpdateSchedule,
   onDeleteSchedule,
@@ -75,9 +75,9 @@ export function ReportsPage({
   onRetryExecution,
   onFetchExecutions,
 }: ReportsPageProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState<Tab>('schedules');
-  const [showReportBuilder, setShowReportBuilder] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
 
   // Epic 81: Schedule editing state
@@ -145,15 +145,6 @@ export function ReportsPage({
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">{t('reports.page.title')}</h1>
             <div className="flex gap-3">
-              {activeTab === 'reports' && (
-                <button
-                  type="button"
-                  onClick={() => setShowReportBuilder(true)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                >
-                  {t('reports.page.newReport')}
-                </button>
-              )}
               {activeTab === 'schedules' && (
                 <button
                   type="button"
@@ -191,99 +182,9 @@ export function ReportsPage({
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Reports Tab */}
+        {/* Reports Tab: on-demand generation of the built-in reports */}
         {activeTab === 'reports' && (
-          <div>
-            {showReportBuilder ? (
-              <ReportBuilder
-                dataSources={dataSources}
-                onSave={async (data) => {
-                  await onCreateReport?.(data);
-                  setShowReportBuilder(false);
-                }}
-                onPreview={async (data) => {
-                  if (!onPreviewReport) {
-                    throw new Error('Preview handler not provided');
-                  }
-                  const result = await onPreviewReport(data);
-                  if (!result || typeof result !== 'object') {
-                    throw new Error('Invalid preview result');
-                  }
-                  return result as import('@ppt/api-client').ReportResult;
-                }}
-                onCancel={() => setShowReportBuilder(false)}
-              />
-            ) : (
-              <div className="bg-white rounded-lg shadow">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-medium text-gray-900">
-                    {t('reports.page.savedReports')}
-                  </h2>
-                </div>
-                {reports.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <svg
-                      className="w-12 h-12 text-gray-400 mx-auto mb-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <p className="text-gray-500">{t('reports.page.noReports')}</p>
-                    <button
-                      type="button"
-                      onClick={() => setShowReportBuilder(true)}
-                      className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      {t('reports.page.createFirstReport')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-200">
-                    {reports.map((report) => (
-                      <div
-                        key={report.id}
-                        className="px-6 py-4 hover:bg-gray-50 flex items-center justify-between"
-                      >
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900">{report.name}</h3>
-                          {report.description && (
-                            <p className="text-sm text-gray-500 mt-1">{report.description}</p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">
-                            {t('reports.page.createdOn', {
-                              date: new Date(report.created_at).toLocaleDateString(i18n.language, {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              }),
-                            })}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {report.is_public && (
-                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
-                              {t('reports.page.public')}
-                            </span>
-                          )}
-                          <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full">
-                            {report.report_type}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <GenerateReportForm isGenerating={isGeneratingReport} onGenerate={onGenerateReport} />
         )}
 
         {/* Schedules Tab */}
@@ -308,7 +209,18 @@ export function ReportsPage({
                 isLoading={isLoading}
                 onEdit={handleEditSchedule}
                 onDelete={async (id) => {
-                  await onDeleteSchedule?.(id);
+                  const schedule = schedules.find((s) => s.id === id);
+                  const confirmed = await confirm({
+                    title: t('reports.page.deleteSchedule.title'),
+                    message: t('reports.page.deleteSchedule.message', {
+                      name: schedule?.name ?? '',
+                    }),
+                    confirmLabel: t('reports.page.deleteSchedule.confirm'),
+                    variant: 'danger',
+                  });
+                  if (confirmed) {
+                    await onDeleteSchedule?.(id);
+                  }
                 }}
                 onToggle={async (id, isActive) => {
                   await onToggleSchedule?.(id, isActive);
@@ -348,6 +260,8 @@ export function ReportsPage({
           onClose={handleCloseHistory}
         />
       )}
+
+      {confirmDialog}
     </div>
   );
 }

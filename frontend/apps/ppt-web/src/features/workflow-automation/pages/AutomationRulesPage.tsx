@@ -9,6 +9,7 @@ import {
   type AutomationRule,
   useAutomationRules,
   useDeleteAutomationRule,
+  useRunAutomationRule,
   useUpdateAutomationRule,
 } from '@ppt/api-client';
 import { useState } from 'react';
@@ -71,6 +72,31 @@ export function AutomationRulesPage() {
         type: 'error',
         title: t('automation.rules.deleteErrorTitle'),
         message: err instanceof Error ? err.message : t('automation.rules.deleteErrorMessage'),
+      });
+    }
+  };
+
+  const runRule = useRunAutomationRule();
+
+  const handleRun = async (rule: AutomationRule) => {
+    try {
+      const summary = await runRule.mutateAsync({ id: rule.id });
+      const failed = summary.status !== 'success' && summary.status !== 'running';
+      showToast({
+        type: failed ? 'warning' : 'success',
+        title: failed
+          ? t('automation.rules.runPartialTitle')
+          : t('automation.rules.runSuccessTitle'),
+        message: t('automation.rules.runMessage', {
+          name: rule.name,
+          count: summary.actions.length,
+        }),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('automation.rules.runErrorTitle'),
+        message: err instanceof Error ? err.message : t('automation.rules.runErrorMessage'),
       });
     }
   };
@@ -285,6 +311,7 @@ export function AutomationRulesPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggle={handleToggle}
+                onRun={handleRun}
               />
             ))}
           </div>

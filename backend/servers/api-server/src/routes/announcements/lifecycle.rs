@@ -1,6 +1,9 @@
 //! Announcement lifecycle routes (Story 6.1, 6.4) - publish, schedule, archive, pin.
 
 use super::shared::*;
+use crate::services::automation_engine::{
+    announcement_event_data, event as automation_event, AutomationEngine,
+};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use api_core::{AuthUser, ValidatedTenantExtractor};
@@ -150,6 +153,14 @@ pub(super) async fn publish_announcement(
                 channels_skipped = skipped,
                 channels_failed = failed,
                 "Announcement published - notifications dispatched via pipeline"
+            );
+
+            // Gap audit 3.1: automation rules listening for announcements.
+            AutomationEngine::emit(
+                &state,
+                announcement.organization_id,
+                automation_event::ANNOUNCEMENT_PUBLISHED,
+                announcement_event_data(&announcement),
             );
 
             Ok(Json(AnnouncementActionResponse {

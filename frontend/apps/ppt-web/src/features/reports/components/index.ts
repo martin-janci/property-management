@@ -11,6 +11,9 @@ export { ExecutionHistory } from './ExecutionHistory';
 // Story 53.1 - Report Builder
 export { FieldSelector } from './FieldSelector';
 export { FilterBuilder } from './FilterBuilder';
+// Gap audit 3.1 - on-demand generation of the built-in reports
+export type { GenerateReportFormat, GenerateReportValues } from './GenerateReportForm';
+export { GenerateReportForm } from './GenerateReportForm';
 export { GroupingConfig } from './GroupingConfig';
 export type { ExecutionFilters } from './HistoryFilters';
 export { HistoryFilters } from './HistoryFilters';

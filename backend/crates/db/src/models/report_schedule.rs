@@ -218,3 +218,36 @@ pub struct ExecutionDownloadUrl {
     pub file_name: String,
     pub content_type: String,
 }
+
+/// A pending (or stale running) execution joined with the schedule fields the
+/// report generator needs (gap audit 3.1: report generator worker).
+///
+/// Read cross-org by the generator worker under the global-read context
+/// (migration 00218 SELECT leg); every write that follows runs under the
+/// row's own `organization_id` tenant context.
+#[derive(Debug, Clone, FromRow)]
+pub struct PendingReportExecution {
+    pub execution_id: Uuid,
+    pub schedule_id: Uuid,
+    pub organization_id: Uuid,
+    pub report_id: Uuid,
+    pub schedule_name: String,
+    pub format: String,
+    pub frequency: String,
+    pub timezone: String,
+    pub recipients: serde_json::Value,
+}
+
+impl PendingReportExecution {
+    /// Recipient e-mail addresses stored on the schedule.
+    pub fn recipient_list(&self) -> Vec<String> {
+        self.recipients
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+}

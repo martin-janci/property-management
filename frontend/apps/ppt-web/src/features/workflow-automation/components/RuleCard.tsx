@@ -143,7 +143,7 @@ export function RuleCard({ rule, onEdit, onDelete, onToggle, onRun }: RuleCardPr
 
       {/* Action Buttons */}
       <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
-        {rule.trigger?.type === 'manual' && onRun && (
+        {(rule.trigger?.type === 'manual' || rule.trigger?.type === 'time_based') && onRun && (
           <button
             type="button"
             onClick={() => onRun(rule)}

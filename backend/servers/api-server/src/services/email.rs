@@ -507,6 +507,79 @@ impl EmailService {
         Ok(())
     }
 
+    /// Send a plain-text email with one file attached (scheduled report
+    /// delivery, gap audit 3.1).
+    ///
+    /// The recipient is validated in every mode; without SMTP the mail is
+    /// logged (development) like every other send path.
+    pub async fn send_email_with_attachment(
+        &self,
+        to: &str,
+        subject: &str,
+        body: &str,
+        file_name: &str,
+        content_type: &str,
+        content: Vec<u8>,
+    ) -> Result<(), EmailError> {
+        let to_mailbox: Mailbox = to.parse().map_err(|e| {
+            EmailError::InvalidAddress(format!("Invalid to address '{}': {}", to, e))
+        })?;
+
+        let transport = match self.transport.as_ref() {
+            EmailTransport::Smtp(smtp) => smtp,
+            EmailTransport::Log => {
+                tracing::info!(
+                    to = %to,
+                    subject = %subject,
+                    attachment = %file_name,
+                    attachment_bytes = content.len(),
+                    "Email with attachment logged (development mode)"
+                );
+                return Ok(());
+            }
+        };
+
+        use lettre::message::{Attachment, MultiPart, SinglePart};
+
+        let config = self
+            .smtp_config
+            .as_ref()
+            .ok_or_else(|| EmailError::ConfigurationError("SMTP config missing".to_string()))?;
+        let from_mailbox: Mailbox = format!("{} <{}>", config.from_name, config.from_address)
+            .parse()
+            .map_err(|e| EmailError::InvalidAddress(format!("Invalid from address: {}", e)))?;
+        let attachment_type = ContentType::parse(content_type)
+            .map_err(|e| EmailError::MessageBuildError(format!("Invalid content type: {}", e)))?;
+
+        let email = Message::builder()
+            .from(from_mailbox)
+            .to(to_mailbox)
+            .subject(subject)
+            .multipart(
+                MultiPart::mixed()
+                    .singlepart(
+                        SinglePart::builder()
+                            .header(ContentType::TEXT_PLAIN)
+                            .body(body.to_string()),
+                    )
+                    .singlepart(
+                        Attachment::new(file_name.to_string()).body(content, attachment_type),
+                    ),
+            )
+            .map_err(|e| EmailError::MessageBuildError(e.to_string()))?;
+
+        transport.send(email).await.map_err(|e| {
+            tracing::error!(error = %e, to = %to, subject = %subject, "Failed to send email with attachment");
+            EmailError::SendFailed(e.to_string())
+        })?;
+        Ok(())
+    }
+
+    /// Base URL of the web app, used to build links in e-mails.
+    pub fn base_url(&self) -> &str {
+        &self.base_url
+    }
+
     /// Send a free-form email on behalf of a workflow `send_email` action.
     ///
     /// Unlike the templated helpers above, this accepts an arbitrary

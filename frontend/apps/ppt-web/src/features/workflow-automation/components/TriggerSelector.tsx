@@ -59,12 +59,11 @@ const eventCategories: { id: string; labelKey: string }[] = [
   { id: 'documents', labelKey: 'automation.triggerSelector.categoryDocuments' },
   { id: 'announcements', labelKey: 'automation.triggerSelector.categoryAnnouncements' },
   { id: 'voting', labelKey: 'automation.triggerSelector.categoryVoting' },
-  { id: 'guests', labelKey: 'automation.triggerSelector.categoryGuests' },
-  { id: 'maintenance', labelKey: 'automation.triggerSelector.categoryMaintenance' },
-  { id: 'meters', labelKey: 'automation.triggerSelector.categoryMeters' },
-  { id: 'leases', labelKey: 'automation.triggerSelector.categoryLeases' },
 ];
 
+// Only events the api-server actually emits to the automation engine
+// (services/automation_engine.rs `event`) are offered; a rule on any other
+// event would never fire.
 const eventTypes: { value: EventTriggerType; labelKey: string; category: string }[] = [
   {
     value: 'fault_created',
@@ -105,26 +104,6 @@ const eventTypes: { value: EventTriggerType; labelKey: string; category: string 
     value: 'vote_ended',
     labelKey: 'automation.triggerSelector.eventVoteEnded',
     category: 'voting',
-  },
-  {
-    value: 'guest_registered',
-    labelKey: 'automation.triggerSelector.eventGuestRegistered',
-    category: 'guests',
-  },
-  {
-    value: 'maintenance_scheduled',
-    labelKey: 'automation.triggerSelector.eventMaintenanceScheduled',
-    category: 'maintenance',
-  },
-  {
-    value: 'meter_reading_due',
-    labelKey: 'automation.triggerSelector.eventMeterReadingDue',
-    category: 'meters',
-  },
-  {
-    value: 'lease_expiring',
-    labelKey: 'automation.triggerSelector.eventLeaseExpiring',
-    category: 'leases',
   },
 ];
 
