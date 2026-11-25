@@ -49,4 +49,33 @@ describe('change-password page i18n', () => {
     expect(screen.getByText('newRequired')).toBeInTheDocument();
     expect(screen.queryByText('Current password is required')).toBeNull();
   });
+
+  // Residual gap (code-review-reality-web-realtor-account-i18n-gap): the submit
+  // error path rendered `AuthApiError.message` — developer-facing English, most
+  // visibly the NOT_IMPLEMENTED "contact support" copy — directly. It must now
+  // route through the `authError.*` catalog. Under the next-intl mock a
+  // translated message renders as its key, so the English dev copy must not
+  // appear.
+  it('shows a translated error, not raw English dev copy, when the change fails', async () => {
+    const { AuthApiError, changePassword } = await import('@/lib/auth-api');
+    vi.mocked(changePassword).mockRejectedValueOnce(
+      new AuthApiError(
+        'Changing your password from the portal is not available yet. Please contact support.',
+        501,
+        'NOT_IMPLEMENTED'
+      )
+    );
+    const { container } = render(<ChangePasswordPage />);
+    const [current, next, confirm] = Array.from(
+      container.querySelectorAll('input[type="password"]')
+    ) as HTMLInputElement[];
+    fireEvent.change(current, { target: { value: 'oldpassword' } });
+    fireEvent.change(next, { target: { value: 'newpassword1' } });
+    fireEvent.change(confirm, { target: { value: 'newpassword1' } });
+    fireEvent.submit(current.closest('form') as HTMLElement);
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('errorNotImplemented');
+    expect(alert).not.toHaveTextContent('contact support');
+  });
 });
