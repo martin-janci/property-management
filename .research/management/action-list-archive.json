@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-25T11:28:26Z",
+  "archived_at": "2026-11-25T12:40:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10280,6 +10280,25 @@
         "merged_at": null,
         "at": "2026-08-20T10:27:25Z"
       }
+    },
+    {
+      "id": "code-review-ppt-web-core-auth-401-refresh-unwired",
+      "action": "[DROPPED-STALE: already-fixed on dev — 401->refresh->replay wired+tested; non-reproducible finding] ppt web core auth 401 refresh unwired",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-24T00:24:47Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-10T00:00:00Z"
+      },
+      "last_updated": "2026-11-25T12:40:19Z"
     },
     {
       "id": "code-review-ppt-web-core-authctx-init-stale-role",
@@ -34756,6 +34775,18 @@
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
       "resolved": "PR #642 merged 2026-05-28 — auth.rs + sso.rs cookie Path reconciliation + runbook, WITH inline tests (+370/-0); closes the #617 cookie-Path regression class"
+    },
+    {
+      "id": "pm-security-restrict-non-manager-person-month-reads-2026-11-25",
+      "action": "Gate non-manager person-month read endpoints (GET unit/yearly/by-id, POST /calculate, GET building list/summary) on residency of that unit or manager role; add 403-cross-unit test.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25",
+      "gc1_closed": "merged PR #3796 on 2026-11-25T12:37:56Z"
     },
     {
       "id": "pm-tech-lead-confirm-websocket-infra-ownership",
