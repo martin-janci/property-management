@@ -18,7 +18,8 @@ import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { formatPrice } from '@/lib/format';
-import { getMyListing, type ListingDraft, RealtorApiError, updateListing } from '@/lib/realtor-api';
+import { getMyListing, type ListingDraft, updateListing } from '@/lib/realtor-api';
+import { useRealtorErrorMessage } from '@/lib/realtor-error';
 import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPES } from './_mock';
 import { resolveOptionalNumber } from './_number';
 import { resolveListingPrice } from './_price';
@@ -118,13 +119,18 @@ const EMPTY_FORM: ListingEditFormData = {
 function EditWizardContent() {
   const locale = useLocale();
   const t = useTranslations('pages.listingEdit');
+  const describeRealtorError = useRealtorErrorMessage();
   const params = useParams<{ id: string }>();
   const listingId = params?.id ?? '';
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<ListingEditFormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // Store the raw thrown value and translate it at render time (via
+  // `describeRealtorError`) so the message tracks the active locale and the
+  // load effect stays free of the unstable hook closure — mirrors the realtor
+  // profile/edit pages.
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -171,10 +177,10 @@ function EditWizardContent() {
         });
       })
       .catch((err) => {
-        setLoadError(err instanceof RealtorApiError ? err.message : t('loadFailed'));
+        setLoadError(err);
       })
       .finally(() => setLoading(false));
-  }, [listingId, t]);
+  }, [listingId]);
 
   const update = (patch: Partial<ListingEditFormData>) => setForm((f) => ({ ...f, ...patch }));
 
@@ -219,7 +225,7 @@ function EditWizardContent() {
       });
       setSaved(true);
     } catch (err) {
-      setSaveError(err instanceof RealtorApiError ? err.message : t('saveFailed'));
+      setSaveError(describeRealtorError(err, 'errorSaveListing'));
     } finally {
       setSaving(false);
     }
@@ -236,7 +242,9 @@ function EditWizardContent() {
   if (loadError) {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
-        <p style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>{loadError}</p>
+        <p style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>
+          {describeRealtorError(loadError, 'errorLoadListing')}
+        </p>
         <a href="/account" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
           {t('backToAccount')}
         </a>

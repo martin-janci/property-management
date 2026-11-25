@@ -12,7 +12,7 @@
  */
 /// <reference types="vitest/globals" />
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/components/ui', () => ({ Header: () => null, Footer: () => null }));
@@ -51,5 +51,25 @@ describe('profile-edit page i18n', () => {
     expect(screen.getByText('displayNameLabel')).toBeInTheDocument();
     expect(screen.getByText('emailLabel')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'save' })).toBeInTheDocument();
+  });
+
+  // Residual gap (code-review-reality-web-realtor-account-i18n-gap): the save
+  // error path rendered `AuthApiError.message` — developer-facing English —
+  // directly. It must now route through the `authError.*` catalog so every
+  // locale sees localized copy. Under the next-intl mock a translated message
+  // renders as its key, so the raw English dev copy must not appear.
+  it('shows a translated error, not raw English dev copy, when the save fails', async () => {
+    const { AuthApiError, updateProfile } = await import('@/lib/auth-api');
+    vi.mocked(updateProfile).mockRejectedValueOnce(
+      new AuthApiError('Network error. Please check your connection.', 0, 'NETWORK_ERROR')
+    );
+    const { container } = render(<ProfileEditPage />);
+    const nameInput = container.querySelector('input[autocomplete="name"]') as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: 'New name' } });
+    fireEvent.submit(nameInput.closest('form') as HTMLElement);
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('errorNetwork');
+    expect(alert).not.toHaveTextContent('Network error. Please check your connection.');
   });
 });

@@ -1571,5 +1571,11 @@
     "errorTitle": "Etwas ist schiefgelaufen",
     "errorDescription": "Bitte versuchen Sie es erneut. Wenn das Problem weiterhin besteht, wenden Sie sich an den Support.",
     "retry": "Erneut versuchen"
+  },
+  "authError": {
+    "errorNetwork": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "errorMalformed": "Der Server hat eine unerwartete Antwort zurückgegeben. Bitte versuchen Sie es erneut.",
+    "errorRequestFailed": "Anfrage fehlgeschlagen ({status}). Bitte versuchen Sie es erneut.",
+    "errorNotImplemented": "Diese Funktion ist noch nicht verfügbar. Bitte wenden Sie sich an den Support."
   }
 }

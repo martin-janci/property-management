@@ -84,4 +84,19 @@ describe('listing-edit page i18n', () => {
     // The aside step list reads step titles from the locale-agnostic _mock keys.
     expect(screen.getByText('steps.type.title')).toBeInTheDocument();
   });
+
+  // Residual gap (code-review-reality-web-realtor-account-i18n-gap): the load
+  // error branch rendered `RealtorApiError.message` — developer-facing English
+  // — directly. It must now route through `useRealtorErrorMessage` so every
+  // locale sees localized copy. Under the next-intl mock the translated message
+  // renders as its key, so the raw English dev copy must not appear.
+  it('shows a translated load error, not raw English dev copy, when the fetch fails', async () => {
+    const { RealtorApiError, getMyListing } = await import('@/lib/realtor-api');
+    vi.mocked(getMyListing).mockRejectedValueOnce(
+      new RealtorApiError('Request failed (500)', 500, 'http')
+    );
+    render(<ListingEditPage />);
+    expect(await screen.findByText('errorRequestFailed')).toBeInTheDocument();
+    expect(screen.queryByText('Request failed (500)')).toBeNull();
+  });
 });

@@ -11,6 +11,7 @@ import { type FormEvent, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { AuthApiError, changePassword } from '@/lib/auth-api';
+import { useAuthErrorMessage } from '@/lib/auth-error';
 
 const MIN_PASSWORD = 8;
 
@@ -22,6 +23,7 @@ interface FieldErrors {
 
 function ChangePasswordForm() {
   const t = useTranslations('pages.accountPassword');
+  const describeAuthError = useAuthErrorMessage();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -54,10 +56,8 @@ function ChangePasswordForm() {
     } catch (err) {
       if (err instanceof AuthApiError && err.status === 401) {
         setErrors({ currentPassword: t('currentIncorrect') });
-      } else if (err instanceof AuthApiError) {
-        setGeneralError(err.message);
       } else {
-        setGeneralError(t('updateFailed'));
+        setGeneralError(describeAuthError(err, t('updateFailed')));
       }
     } finally {
       setIsSubmitting(false);

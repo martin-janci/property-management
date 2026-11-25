@@ -1564,5 +1564,11 @@
     "errorTitle": "Coś poszło nie tak",
     "errorDescription": "Spróbuj ponownie. Jeśli problem będzie się powtarzał, skontaktuj się z pomocą techniczną.",
     "retry": "Spróbuj ponownie"
+  },
+  "authError": {
+    "errorNetwork": "Błąd sieci. Spróbuj ponownie.",
+    "errorMalformed": "Serwer zwrócił nieoczekiwaną odpowiedź. Spróbuj ponownie.",
+    "errorRequestFailed": "Żądanie nie powiodło się ({status}). Spróbuj ponownie.",
+    "errorNotImplemented": "Ta funkcja nie jest jeszcze dostępna. Skontaktuj się z pomocą techniczną."
   }
 }

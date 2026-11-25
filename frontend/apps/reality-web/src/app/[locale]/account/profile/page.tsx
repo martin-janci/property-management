@@ -11,12 +11,14 @@ import { useTranslations } from 'next-intl';
 import { type FormEvent, useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-import { AuthApiError, updateProfile } from '@/lib/auth-api';
+import { updateProfile } from '@/lib/auth-api';
 import { useAuth } from '@/lib/auth-context';
+import { useAuthErrorMessage } from '@/lib/auth-error';
 
 function ProfileForm() {
   const { user, refreshSession } = useAuth();
   const t = useTranslations('pages.accountProfile');
+  const describeAuthError = useAuthErrorMessage();
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string>();
   const [savedAt, setSavedAt] = useState<number>();
@@ -39,7 +41,7 @@ function ProfileForm() {
       await refreshSession();
       setSavedAt(Date.now());
     } catch (err) {
-      setError(err instanceof AuthApiError ? err.message : t('saveFailed'));
+      setError(describeAuthError(err, t('saveFailed')));
     } finally {
       setIsSaving(false);
     }

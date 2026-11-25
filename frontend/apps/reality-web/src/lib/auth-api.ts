@@ -18,7 +18,15 @@ export class AuthApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly code?: string
+    public readonly code?: string,
+    /**
+     * Backend-provided, user-facing error copy (the response body's `message`
+     * field) when present. Kept separate from the developer-facing `message`
+     * so UI surfaces can translate off `code` / `status` and only fall back to
+     * server copy the backend owns and localizes — mirrors
+     * `RealtorApiError.serverMessage`. See `useAuthErrorMessage`.
+     */
+    public readonly serverMessage?: string
   ) {
     super(message);
     this.name = 'AuthApiError';
@@ -50,15 +58,19 @@ async function requestJson<T>(method: string, path: string, body?: unknown): Pro
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
+    let serverMessage: string | undefined;
     let code: string | undefined;
     try {
       const data = await response.json();
-      if (typeof data?.message === 'string') message = data.message;
+      if (typeof data?.message === 'string') {
+        message = data.message;
+        serverMessage = data.message;
+      }
       if (typeof data?.code === 'string') code = data.code;
     } catch {
       // Non-JSON error body; fall through with default message.
     }
-    throw new AuthApiError(message, response.status, code);
+    throw new AuthApiError(message, response.status, code, serverMessage);
   }
 
   if (response.status === 204) {
