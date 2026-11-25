@@ -491,7 +491,9 @@ export function personMonthRoutes() {
       <Route
         path="/buildings/:buildingId/person-months"
         element={
-          <ProtectedRoute>
+          // Building-wide person counts are manager-only (residents see only
+          // their own unit; enforced by the API as well).
+          <ProtectedRoute requiredRoles={[...MANAGER_ROLES]}>
             <PersonMonthsPageRoute />
           </ProtectedRoute>
         }

@@ -101,6 +101,7 @@ function renderAt(path: string) {
 
 describe.each(['owner', 'tenant'])('manager-only routes deny "%s"', (role) => {
   it.each([
+    '/buildings/b-1/person-months',
     '/buildings/b-1/person-months/bulk',
     '/buildings/b-1/units/u-1/person-months/edit/2026/10',
     '/settings/integrations',
