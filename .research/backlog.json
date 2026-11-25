@@ -16981,7 +16981,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3724",
         "PR #3726",
@@ -16997,7 +16997,12 @@
       ],
       "created_at": "2026-11-23",
       "updated_at": "2026-11-25",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-25T10:38:25Z",
+        "assignment_status": "merged",
+        "pr_number": 3790
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-services-push-fcm-rs",

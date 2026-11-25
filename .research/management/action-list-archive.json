@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-25T08:39:21Z",
+  "archived_at": "2026-11-25T10:42:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8134,6 +8134,30 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-auth-unvalidated-token-body",
+      "action": "mobile rn auth unvalidated token body",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d mobile-rn score=1 vector=bug) | dev-reconcile 2026-11-25T10:38:40Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-14T22:30:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "660ce7a087bee04d34507d9769255be8f83284a7",
+        "subject": "code-review-mobile-rn-auth-unvalidated-token-body: narrow embedded user in mobile token response (#3787)",
+        "at": "2026-11-25T10:38:40Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-biometric-prompt-i18n",
       "action": "mobile-rn: enableBiometric passes hardcoded English strings to the OS biometric dialog...",
       "owner_role": "pm-backend",
@@ -8469,6 +8493,31 @@
         "merged_pr": 3396,
         "merged_at": "2026-11-10T20:29:53Z",
         "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-button-labels",
+      "action": "mobile rn hardcoded button labels",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-19T22:25:12Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-25T10:38:25Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-19T22:25:12Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-26T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3677,
+        "merged_at": "2026-11-25T08:30:32Z",
+        "at": "2026-11-25T10:38:25Z"
       }
     },
     {
@@ -18368,6 +18417,30 @@
       }
     },
     {
+      "id": "code-review-reality-web-comparison-unvalidated-cast",
+      "action": "reality web comparison unvalidated cast",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=1 vector=bug) | dev-reconcile 2026-11-25T10:38:40Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-14T12:30:00Z"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "99cf24d9007e190ebc437d0eaa05845417d47342",
+        "subject": "code-review-reality-web-comparison-unvalidated-cast: narrow /compare ids query param instead of unchecked cast (#3788)",
+        "at": "2026-11-25T10:38:40Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-comparison-url-unvalidated-cast",
       "action": "reality web comparison url unvalidated cast",
       "owner_role": "pm-backend",
@@ -19861,6 +19934,31 @@
         "merged_pr": 3518,
         "merged_at": "2026-11-14T16:41:04Z",
         "at": "2026-11-14T16:44:42Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtormgmt-i18n-gap",
+      "action": "reality web realtormgmt i18n gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=1 vector=bug) | gc1-reconcile 2026-11-25T10:38:25Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-14T12:30:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-25T10:38:25Z"
       }
     },
     {
