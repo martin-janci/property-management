@@ -506,7 +506,12 @@ async fn submission_validation_and_review_filter_edges(pool: PgPool) {
         )
         .await;
     assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
-    assert_eq!(resp.json_value()["code"], "NOTE_TOO_LONG", "{}", resp.text());
+    assert_eq!(
+        resp.json_value()["code"],
+        "NOTE_TOO_LONG",
+        "{}",
+        resp.text()
+    );
 
     // A period more than 24 months in the past is rejected. Months are counted
     // 0-indexed here so the conversion back to a 1-12 month is exact.
@@ -522,7 +527,12 @@ async fn submission_validation_and_review_filter_edges(pool: PgPool) {
         )
         .await;
     assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
-    assert_eq!(resp.json_value()["code"], "INVALID_PERIOD", "{}", resp.text());
+    assert_eq!(
+        resp.json_value()["code"],
+        "INVALID_PERIOD",
+        "{}",
+        resp.text()
+    );
 
     // The manager review list rejects an unknown status filter but accepts `all`.
     let review = format!("/api/v1/buildings/{}/person-months/submissions", f.building);
@@ -535,7 +545,12 @@ async fn submission_validation_and_review_filter_edges(pool: PgPool) {
         )
         .await;
     assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
-    assert_eq!(resp.json_value()["code"], "INVALID_STATUS", "{}", resp.text());
+    assert_eq!(
+        resp.json_value()["code"],
+        "INVALID_STATUS",
+        "{}",
+        resp.text()
+    );
     let resp = app
         .execute(
             app.get(&format!("{review}?status=all"))
@@ -584,5 +599,8 @@ async fn submission_validation_and_review_filter_edges(pool: PgPool) {
         .fetch_one(&pool)
         .await
         .unwrap();
-    assert_eq!(written, 0, "a rejected submission writes nothing even after a failed approve");
+    assert_eq!(
+        written, 0,
+        "a rejected submission writes nothing even after a failed approve"
+    );
 }
