@@ -15,6 +15,8 @@ mod payment_webhook_dead_letter_rls_manager_tests;
 mod payment_webhook_settlement_tests;
 #[path = "suites/person_month_submissions_tests.rs"]
 mod person_month_submissions_tests;
+#[path = "suites/person_months_cross_unit_authz_tests.rs"]
+mod person_months_cross_unit_authz_tests;
 #[path = "suites/person_months_happy_path_tests.rs"]
 mod person_months_happy_path_tests;
 #[path = "suites/platform_admin_authz_batch2_tests.rs"]
