@@ -16984,16 +16984,19 @@
       "status": "open",
       "sources": [
         "PR #3724",
-        "PR #3726"
+        "PR #3726",
+        "PR #3769",
+        "PR #3780"
       ],
       "evidence": [
-        "backend/servers/api-server/src/services/push/apns.rs touched by 2 non-research commits this run — PR #3724 (characterize push/apns + voice_webhooks/parsers) + PR #3726 (surface failed Redis requeue in push fanout worker). Post-split child of push_fanout.rs; first appearance in hotspot_history. Phase 1.5 surfaced a related correctness finding (see code-review-api-core-apns-410-body-parse-stale-missed)."
+        "backend/servers/api-server/src/services/push/apns.rs touched by 2 non-research commits this run — PR #3724 (characterize push/apns + voice_webhooks/parsers) + PR #3726 (surface failed Redis requeue in push fanout worker). Post-split child of push_fanout.rs; first appearance in hotspot_history. Phase 1.5 surfaced a related correctness finding (see code-review-api-core-apns-410-body-parse-stale-missed).",
+        "re-emit 2026-11-25: 415 churn this run; touched by #3769 (APNs 410 fix) + #3780 (characterization)"
       ],
       "files": [
         "backend/servers/api-server/src/services/push/apns.rs"
       ],
       "created_at": "2026-11-23",
-      "updated_at": "2026-11-23",
+      "updated_at": "2026-11-25",
       "plan": null
     },
     {
@@ -17230,6 +17233,46 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-screens-person-months-personmonthsscreen-tsx",
+      "title": "churn-hotspot: frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3775"
+      ],
+      "evidence": [
+        "444 churn lines this run — new in feat(UC-10) resident person-month submissions (#3775)"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx"
+      ],
+      "created_at": "2026-11-25",
+      "updated_at": "2026-11-25",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-person-months-rs",
+      "title": "churn-hotspot: backend/servers/api-server/src/routes/person_months.rs",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3775"
+      ],
+      "evidence": [
+        "436 churn lines this run — new in feat(UC-10) resident person-month submissions (#3775); 1658 lines total (large single-file module)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/person_months.rs"
+      ],
+      "created_at": "2026-11-25",
+      "updated_at": "2026-11-25",
       "plan": null
     }
   ]

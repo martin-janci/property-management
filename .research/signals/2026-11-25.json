@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-25",
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "git diff 7b4bfa4..12e0bbf",
+      "score_delta": 1,
+      "evidence": "444 churn lines this run — new in feat(UC-10) resident person-month submissions (#3775)",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/person_months.rs",
+      "type": "churn-hotspot",
+      "source": "git diff 7b4bfa4..12e0bbf",
+      "score_delta": 1,
+      "evidence": "436 churn lines this run — new in #3775; file is 1658 lines (large single-file module)",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push/apns.rs",
+      "type": "churn-hotspot",
+      "source": "git diff 7b4bfa4..12e0bbf",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: 415 churn lines this run; touched by #3769 (APNs 410 fix) + #3780 (characterization). Previous hotspot_history.runs_seen = 1 → now 2.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal met confidence=high + score>=3 + allowlist",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-11-25.md && head -1 matches", "observed": "OK", "expected": "OK" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state to HEAD cursors/seen/hotspot", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq [.items[].id] | length == unique length", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "signal dedup w/ cumulative carve-out", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "cap <=8 + decay rule", "observed": "cap=true decay=true (no old-open items)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "no new plans this run", "observed": "0 new plans", "expected": "n/a" },
+    { "goal": "G7", "passed": true, "command": "git diff --cached --diff-filter=A .research/plans/", "observed": "0", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^\\.research/'", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets grep on staged diff", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regenerated", "observed": "byte-identical", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true, "command": "n/a (no failed phases)", "observed": "no failures", "expected": "n/a" },
+    { "goal": "G12", "passed": true, "command": "prior plans still in plans/ or _archive/", "observed": "missing=0", "expected": "missing=0" },
+    { "goal": "G13", "passed": true, "command": "_archive/ count only grows", "observed": "prev=24 now=24", "expected": ">=prev" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regenerated", "observed": "byte-identical", "expected": "byte-identical" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency", "observed": "true (empty)", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts + pm_cursor + coverage_cursor advance", "observed": "epics=13 cc=12/11 pm=6/5", "expected": "valid + cc advanced" },
+    { "goal": "G17", "passed": true, "command": "telegram token grep on staged diff", "observed": "0", "expected": "0" }
+  ]
+}

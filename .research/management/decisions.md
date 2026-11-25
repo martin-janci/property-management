@@ -183,3 +183,15 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-11-24, pm-devops):** KMP + swagger-ui cloud-runner unblock path — pick between (a) vendor swagger-ui assets locally, (b) allowlist the egress target in the proxy, or (c) pre-cache the dist in the sandbox base image. Each unblocks 4+ structurally unclaimable items. Owner: pm-devops.
 - **NEW (2026-11-24, pm-devops):** Quarantine burn-down cadence — fixed per-week quota vs. sprint-boundary flush vs. per-owner contracts (193 pm-backend / 6 pm-devops / 2 pm-security rows, all due 2027-02-19). Owner: pm-devops (with pm-tech-lead).
 - **NEW (2026-11-24, pm-devops):** push/* CODEOWNERS entry (pm-backend + pm-qa) — add a reviewer-attachment rule so push-subtree PRs auto-request the right pair. Owner: pm-devops.
+
+---
+
+## Decisions logged 2026-11-25 (Phase 1.6 — pm-scrum-master + pm-security)
+
+- **NEW (2026-11-25, pm-scrum-master):** Go/no-go on the 2026-12-01 i18n warn→error flip (or one-week slip) if mobile-RN drafts #3676/#3677 are unresolved by 2026-11-29. Owner: pm-frontend.
+- **NEW (2026-11-25, pm-scrum-master):** Unblock or formally defer mobile-native KMP track 3 (#2652 + #2966). Record the choice in this file. Owner: pm-devops.
+- **NEW (2026-11-25, pm-scrum-master):** Close or revive the stale UC-ACC-05 PRs #2555 and #2559 (open since 2026-07-28). Owner: pm-tech-lead.
+- **NEW (2026-11-25, pm-scrum-master):** Add `PersonMonthsScreen.tsx` and `backend/servers/api-server/src/routes/person_months.rs` to the watch list after UC-10 (#3775) churn (444 and 436 lines this run). Owner: pm-tech-lead.
+- **NEW (2026-11-25, pm-security):** Allow residents to read other units' person-month counts in the same org, or restrict to own-unit / manager? Owner: pm-product.
+- **NEW (2026-11-25, pm-security):** For a second co-resident pending submission on the same (unit, year, month), reject, keep audit trail, or merge? Owner: pm-product.
+- **NEW (2026-11-25, pm-security):** Is `FORCE RLS` on `person_month_submissions` (and routing repo calls through the RLS connection) a UC-10 release blocker, or hardening item? Recommendation: hardening item, land this sprint. Owner: pm-security.

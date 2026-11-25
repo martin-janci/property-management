@@ -674,10 +674,11 @@
       "priority": "low",
       "dependency": "none",
       "depends_on": [],
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "pm-analysis 2026-11-24",
-      "first_open_at": "2026-11-24T10:28:53Z"
+      "first_open_at": "2026-11-24T10:28:53Z",
+      "evidence": "merged by PR #3773 pm-devops-dependabot-3441-axum-test-land 2026-11-24"
     },
     {
       "id": "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",
@@ -831,7 +832,119 @@
         "score": 1,
         "vector": "bug"
       }
+    },
+    {
+      "id": "pm-scrum-master-promote-close-mobile-rn-i18n-drafts-2026-11-25",
+      "action": "Promote or close mobile-RN i18n drafts #3676 and #3677 before the 2026-12-01 warn-to-error flip.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": "2026-11-29",
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-scrum-master-verify-3357-after-3784-2026-11-25",
+      "action": "Verify dispatcher stall #3357 status after #3784 and resolve remaining non-mechanical conflicts.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-scrum-master-uc-10-followup-watch-2026-11-25",
+      "action": "Land UC-10 follow-up tests/i18n/screen-map for PersonMonthsScreen.tsx (444) and person_months.rs (436) hotspots; consider adding them to the watch list.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-scrum-master-triage-open-prs-2026-11-25",
+      "action": "Triage open PRs: #3786 epic-gap-audit round 12, drafts #3787/#3788/#3789, stale #2555/#2559 (UC-ACC-05 wiring open since July).",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-scrum-master-quarantine-burndown-watch-decompose-2026-11-25",
+      "action": "Continue quarantine burn-down (201 rows, due 2027-02-19) using #3774 cadence; decompose watch modules (vote.rs, sso.rs, financial.rs, lease.rs).",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": "2027-02-19",
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-security-force-rls-person-month-submissions-2026-11-25",
+      "action": "Add ALTER TABLE person_month_submissions (and person_months if not already) FORCE ROW LEVEL SECURITY; move submission repo methods (submit, find_submission, list_*_submissions, is_active_resident) onto the RLS connection; add cross-tenant integration test.",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-security-restrict-non-manager-person-month-reads-2026-11-25",
+      "action": "Gate non-manager person-month read endpoints (GET unit/yearly/by-id, POST /calculate, GET building list/summary) on residency of that unit or manager role; add 403-cross-unit test.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-security-submit-overwrite-semantics-2026-11-25",
+      "action": "Fix submit overwrite semantics on person_month_submissions: ON CONFLICT DO UPDATE lets a co-resident overwrite another resident's pending proposal and rewrites submitted_by. Decide: reject or audit trail; cover with test.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "pm-product",
+      "depends_on": [
+        "UNRESOLVED:pm-product decision on reject vs audit"
+      ],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-security-negative-authz-tests-person-months-2026-11-25",
+      "action": "Add negative authz tests to person_months_happy_path_tests.rs: non-resident submit 403, resident approve 403, cross-building submission_id 404, double-approve 409, out-of-range period 400.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "pm-security-audit-non-force-rls-pool-bypass-2026-11-25",
+      "action": "Repo-wide audit of the pool-instead-of-RLS-conn pattern and RLS tables that are not FORCE'd. Rank by sensitivity; file a backlog plan.",
+      "owner_role": "pm-security",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25"
     }
   ],
-  "generated": "2026-11-24T04:19:35Z"
+  "generated": "2026-11-25T04:15:10Z"
 }

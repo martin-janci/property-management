@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-24T04:19:35Z",
+  "generated": "2026-11-25T04:15:57Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -844,6 +844,66 @@
       "mitigation": "Per-owner weekly quota (193 pm-backend / 6 pm-devops / 2 pm-security) + sprint-dashboard metric; prefer fix+delete over bumping due dates",
       "owner_role": "pm-devops",
       "trigger": "Zero burn-down in any 14-day window",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-quarantine-deadline-2027-02-19-missed-2026-11-25",
+      "risk": "Quarantine burn-down deadline 2027-02-19 is at risk: 201 rows outstanding and burn-down was 0 in the prior 2 weeks before the #3774 cadence landed.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Enforce the #3774 weekly cadence; convert Postgres-gated tests to a dedicated integration lane.",
+      "owner_role": "pm-scrum-master",
+      "trigger": "If next weekly burn-down metric is <3 rows drained.",
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-push-hotspots-apns-fcm-regress-2026-11-25",
+      "risk": "Push transport hotspots (apns.rs 415-churn, fcm.rs) keep regressing; repeated fixes without architectural pass.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Leverage #3771/#3780 characterization tests; add push/* CODEOWNERS; schedule a design pass.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-uc10-approval-flow-rls-risk-2026-11-25",
+      "risk": "New UC-10 person-month submissions (#3775) ship with an approval flow and high churn; raises chance of RLS or authorization defects landing before a security pass.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Run pm-security review of person-month approval authz + RLS (see pm-security-force-rls-person-month-submissions-2026-11-25).",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-person-month-submissions-no-force-rls-2026-11-25",
+      "risk": "person_month_submissions is not FORCE'd and submission repo methods run on the base pool, so tenant isolation rests only on handler checks. A future handler that omits building-tenant check becomes cross-tenant IDOR.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "FORCE RLS + route repo calls through RlsConnection + cross-tenant integration test (tracked in pm-security-force-rls-person-month-submissions-2026-11-25).",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-person-month-read-exposure-residents-2026-11-25",
+      "risk": "Any org member (including non-manager residents) can read occupancy counts for any unit in the org via GET /buildings/{id}/person-months family endpoints. Authorization requires org membership only.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Gate reads on residency-of-unit OR manager role (tracked in pm-security-restrict-non-manager-person-month-reads-2026-11-25).",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-non-force-rls-pattern-recurrence-2026-11-25",
+      "risk": "Pattern recurrence: multiple prior migrations (00171/00172/00178/00179/00180) were force-fixes for the same non-FORCE + pool-bypass pattern. Residual score=2 should not be read as fully closed.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Repo-wide audit (tracked in pm-security-audit-non-force-rls-pool-bypass-2026-11-25).",
+      "owner_role": "pm-security",
+      "trigger": null,
       "status": "open"
     }
   ]
