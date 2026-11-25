@@ -7,7 +7,11 @@
 
 import { getTranslations } from 'next-intl/server';
 
-import { ComparisonUrlHandler, ComparisonView } from '../../../components/comparison';
+import {
+  ComparisonUrlHandler,
+  ComparisonView,
+  parseSharedIdsParam,
+} from '../../../components/comparison';
 import { Header } from '../../../components/ui';
 import { pageMetadata } from '../../../lib/page-metadata';
 
@@ -16,12 +20,17 @@ import { pageMetadata } from '../../../lib/page-metadata';
 export const generateMetadata = pageMetadata('compare');
 
 interface ComparePageProps {
-  searchParams: Promise<{ ids?: string }>;
+  // Next.js types each searchParams value as `string | string[] | undefined`:
+  // a repeated `?ids=a&ids=b` param arrives as an array. The previous
+  // `{ ids?: string }` annotation was an unvalidated cast, so `params.ids.split`
+  // threw `TypeError: split is not a function` and 500'd the whole route.
+  searchParams: Promise<{ ids?: string | string[] }>;
 }
 
 export default async function ComparePage({ searchParams }: ComparePageProps) {
   const params = await searchParams;
-  const sharedIds = params.ids?.split(',').filter(Boolean) ?? [];
+  // Narrow the raw query value instead of trusting the cast.
+  const sharedIds = parseSharedIdsParam(params.ids);
   const t = await getTranslations('pages.compare');
 
   return (
