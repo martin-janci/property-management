@@ -8346,6 +8346,28 @@
       "merge_attempted_at": "2026-11-10T20:27:10Z"
     },
     {
+      "task_id": "code-review-mobile-rn-hardcoded-button-labels",
+      "branch": "auto-impl/code-review-mobile-rn-hardcoded-button-l-f8069e2c",
+      "status": "merged",
+      "claimed_at": "2026-11-20T20:27:30Z",
+      "last_updated": "2026-11-25T08:39:14Z",
+      "status_changed_at": "2026-11-25T08:39:14Z",
+      "pr_number": 3677,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3677",
+      "merged_at": "2026-11-25T08:30:32Z",
+      "specialist": null,
+      "implementer_summary": "[reconciled: PR #3677 opened by implementer] [rebase_attempts reset 3->2: i18n locale-JSON resolver merged via #3718; prior 3 attempts predate the resolver -- one fresh Phase 5.6 attempt warranted] [5.6 rebase attempt #3 FAILED: branch has UNRELATED HISTORY to dev (empty merge-base; 181 commits off dev; 482 add/add conflicts repo-wide) -- NOT the locale-JSON case, NOT mechanically rebasable. Needs branch recreation from a correct dev base. rebase_attempts exhausted (3/3). See issue #3357.] [disjoint-history vs dev: branch shares no common ancestor with origin/dev (~7761 divergent commits); mechanical rebase impossible — needs re-implementation off fresh dev by operator] [fix-round 1: removed orphaned faults.report key in 6 locales; PR body corrected; pushed e79bca8]",
+      "reviewer_summary": "verdict=approve head_oid=e79bca80908f39d18c1df19113e8a0096875f977 note=i18n routing correct, prior faults.report orphan removed + body fixed, CI green; MERGE-BLOCKED pending branch recreation off fresh dev base (disjoint history, issue #3357 — operator action, not a review issue)",
+      "last_reviewed_oid": "e79bca80908f39d18c1df19113e8a0096875f977",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 3,
+      "reclaim_attempts": 0,
+      "fix_rounds": 1,
+      "merge_attempted_at": "2026-11-25T08:39:14Z"
+    },
+    {
       "task_id": "code-review-mobile-rn-hardcoded-empty-error-i18n",
       "branch": "auto-impl/code-review-mobile-rn-hardcoded-empty-er-639932af",
       "status": "merged",
@@ -19320,6 +19342,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-14T16:43:38Z"
+    },
+    {
+      "task_id": "code-review-reality-web-realtormgmt-i18n-gap",
+      "branch": "auto-impl/code-review-reality-web-realtormgmt-i18n-b8f91e64",
+      "status": "failed",
+      "claimed_at": "2026-11-24T20:25:50Z",
+      "last_updated": "2026-11-25T08:39:14Z",
+      "status_changed_at": "2026-11-25T08:39:14Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "nextjs-web",
+      "implementer_summary": "[reclaim-respawn] pr=none status=blocked specialist=nextjs-web — stale finding: realtor-mgmt area already fully i18n'd on dev (commit #2777); all agency/realtor keys resolve sk/cs/de/en; no gap to fix",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-web-report-attachments-disabled-3017",
@@ -35308,5 +35352,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-24T18:45:41Z"
+  "archived_at": "2026-11-25T08:39:21Z"
 }

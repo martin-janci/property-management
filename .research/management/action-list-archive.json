@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-24T18:45:41Z",
+  "archived_at": "2026-11-25T08:39:21Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -33558,6 +33558,19 @@
       "source": "pm-analysis 2026-11-16",
       "resolved_by": "PR #3579",
       "resolved_at": "2026-11-17"
+    },
+    {
+      "id": "pm-scrum-master-dependabot-3441-axum-test-2026-11-24",
+      "action": "Dependabot #3441 (axum-test 21.0.0 → 21.1.0) open since 2026-11-23 — trivial patch bump, land next cycle.",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-24",
+      "first_open_at": "2026-11-24T10:28:53Z",
+      "evidence": "merged by PR #3773 pm-devops-dependabot-3441-axum-test-land 2026-11-24"
     },
     {
       "id": "pm-scrum-master-draft-3676-mobile-rn-raw-status-untranslated-2026-11-23",

@@ -1,9 +1,39 @@
 {
-  "generated": "2026-11-24T04:28:51Z",
+  "generated": "2026-11-25T08:36:53Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-25T08:36:53Z",
+      "prs_scanned": 15,
+      "clean": [
+        3786,
+        3782,
+        3785,
+        3784,
+        3780,
+        3779,
+        3778,
+        3776,
+        3773,
+        3774,
+        3772,
+        3769,
+        3775,
+        3771
+      ],
+      "with_issues": [
+        {
+          "pr": 3783,
+          "issue": 3791,
+          "findings": 1,
+          "specialist": "ppt-web",
+          "note": "DSA report card dates hardcoded to en-GB despite full 6-locale string i18n"
+        }
+      ],
+      "note": "14 clean (push/APNs/FCM tests, i18n localizations, UC-10 person-month submissions w/ RLS, dependabot, quarantine cadence); 1 follow-up (#3791)"
+    },
     {
       "run_at": "2026-11-24T04:28:51Z",
       "prs_scanned": 15,
@@ -528,96 +558,6 @@
         3316
       ],
       "with_issues": []
-    },
-    {
-      "run_at": "2026-11-04T18:44:47Z",
-      "prs_scanned": 15,
-      "clean": [
-        3285,
-        3270,
-        3259,
-        3258
-      ],
-      "with_issues": [
-        {
-          "pr": 3291,
-          "issue": 3304,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "member-role escalation gate reimplements role parsing instead of reusing common::TenantRole::from_role_type"
-        },
-        {
-          "pr": 3289,
-          "issue": 3305,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "IoT add_reading hot path does a separate SELECT EXISTS org check instead of folding it into the insert"
-        },
-        {
-          "pr": 3287,
-          "issue": 3306,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "board_meetings require_manager(rls) duplicates shared rls_authz::require_manager_rls (consolidate)"
-        },
-        {
-          "pr": 3286,
-          "issue": 3307,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "fault update/triage/status hand-guard org on id-only find_by_id_rls instead of find_by_id_for_org"
-        },
-        {
-          "pr": 3281,
-          "issue": 3308,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "vote sub-resource reads use pool-bypass + manual vote_in_org guard; add RLS-aware repo variants"
-        },
-        {
-          "pr": 3260,
-          "issue": 3309,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "cs.json/sk.json ~9k-line reorder churn vs ~115-line en/de/hu/pl; enforce stable key order for messages/*.json"
-        },
-        {
-          "pr": 3269,
-          "issue": 3310,
-          "findings": 2,
-          "specialist": "pm-frontend",
-          "note": "community feed shows every author as Neighbor (API returns ids only); formatMoney coerces Decimal via Number()"
-        },
-        {
-          "pr": 3268,
-          "issue": 3311,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "POST /leases/{id}/payments path param is lease id by route but payment id in handler; client works around it"
-        },
-        {
-          "pr": 3264,
-          "issue": 3312,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "resolution-term responsiblePartyId resolved via user-id map not nameByParty like votes (verify)"
-        },
-        {
-          "pr": 3253,
-          "issue": 3314,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "org-wide automation execution list/stats endpoints not manager-gated (any member can read)"
-        },
-        {
-          "pr": 3252,
-          "issue": 3315,
-          "findings": 1,
-          "specialist": "pm-frontend",
-          "note": "RecentActivity filters my-faults client-side over a capped 20-row org-wide fetch (own faults can vanish)"
-        }
-      ],
-      "note": "Dispatcher Tier-1d demand-driven backlog generator run (buffer starved: claimable=9 < floor=36; DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-10-21), base=dev, max_prs=15, labels=follow-up,from-merged-review. Scanned the 15 most-recently-merged in-window dev merges lacking post-merge-reviewed/no-review-needed: #3291 plus the 16:23:52Z R4 batch (#3260,#3289,#3287,#3286,#3285,#3281,#3270,#3269,#3268,#3264,#3259,#3258,#3253,#3252). 11 follow-ups opened (#3304,#3305,#3306,#3307,#3308,#3309,#3310,#3311,#3312,#3314,#3315); 4 clean (#3285,#3270,#3259,#3258). No Task fan-out tool available to this subagent, so all diffs reviewed inline. GitHub I/O MCP-primary (gh writes 403-blocked by proxy): enumeration via list_pull_requests(state=closed, base=dev, sort=updated desc), merged detected by non-null merged_at; diffs via pull_request_read get_diff. Cross-cutting themes filed once to avoid duplicates: per-file require_manager helper duplication (filed on #3287/#3306) also appears in #3286; the cs/sk i18n reorder churn (filed on #3260/#3309) also appears in #3270/#3264/#3252 which were marked clean or carried a distinct finding. All 15 PRs labeled post-merge-reviewed (none had prior labels, so label-set writes clobbered nothing) + a breadcrumb comment left where an issue was opened. Every issue/comment body ends with the required _Generated by [Claude Code](https://claude.ai/code)_ footer."
     }
   ]
 }

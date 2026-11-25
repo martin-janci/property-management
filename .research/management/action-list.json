@@ -668,19 +668,6 @@
       "first_open_at": "2026-11-24T10:28:53Z"
     },
     {
-      "id": "pm-scrum-master-dependabot-3441-axum-test-2026-11-24",
-      "action": "Dependabot #3441 (axum-test 21.0.0 → 21.1.0) open since 2026-11-23 — trivial patch bump, land next cycle.",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "done",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-24",
-      "first_open_at": "2026-11-24T10:28:53Z",
-      "evidence": "merged by PR #3773 pm-devops-dependabot-3441-axum-test-land 2026-11-24"
-    },
-    {
       "id": "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",
       "action": "ppt-web AppShell UserMenu declares role=\"menu\" but missing arrow-key navigation + focus return — SR users cannot operate",
       "owner_role": "pm-backend",
