@@ -262,6 +262,11 @@
       "voteNotAcceptingBallots": "Hlasování momentálně nepřijímá hlasy.",
       "notEligibleInBuilding": "V této budově nemáte oprávnění hlasovat.",
       "allUnitsVoted": "Všechny vaše oprávněné jednotky již hlasovaly."
+    },
+    "status": {
+      "active": "Aktivní",
+      "closed": "Ukončená",
+      "pending": "Čekající"
     }
   },
   "documents": {
@@ -499,7 +504,12 @@
       "ackError": "Nepodarilo se potvrdit: {{message}}",
       "publishedAt": "Zverejneno: {{date}}"
     },
-    "loadError": "Nepodařilo se načíst oznámení"
+    "loadError": "Nepodařilo se načíst oznámení",
+    "status": {
+      "published": "Zveřejněno",
+      "draft": "Koncept",
+      "scheduled": "Naplánované"
+    }
   },
   "widgets": {
     "addedTitle": "Widget pridan",
@@ -651,7 +661,13 @@
     "amenities": "Vybavení",
     "loadError": "Nepodařilo se načíst budovy",
     "emptyTitle": "Žádné budovy",
-    "emptyText": "K vašemu účtu zatím nejsou přiřazeny žádné nemovitosti."
+    "emptyText": "K vašemu účtu zatím nejsou přiřazeny žádné nemovitosti.",
+    "status": {
+      "active": "Aktivní",
+      "under_construction": "Ve výstavbě",
+      "renovation": "Rekonstrukce",
+      "inactive": "Neaktivní"
+    }
   },
   "messages": {
     "newMessage": "+ Nová zpráva",
@@ -683,7 +699,13 @@
     "emptyText": "Zatím jste nebyli přidáni k žádné nájemní smlouvě.",
     "detailLoadError": "Nepodařilo se načíst nájemní smlouvu",
     "noPayments": "Nejsou naplánovány žádné nadcházející platby.",
-    "notFound": "Nájemní smlouva nebyla nalezena."
+    "notFound": "Nájemní smlouva nebyla nalezena.",
+    "status": {
+      "active": "Aktivní",
+      "pending": "Čekající",
+      "expired": "Vypršelé",
+      "terminated": "Ukončené"
+    }
   },
   "personMonths": {
     "title": "Osoboměsíce",

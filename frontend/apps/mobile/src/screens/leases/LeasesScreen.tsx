@@ -195,7 +195,9 @@ export function LeasesScreen({ onNavigate }: LeasesScreenProps) {
                     {lease.unitLabel} · {lease.buildingName}
                   </Text>
                   <View style={[s.badge, { backgroundColor: sc.background }]}>
-                    <Text style={[s.badgeText, { color: sc.color }]}>{lease.status}</Text>
+                    <Text style={[s.badgeText, { color: sc.color }]}>
+                      {t(`leases.status.${lease.status}`)}
+                    </Text>
                   </View>
                 </View>
                 <Text style={s.cardBody}>
