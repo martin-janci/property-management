@@ -13,6 +13,8 @@
  * next-intl's own missing-key fallback behind it — not hardcoded English.
  */
 
+import { getTranslations } from 'next-intl/server';
+
 export async function MaintenanceNotice({
   locale,
   tenantName,
@@ -20,8 +22,12 @@ export async function MaintenanceNotice({
   locale: string;
   tenantName: string;
 }) {
-  const title = 'Service temporarily unavailable';
-  const body = `${tenantName} is offline for maintenance. Please check back shortly.`;
+  // Server-side translator for the request locale. next-intl applies its own
+  // missing-key fallback (default locale) behind this, so an untranslated
+  // locale degrades to real copy rather than a raw key.
+  const t = await getTranslations('layout.maintenance');
+  const title = t('title');
+  const body = t('body', { name: tenantName });
 
   return (
     <html lang={locale}>
