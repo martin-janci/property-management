@@ -406,31 +406,6 @@
       }
     },
     {
-      "id": "code-review-api-handlers-webhook-ssrf-loopback-failopen",
-      "action": "api handlers webhook ssrf loopback failopen",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "dropped",
-      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-25T15:36:49Z",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-24T00:24:47Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-10T00:00:00Z"
-      },
-      "gc1_closed": {
-        "reason": "archive-terminal",
-        "archive_status": "failed",
-        "merged_pr": null,
-        "merged_at": null,
-        "at": "2026-11-25T15:36:49Z"
-      }
-    },
-    {
       "id": "code-review-api-handlers-voice-oauth-link-failopen",
       "action": "api handlers voice oauth link failopen",
       "owner_role": "pm-backend",
@@ -786,6 +761,82 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-25"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-person-months-rs",
+      "action": "churn-hotspot: backend/servers/api-server/src/routes/person_months.rs",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-25T16:26:39Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-screens-person-months-personmonthsscreen-tsx",
+      "action": "churn-hotspot: frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-25T16:26:39Z (score=1 conf=medium vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth-retry1",
+      "action": "ppt web ui registry api client no auth [retry 1/2 of failed code-review-ppt-web-ui-registry-api-client-no-auth]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=code-review-ppt-web-ui-registry-api-client-no-auth reason=failed-no-pr cooldown_ok newest_failure=2026-11-17T18:41:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "retry_of": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "retry_round": 1
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx-retry1",
+      "action": "Churn hotspot: ppt-web features/reports/AnalyticsChart.tsx (reports feature rollout) [retry 1/2 of failed churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx reason=failed-no-pr cooldown_ok newest_failure=2026-11-17T22:32:30Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "retry_of": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub-retry1",
+      "action": "[CLOSED-STALE: already fixed in cd88a22 2026-11-17] reality web agent profile mock stub [retry 1/2 of failed code-review-reality-web-agent-profile-mock-stub]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=code-review-reality-web-agent-profile-mock-stub reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T08:37:10Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "retry_of": "code-review-reality-web-agent-profile-mock-stub",
+      "retry_round": 1
     }
   ],
   "generated": "2026-11-25T04:15:10Z"
