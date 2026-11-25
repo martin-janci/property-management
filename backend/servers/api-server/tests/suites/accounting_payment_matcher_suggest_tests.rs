@@ -15,6 +15,7 @@
 
 use crate::common::seed_org;
 use api_server::services::accounting::AccountingService;
+use chrono::NaiveDate;
 use db::repositories::{AccConfigRepository, AccountingRepository};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -125,6 +126,66 @@ async fn seed_statement_line(pool: &PgPool, org: Uuid, amount: i64, vs: &str) ->
     )
     .bind(stmt)
     .bind(org)
+    .bind(amount)
+    .bind(vs)
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    (stmt, line)
+}
+
+/// Seed an open (issued) invoice carrying an explicit `due_date`. Used for the
+/// date-proximity tie-breaker, where recurring invoices share VS + amount and
+/// differ only on when they fall due. `paid_amount` stays 0, so
+/// `remaining = total`.
+async fn seed_invoice_due(
+    pool: &PgPool,
+    org: Uuid,
+    contact: Uuid,
+    number: &str,
+    total: i64,
+    vs: &str,
+    due_date: NaiveDate,
+) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO invoice (tenant_id, contact_id, number, issue_date, due_date, currency, total_amount, variable_symbol, status) \
+         VALUES ($1, $2, $3, $4, $4, 'CZK', $5, $6, 'issued') RETURNING id",
+    )
+    .bind(org)
+    .bind(contact)
+    .bind(number)
+    .bind(due_date)
+    .bind(total)
+    .bind(vs)
+    .fetch_one(pool)
+    .await
+    .unwrap()
+}
+
+/// Seed a bank statement plus a single unmatched line booked on an explicit
+/// `booking_date` (given amount + VS). Returns (statement_id, line_id).
+async fn seed_statement_line_booked(
+    pool: &PgPool,
+    org: Uuid,
+    amount: i64,
+    vs: &str,
+    booking_date: NaiveDate,
+) -> (Uuid, Uuid) {
+    let stmt = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO bank_statement (tenant_id, source_filename, account_iban) \
+         VALUES ($1, 'S', 'IBAN') RETURNING id",
+    )
+    .bind(org)
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    let line = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO bank_statement_line (statement_id, tenant_id, booking_date, amount, currency, variable_symbol, match_state) \
+         VALUES ($1, $2, $3, $4, 'CZK', $5, 'unmatched') RETURNING id",
+    )
+    .bind(stmt)
+    .bind(org)
+    .bind(booking_date)
     .bind(amount)
     .bind(vs)
     .fetch_one(pool)
@@ -247,5 +308,152 @@ async fn counterparty_iban_breaks_a_vs_amount_tie(pool: PgPool) {
         suggested,
         vec![a],
         "the counterparty-IBAN match must break the VS+amount tie in favour of the owning contact"
+    );
+}
+
+/// Recurring monthly invoices that share VS and amount (and so tie on
+/// confidence at 0.95) must be disambiguated by due-date proximity: a payment
+/// booked on 2026-03-14 is suggested against ONLY the invoice due 2026-03-15,
+/// not also January's and February's. Regression for #3762 — before the
+/// `closest_due_date` tie-break every month was auto-suggested for the one
+/// bank line, burying the genuinely-correct candidate. This pins the tie-break
+/// through the full matcher (`run_payment_matcher`), not just the pure helper.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn due_date_proximity_breaks_a_confidence_tie(pool: PgPool) {
+    let org = seed_org(&pool, "matcher-date-tiebreak").await;
+    let contact = seed_contact(&pool, org).await;
+
+    // Three recurring invoices: same VS "VSREC", each owes exactly 100 (==
+    // line amount, so exact-amount 0.95). No IBAN. They tie on confidence and
+    // differ only on due date.
+    let jan = seed_invoice_due(
+        &pool,
+        org,
+        contact,
+        "INV-JAN",
+        100,
+        "VSREC",
+        NaiveDate::from_ymd_opt(2026, 1, 15).unwrap(),
+    )
+    .await;
+    let feb = seed_invoice_due(
+        &pool,
+        org,
+        contact,
+        "INV-FEB",
+        100,
+        "VSREC",
+        NaiveDate::from_ymd_opt(2026, 2, 15).unwrap(),
+    )
+    .await;
+    let mar = seed_invoice_due(
+        &pool,
+        org,
+        contact,
+        "INV-MAR",
+        100,
+        "VSREC",
+        NaiveDate::from_ymd_opt(2026, 3, 15).unwrap(),
+    )
+    .await;
+    let (stmt, line) = seed_statement_line_booked(
+        &pool,
+        org,
+        100,
+        "VSREC",
+        NaiveDate::from_ymd_opt(2026, 3, 14).unwrap(),
+    )
+    .await;
+
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
+    let mut conn = pool.acquire().await.unwrap();
+    set_ctx(&mut conn, org).await;
+    svc.run_payment_matcher(&mut conn, org, stmt)
+        .await
+        .expect("run matcher");
+
+    let suggested = suggested_invoices(&pool, line).await;
+    assert_eq!(
+        suggested,
+        vec![mar],
+        "only the invoice due nearest the booking date may be suggested among confidence-tied recurring invoices"
+    );
+    assert!(
+        !suggested.contains(&jan) && !suggested.contains(&feb),
+        "strictly-farther recurring invoices must not be suggested once the date tie-break applies"
+    );
+}
+
+/// When confidence-tied recurring invoices are genuinely equidistant from the
+/// booking date, the date tie-break must keep ALL of them (it only drops
+/// strictly-farther candidates). A payment booked 2026-03-15 is equidistant (5
+/// days) from invoices due 2026-03-10 and 2026-03-20, so both are surfaced for
+/// manual disambiguation, while a far-off January invoice is dropped.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn due_date_proximity_keeps_genuine_date_ties(pool: PgPool) {
+    let org = seed_org(&pool, "matcher-date-ties").await;
+    let contact = seed_contact(&pool, org).await;
+
+    // All three share VS "VSEQ" and owe exactly 100 (== line amount) -> all tie
+    // at 0.95 on confidence.
+    let early = seed_invoice_due(
+        &pool,
+        org,
+        contact,
+        "INV-EARLY",
+        100,
+        "VSEQ",
+        NaiveDate::from_ymd_opt(2026, 3, 10).unwrap(),
+    )
+    .await;
+    let late = seed_invoice_due(
+        &pool,
+        org,
+        contact,
+        "INV-LATE",
+        100,
+        "VSEQ",
+        NaiveDate::from_ymd_opt(2026, 3, 20).unwrap(),
+    )
+    .await;
+    let _far = seed_invoice_due(
+        &pool,
+        org,
+        contact,
+        "INV-FAR",
+        100,
+        "VSEQ",
+        NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+    )
+    .await;
+    let (stmt, line) = seed_statement_line_booked(
+        &pool,
+        org,
+        100,
+        "VSEQ",
+        NaiveDate::from_ymd_opt(2026, 3, 15).unwrap(),
+    )
+    .await;
+
+    let svc = AccountingService::new(
+        AccountingRepository::new(pool.clone()),
+        AccConfigRepository::new(pool.clone()),
+    );
+    let mut conn = pool.acquire().await.unwrap();
+    set_ctx(&mut conn, org).await;
+    svc.run_payment_matcher(&mut conn, org, stmt)
+        .await
+        .expect("run matcher");
+
+    let mut suggested = suggested_invoices(&pool, line).await;
+    suggested.sort();
+    let mut expected = vec![early, late];
+    expected.sort();
+    assert_eq!(
+        suggested, expected,
+        "equidistant confidence-tied invoices must both survive the date tie-break; only strictly-farther ones are dropped"
     );
 }
