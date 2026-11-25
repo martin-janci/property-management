@@ -91,7 +91,7 @@ export class WidgetDataProvider {
    */
   async getAllWidgetConfigs(): Promise<WidgetConfig[]> {
     const stored = await AsyncStorage.getItem(WIDGET_CONFIG_KEY);
-    return stored ? JSON.parse(stored) : [];
+    return this.safeParse<WidgetConfig[]>(stored, []);
   }
 
   /**
@@ -348,7 +348,28 @@ export class WidgetDataProvider {
     Record<string, { data: WidgetData; cachedAt: string }>
   > {
     const stored = await AsyncStorage.getItem(WIDGET_DATA_KEY);
-    return stored ? JSON.parse(stored) : {};
+    return this.safeParse<Record<string, { data: WidgetData; cachedAt: string }>>(stored, {});
+  }
+
+  /**
+   * Parse a value read from AsyncStorage, falling back to `fallback` when the
+   * value is absent or corrupt. Stored blobs can be truncated by a killed
+   * write or mangled by a bad migration; an unguarded `JSON.parse` would throw
+   * a `SyntaxError` that crashes the widget. Degrade to the empty state
+   * instead so the next write can overwrite the bad blob.
+   */
+  private safeParse<T>(stored: string | null, fallback: T): T {
+    if (!stored) {
+      return fallback;
+    }
+    try {
+      return JSON.parse(stored) as T;
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Widget storage held a corrupt value; ignoring it:', error);
+      }
+      return fallback;
+    }
   }
 
   private async apiRequest<T>(endpoint: string): Promise<T> {
