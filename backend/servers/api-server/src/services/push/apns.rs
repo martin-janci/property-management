@@ -237,6 +237,13 @@ impl ApnsHttpAdapter {
             .post(&url)
             .bearer_auth(jwt)
             .header("apns-topic", &self.apns_config.topic)
+            // Required on watchOS 6+ and strongly recommended on iOS 13+; the
+            // value must match the payload. This adapter always sends a
+            // user-visible `aps.alert` dictionary, so the type is always
+            // `alert`. Omitting the header risks APNs rejecting the request
+            // (e.g. 400 `MissingTopic`) or dropping the notification on newer
+            // OS versions.
+            .header("apns-push-type", "alert")
             // Normal push: priority 10. Use 5 for background delivery.
             .header("apns-priority", "10")
             .json(&body)
@@ -833,6 +840,12 @@ mod tests {
         };
         assert_eq!(header("apns-topic"), "three.two.bit.ppt.management");
         assert_eq!(header("apns-priority"), "10");
+        // APNs requires `apns-push-type` for the alert payload shape this
+        // adapter sends (mandatory on watchOS 6+, strongly recommended on
+        // iOS 13+). The value must match the payload: an `aps.alert`
+        // dictionary is an `alert` push. Omitting it risks APNs rejecting or
+        // silently dropping the notification on newer OS versions.
+        assert_eq!(header("apns-push-type"), "alert");
         assert_eq!(header("authorization"), "Bearer jwt-token-xyz");
 
         // Body: aps alert dictionary + custom data fields, verbatim.
