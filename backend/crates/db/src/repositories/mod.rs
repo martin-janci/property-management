@@ -50,6 +50,7 @@ pub mod organization;
 pub mod organization_member;
 pub mod password_reset;
 pub mod person_month;
+pub mod person_month_submissions;
 pub mod platform_admin;
 pub mod portal_password_reset;
 pub mod role;
