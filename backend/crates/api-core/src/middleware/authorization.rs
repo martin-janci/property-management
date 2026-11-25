@@ -244,6 +244,97 @@ pub async fn require_authenticated(
 mod tests {
     use super::*;
 
+    use axum::{body::Body, http::Request, routing::get, Router};
+    use tower::ServiceExt; // for `oneshot`
+
+    /// Minimal downstream handler — only reached if authorization GRANTS access.
+    async fn ok_handler() -> &'static str {
+        "reached-handler"
+    }
+
+    /// Router guarded by `require_authenticated`, with NO upstream extractor
+    /// inserting a `TenantRole` into the request extensions. This models an
+    /// unauthenticated request (or one where the auth/tenant extractor never
+    /// ran or failed to resolve a role): the `TenantRole` extension is absent.
+    fn unauthenticated_router() -> Router {
+        Router::new()
+            .route("/guarded", get(ok_handler))
+            .layer(axum::middleware::from_fn(require_authenticated))
+    }
+
+    /// Router that injects an explicit `TenantRole` before the authorization
+    /// layer runs, modelling a fully-resolved authenticated principal.
+    fn router_with_role(role: TenantRole) -> Router {
+        Router::new()
+            .route("/guarded", get(ok_handler))
+            .layer(axum::middleware::from_fn(require_authenticated))
+            // `from_fn` layers run bottom-to-top, so this role-injector runs
+            // BEFORE `require_authenticated` and populates the extension.
+            .layer(axum::middleware::from_fn(
+                move |mut req: Request<Body>, next: axum::middleware::Next| async move {
+                    req.extensions_mut().insert(role);
+                    next.run(req).await
+                },
+            ))
+    }
+
+    async fn status_of(app: Router) -> StatusCode {
+        app.oneshot(
+            Request::builder()
+                .uri("/guarded")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap()
+        .status()
+    }
+
+    /// Regression (fail-open): a request with NO `TenantRole` in its extensions
+    /// — i.e. never authenticated / role never resolved — must be REJECTED by
+    /// `require_authenticated`, not silently treated as `Guest`.
+    ///
+    /// Before the fix, `require_permission` did `.unwrap_or(TenantRole::Guest)`,
+    /// and `Guest` (level 10) satisfies `AUTHENTICATED` (min_level 1), so an
+    /// unauthenticated request was GRANTED access (HTTP 200). The default must
+    /// DENY: a missing role is "unauthenticated" → 401, never a fall-through to
+    /// a guest identity.
+    #[tokio::test]
+    async fn missing_role_is_denied_not_treated_as_guest() {
+        let status = status_of(unauthenticated_router()).await;
+        assert_eq!(
+            status,
+            StatusCode::UNAUTHORIZED,
+            "a request with no resolved TenantRole must be rejected (401), \
+             NOT defaulted to Guest and admitted — that is a fail-open auth bypass"
+        );
+    }
+
+    /// The fix must not break the legitimate authenticated path: a request that
+    /// carries a sufficient role still reaches the handler.
+    #[tokio::test]
+    async fn present_sufficient_role_is_allowed() {
+        let status = status_of(router_with_role(TenantRole::Manager)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    /// A request whose role IS resolved but is insufficient for the required
+    /// permission is forbidden (403) — distinct from the unauthenticated 401.
+    #[tokio::test]
+    async fn present_insufficient_role_is_forbidden() {
+        // `OWNER` requires level 60; `Resident` (30) is below it.
+        let status = Router::new()
+            .route("/guarded", get(ok_handler))
+            .layer(axum::middleware::from_fn(require_owner))
+            .layer(axum::middleware::from_fn(
+                move |mut req: Request<Body>, next: axum::middleware::Next| async move {
+                    req.extensions_mut().insert(TenantRole::Resident);
+                    next.run(req).await
+                },
+            ));
+        assert_eq!(status_of(status).await, StatusCode::FORBIDDEN);
+    }
+
     #[test]
     fn test_permission_levels() {
         // Super admin can access everything
