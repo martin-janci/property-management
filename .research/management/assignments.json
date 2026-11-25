@@ -25,15 +25,15 @@
     {
       "task_id": "pm-security-force-rls-person-month-submissions-2026-11-25",
       "branch": "auto-impl/pm-security-force-rls-person-month-submi-3f9aefa2",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-25T10:41:18Z",
-      "last_updated": "2026-11-25T12:37:43Z",
-      "status_changed_at": "2026-11-25T12:37:43Z",
+      "last_updated": "2026-11-25T12:51:24Z",
+      "status_changed_at": "2026-11-25T12:51:24Z",
       "pr_number": 3797,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3797",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3797 status=done specialist=rust-backend scope_drift=true note=FORCE RLS on person_month_submissions (migration 00251) + 5 submission repo methods moved to RLS conn; handlers refactored to hold RLS conn through repo call; new cross-tenant DB test. person_months intentionally NOT forced (would break manager CRUD; ~10 methods still on pool \u2014 documented follow-up). fmt+clippy green; DB tests CI-DEFERRED (no local Postgres) \u2014 DO NOT mark ready until backend.yml Postgres job is green. [5.5 ci-fail: RLS static-check `check` job failed \u2014 Found 1 RLS violation(s) from forcing RLS on person_month_submissions (one path still on raw pool). 5.7 respawn fix_rounds=1 to move it onto the RLS conn.]",
+      "implementer_summary": "pr=3797 status=done specialist=rust-backend scope_drift=true note=FORCE RLS on person_month_submissions (migration 00251) + 5 submission repo methods moved to RLS conn; handlers refactored to hold RLS conn through repo call; new cross-tenant DB test. person_months intentionally NOT forced (would break manager CRUD; ~10 methods still on pool \u2014 documented follow-up). fmt+clippy green; DB tests CI-DEFERRED (no local Postgres) \u2014 DO NOT mark ready until backend.yml Postgres job is green. [5.5 ci-fail: RLS static-check `check` job failed \u2014 Found 1 RLS violation(s) from forcing RLS on person_month_submissions (one path still on raw pool). 5.7 respawn fix_rounds=1 to move it onto the RLS conn.] [5.7 followup=fixed (round1): RLS lint conflated file-level raw-pool person_months reader w/ FORCE-RLS submission methods; split UC-10 submission methods into repositories/person_month_submissions.rs (same signatures/call sites, 0 route changes). RLS lint 0 violations; cargo check+clippy green; pushed 62ab455. Back to review \u2014 awaiting re-review + backend.yml Postgres green.]",
       "reviewer_summary": "verdict=approve head_oid=720f36826a6eb4a617305dd2a58955a17c80349b note=RLS-FORCE-sound; migration 00251 correct; 5 repo methods on RLS conn; handler release-bug fixed; cross-tenant test non-vacuous; person_months ENABLE-only is pre-existing status-quo+documented-followup. MERGE GATED ON backend.yml test(Postgres) GREEN.",
       "last_reviewed_oid": "720f36826a6eb4a617305dd2a58955a17c80349b",
       "scope_drift": true,
@@ -69,5 +69,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-25T12:45:37Z"
+  "generated": "2026-11-25T12:51:24Z"
 }
