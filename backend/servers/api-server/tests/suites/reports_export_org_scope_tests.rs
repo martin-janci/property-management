@@ -153,19 +153,22 @@ async fn get_export_job_status_for_own_org_is_allowed(pool: PgPool) {
     );
 }
 
-/// An async export (any non-CSV format) must hand back a status URL for the job
-/// row that was actually inserted. The handler used to return a locally
-/// generated id that `background_jobs` never saw, so polling the URL was always
-/// a 404.
+/// A small export is generated inline in every format (gap audit 3.1): the
+/// response carries the real file, base64-encoded, and no job is queued. The
+/// previous handler queued every non-CSV format as a job nothing processed.
+/// Larger reports (and only when S3 is configured) go through the report
+/// worker instead; that path is covered by the worker's own tests.
 #[sqlx::test(migrator = "db::MIGRATOR")]
-async fn async_export_status_url_points_at_the_created_job(pool: PgPool) {
+async fn small_export_is_generated_inline(pool: PgPool) {
+    use base64::Engine as _;
+
     let app = TestApp::new(pool.clone()).await;
     let (token, _org_a, org_b) = setup(&pool, &app).await;
 
     let body = json!({
         "organization_id": org_b,
         "report_type": "faults",
-        "format": "pdf"
+        "format": "csv"
     });
     let req = Request::builder()
         .method(Method::POST)
@@ -178,29 +181,28 @@ async fn async_export_status_url_points_at_the_created_job(pool: PgPool) {
     let resp = app.execute(req).await;
     assert_eq!(
         resp.status,
-        StatusCode::ACCEPTED,
-        "a pdf export is queued, got {}",
-        resp.status
+        StatusCode::OK,
+        "a small export is generated inline, got {} body={}",
+        resp.status,
+        resp.text()
     );
 
     let payload: serde_json::Value = serde_json::from_slice(&resp.body).expect("json body");
-    let status_url = payload["download_url"]
-        .as_str()
-        .expect("download_url in async response")
-        .to_string();
-
-    let req = Request::builder()
-        .method(Method::GET)
-        .uri(&status_url)
-        .header(header::AUTHORIZATION, format!("Bearer {token}"))
-        .header("X-Tenant-ID", org_b.to_string())
-        .body(Body::empty())
-        .unwrap();
-    let resp = app.execute(req).await;
-    assert_eq!(
-        resp.status,
-        StatusCode::OK,
-        "the returned status URL must resolve to the queued job, got {}",
-        resp.status
+    assert_eq!(payload["format"], "csv");
+    assert!(payload["filename"].as_str().unwrap_or("").ends_with(".csv"));
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(payload["data"].as_str().expect("inline data"))
+        .expect("base64 data");
+    let text = String::from_utf8(bytes).expect("utf-8 csv");
+    assert!(
+        text.to_lowercase().contains("fault"),
+        "the inline csv must be the generated fault report, got {text:?}"
     );
+
+    let queued: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM background_jobs WHERE job_type = 'report_export'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(queued, 0, "an inline export must not queue a job");
 }

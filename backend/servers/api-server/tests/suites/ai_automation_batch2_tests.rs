@@ -153,7 +153,7 @@ async fn test_create_automation_rule_returns_201(pool: PgPool) {
         "name": "Test Rule",
         "trigger_type": "schedule",
         "trigger_config": {"cron": "0 9 * * 1"},
-        "actions": [{"type": "notify", "config": {}}]
+        "actions": [{"type": "send_notification", "config": {"title": "Weekly check"}}]
     });
     let resp = app
         .execute(inject_tenant(
@@ -162,6 +162,27 @@ async fn test_create_automation_rule_returns_201(pool: PgPool) {
         ))
         .await;
     assert_eq!(resp.status, StatusCode::CREATED, "create automation rule");
+    let rule: serde_json::Value = serde_json::from_slice(&resp.body).expect("rule json");
+    assert!(
+        rule["next_run_at"].is_string(),
+        "a schedule rule is scheduled on create, got {rule}"
+    );
+
+    // An action the engine cannot execute is rejected up front instead of
+    // being stored and silently never running.
+    let body = json!({
+        "name": "Bogus Rule",
+        "trigger_type": "schedule",
+        "trigger_config": {"cron": "0 9 * * 1"},
+        "actions": [{"type": "notify", "config": {}}]
+    });
+    let resp = app
+        .execute(inject_tenant(
+            authed(&token, Method::POST, &uri, Some(body), org_id),
+            org_id,
+        ))
+        .await;
+    assert_eq!(resp.status, StatusCode::BAD_REQUEST, "unsupported action");
 }
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
