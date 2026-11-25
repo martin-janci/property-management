@@ -233,20 +233,6 @@ due = "2027-02-19"
 reason = "Phase 6: portal_users table dropped (migration 00148); re-target before re-enabling"
 
 [[quarantine]]
-test = "backend/crates/db/tests/suites/rag_similarity_search_tests.rs::rag_retrieval_correctness"
-owner = "pm-backend"
-due = "2027-02-19"
-ticket = "BIT-352"
-reason = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3..."
-
-[[quarantine]]
-test = "backend/crates/db/tests/suites/rag_similarity_search_tests.rs::search_documents_pgvector_model_filter_provenance"
-owner = "pm-backend"
-due = "2027-02-19"
-ticket = "BIT-352"
-reason = "BIT-352: fails when pgvector is installed (CI). search_documents_by_embedding casts the JSONB `embedding` column to vector (no such cast) and the seeds use 3..."
-
-[[quarantine]]
 test = "backend/crates/db/tests/suites/repository_tests.rs::test_building_repository_create"
 owner = "pm-backend"
 due = "2027-02-19"
@@ -750,12 +736,6 @@ reason = "seed_provider fails: marketplace providers table not seeded"
 
 [[quarantine]]
 test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::delete_review_returns_204"
-owner = "pm-backend"
-due = "2027-02-19"
-reason = "seed_provider fails: marketplace providers table not seeded"
-
-[[quarantine]]
-test = "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_feature_stats_returns_200"
 owner = "pm-backend"
 due = "2027-02-19"
 reason = "seed_provider fails: marketplace providers table not seeded"
