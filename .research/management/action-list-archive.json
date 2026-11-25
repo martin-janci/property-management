@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-25T18:26:57Z",
+  "archived_at": "2026-11-25T20:27:18Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -20080,6 +20080,31 @@
       }
     },
     {
+      "id": "code-review-reality-web-realtor-profile-mock-noid",
+      "action": "reality web realtor profile mock noid",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=2 vector=bug) | gc1-reconcile 2026-11-25T20:23:45Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-23T18:28:58Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-12T18:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-25T20:23:45Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-realtor-reviews-silent-error",
       "action": "reality-web realtor/[id] page swallows realtor-reviews useQuery error — renders ",
       "owner_role": "pm-backend",
@@ -34597,6 +34622,24 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-22T14:29:02Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-triage-open-prs-2026-11-25",
+      "action": "Triage open PRs: #3786 epic-gap-audit round 12, drafts #3787/#3788/#3789, stale #2555/#2559 (UC-ACC-05 wiring open since July).",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25 | gc1-reconcile 2026-11-25T20:23:45Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-25T20:23:45Z"
       }
     },
     {

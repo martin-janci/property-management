@@ -297,24 +297,6 @@
       "first_open_at": "2026-11-22T04:28:21Z"
     },
     {
-      "id": "code-review-reality-web-realtor-profile-mock-noid",
-      "action": "reality web realtor profile mock noid",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-23T18:28:58Z (tier1d reality-web score=2 vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-23T18:28:58Z",
-      "signal_ref": {
-        "segment": "reality-web",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-12T18:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-web-layoutsections-dup-key",
       "action": "reality web layoutsections dup key",
       "owner_role": "pm-backend",
@@ -648,17 +630,6 @@
       "source": "pm-analysis 2026-11-25"
     },
     {
-      "id": "pm-scrum-master-triage-open-prs-2026-11-25",
-      "action": "Triage open PRs: #3786 epic-gap-audit round 12, drafts #3787/#3788/#3789, stale #2555/#2559 (UC-ACC-05 wiring open since July).",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-25"
-    },
-    {
       "id": "pm-scrum-master-quarantine-burndown-watch-decompose-2026-11-25",
       "action": "Continue quarantine burn-down (201 rows, due 2027-02-19) using #3774 cadence; decompose watch modules (vote.rs, sso.rs, financial.rs, lease.rs).",
       "owner_role": "pm-scrum-master",
@@ -757,6 +728,222 @@
       "first_open_at": "2026-11-25T16:26:39Z",
       "retry_of": "code-review-reality-web-agent-profile-mock-stub",
       "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
+      "action": "ppt web core errorhandler network misclassify",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-08T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "action": "ppt web core usewebsocket handler dep gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-08T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
+      "action": "mobile rn nfc device clock expiry",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "action": "mobile rn useapi no refresh retry",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
+      "action": "regional compliance vote validation fabricated pass",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d api-handlers score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-modules-no-tests",
+      "action": "mobile rn nfc modules no tests",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-02T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
+      "action": "mobile rn untested qr deeplink parsers",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=2 vector=test)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "test",
+        "generated": "2026-08-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
+      "action": "ppt web ui budgetform index key editable list",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
+      "action": "ppt web ui financial dash swallows query errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-imports-unclamped-limit",
+      "action": "reality server imports unclamped limit",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d reality-server score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "action": "reality server pricemap unbounded cache dos",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d reality-server score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
+      "action": "mobile rn hardcoded i18n screens",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-01T00:00:00Z"
+      }
     }
   ],
   "generated": "2026-11-25T04:15:10Z"
