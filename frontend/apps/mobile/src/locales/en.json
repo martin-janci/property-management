@@ -19,7 +19,8 @@
     "submit": "Submit",
     "tryAgain": "Try again",
     "errorTitle": "Something went wrong",
-    "errorDescription": "Please try again. If the issue persists, contact support."
+    "errorDescription": "Please try again. If the issue persists, contact support.",
+    "previous": "Previous"
   },
   "tabs": {
     "home": "Home",
@@ -388,7 +389,9 @@
     "detailLoadError": "Couldn't load document",
     "openErrorTitle": "Could not open document",
     "openErrorMessage": "The file viewer is unavailable on this device.",
-    "notFound": "Document not found"
+    "notFound": "Document not found",
+    "open": "Open document",
+    "opening": "Opening…"
   },
   "settings": {
     "title": "Settings",

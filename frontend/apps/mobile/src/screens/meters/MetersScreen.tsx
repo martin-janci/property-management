@@ -193,7 +193,9 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
                   style={styles.linkButton}
                   onPress={() => onNavigate?.('MeterReading', { meterId: meter.id })}
                 >
-                  <Text style={styles.linkButtonText}>Submit reading →</Text>
+                  <Text style={styles.linkButtonText}>
+                    {t('meters.submit', { defaultValue: 'Submit Reading' })} →
+                  </Text>
                 </Pressable>
               </View>
             </Pressable>

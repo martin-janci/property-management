@@ -19,7 +19,8 @@
     "submit": "Odeslat",
     "tryAgain": "Zkusit znovu",
     "errorTitle": "Něco se pokazilo",
-    "errorDescription": "Zkuste to prosím znovu. Pokud problém přetrvává, kontaktujte podporu."
+    "errorDescription": "Zkuste to prosím znovu. Pokud problém přetrvává, kontaktujte podporu.",
+    "previous": "Předchozí"
   },
   "tabs": {
     "home": "Domu",
@@ -390,7 +391,9 @@
     "detailLoadError": "Nepodařilo se načíst dokument",
     "openErrorTitle": "Dokument se nepodařilo otevřít",
     "openErrorMessage": "Prohlížeč souborů není na tomto zařízení dostupný.",
-    "notFound": "Dokument nebyl nalezen"
+    "notFound": "Dokument nebyl nalezen",
+    "open": "Otevřít dokument",
+    "opening": "Otevírá se…"
   },
   "settings": {
     "title": "Nastaveni",
