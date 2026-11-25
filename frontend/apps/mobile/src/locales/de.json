@@ -260,6 +260,11 @@
       "voteNotAcceptingBallots": "Die Abstimmung nimmt derzeit keine Stimmen an.",
       "notEligibleInBuilding": "Sie sind in diesem Gebäude nicht stimmberechtigt.",
       "allUnitsVoted": "Alle Ihre stimmberechtigten Einheiten haben bereits abgestimmt."
+    },
+    "status": {
+      "active": "Aktiv",
+      "closed": "Beendet",
+      "pending": "Ausstehend"
     }
   },
   "documents": {
@@ -457,7 +462,12 @@
       "ackError": "Bestatigung fehlgeschlagen: {{message}}",
       "publishedAt": "Veroffentlicht: {{date}}"
     },
-    "loadError": "Ankündigungen konnten nicht geladen werden"
+    "loadError": "Ankündigungen konnten nicht geladen werden",
+    "status": {
+      "published": "Veröffentlicht",
+      "draft": "Entwurf",
+      "scheduled": "Geplant"
+    }
   },
   "widgets": {
     "addedTitle": "Widget hinzugefugt",
@@ -609,7 +619,13 @@
     "amenities": "Ausstattung",
     "loadError": "Gebäude konnten nicht geladen werden",
     "emptyTitle": "Keine Gebäude",
-    "emptyText": "Mit Ihrem Konto sind noch keine Immobilien verknüpft."
+    "emptyText": "Mit Ihrem Konto sind noch keine Immobilien verknüpft.",
+    "status": {
+      "active": "Aktiv",
+      "under_construction": "Im Bau",
+      "renovation": "Renovierung",
+      "inactive": "Inaktiv"
+    }
   },
   "messages": {
     "newMessage": "+ Neue Nachricht",
@@ -639,7 +655,13 @@
     "emptyText": "Sie wurden noch keinem Mietvertrag hinzugefügt.",
     "detailLoadError": "Mietvertrag konnte nicht geladen werden",
     "noPayments": "Keine anstehenden Zahlungen geplant.",
-    "notFound": "Mietvertrag nicht gefunden."
+    "notFound": "Mietvertrag nicht gefunden.",
+    "status": {
+      "active": "Aktiv",
+      "pending": "Ausstehend",
+      "expired": "Abgelaufen",
+      "terminated": "Beendet"
+    }
   },
   "personMonths": {
     "title": "Personenmonate",

@@ -112,7 +112,7 @@ export function OutageDetailScreen({ outageId, onBack }: OutageDetailScreenProps
           <View style={s.cardFooter}>
             <Text style={s.cardMeta}>{formatRange(data.starts_at, data.ends_at)}</Text>
             <View style={s.badge}>
-              <Text style={s.badgeText}>{data.status.replace('_', ' ')}</Text>
+              <Text style={s.badgeText}>{t(`outages.status.${data.status}`)}</Text>
             </View>
           </View>
           {data.description ? <Text style={s.cardBody}>{data.description}</Text> : null}
