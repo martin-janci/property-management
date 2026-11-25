@@ -7614,6 +7614,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-handlers-webhook-ssrf-loopback-failopen",
+      "branch": "auto-impl/code-review-api-handlers-webhook-ssrf-lo-94b9cf9f",
+      "status": "failed",
+      "claimed_at": "2026-11-25T14:30:27Z",
+      "last_updated": "2026-11-25T15:36:28Z",
+      "status_changed_at": "2026-11-25T15:36:28Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend note=finding-not-reproducible: all webhook/outbound SSRF guards already fail closed on parse+resolve failure (validate_external_url + connect-time validate_resolved_addrs; regression tests exist). No change.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-handlers-workflow-enable-silent-fail",
       "branch": "auto-impl/code-review-api-handlers-workflow-enable-c3723f52",
       "status": "merged",
@@ -35578,5 +35600,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-25T14:41:57Z"
+  "archived_at": "2026-11-25T15:36:36Z"
 }
