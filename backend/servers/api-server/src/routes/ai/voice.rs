@@ -23,6 +23,56 @@ use uuid::Uuid;
 /// forwarded to the client, to avoid leaking upstream OAuth-provider detail.
 const OAUTH_EXCHANGE_FAILED_MESSAGE: &str = "Authorization code exchange failed";
 
+/// Encrypted token material persisted for a linked voice device:
+/// `(access_ciphertext, refresh_ciphertext, token_expires_at)`. All three are
+/// `None` only on the development credential-free path (see
+/// [`unconfigured_platform_link_tokens`]).
+type VoiceLinkTokens = (
+    Option<String>,
+    Option<String>,
+    Option<chrono::DateTime<chrono::Utc>>,
+);
+
+/// Token material to persist when the requested voice platform has **no OAuth
+/// client configured** at device-link time.
+///
+/// Fail-open fix: the previous code treated an unconfigured platform as a
+/// successful link on EVERY build — it returned `Ok((None, None, None))`, so the
+/// handler stored a tokenless device and answered `201 Created`. A release
+/// deployment that is simply missing its `ALEXA_*` / `GOOGLE_*` OAuth env would
+/// therefore silently report voice linking as succeeded. We now fail **closed**
+/// in release builds (HTTP 503 `OAUTH_NOT_CONFIGURED`), matching the
+/// `oauth_token_exchange` webhook handler's #890 posture, and reuse the shared
+/// [`crate::services::voice_oauth::voice_simulated_oauth_allowed`] gate so only
+/// debug/dev builds keep the credential-free convenience path. The build flag is
+/// threaded as an explicit argument (not read from `cfg!` inside) so the release
+/// fail-closed path is unit-testable — test binaries always compile with
+/// `debug_assertions` on.
+fn unconfigured_platform_link_tokens(
+    platform: &str,
+    debug_build: bool,
+) -> Result<VoiceLinkTokens, (StatusCode, Json<ErrorResponse>)> {
+    if crate::services::voice_oauth::voice_simulated_oauth_allowed(debug_build) {
+        tracing::warn!(
+            "Voice OAuth not configured for platform {}, storing device without tokens (debug build)",
+            platform
+        );
+        Ok((None, None, None))
+    } else {
+        tracing::error!(
+            "Voice OAuth not configured for platform {} in a release build; refusing to treat an unconfigured platform as a successful link",
+            platform
+        );
+        Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "OAUTH_NOT_CONFIGURED",
+                "Voice OAuth is not configured for this platform",
+            )),
+        ))
+    }
+}
+
 // ============================================================================
 // Story 64.5: Voice Assistant Endpoints
 // ============================================================================
@@ -214,13 +264,10 @@ async fn exchange_voice_oauth_tokens(
 
     // Check if platform is configured
     if !oauth_manager.has_platform(voice_platform) {
-        // Platform not configured - store device without OAuth tokens
-        // This allows development/testing without OAuth credentials
-        tracing::warn!(
-            "Voice OAuth not configured for platform {}, storing device without tokens",
-            platform
-        );
-        return Ok((None, None, None));
+        // Platform not configured. The decision of whether this is a permitted
+        // (credential-free dev link) or a failure is delegated to
+        // `unconfigured_platform_link_tokens`, gated by the build flag.
+        return unconfigured_platform_link_tokens(platform, cfg!(debug_assertions));
     }
 
     // Get redirect URI from environment (platform-specific)
@@ -381,6 +428,37 @@ pub(crate) async fn list_voice_commands(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Regression for the voice OAuth link fail-open: when the requested
+    /// platform has no OAuth client configured, the old code returned
+    /// `Ok((None, None, None))` on EVERY build, so `link_voice_device` stored a
+    /// tokenless device and answered `201 Created`. A release deployment merely
+    /// missing its `ALEXA_*` / `GOOGLE_*` OAuth env would then silently report
+    /// voice linking as succeeded. A release build (`debug_build=false`) must
+    /// now fail CLOSED with HTTP 503 `OAUTH_NOT_CONFIGURED`, matching the
+    /// `oauth_token_exchange` webhook handler's #890 posture. (Test binaries
+    /// always compile with `debug_assertions` on, so the build flag is threaded
+    /// explicitly — mirroring `voice_simulated_oauth_allowed`.)
+    #[test]
+    fn unconfigured_platform_link_fails_closed_in_release() {
+        let (status, body) = unconfigured_platform_link_tokens("alexa", false)
+            .expect_err("a release build must fail closed on an unconfigured platform");
+        assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(body.0.code, "OAUTH_NOT_CONFIGURED");
+    }
+
+    /// The development convenience path is preserved: a debug/dev build
+    /// (`debug_build=true`) may still link a device without OAuth tokens when
+    /// the platform is unconfigured.
+    #[test]
+    fn unconfigured_platform_link_allows_tokenless_dev_build() {
+        let (access, refresh, expires) = unconfigured_platform_link_tokens("alexa", true)
+            .expect("a debug build may store a tokenless device");
+        assert!(
+            access.is_none() && refresh.is_none() && expires.is_none(),
+            "the dev credential-free path stores no tokens"
+        );
+    }
 
     /// Regression guard for the AI upstream-error leak finding: the client-facing
     /// body for a failed voice-device OAuth code exchange must carry only the
