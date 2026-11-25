@@ -18538,6 +18538,30 @@
       "merge_attempted_at": "2026-11-10T02:43:27Z"
     },
     {
+      "task_id": "code-review-reality-web-layoutsections-dup-key",
+      "branch": "auto-impl/code-review-reality-web-layoutsections-d-3e753842",
+      "status": "merged",
+      "claimed_at": "2026-11-25T12:32:55Z",
+      "last_updated": "2026-11-25T14:40:36Z",
+      "status_changed_at": "2026-11-25T14:40:36Z",
+      "pr_number": 3798,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3798",
+      "merged_at": "2026-11-25T14:40:36Z",
+      "specialist": "nextjs-web",
+      "implementer_summary": "pr=3798 status=done specialist=nextjs-web scope_drift=true note=LayoutSections.tsx keyed rows by section.type; server-resolved layouts can repeat a type -> key collision (React same-key warning + broken reconciliation). Fixed key to ${section.type}-${index} (stable+unique). test:/fix: split regression test (fails pre-fix). VERIFY OK biome+tsc clean, 660/660 reality-web tests. Draft PR vs dev.",
+      "reviewer_summary": "verdict=approve head_oid=90fd07431f7e6e016004df1b93f63c312c936636 note=self-approve-blocked; posted COMMENT review. Clean reality-web key fix stable+unique; IG3 test; scope_drift justified; CI green.",
+      "last_reviewed_oid": "90fd07431f7e6e016004df1b93f63c312c936636",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-25T14:38:38Z",
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-reality-web-listing-edit-i18n",
       "branch": "auto-impl/code-review-reality-web-listing-edit-i18-99cd63cc",
       "status": "merged",
@@ -35554,5 +35578,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-25T12:41:05Z"
+  "archived_at": "2026-11-25T14:41:57Z"
 }
