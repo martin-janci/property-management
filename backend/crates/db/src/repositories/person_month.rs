@@ -434,8 +434,13 @@ impl PersonMonthRepository {
     // ==================== Resident submissions (UC-10) ====================
 
     /// Whether `user_id` is a current (`end_date IS NULL`) resident of `unit_id`.
+    ///
+    /// Runs on the caller-supplied RLS connection so the request's tenant
+    /// context is in scope (`unit_residents` is RLS-scoped). Pass
+    /// `&mut **rls.conn()` from the handler.
     pub async fn is_active_resident(
         &self,
+        conn: &mut PgConnection,
         unit_id: Uuid,
         user_id: Uuid,
     ) -> Result<bool, SqlxError> {
@@ -445,14 +450,21 @@ impl PersonMonthRepository {
         )
         .bind(unit_id)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(conn)
         .await
     }
 
     /// Create a pending submission, replacing any pending one for the same
     /// unit and month.
+    ///
+    /// Runs on the caller-supplied RLS connection so the request's tenant
+    /// context is in scope — `person_month_submissions` is `FORCE ROW LEVEL
+    /// SECURITY` (migration 00251), so the INSERT is checked against the
+    /// `person_month_submissions_org` policy. Pass `&mut **rls.conn()`.
+    #[allow(clippy::too_many_arguments)]
     pub async fn submit(
         &self,
+        conn: &mut PgConnection,
         unit_id: Uuid,
         year: i32,
         month: i32,
@@ -479,13 +491,17 @@ impl PersonMonthRepository {
         .bind(count)
         .bind(note)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(conn)
         .await
     }
 
     /// Submissions for one unit in one year, newest first.
+    ///
+    /// Runs on the caller-supplied RLS connection (see [`Self::submit`]). Pass
+    /// `&mut **rls.conn()`.
     pub async fn list_unit_submissions(
         &self,
+        conn: &mut PgConnection,
         unit_id: Uuid,
         year: i32,
     ) -> Result<Vec<PersonMonthSubmission>, SqlxError> {
@@ -495,15 +511,19 @@ impl PersonMonthRepository {
         )
         .bind(unit_id)
         .bind(year)
-        .fetch_all(&self.pool)
+        .fetch_all(conn)
         .await
     }
 
     /// Submissions for every unit of a building, optionally by status, with
     /// the unit designation, the submitter's email and the currently recorded
     /// count for comparison.
+    ///
+    /// Runs on the caller-supplied RLS connection (see [`Self::submit`]). Pass
+    /// `&mut **rls.conn()`.
     pub async fn list_building_submissions(
         &self,
+        conn: &mut PgConnection,
         building_id: Uuid,
         status: Option<&str>,
     ) -> Result<Vec<PersonMonthSubmissionWithUnit>, SqlxError> {
@@ -525,20 +545,24 @@ impl PersonMonthRepository {
         )
         .bind(building_id)
         .bind(status)
-        .fetch_all(&self.pool)
+        .fetch_all(conn)
         .await
     }
 
     /// Find a submission by id.
+    ///
+    /// Runs on the caller-supplied RLS connection (see [`Self::submit`]). Pass
+    /// `&mut **rls.conn()`.
     pub async fn find_submission(
         &self,
+        conn: &mut PgConnection,
         id: Uuid,
     ) -> Result<Option<PersonMonthSubmission>, SqlxError> {
         sqlx::query_as::<_, PersonMonthSubmission>(
             "SELECT * FROM person_month_submissions WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(conn)
         .await
     }
 
