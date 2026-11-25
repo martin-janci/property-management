@@ -76,6 +76,32 @@ describe('LayoutSections', () => {
     warn.mockRestore();
   });
 
+  it('renders repeated section types without a duplicate React key warning', () => {
+    // A server-resolved layout may legitimately repeat a section type (the
+    // resolver only drops non-renderable sections — it never dedups by type).
+    // Keying the row by `section.type` alone collides, which makes React log
+    // "Encountered two children with the same key" and breaks reconciliation.
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <LayoutSections
+        registry={registry}
+        layout={layoutOf([
+          { type: 'alpha.v1', presentation: 'visible' },
+          { type: 'alpha.v1', presentation: 'visible' },
+          { type: 'beta.v1', mode: 'grid', presentation: 'placeholder' },
+          { type: 'beta.v1', mode: 'grid', presentation: 'placeholder' },
+        ])}
+        listing={dummyListing}
+      />
+    );
+    // Both duplicate-type rows still render.
+    expect(screen.getAllByText('ALPHA')).toHaveLength(2);
+    // No React key-collision warning was emitted.
+    const sameKeyWarnings = err.mock.calls.filter((c) => String(c[0]).includes('same key'));
+    expect(sameKeyWarnings).toHaveLength(0);
+    err.mockRestore();
+  });
+
   it('isolates a crashing section: placeholder for it, siblings render', () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(
