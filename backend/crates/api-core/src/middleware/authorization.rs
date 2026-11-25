@@ -172,12 +172,29 @@ pub async fn require_permission(
     request: Request<Body>,
     next: Next,
 ) -> Result<Response, AuthorizationError> {
-    // Get role from request extensions (set by TenantExtractor or ValidatedTenantExtractor)
-    let role = request
-        .extensions()
-        .get::<TenantRole>()
-        .cloned()
-        .unwrap_or(TenantRole::Guest);
+    // Get role from request extensions (set by TenantExtractor or
+    // ValidatedTenantExtractor after the JWT has been authenticated).
+    //
+    // A MISSING role means the request was never authenticated / no tenant
+    // role was resolved upstream. We MUST fail closed here: previously this
+    // defaulted to `TenantRole::Guest`, but `Guest` (level 10) satisfies
+    // `AUTHENTICATED` (min_level 1) and every permission at or below its
+    // level, so an unauthenticated request silently cleared `require_*`
+    // guards — a fail-open auth bypass. Reject with 401 instead. (A role
+    // that is *explicitly* resolved to `Guest` — e.g. an authenticated
+    // non-member via `TenantExtractor` — is still present in extensions and
+    // flows through the normal permission check below; only the absent-role
+    // fall-through is denied here.)
+    let Some(role) = request.extensions().get::<TenantRole>().cloned() else {
+        tracing::warn!(
+            permission = required.description,
+            "Authorization denied - no authenticated role in request context (fail-closed)"
+        );
+        return Err(AuthorizationError {
+            status: StatusCode::UNAUTHORIZED,
+            message: "Authentication required",
+        });
+    };
 
     if required.is_satisfied_by(&role) {
         tracing::debug!(
