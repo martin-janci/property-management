@@ -283,3 +283,124 @@ async fn manager_rejects_and_non_residents_are_refused(pool: PgPool) {
         .unwrap();
     assert_eq!(written, 0, "a rejected submission writes nothing");
 }
+
+/// Seed an independent tenant (org + building + unit + resident) with one
+/// pending submission, and return `(org, building, unit, resident)`.
+///
+/// The submission is inserted under the tenant's own RLS context so it is
+/// seeded identically whether or not `person_month_submissions` is FORCE'd.
+async fn seed_tenant_with_submission(
+    pool: &PgPool,
+    label: &str,
+    count: i32,
+) -> (Uuid, Uuid, Uuid, Uuid) {
+    let org = seed_org(pool, label).await;
+    let building = sqlx::query_scalar::<_, Uuid>(
+        r#"INSERT INTO buildings (organization_id, street, city, postal_code, country)
+           VALUES ($1, 'Cross St 1', 'Bratislava', '81101', 'SK') RETURNING id"#,
+    )
+    .bind(org)
+    .fetch_one(pool)
+    .await
+    .expect("building");
+    let unit = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO units (building_id, designation) VALUES ($1, '1A') RETURNING id",
+    )
+    .bind(building)
+    .fetch_one(pool)
+    .await
+    .expect("unit");
+    let (resident, _email) = seed_user(pool, label).await;
+    seed_membership(pool, org, resident, "resident").await;
+    sqlx::query(
+        "INSERT INTO unit_residents (unit_id, user_id, resident_type) VALUES ($1, $2, 'tenant')",
+    )
+    .bind(unit)
+    .bind(resident)
+    .execute(pool)
+    .await
+    .expect("residency");
+
+    let (year, month) = this_month();
+    let mut conn = pool.acquire().await.expect("acquire seed conn");
+    db::set_request_context(&mut *conn, Some(org), Some(resident), false)
+        .await
+        .expect("set seed ctx");
+    sqlx::query(
+        r#"INSERT INTO person_month_submissions (unit_id, year, month, count, submitted_by)
+           VALUES ($1, $2, $3, $4, $5)"#,
+    )
+    .bind(unit)
+    .bind(year)
+    .bind(month)
+    .bind(count)
+    .bind(resident)
+    .execute(&mut *conn)
+    .await
+    .expect("seed submission");
+    db::clear_request_context(&mut *conn)
+        .await
+        .expect("clear seed ctx");
+
+    (org, building, unit, resident)
+}
+
+/// Cross-tenant isolation must hold at the database, not only in the handler
+/// layer: `person_month_submissions` is `FORCE ROW LEVEL SECURITY` (migration
+/// 00251), so even the api-server's table-owner connection is subject to the
+/// `person_month_submissions_org` policy. An org-B RLS context must never see
+/// an org-A submission row.
+///
+/// Regression guard: before FORCE (ENABLE only), the owner connection bypassed
+/// RLS and saw every tenant's rows — this test would then observe two rows
+/// under org B and fail.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn force_rls_hides_other_tenant_submissions(pool: PgPool) {
+    let (org_a, _building_a, unit_a, _res_a) =
+        seed_tenant_with_submission(&pool, "cross-a", 2).await;
+    let (org_b, _building_b, unit_b, _res_b) =
+        seed_tenant_with_submission(&pool, "cross-b", 5).await;
+
+    // Open a pooled connection in org B's RLS context — the same path the
+    // request extractor uses — and read the submissions table directly.
+    let mut conn = pool.acquire().await.expect("acquire");
+    db::set_request_context(&mut *conn, Some(org_b), None, false)
+        .await
+        .expect("set ctx B");
+    let visible: Vec<(Uuid, Uuid)> =
+        sqlx::query_as("SELECT id, unit_id FROM person_month_submissions ORDER BY submitted_at")
+            .fetch_all(&mut *conn)
+            .await
+            .expect("select under org B");
+    db::clear_request_context(&mut *conn)
+        .await
+        .expect("clear ctx B");
+
+    assert_eq!(
+        visible.len(),
+        1,
+        "org B must see exactly its own submission, not org A's: {visible:?}"
+    );
+    assert_eq!(visible[0].1, unit_b, "the visible row is org B's unit");
+    assert!(
+        !visible.iter().any(|(_, u)| *u == unit_a),
+        "org A's submission must be invisible to an org B context"
+    );
+
+    // Isolation is symmetric: org A's context sees exactly org A's row.
+    db::set_request_context(&mut *conn, Some(org_a), None, false)
+        .await
+        .expect("set ctx A");
+    let visible_a: Vec<Uuid> = sqlx::query_scalar("SELECT unit_id FROM person_month_submissions")
+        .fetch_all(&mut *conn)
+        .await
+        .expect("select under org A");
+    db::clear_request_context(&mut *conn)
+        .await
+        .expect("clear ctx A");
+    assert_eq!(
+        visible_a,
+        vec![unit_a],
+        "org A must see only its own submission"
+    );
+}
