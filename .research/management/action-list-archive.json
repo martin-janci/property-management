@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-25T20:27:18Z",
+  "archived_at": "2026-11-25T22:34:30Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -13001,6 +13001,31 @@
         "merged_pr": 2986,
         "merged_at": "2026-09-27T04:30:54Z",
         "at": "2026-09-27T08:35:58Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
+      "action": "ppt web ui automationrules mutation no catch",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-25T22:26:58Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-24T00:24:47Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-25T22:26:58Z"
       }
     },
     {
@@ -34028,6 +34053,24 @@
         "merged_pr": 2842,
         "merged_at": "2026-08-25T06:38:41Z",
         "at": "2026-08-25T08:23:13Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-promote-close-mobile-rn-i18n-drafts-2026-11-25",
+      "action": "Promote or close mobile-RN i18n drafts #3676 and #3677 before the 2026-12-01 warn-to-error flip.",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": "2026-11-29",
+      "source": "pm-analysis 2026-11-25 | gc1-reconcile 2026-11-25T22:26:58Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3803,
+        "merged_at": "2026-11-25T20:32:38Z",
+        "at": "2026-11-25T22:26:58Z"
       }
     },
     {

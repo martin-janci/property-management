@@ -407,24 +407,6 @@
       "last_updated": "2026-11-25T12:41:05Z"
     },
     {
-      "id": "code-review-ppt-web-ui-automationrules-mutation-no-catch",
-      "action": "ppt web ui automationrules mutation no catch",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-24T00:24:47Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-09T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
       "action": "ppt web ui conditionbuilder number coerce zero",
       "owner_role": "pm-backend",
@@ -606,17 +588,6 @@
         "score": 1,
         "vector": "bug"
       }
-    },
-    {
-      "id": "pm-scrum-master-promote-close-mobile-rn-i18n-drafts-2026-11-25",
-      "action": "Promote or close mobile-RN i18n drafts #3676 and #3677 before the 2026-12-01 warn-to-error flip.",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": "2026-11-29",
-      "source": "pm-analysis 2026-11-25"
     },
     {
       "id": "pm-scrum-master-uc-10-followup-watch-2026-11-25",
