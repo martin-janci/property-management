@@ -23,28 +23,6 @@
       "merge_attempted_at": "2026-11-25T08:39:14Z"
     },
     {
-      "task_id": "code-review-reality-web-realtor-account-i18n-gap",
-      "branch": "auto-impl/code-review-reality-web-realtor-account-b357bd6a",
-      "status": "review",
-      "claimed_at": "2026-11-24T20:25:50Z",
-      "last_updated": "2026-11-25T10:38:16Z",
-      "status_changed_at": "2026-11-25T10:38:16Z",
-      "pr_number": 3793,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3793",
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": "[reclaim-respawn in flight 2026-11-25; reclaim_attempts=1] [reconciled: PR #3793 opened by implementer (draft, 2 commits, 14 files)]",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 1,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "pm-security-force-rls-person-month-submissions-2026-11-25",
       "branch": "auto-impl/pm-security-force-rls-person-month-submi-3f9aefa2",
       "status": "in-progress",
