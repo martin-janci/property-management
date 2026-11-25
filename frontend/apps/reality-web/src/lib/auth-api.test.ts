@@ -25,7 +25,13 @@ vi.mock('./auth-token', () => ({
   clearSession: vi.fn(),
 }));
 
-import { AuthApiError, login, register } from './auth-api';
+import {
+  AuthApiError,
+  confirmPasswordReset,
+  login,
+  register,
+  requestPasswordReset,
+} from './auth-api';
 
 describe('auth-api requestJson success-body guard', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -94,5 +100,42 @@ describe('auth-api requestJson success-body guard', () => {
       user: body.user,
       expiresAt: '2026-01-01T00:00:00Z',
     });
+  });
+});
+
+describe('auth-api password reset', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ message: 'ok' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  // Both helpers used to throw a local 501 without calling the server, although
+  // reality-server implements the routes.
+  it('requests a reset link from POST /users/password-reset', async () => {
+    await requestPasswordReset('eva@example.com');
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/users/password-reset');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ email: 'eva@example.com' });
+  });
+
+  it('confirms with the snake_case body the server deserializes', async () => {
+    await confirmPasswordReset('tok-1', 'N3w-password!');
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/users/password-reset/confirm');
+    expect(JSON.parse(init.body)).toEqual({ token: 'tok-1', new_password: 'N3w-password!' });
   });
 });

@@ -21,7 +21,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useApiQuery } from '../../hooks/useApi';
+import { useApiQuery, useTenantId } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 // ---------------------------------------------------------------------------
@@ -125,9 +125,13 @@ export function NeighborsScreen(_props: NeighborsScreenProps) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch the first building the user belongs to
+  // `organization_id` is a required query param of `GET /api/v1/buildings`
+  // (400 without it); same key + path as BuildingsScreen so the two share a cache.
+  const { tenantId } = useTenantId();
   const buildingsQuery = useApiQuery<BuildingsPaginatedResponse>(
-    ['buildings', 'list'],
-    '/api/v1/buildings'
+    ['buildings', 'list', tenantId],
+    `/api/v1/buildings?organization_id=${tenantId ?? ''}`,
+    { enabled: !!tenantId }
   );
 
   const { buildingId, buildingName } = selectBuilding(buildingsQuery.data);

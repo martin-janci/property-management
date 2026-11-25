@@ -16,7 +16,7 @@ use db::{
     DbPool,
 };
 
-use crate::handlers::inquiries::{InquiriesHandler, LogInquiryNotifier};
+use crate::handlers::inquiries::InquiriesHandler;
 use crate::routes::sso::{OAuthTokens, PendingSsoSession, SessionInfo, SsoUserInfo};
 
 /// Application configuration.
@@ -875,7 +875,7 @@ pub struct AppState {
     /// (`send_contact_message`, `request_viewing`) create inquiries through
     /// this handler rather than the repository directly, so the best-effort
     /// realtor notification fires via the injected [`InquiryNotifier`] seam.
-    /// Built with [`LogInquiryNotifier`] via [`InquiriesHandler::with_notifier`]
+    /// Built with the env-selected notifier (SMTP or the logging stub) via [`InquiriesHandler::with_notifier`]
     /// until a real email/push transport is wired — swapping the notifier here
     /// is then the single change needed to light up delivery.
     pub inquiries_handler: InquiriesHandler,
@@ -992,10 +992,11 @@ impl AppState {
 
         // Public inquiry POSTs go through this handler so the best-effort realtor
         // notification fires. `with_notifier` makes the transport injectable:
-        // today it is the logging stub; a real email/push adapter drops in here.
+        // SMTP when `SMTP_*` is set (emails the inquirer when a realtor answers),
+        // the logging stub otherwise.
         let inquiries_handler = InquiriesHandler::with_notifier(
             reality_portal_repo.clone(),
-            Arc::new(LogInquiryNotifier),
+            crate::services::email::build_inquiry_notifier(reality_portal_repo.clone()),
         );
         let config = AppConfig::from_env();
         let jwt_secret = config.jwt_secret.clone();

@@ -941,8 +941,6 @@ pub async fn export_report(
         "requested_by": auth.user_id,
     });
 
-    // Create a unique job ID for tracking
-    let job_id = Uuid::new_v4();
     let timestamp = chrono::Utc::now().timestamp();
 
     // Create background job for report generation
@@ -953,7 +951,8 @@ pub async fn export_report(
     let job_result = state
         .operations_repo
         .create_background_job(
-            job_id,
+            // Ignored by the repository: the row gets a DB-generated id.
+            Uuid::new_v4(),
             "report_export".to_string(),
             "reports".to_string(),
             job_payload,
@@ -963,7 +962,11 @@ pub async fn export_report(
         .await;
 
     match job_result {
-        Ok(_) => {
+        Ok(job) => {
+            // Track the id of the row that was actually inserted. The handler
+            // used to return a locally generated id the table never saw, so
+            // the status URL always answered "not found".
+            let job_id = job.id;
             tracing::info!(
                 job_id = %job_id,
                 report_type = %report_type,

@@ -16,6 +16,7 @@ import {
   createUploadUrl,
   deleteFolder,
   listDocuments,
+  mapSearchResponse,
   revokeDocumentShare,
   uploadDocumentDirect,
 } from './api';
@@ -372,5 +373,37 @@ describe('documents api client', () => {
     expect(warnSpy.mock.calls[0][0]).toContain('org/2026/07/uuid_report.pdf');
 
     vi.unstubAllGlobals();
+  });
+});
+
+describe('mapSearchResponse', () => {
+  const document = { id: 'd-1', title: 'House rules' } as never;
+
+  it('maps the server hit (rank / headline / matched_fields) onto score + highlights', () => {
+    const mapped = mapSearchResponse(
+      {
+        results: [
+          { document, rank: 0.42, headline: 'the <mark>roof</mark>', matched_fields: ['content'] },
+          { document, rank: 3.5, headline: null, matched_fields: ['title'] },
+        ],
+        total: 2,
+        query: 'roof',
+      },
+      17
+    );
+
+    expect(mapped.total).toBe(2);
+    expect(mapped.took_ms).toBe(17);
+    expect(mapped.results[0].score).toBeCloseTo(0.42);
+    expect(mapped.results[0].highlights).toEqual([
+      { field: 'ocr_text', snippet: 'the <mark>roof</mark>' },
+    ]);
+    // Unbounded ts_rank_cd is clamped; a missing headline yields no highlight.
+    expect(mapped.results[1].score).toBe(1);
+    expect(mapped.results[1].highlights).toEqual([]);
+  });
+
+  it('tolerates an empty or malformed body', () => {
+    expect(mapSearchResponse(null, 0)).toEqual({ results: [], total: 0, took_ms: 0 });
   });
 });

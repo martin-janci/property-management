@@ -183,6 +183,56 @@ export function mapAnnouncementDetail(raw: RawRecord): AnnouncementWithDetails {
   };
 }
 
+/**
+ * `CommentWithAuthor` is serialized snake_case by the api-server. The comment
+ * thread read `authorName` / `isDeleted` / `createdAt` off the raw payload, so
+ * `comment.authorName.charAt(0)` threw on the first comment.
+ */
+export function mapAnnouncementComment(raw: RawRecord): import('./types').CommentWithAuthor {
+  const replies = raw.replies;
+  return {
+    id: String(raw.id ?? ''),
+    announcementId: pick<string>(raw, 'announcement_id', 'announcementId') ?? '',
+    userId: pick<string>(raw, 'user_id', 'userId') ?? '',
+    parentId: pick<string>(raw, 'parent_id', 'parentId') ?? undefined,
+    content: String(raw.content ?? ''),
+    authorName: pick<string>(raw, 'author_name', 'authorName') ?? '',
+    isDeleted: Boolean(pick<boolean>(raw, 'is_deleted', 'isDeleted')),
+    createdAt: pick<string>(raw, 'created_at', 'createdAt') ?? '',
+    updatedAt: pick<string>(raw, 'updated_at', 'updatedAt') ?? '',
+    replies: Array.isArray(replies)
+      ? (replies as RawRecord[]).map(mapAnnouncementComment)
+      : undefined,
+  };
+}
+
+export function mapCommentsResponse(raw: RawRecord): import('./types').CommentsResponse {
+  const comments = Array.isArray(raw.comments)
+    ? (raw.comments as RawRecord[]).map(mapAnnouncementComment)
+    : [];
+  return {
+    ...(raw as unknown as import('./types').CommentsResponse),
+    comments,
+    count: num(raw, 'count', 'count') || comments.length,
+  };
+}
+
+/** `AcknowledgmentStats` is snake_case on the wire; the panel reads camelCase. */
+export function mapAcknowledgmentStatsResponse(
+  raw: RawRecord
+): import('./types').AcknowledgmentStatsResponse {
+  const stats = (raw.stats ?? {}) as RawRecord;
+  return {
+    stats: {
+      announcementId: pick<string>(stats, 'announcement_id', 'announcementId') ?? '',
+      totalTargeted: num(stats, 'total_targeted', 'totalTargeted'),
+      readCount: num(stats, 'read_count', 'readCount'),
+      acknowledgedCount: num(stats, 'acknowledged_count', 'acknowledgedCount'),
+      pendingCount: num(stats, 'pending_count', 'pendingCount'),
+    },
+  };
+}
+
 export function mapAnnouncementAttachment(raw: RawRecord): AnnouncementAttachment {
   return {
     id: String(raw.id ?? ''),
@@ -720,7 +770,10 @@ export function useAcknowledgeAnnouncement() {
 export function useAnnouncementAcknowledgmentStats(id: string, enabled = true) {
   return useQuery<import('./types').AcknowledgmentStatsResponse>({
     queryKey: announcementKeys.acknowledgments(id),
-    queryFn: () => fetchJson(`${ANNOUNCEMENTS_BASE}/${id}/acknowledgments`),
+    queryFn: async () =>
+      mapAcknowledgmentStatsResponse(
+        await fetchJson<RawRecord>(`${ANNOUNCEMENTS_BASE}/${id}/acknowledgments`)
+      ),
     enabled: enabled && !!id,
   });
 }
@@ -745,7 +798,7 @@ export function useAnnouncementComments(
       const url = qs
         ? `${ANNOUNCEMENTS_BASE}/${announcementId}/comments?${qs}`
         : `${ANNOUNCEMENTS_BASE}/${announcementId}/comments`;
-      return fetchJson<import('./types').CommentsResponse>(url);
+      return fetchJson<RawRecord>(url).then(mapCommentsResponse);
     },
     enabled: enabled && !!announcementId,
   });

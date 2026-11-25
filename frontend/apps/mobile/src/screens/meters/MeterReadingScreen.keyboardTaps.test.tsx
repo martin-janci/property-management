@@ -42,6 +42,21 @@ jest.mock('../../components/sync', () => ({
   PendingSyncIndicator: () => null,
 }));
 
+// The resident's meters come from the API (GET /users/me/units + per-unit
+// meters); serve one cold-water meter so a reading has a meter to target.
+jest.mock('./useMyMeters', () => ({
+  useMyMeters: () => ({
+    data: {
+      unitIds: ['unit-1'],
+      meters: [
+        { id: 'meter-1', meter_number: 'CW-001', meter_type: 'cold_water', unit_of_measure: 'm³' },
+      ],
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 import { MeterReadingScreen } from './MeterReadingScreen';
 
 describe('MeterReadingScreen keyboard-persist-taps guard', () => {

@@ -23,6 +23,7 @@ import { EDIT_STEPS, type ListingEditFormData, PROPERTY_TYPES } from './_mock';
 import { resolveOptionalNumber } from './_number';
 import { resolveListingPrice } from './_price';
 import { mapListingStatusToForm, resolveStatusUpdate } from './_status';
+import { resolveListingTitle } from './_title';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
 // TODO: replace file upload with @ppt/ui-kit/FileUpload once available
@@ -133,6 +134,8 @@ function EditWizardContent() {
   // `draft`. We remember the loaded value so a save that did not deliberately
   // toggle the control omits `status` entirely and preserves the real state.
   const [initialStatus, setInitialStatus] = useState<ListingEditFormData['status']>('draft');
+  // The wizard has no title field; remember the loaded title so a save keeps it.
+  const [loadedTitle, setLoadedTitle] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!listingId) return;
@@ -144,6 +147,7 @@ function EditWizardContent() {
         // is preserved on save by `resolveStatusUpdate`. See `_status.ts`.
         const mappedStatus = mapListingStatusToForm(listing.status);
         setInitialStatus(mappedStatus);
+        setLoadedTitle(listing.title);
         setForm({
           transactionType: (listing.transactionType as 'sale' | 'rent') ?? 'sale',
           propertyType:
@@ -195,7 +199,7 @@ function EditWizardContent() {
         initialStatus
       );
       await updateListing(listingId, {
-        title: form.description?.slice(0, 80) || `${form.propertyType} ${form.city}`,
+        title: resolveListingTitle(loadedTitle, form),
         description: form.description,
         propertyType: form.propertyType,
         transactionType: form.transactionType,

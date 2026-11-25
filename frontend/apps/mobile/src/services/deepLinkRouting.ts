@@ -17,6 +17,7 @@ import type { ParsedDeepLink } from '../qrcode';
 export type Screen =
   | 'Dashboard'
   | 'Faults'
+  | 'FaultDetail'
   | 'ReportFault'
   | 'Announcements'
   | 'AnnouncementDetail'
@@ -29,6 +30,7 @@ export type Screen =
   | 'DocumentPermissions'
   | 'Messages'
   | 'ThreadDetail'
+  | 'NewMessage'
   | 'Settings'
   | 'MeterReading'
   | 'Meters'
@@ -44,6 +46,7 @@ export type Screen =
   | 'ArticleDetail'
   | 'Forms'
   | 'Buildings'
+  | 'BuildingDetail'
   | 'Leases'
   | 'LeaseDetail'
   | 'LeaseSignature'
@@ -70,6 +73,8 @@ export function resolveDeepLinkTarget(
       return id
         ? { screen: 'AnnouncementDetail', params: { announcementId: id } }
         : { screen: 'Announcements' };
+    case 'Faults':
+      return id ? { screen: 'FaultDetail', params: { faultId: id } } : { screen: 'Faults' };
     case 'Voting':
       return id ? { screen: 'VoteDetail', params: { voteId: id } } : { screen: 'Voting' };
     case 'Documents':
@@ -81,7 +86,7 @@ export function resolveDeepLinkTarget(
     case 'WidgetSettings':
       return { screen: 'Settings' };
     default:
-      // Faults, ReportFault, Outages, Settings, Dashboard map 1:1. Pass any
+      // ReportFault, Outages, Settings, Dashboard map 1:1. Pass any
       // remaining route params through verbatim.
       return { screen: link.screen as Screen, params: link.params };
   }

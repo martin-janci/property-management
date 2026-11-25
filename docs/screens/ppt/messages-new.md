@@ -50,6 +50,7 @@ context flows through auth.
 - 2026-06-25 — group conversations (BIT-244): `toStartThreadRequest` now sends the **full** recipient set as snake_case `recipient_ids` (was collapsed to a single `recipientId`), so multi-select recipients open one N-party thread (UC-05.8 / BIT-183). Backend merge: PR #1848.
 
 ## Agent Log
+- 2026-11-24 — agent: gap-audit-r14 — mobile counterpart added (`NewMessageScreen`), see ppt/messages log. No ppt-web change.
 - 2026-11-16 — agent: screen-map-drift-pr-3486 — reconciled with merged PR #3486: route now gated behind `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/messaging.tsx`; anonymous visitors redirect to `/login`. No route/component/buildStatus/apiStatus change.
 - 2026-11-04 — agent: recipient picker now gets neighbors: the neighbors client maps the snake_case `NeighborView` (every neighbor was filtered out as hidden) and builds auth headers per request (R3 #18). The building list still needs `organization_id` (buildings-contract). Status unchanged.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.

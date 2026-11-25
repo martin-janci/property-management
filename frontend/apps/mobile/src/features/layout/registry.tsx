@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { formatDate as formatLocaleDate } from '../../i18n/format';
 import { colors } from '../../screens/shared/screenStyles';
+import { parseVoteSummaries } from '../../screens/voting/VotingScreen';
 import type { ResolvedScreen } from './types';
 
 // NavigateContext threads `onNavigate` to section components without prop drilling
@@ -24,10 +25,6 @@ interface PendingAction {
   type: 'vote' | 'payment' | 'reading' | 'fault';
   title: string;
   dueDate?: string;
-}
-
-interface ApiVoteListResponse {
-  votes?: Array<{ id: string; title: string; status: string; end_at: string }>;
 }
 
 interface ApiFaultStatistics {
@@ -64,7 +61,8 @@ export function DashboardStatsSection({ mode: _mode, props: _props }: SectionCom
 
   const announcementsQuery = useApiQuery<ApiAnnouncementListResponse>(
     ['dashboard', 'announcements'],
-    '/api/v1/announcements?status=published&limit=3',
+    // The resident-readable list; `GET /announcements` is manager-only (403).
+    '/api/v1/announcements/published',
     { staleTime: 60_000 }
   );
   const faultsStatsQuery = useApiQuery<ApiFaultStatistics>(
@@ -72,7 +70,7 @@ export function DashboardStatsSection({ mode: _mode, props: _props }: SectionCom
     '/api/v1/faults/statistics',
     { staleTime: 60_000 }
   );
-  const votesQuery = useApiQuery<ApiVoteListResponse>(['dashboard', 'votes'], '/api/v1/voting', {
+  const votesQuery = useApiQuery<unknown>(['dashboard', 'votes'], '/api/v1/voting', {
     staleTime: 60_000,
   });
   const unreadMessagesQuery = useApiQuery<ApiUnreadMessages>(
@@ -88,7 +86,7 @@ export function DashboardStatsSection({ mode: _mode, props: _props }: SectionCom
       (faultsStatsQuery.data?.statistics?.open_count ?? 0) +
       (faultsStatsQuery.data?.statistics?.in_progress_count ?? 0),
     unreadAnnouncements: announcements.length,
-    activeVotes: (votesQuery.data?.votes ?? []).filter((v) => v.status === 'active').length,
+    activeVotes: parseVoteSummaries(votesQuery.data).filter((v) => v.status === 'active').length,
     unreadMessages:
       unreadMessagesQuery.data?.unreadCount ??
       unreadMessagesQuery.data?.unread_count ??
@@ -123,11 +121,11 @@ export function DashboardStatsSection({ mode: _mode, props: _props }: SectionCom
 export function ActionQueueSection({ mode: _mode, props: _props }: SectionComponentProps) {
   const { t } = useTranslation();
 
-  const votesQuery = useApiQuery<ApiVoteListResponse>(['dashboard', 'votes'], '/api/v1/voting', {
+  const votesQuery = useApiQuery<unknown>(['dashboard', 'votes'], '/api/v1/voting', {
     staleTime: 60_000,
   });
 
-  const pendingActions: PendingAction[] = (votesQuery.data?.votes ?? [])
+  const pendingActions: PendingAction[] = parseVoteSummaries(votesQuery.data)
     .filter((v) => v.status === 'active')
     .slice(0, 3)
     .map((v) => ({

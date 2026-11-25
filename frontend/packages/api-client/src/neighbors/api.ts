@@ -103,7 +103,7 @@ export const createNeighborsApi = (config: ApiConfig) => {
       const response = await fetch(`${baseUrl}/api/v1/users/me/privacy`, {
         headers: buildHeaders(config),
       });
-      return handleResponse(response);
+      return mapPrivacySettingsResponse(await handleResponse(response));
     },
 
     /**
@@ -115,11 +115,39 @@ export const createNeighborsApi = (config: ApiConfig) => {
       const response = await fetch(`${baseUrl}/api/v1/users/me/privacy`, {
         method: 'PUT',
         headers: buildHeaders(config),
-        body: JSON.stringify(data),
+        body: JSON.stringify(toPrivacySettingsBody(data)),
       });
-      return handleResponse(response);
+      return mapPrivacySettingsResponse(await handleResponse(response));
     },
   };
 };
+
+/**
+ * The api-server speaks snake_case here (`profile_visibility`,
+ * `show_contact_info`). Sent camelCase, both fields deserialized as `None`:
+ * the save returned 200 and changed nothing, and the form never showed the
+ * stored values.
+ */
+export function toPrivacySettingsBody(data: UpdatePrivacySettingsRequest): Record<string, unknown> {
+  return {
+    profile_visibility: data.profileVisibility,
+    show_contact_info: data.showContactInfo,
+  };
+}
+
+export function mapPrivacySettingsResponse(raw: unknown): PrivacySettingsResponse {
+  const settings = ((raw as { settings?: unknown } | null)?.settings ?? {}) as Record<
+    string,
+    unknown
+  >;
+  return {
+    settings: {
+      profileVisibility: (settings.profile_visibility ??
+        settings.profileVisibility ??
+        'visible') as PrivacySettingsResponse['settings']['profileVisibility'],
+      showContactInfo: Boolean(settings.show_contact_info ?? settings.showContactInfo),
+    },
+  };
+}
 
 export type NeighborsApi = ReturnType<typeof createNeighborsApi>;

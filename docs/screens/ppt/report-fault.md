@@ -102,5 +102,6 @@ UC-03 fault creation — single-step modal form. The mobile design favors speed 
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: mobile: category `hvac` (not in `fault_category` enum, 500 on insert) replaced by `heating`.
 - 2026-05-09 — agent: design analyzed (ui_kits/mobile/screens.jsx — MobReportFaultScreen); flipped mobile redesignStatus → in-progress; attached designSource; populated functionality checklist (6 sections), all 5 states (initial/submitting/validation/network-error/success), design-specific notes; declared 5 sharedComponents; added 2 relatedScreens (dashboard parent + faults-list sibling)
 - 2026-05-08 — init: created from scan (source: sitemap)

@@ -31,7 +31,7 @@ export interface DocumentPermission {
   updated_at: string;
 }
 
-interface ApiDocumentDetailResponse {
+export interface ApiDocumentDetailResponse {
   id: string;
   title: string;
   access_scope?: AccessScope;
@@ -42,6 +42,21 @@ interface ApiDocumentDetailResponse {
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * `GET /api/v1/documents/{id}` wraps the row as `{ document: {...} }`
+ * (`DocumentDetailResponse`). Reading the fields off the top level left every
+ * one undefined, so the screen always fell back to its default audience and an
+ * "Invalid Date". A flat payload is still accepted defensively.
+ */
+export function unwrapDocumentDetail(data: unknown): ApiDocumentDetailResponse | undefined {
+  if (typeof data !== 'object' || data === null) return undefined;
+  const inner = (data as { document?: unknown }).document;
+  const doc = typeof inner === 'object' && inner !== null ? inner : data;
+  return typeof (doc as { id?: unknown }).id === 'string'
+    ? (doc as ApiDocumentDetailResponse)
+    : undefined;
+}
 
 interface AudienceMeta {
   label: string;
@@ -139,11 +154,19 @@ export interface DocumentPermissionsScreenProps {
 export function DocumentPermissionsScreen({ documentId, onBack }: DocumentPermissionsScreenProps) {
   const { t } = useTranslation();
 
-  const { data, isLoading, error, refetch } = useApiQuery<ApiDocumentDetailResponse>(
-    ['documents', 'detail', documentId],
+  const {
+    data: raw,
+    isLoading,
+    error,
+    refetch,
+  } = useApiQuery<unknown>(
+    ['documents', 'permissions', documentId],
     `/api/v1/documents/${documentId}`,
-    { staleTime: 60_000 }
+    {
+      staleTime: 60_000,
+    }
   );
+  const data = unwrapDocumentDetail(raw);
 
   const handleRetry = useCallback(() => {
     void refetch();

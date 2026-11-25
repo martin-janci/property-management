@@ -42,6 +42,7 @@ the API's `ThreadDetailResponse` to the feature-layer `ThreadWithMessages` type 
 - 2026-06-25 — group conversations (BIT-244): detail header renders all other participants (`ThreadDetailResponse.otherParticipant` → `participants: ParticipantInfo[]`, backend PR #1848). `formatParticipantNames` already collapses N>2 to "X and N others".
 
 ## Agent Log
+- 2026-11-24 — agent: mobile: App.tsx forwards `threadId` (screen was stuck on Loading).
 - 2026-11-16 — agent: screen-map-drift-pr-3486 — reconciled with merged PR #3486: route now gated behind `<ProtectedRoute>` (auth-only, not role-gated) in `routes/groups/messaging.tsx`; anonymous visitors redirect to `/login`. No route/component/buildStatus/apiStatus change.
 - 2026-11-04 — agent: messaging client builds the Authorization header per request from the token provider, so a deep-linked thread no longer gets 401 "Missing Authorization header" (R3 #19). Status unchanged.
 - 2026-07-13 — agent: gap-screens-normalize-frontmatter — normalized story-id-style epic ref(s) Epic-6-5 → Epic-6 (strip story suffix); /screens validate clean.

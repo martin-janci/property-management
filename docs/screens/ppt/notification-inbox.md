@@ -67,4 +67,6 @@ ppt-web never read them, so a notification missed in the toast was lost.
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: gap-audit-r13 — mobile inbox tap now opens the entity the group is about (fault / announcement / vote detail, messages and meters list) via `notificationTarget`; it used to navigate to a non-existent `NotificationDetail` screen and land on the Dashboard. No ppt-web change.
+
 - 2026-11-09 — agent: gap-audit-r7 — created. `/notifications` inbox page + top-bar bell; NotificationService now writes in-app groups through `add_notification_to_group_for_user` (RLS-safe).

@@ -7,9 +7,8 @@
  *
  * Wired to `GET /api/v1/meters/units/{unit_id}` on the api-server, which
  * returns `Vec<Meter>` (see `db::models::meter::Meter` — default snake_case
- * serde, `Decimal` fields as JSON strings). The unit id comes from the
- * authenticated user (`useAuth().user.unitId`); the query stays disabled until
- * it is known. The response is consumed without a generated client, so it is
+ * serde, `Decimal` fields as JSON strings). The unit ids come from
+ * `GET /api/v1/users/me/units` via `useMyMeters`. The response is consumed without a generated client, so it is
  * validated defensively — malformed rows are dropped rather than crashing the
  * list.
  */
@@ -18,11 +17,10 @@ import type { Meter as ApiMeterPayload } from '@ppt/api-client';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { useApiQuery } from '../../hooks/useApi';
 import { formatDate } from '../../i18n/format';
 import { warnIfListDegraded } from '../shared/parserWarnings';
 import { colors, screenStyles as s } from '../shared/screenStyles';
+import { useMyMeters } from './useMyMeters';
 
 export type MeterCommodity = 'water_cold' | 'water_hot' | 'water' | 'electricity' | 'gas' | 'heat';
 
@@ -105,7 +103,7 @@ export function toUiMeter(m: ApiMeter): Meter {
   };
 }
 
-function commodityIcon(commodity: MeterCommodity): string {
+export function commodityIcon(commodity: MeterCommodity): string {
   switch (commodity) {
     case 'water_cold':
     case 'water':
@@ -127,16 +125,12 @@ interface MetersScreenProps {
 
 export function MetersScreen({ onNavigate }: MetersScreenProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const unitId = user?.unitId;
+  const { data, isLoading, error, refetch, isFetching } = useMyMeters();
+  // `undefined` while the first load is in flight, so the "no unit" state only
+  // shows once the server has said the user really has none.
+  const hasUnit = data ? data.unitIds.length > 0 : !error;
 
-  const { data, isLoading, error, refetch, isFetching } = useApiQuery<unknown>(
-    ['meters', 'unit', unitId],
-    `/api/v1/meters/units/${unitId ?? ''}`,
-    { staleTime: 30_000, enabled: !!unitId }
-  );
-
-  const meters: Meter[] = parseMeters(data).map(toUiMeter);
+  const meters: Meter[] = parseMeters(data?.meters ?? []).map(toUiMeter);
 
   const onRefresh = useCallback(async () => {
     await refetch();
@@ -153,7 +147,7 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
         style={s.scrollView}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} />}
       >
-        {!unitId ? (
+        {!hasUnit ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>🏠</Text>
             <Text style={s.emptyTitle}>{t('meters.noUnitTitle')}</Text>

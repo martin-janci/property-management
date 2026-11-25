@@ -31,6 +31,16 @@ use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
 
+use db::models::{ListingInquiry, ViewingSchedule};
+use db::repositories::RealityPortalRepository;
+use uuid::Uuid;
+
+use crate::handlers::inquiries::{InquiryNotifier, LogInquiryNotifier};
+
+use super::search_alert_drainer::{
+    AlertDelivery, AlertEmailTransport, AlertNotification, LogEmailTransport,
+};
+
 /// How a password-reset request should be handled given the transport state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResetDelivery {
@@ -225,6 +235,205 @@ impl PasswordResetMailer for SmtpPasswordResetMailer {
     }
 }
 
+/// Build the plain-text alert email. Split out from the transport so the
+/// addressing and headers are unit-testable without an SMTP server.
+fn build_alert_message(
+    from: &str,
+    to_email: &str,
+    to_name: &str,
+    notification: &AlertNotification,
+) -> Result<Message> {
+    let from: Mailbox = from
+        .parse()
+        .map_err(|e| anyhow::anyhow!("invalid SMTP from address: {e}"))?;
+    let address = to_email
+        .parse()
+        .map_err(|e| anyhow::anyhow!("invalid recipient address: {e}"))?;
+    let name = to_name.trim();
+    let to = Mailbox::new((!name.is_empty()).then(|| name.to_string()), address);
+
+    Ok(Message::builder()
+        .from(from)
+        .to(to)
+        .subject(notification.subject.as_str())
+        .header(ContentType::TEXT_PLAIN)
+        .body(notification.body.clone())?)
+}
+
+/// SMTP delivery for saved-search alerts. The drainer shipped with a logging
+/// stub only, so alerts were enqueued and never emailed even on deployments
+/// that already had `SMTP_*` configured for password reset.
+pub struct SmtpAlertEmailTransport {
+    transport: AsyncSmtpTransport<Tokio1Executor>,
+    from: String,
+}
+
+#[async_trait]
+impl AlertEmailTransport for SmtpAlertEmailTransport {
+    async fn send_email(
+        &self,
+        to_email: &str,
+        to_name: &str,
+        notification: &AlertNotification,
+    ) -> std::result::Result<AlertDelivery, String> {
+        let message = build_alert_message(&self.from, to_email, to_name, notification)
+            .map_err(|e| e.to_string())?;
+        self.transport
+            .send(message)
+            .await
+            .map_err(|e| format!("SMTP send failed: {e}"))?;
+        Ok(AlertDelivery::Sent)
+    }
+}
+
+/// Select the saved-search alert email transport from the environment: SMTP
+/// when the `SMTP_*` variables are present, the logging stub otherwise (which
+/// reports `Skipped`, so alerts stay pending rather than being dropped).
+pub fn build_alert_email_transport() -> Arc<dyn AlertEmailTransport> {
+    let Some(settings) = SmtpSettings::from_env() else {
+        tracing::info!("SMTP not configured; saved-search alert emails stay pending");
+        return Arc::new(LogEmailTransport);
+    };
+    let from = format!("{} <{}>", settings.from_name, settings.from_address);
+    let creds = Credentials::new(settings.username.clone(), settings.password.clone());
+    let builder = if settings.use_tls {
+        match AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&settings.host) {
+            Ok(builder) => builder,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "Failed to build SMTP transport for saved-search alerts; emails stay pending"
+                );
+                return Arc::new(LogEmailTransport);
+            }
+        }
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&settings.host)
+    };
+    tracing::info!("Saved-search alert SMTP transport configured");
+    Arc::new(SmtpAlertEmailTransport {
+        transport: builder.port(settings.port).credentials(creds).build(),
+        from,
+    })
+}
+
+fn inquiry_response_subject(locale: &Locale) -> &'static str {
+    match locale {
+        Locale::Slovak => "Maklér odpovedal na váš dopyt",
+        Locale::Czech => "Makléř odpověděl na váš dotaz",
+        Locale::German => "Der Makler hat auf Ihre Anfrage geantwortet",
+        Locale::English => "The agent replied to your inquiry",
+    }
+}
+
+fn inquiry_response_body(name: &str, url: &str, locale: &Locale) -> String {
+    match locale {
+        Locale::Slovak => format!(
+            "Dobrý deň {name},\n\nmaklér odpovedal na váš dopyt. Odpoveď si prečítate tu:\n\n{url}\n\nS pozdravom,\nTím Reality Portál",
+        ),
+        Locale::Czech => format!(
+            "Dobrý den {name},\n\nmakléř odpověděl na váš dotaz. Odpověď si přečtete zde:\n\n{url}\n\nS pozdravem,\nTým Reality Portál",
+        ),
+        Locale::German => format!(
+            "Guten Tag {name},\n\nder Makler hat auf Ihre Anfrage geantwortet. Die Antwort finden Sie hier:\n\n{url}\n\nMit freundlichen Grüßen,\nDas Reality-Portal-Team",
+        ),
+        Locale::English => format!(
+            "Hello {name},\n\nThe agent replied to your inquiry. You can read the reply here:\n\n{url}\n\nBest regards,\nThe Reality Portal Team",
+        ),
+    }
+}
+
+/// Compose the "your inquiry was answered" notification. The reply text itself
+/// is not included: the inquirer reads it in the portal after signing in.
+fn inquiry_response_notification(
+    base_url: &str,
+    name: &str,
+    locale: Option<&str>,
+) -> AlertNotification {
+    let locale = Locale::parse(locale.unwrap_or_default());
+    let url = format!("{}/{}/inquiries", base_url, locale.as_str());
+    AlertNotification {
+        subject: inquiry_response_subject(&locale).to_string(),
+        body: inquiry_response_body(name, &url, &locale),
+        locale: locale.as_str().to_string(),
+    }
+}
+
+/// SMTP-backed [`InquiryNotifier`]: emails the inquirer when a realtor answers.
+/// New-inquiry and viewing-reminder notifications still go to the logging stub.
+pub struct SmtpInquiryNotifier {
+    repo: RealityPortalRepository,
+    transport: AsyncSmtpTransport<Tokio1Executor>,
+    from: String,
+    base_url: String,
+}
+
+#[async_trait]
+impl InquiryNotifier for SmtpInquiryNotifier {
+    async fn notify_new_inquiry(
+        &self,
+        inquiry: &ListingInquiry,
+    ) -> std::result::Result<(), String> {
+        LogInquiryNotifier.notify_new_inquiry(inquiry).await
+    }
+
+    async fn notify_inquiry_response(&self, inquiry_id: Uuid) -> std::result::Result<(), String> {
+        let Some((email, name, locale)) = self
+            .repo
+            .get_inquiry_response_recipient(inquiry_id)
+            .await
+            .map_err(|_| "failed to load the inquiry recipient".to_string())?
+        else {
+            return Ok(());
+        };
+        let notification = inquiry_response_notification(&self.base_url, &name, locale.as_deref());
+        let message = build_alert_message(&self.from, &email, &name, &notification)
+            .map_err(|e| e.to_string())?;
+        self.transport
+            .send(message)
+            .await
+            .map_err(|e| format!("SMTP send failed: {e}"))?;
+        Ok(())
+    }
+
+    async fn notify_viewing_reminder(
+        &self,
+        viewing: &ViewingSchedule,
+    ) -> std::result::Result<(), String> {
+        LogInquiryNotifier.notify_viewing_reminder(viewing).await
+    }
+}
+
+/// Select the inquiry notifier from the environment: SMTP when the `SMTP_*`
+/// variables are present, the logging stub otherwise.
+pub fn build_inquiry_notifier(repo: RealityPortalRepository) -> Arc<dyn InquiryNotifier> {
+    let Some(settings) = SmtpSettings::from_env() else {
+        return Arc::new(LogInquiryNotifier);
+    };
+    let from = format!("{} <{}>", settings.from_name, settings.from_address);
+    let creds = Credentials::new(settings.username.clone(), settings.password.clone());
+    let builder = if settings.use_tls {
+        match AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&settings.host) {
+            Ok(builder) => builder,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "Failed to build SMTP transport for inquiry notifications; using the logging stub"
+                );
+                return Arc::new(LogInquiryNotifier);
+            }
+        }
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&settings.host)
+    };
+    Arc::new(SmtpInquiryNotifier {
+        repo,
+        transport: builder.port(settings.port).credentials(creds).build(),
+        from,
+        base_url: reset_base_url_from_env(),
+    })
+}
+
 /// Local/dev fallback: logs the reset link instead of sending it, and reports
 /// itself as **not** configured so the request handler never claims delivery.
 pub struct LogPasswordResetMailer {
@@ -305,6 +514,50 @@ pub fn build_password_reset_mailer() -> Arc<dyn PasswordResetMailer> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn alert() -> AlertNotification {
+        AlertNotification {
+            subject: "3 new listings".to_string(),
+            body: "Your saved search has new matches.".to_string(),
+            locale: "en".to_string(),
+        }
+    }
+
+    #[test]
+    fn inquiry_response_notification_is_localized_and_links_to_the_inbox() {
+        let sk = inquiry_response_notification("https://portal.example", "Jana", Some("sk"));
+        assert_eq!(sk.subject, "Maklér odpovedal na váš dopyt");
+        assert!(sk.body.contains("Dobrý deň Jana"));
+        assert!(sk.body.contains("https://portal.example/sk/inquiries"));
+
+        // Anonymous inquirers have no account locale: fall back to English.
+        let en = inquiry_response_notification("https://portal.example", "Jane", None);
+        assert_eq!(en.subject, "The agent replied to your inquiry");
+        assert!(en.body.contains("https://portal.example/en/inquiries"));
+    }
+
+    #[test]
+    fn alert_message_carries_recipient_subject_and_body() {
+        let message = build_alert_message(
+            "Reality Portal <noreply@example.com>",
+            "jana@example.com",
+            "Jana Nova",
+            &alert(),
+        )
+        .expect("message builds");
+        let raw = String::from_utf8(message.formatted()).expect("utf8");
+        assert!(raw.contains("jana@example.com"));
+        assert!(raw.contains("Jana Nova"));
+        assert!(raw.contains("Subject: 3 new listings"));
+        assert!(raw.contains("Your saved search has new matches."));
+    }
+
+    #[test]
+    fn alert_message_allows_a_blank_name_and_rejects_a_bad_address() {
+        assert!(build_alert_message("a@example.com", "b@example.com", "  ", &alert()).is_ok());
+        assert!(build_alert_message("a@example.com", "not-an-address", "B", &alert()).is_err());
+        assert!(build_alert_message("broken", "b@example.com", "B", &alert()).is_err());
+    }
 
     #[test]
     fn delivery_decision_truth_table() {

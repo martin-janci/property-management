@@ -10,7 +10,7 @@ export {
   TwoFactorScreen,
 } from './auth';
 export type { Building } from './buildings';
-export { BuildingsScreen } from './buildings';
+export { BuildingDetailScreen, BuildingsScreen } from './buildings';
 // Main screens
 export { DashboardScreen } from './dashboard';
 export type { Document, DocumentStatus, DocumentType } from './documents';
@@ -23,13 +23,13 @@ export {
 } from './documents';
 // Types
 export type { Fault, FaultCategory, FaultPriority, FaultStatus } from './faults';
-export { FaultsListScreen, ReportFaultScreen } from './faults';
+export { FaultDetailScreen, FaultsListScreen, ReportFaultScreen } from './faults';
 export type { ResidentForm } from './forms';
 export { FormsScreen } from './forms';
 export type { ESignatureRequest, ESignatureStatus, Lease, LeaseRole, LeaseStatus } from './leases';
 export { LeaseDetailScreen, LeaseSignatureScreen, LeasesScreen } from './leases';
 // Phase 3 feature screens
-export { MessagesScreen, ThreadDetailScreen } from './messages';
+export { MessagesScreen, NewMessageScreen, ThreadDetailScreen } from './messages';
 export type { Meter, MeterCommodity } from './meters';
 export { MeterDetailScreen, MeterReadingScreen, MetersScreen } from './meters';
 export { NeighborsScreen } from './neighbors';

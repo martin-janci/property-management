@@ -180,8 +180,11 @@ export interface QuestionResult {
   question_id: string;
   question_text: string;
   question_type: QuestionType;
-  options: OptionResult[];
-  total_responses: number;
+  /** Number of ballots that answered this question. */
+  total_votes: number;
+  weighted_total: number;
+  /** Per-option tallies (the server field is `results`, not `options`). */
+  results: OptionResult[];
   winner: string | null;
 }
 

@@ -5,18 +5,19 @@
  *   1. Minimum app version (force-update floor)
  *   2. React Native feature flags
  *
- * NOTE: there is no backend write endpoint for mobile config yet — no
- * `PATCH /api/v1/admin/mobile-config` exists. Both forms are therefore
- * rendered read-only via `SettingsForm`'s `readOnly` prop with an explanatory
- * notice, rather than presenting a Save button that fires at a non-existent
- * endpoint and silently no-ops. Re-enable writes (and restore the
- * force-update audit-reason flow) once the endpoint lands.
+ * Reads and writes the singleton `mobile_config` row through `GET` / `PATCH
+ * /api/v1/admin/mobile-config`. The versions are top-level fields; the flag
+ * toggles live in the nested `flags` object, which PATCH merges key by key.
+ * No app reads this config yet (there is no public read endpoint), which the
+ * notice says.
  */
 
 import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
-import { type ReactNode, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../components/Toast';
 import { HelpTooltip } from '../features/help';
+import { useSettingsResource } from '../lib/settingsResource';
 
 interface ForceUpdateValues extends Record<string, unknown> {
   min_ios_version: string;
@@ -28,17 +29,41 @@ interface MobileFlagValues extends Record<string, unknown> {
   'rn.push_notifications_v2': boolean;
 }
 
-const initialForceUpdateValues: ForceUpdateValues = {
-  min_ios_version: '',
-  min_android_version: '',
-};
+const FLAG_KEYS = ['rn.new_onboarding', 'rn.push_notifications_v2'] as const;
 
-const initialFlagValues: MobileFlagValues = {
-  'rn.new_onboarding': false,
-  'rn.push_notifications_v2': false,
-};
+/** `MobileConfigResponse` from api-server. */
+export interface MobileConfigDoc {
+  min_ios_version: string | null;
+  min_android_version: string | null;
+  flags: Record<string, unknown> | null;
+  updated_at?: string;
+}
 
-const noop = () => {};
+/** `MobileConfigPatchRequest`: only the supplied fields are applied. */
+export interface MobileConfigPatch {
+  min_ios_version?: string;
+  min_android_version?: string;
+  flags?: Record<string, boolean>;
+}
+
+/** Stored flags object → the form's flat boolean values. */
+export function flagValuesFromDoc(doc: MobileConfigDoc): MobileFlagValues {
+  const flags = doc.flags ?? {};
+  return {
+    'rn.new_onboarding': flags['rn.new_onboarding'] === true,
+    'rn.push_notifications_v2': flags['rn.push_notifications_v2'] === true,
+  };
+}
+
+/** The form's flat flag values → the nested `flags` patch. */
+export function flagsPatch(values: MobileFlagValues): MobileConfigPatch {
+  const flags: Record<string, boolean> = {};
+  for (const key of FLAG_KEYS) flags[key] = values[key] === true;
+  return { flags };
+}
+
+const CONFIG_URL = '/api/v1/admin/mobile-config';
+const CONFIG_KEY = ['admin', 'mobile-config'] as const;
 
 // ---------------------------------------------------------------------------
 // Page
@@ -46,6 +71,38 @@ const noop = () => {};
 
 export default function MobileConfigPage() {
   const { t } = useTranslation();
+  const { showToast } = useToast();
+  const { query, save } = useSettingsResource<MobileConfigDoc, MobileConfigPatch>(
+    CONFIG_URL,
+    CONFIG_KEY
+  );
+
+  const notifySaved = useCallback(() => {
+    showToast({
+      type: 'success',
+      title: t('admin.mobile.saved', { defaultValue: 'Mobile configuration saved.' }),
+    });
+  }, [showToast, t]);
+
+  const handleVersionsSubmit = useCallback(
+    async (values: ForceUpdateValues) => {
+      // An empty string clears the stored floor.
+      await save.mutateAsync({
+        min_ios_version: values.min_ios_version.trim(),
+        min_android_version: values.min_android_version.trim(),
+      });
+      notifySaved();
+    },
+    [save, notifySaved]
+  );
+
+  const handleFlagsSubmit = useCallback(
+    async (values: MobileFlagValues) => {
+      await save.mutateAsync(flagsPatch(values));
+      notifySaved();
+    },
+    [save, notifySaved]
+  );
 
   const forceUpdateFields = useMemo<ReadonlyArray<SettingsField>>(
     () => [
@@ -104,13 +161,25 @@ export default function MobileConfigPage() {
           fontSize: 13,
         }}
       >
-        {t('admin.mobile.readOnlyNotice', {
+        {t('admin.mobile.storedOnlyNotice', {
           defaultValue:
-            'Saving is not available yet — the mobile config write endpoint is not implemented. These values are shown for reference only.',
+            'This configuration is saved and audited, but the mobile apps do not read it yet: changing a version floor or a flag here has no effect on users.',
         })}
       </span>
     ),
     [t]
+  );
+
+  const doc = query.data;
+  // Remount the forms on every stored version so they show what was saved.
+  const version = doc?.updated_at ?? 'initial';
+  const status: ReactNode = query.isLoading ? (
+    <p role="status">{t('admin.mobile.loading', { defaultValue: 'Loading configuration…' })}</p>
+  ) : (
+    <p role="alert">
+      {t('admin.mobile.loadError', { defaultValue: 'Could not load mobile configuration.' })}{' '}
+      {query.error?.message}
+    </p>
   );
 
   return (
@@ -148,14 +217,21 @@ export default function MobileConfigPage() {
         >
           {t('admin.mobile.forceUpdateTitle', { defaultValue: 'Force-update floor' })}
         </h2>
-        <SettingsForm<ForceUpdateValues>
-          fields={forceUpdateFields}
-          initialValues={initialForceUpdateValues}
-          capability="mobile_config_write"
-          readOnly
-          notice={notice}
-          onSubmit={noop}
-        />
+        {doc ? (
+          <SettingsForm<ForceUpdateValues>
+            key={`versions-${version}`}
+            fields={forceUpdateFields}
+            initialValues={{
+              min_ios_version: doc.min_ios_version ?? '',
+              min_android_version: doc.min_android_version ?? '',
+            }}
+            capability="mobile_config_write"
+            notice={notice}
+            onSubmit={handleVersionsSubmit}
+          />
+        ) : (
+          status
+        )}
       </div>
 
       <div>
@@ -169,14 +245,18 @@ export default function MobileConfigPage() {
         >
           {t('admin.mobile.flagsTitle', { defaultValue: 'React Native feature flags' })}
         </h2>
-        <SettingsForm<MobileFlagValues>
-          fields={flagFields}
-          initialValues={initialFlagValues}
-          capability="mobile_config_write"
-          readOnly
-          notice={notice}
-          onSubmit={noop}
-        />
+        {doc ? (
+          <SettingsForm<MobileFlagValues>
+            key={`flags-${version}`}
+            fields={flagFields}
+            initialValues={flagValuesFromDoc(doc)}
+            capability="mobile_config_write"
+            notice={notice}
+            onSubmit={handleFlagsSubmit}
+          />
+        ) : (
+          status
+        )}
       </div>
     </section>
   );

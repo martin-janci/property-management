@@ -32,4 +32,5 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/reality-web/src/app/[locale]/auth/forgot-password/page.tsx`.
 
 ## Agent Log
+- 2026-11-24 — agent: reality-web: `requestPasswordReset` calls POST /users/password-reset (was a local 501 stub although the server route exists).
 - 2026-05-18 — agent: created stub for unmapped route.

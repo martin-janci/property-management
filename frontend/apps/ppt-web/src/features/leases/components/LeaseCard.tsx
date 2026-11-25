@@ -110,10 +110,10 @@ export function LeaseCard({ lease, onView, onRenew, onTerminate }: LeaseCardProp
             {t('leases.renew')}
           </button>
         )}
-        {canTerminate && (
+        {onTerminate && canTerminate && (
           <button
             type="button"
-            onClick={() => onTerminate?.(lease.id)}
+            onClick={() => onTerminate(lease.id)}
             className="text-sm text-red-600 hover:text-red-800"
           >
             {t('leases.terminate')}

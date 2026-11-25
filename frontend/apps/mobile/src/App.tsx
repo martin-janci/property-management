@@ -16,6 +16,7 @@ import {
   AnnouncementsScreen,
   ArticleDetailScreen,
   AuthFlow,
+  BuildingDetailScreen,
   BuildingsScreen,
   DashboardScreen,
   DocumentDetailScreen,
@@ -23,6 +24,7 @@ import {
   DocumentPreviewScreen,
   DocumentsScreen,
   DocumentUploadScreen,
+  FaultDetailScreen,
   FaultsListScreen,
   FormsScreen,
   LeaseDetailScreen,
@@ -33,6 +35,7 @@ import {
   MeterReadingScreen,
   MetersScreen,
   NeighborsScreen,
+  NewMessageScreen,
   NewsScreen,
   NotificationsScreen,
   OutageDetailScreen,
@@ -148,6 +151,13 @@ function MainApp() {
         return <DashboardScreen onNavigate={handleNavigate} />;
       case 'Faults':
         return <FaultsListScreen onNavigate={handleNavigate} />;
+      case 'FaultDetail':
+        return (
+          <FaultDetailScreen
+            faultId={screenParams?.faultId as string | undefined}
+            onBack={() => handleNavigate('Faults')}
+          />
+        );
       case 'ReportFault':
         return (
           <ReportFaultScreen
@@ -216,6 +226,7 @@ function MainApp() {
       case 'MeterReading':
         return (
           <MeterReadingScreen
+            meterId={screenParams?.meterId as string | undefined}
             onSuccess={() => handleNavigate('Meters')}
             onCancel={() => handleNavigate('Meters')}
           />
@@ -224,7 +235,11 @@ function MainApp() {
         return <MetersScreen onNavigate={handleNavigate} />;
       case 'MeterDetail':
         return (
-          <MeterDetailScreen onBack={() => handleNavigate('Meters')} onNavigate={handleNavigate} />
+          <MeterDetailScreen
+            meterId={screenParams?.meterId as string | undefined}
+            onBack={() => handleNavigate('Meters')}
+            onNavigate={handleNavigate}
+          />
         );
       case 'Profile':
         return <ProfileScreen onTwoFactorPress={() => handleNavigate('TwoFactor')} />;
@@ -232,8 +247,22 @@ function MainApp() {
         return <TwoFactorScreen onDonePress={() => handleNavigate('Profile')} />;
       case 'Messages':
         return <MessagesScreen onNavigate={handleNavigate} />;
+      case 'NewMessage':
+        return (
+          <NewMessageScreen
+            onCancel={() => handleNavigate('Messages')}
+            onSent={(threadId) =>
+              threadId ? handleNavigate('ThreadDetail', { threadId }) : handleNavigate('Messages')
+            }
+          />
+        );
       case 'ThreadDetail':
-        return <ThreadDetailScreen onBack={() => handleNavigate('Messages')} />;
+        return (
+          <ThreadDetailScreen
+            threadId={screenParams?.threadId as string | undefined}
+            onBack={() => handleNavigate('Messages')}
+          />
+        );
       case 'Neighbors':
         return <NeighborsScreen onNavigate={handleNavigate} />;
       case 'Notifications':
@@ -262,11 +291,22 @@ function MainApp() {
         return <FormsScreen onNavigate={handleNavigate} />;
       case 'Buildings':
         return <BuildingsScreen onNavigate={handleNavigate} />;
+      case 'BuildingDetail':
+        return (
+          <BuildingDetailScreen
+            buildingId={screenParams?.buildingId as string | undefined}
+            onBack={() => handleNavigate('Buildings')}
+          />
+        );
       case 'Leases':
         return <LeasesScreen onNavigate={handleNavigate} />;
       case 'LeaseDetail':
         return (
-          <LeaseDetailScreen onBack={() => handleNavigate('Leases')} onNavigate={handleNavigate} />
+          <LeaseDetailScreen
+            leaseId={screenParams?.leaseId as string | undefined}
+            onBack={() => handleNavigate('Leases')}
+            onNavigate={handleNavigate}
+          />
         );
       case 'LeaseSignature':
         return (
@@ -310,7 +350,11 @@ function MainApp() {
         <NavButton
           icon="🔧"
           label={t('tabs.faults')}
-          isActive={currentScreen === 'Faults' || currentScreen === 'ReportFault'}
+          isActive={
+            currentScreen === 'Faults' ||
+            currentScreen === 'ReportFault' ||
+            currentScreen === 'FaultDetail'
+          }
           onPress={() => handleNavigate('Faults')}
         />
         <NavButton

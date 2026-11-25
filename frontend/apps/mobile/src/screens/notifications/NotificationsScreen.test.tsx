@@ -15,8 +15,8 @@
  */
 
 import type { InboxResponse } from '@ppt/api-client';
-import { render, screen } from '@testing-library/react-native';
-import { NotificationsScreen } from './NotificationsScreen';
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import { NotificationsScreen, notificationTarget } from './NotificationsScreen';
 
 jest.mock('../../hooks/useApi', () => ({
   useApiQuery: jest.fn(),
@@ -108,5 +108,27 @@ describe('NotificationsScreen real-data wiring', () => {
     for (const title of OLD_MOCK_TITLES) {
       expect(screen.queryByText(title)).toBeNull();
     }
+  });
+
+  it('opens the fault a notification is about when tapped', async () => {
+    mockQuery({ data: SAMPLE });
+    const onNavigate = jest.fn();
+    await render(<NotificationsScreen onNavigate={onNavigate} />);
+    await fireEvent.press(screen.getByText('Server-sent fault update'));
+    expect(onNavigate).toHaveBeenCalledWith('FaultDetail', { faultId: 'f1' });
+  });
+});
+
+describe('notificationTarget', () => {
+  it.each([
+    ['fault', 'x', { screen: 'FaultDetail', params: { faultId: 'x' } }],
+    ['announcement', 'x', { screen: 'AnnouncementDetail', params: { announcementId: 'x' } }],
+    ['vote', 'x', { screen: 'VoteDetail', params: { voteId: 'x' } }],
+    ['fault', '', { screen: 'Faults' }],
+    ['message', 'x', { screen: 'Messages' }],
+    ['meter', 'x', { screen: 'Meters' }],
+    ['system', 'x', null],
+  ] as const)('%s with id "%s"', (category, entityId, expected) => {
+    expect(notificationTarget({ category, entityId })).toEqual(expected);
   });
 });

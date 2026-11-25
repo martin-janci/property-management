@@ -47,4 +47,5 @@ already built but unrouted; this screen is now reachable on web.
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: ppt-web: Terminate on dashboard lease cards navigates to the lease (handler was not passed).
 - 2026-11-04 — agent: header links to Lease templates (/leases/templates) and Violations (/leases/violations) — both were orphan screens

@@ -115,6 +115,8 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 
 <!-- newest entries on top -->
 
+- 2026-11-24 — agent: gap-audit-r14 — mobile fault list now uses the server `fault_status` enum (new/triaged/waiting_parts/scheduled/reopened were all shown as "Open") and no longer needs `updated_at`, which `FaultSummary` does not send. No ppt-web change.
+
 - 2026-11-18 — agent: screen-map-drift-pr-3606-ppt — reconciled with merged PR #3606: the previously-bare `/faults` list route is now wrapped in `<ProtectedRoute>` (auth-only) in `routes/groups/faults.tsx`; anonymous visitors redirect to `/login` (return URL captured). No route/component/status change — docs-only.
 
 - 2026-11-18 — agent: screen-map-drift-pr-3546-ppt — reconcile drift from PR #3546 (`validate faults list URL filter params`). `FaultsPageRoute` (`routes/groups/faults.tsx`) previously `as`-cast the raw `?status`/`?category`/`?priority` query values straight to the API enum types when seeding the list query, so a typo'd or hand-edited URL (`/faults?status=foo`) forwarded an invalid enum to the faults API as a bad filter. PR #3546 adds a module-local `validEnumParam` guard + `FAULT_STATUS_VALUES`/`FAULT_CATEGORY_VALUES`/`FAULT_PRIORITY_VALUES` arrays (mirroring the `@ppt/api-client` `FaultStatus`/`FaultCategory`/`FaultPriority` enums) that drops out-of-range values to `undefined` before use; regression test added in `faults.route.test.tsx`. Input-hardening on already-wired URL-seed params only — no route/component/endpoint change; `ppt-web.buildStatus: planned` / `apiStatus: partial` unchanged; docs-only.

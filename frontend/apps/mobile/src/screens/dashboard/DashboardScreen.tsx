@@ -23,7 +23,7 @@ interface ApiAnnouncement {
   status: string;
   pinned: boolean;
   published_at?: string | null;
-  created_at: string;
+  created_at?: string;
 }
 
 interface ApiAnnouncementListResponse {
@@ -48,7 +48,7 @@ interface ApiUnreadMessages {
 }
 
 interface DashboardScreenProps {
-  onNavigate?: (screen: string) => void;
+  onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
@@ -61,7 +61,8 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   // counts are user-facing badges that should feel fresh.
   const announcementsQuery = useApiQuery<ApiAnnouncementListResponse>(
     ['dashboard', 'announcements'],
-    '/api/v1/announcements?status=published&limit=3',
+    // The resident-readable list; `GET /announcements` is manager-only (403).
+    '/api/v1/announcements/published',
     { staleTime: 60_000 }
   );
   const faultsStatsQuery = useApiQuery<ApiFaultStatistics>(
@@ -83,7 +84,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     .map((a) => ({
       id: a.id,
       title: a.title,
-      createdAt: a.published_at ?? a.created_at,
+      createdAt: a.published_at ?? a.created_at ?? '',
       // The list endpoint doesn't expose category yet — default to general
       // so the card colour stays neutral.
       category: 'general',
@@ -179,7 +180,13 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
             </View>
             <View style={styles.announcementsList}>
               {announcements.map((announcement) => (
-                <Pressable key={announcement.id} style={styles.announcementCard}>
+                <Pressable
+                  key={announcement.id}
+                  style={styles.announcementCard}
+                  onPress={() =>
+                    onNavigate?.('AnnouncementDetail', { announcementId: announcement.id })
+                  }
+                >
                   <View style={styles.announcementHeader}>
                     <View
                       style={[

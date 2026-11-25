@@ -22,19 +22,21 @@ import {
 import { PendingSyncIndicator, type SyncStatus } from '../../components/sync';
 import { useOfflineSupport } from '../../hooks';
 import { colors } from '../shared/screenStyles';
+import { commodityIcon, parseMeters, toUiMeter } from './MetersScreen';
 import { uploadMeterPhoto } from './meterPhotoUpload';
 import { isValidReading, normalizeReadingInput } from './meterReadingInput';
+import { useMyMeters } from './useMyMeters';
 
 export interface MeterReadingScreenProps {
+  /** Meter to preselect, passed when the screen is opened from a meter row. */
+  meterId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-type MeterType = 'water' | 'electricity' | 'gas' | 'heating';
-
 interface MeterReading {
   id: string;
-  meterType: MeterType;
+  meterId: string;
   reading: string;
   unit: string;
   photoUri?: string;
@@ -42,23 +44,24 @@ interface MeterReading {
   syncStatus: SyncStatus;
 }
 
-const METER_TYPES: { type: MeterType; icon: string; label: string; unit: string }[] = [
-  { type: 'water', icon: '💧', label: 'meters.water', unit: 'm³' },
-  { type: 'electricity', icon: '⚡', label: 'meters.electricity', unit: 'kWh' },
-  { type: 'gas', icon: '🔥', label: 'meters.gas', unit: 'm³' },
-  { type: 'heating', icon: '🌡️', label: 'meters.heating', unit: 'GJ' },
-];
-
-export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenProps) {
+export function MeterReadingScreen({ meterId, onSuccess, onCancel }: MeterReadingScreenProps) {
   const { t } = useTranslation();
   const { isConnected, addToQueue } = useOfflineSupport();
-  const [selectedMeter, setSelectedMeter] = useState<MeterType>('water');
+  // The resident's real meters: a reading is recorded against a meter id
+  // (`SubmitReading.meter_id`), not against a commodity type.
+  const metersQuery = useMyMeters();
+  const meters = parseMeters(metersQuery.data?.meters ?? []).map(toUiMeter);
+  const [pickedMeterId, setPickedMeterId] = useState<string | null>(null);
+  // An explicit pick wins, then the meter the screen was opened for, then the
+  // only/first meter of the unit. `meterId` alone is enough to submit, so a
+  // reading opened from a meter row still works when the list can't load
+  // (offline with a cold cache).
+  const selectedMeterId = pickedMeterId ?? meterId ?? meters[0]?.id ?? null;
+  const selectedMeter = meters.find((m) => m.id === selectedMeterId);
   const [reading, setReading] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingReadings, setPendingReadings] = useState<MeterReading[]>([]);
-
-  const selectedMeterConfig = METER_TYPES.find((m) => m.type === selectedMeter)!;
 
   const handleTakePhoto = useCallback(async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -104,6 +107,11 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
       return;
     }
 
+    if (!selectedMeterId) {
+      Alert.alert(t('common.error'), t('meters.meterRequired'));
+      return;
+    }
+
     // Guard against non-numeric / malformed values reaching the sync queue.
     // `keyboardType="decimal-pad"` is only a hint — hardware keyboards, paste
     // and autofill can still enter garbage, which was previously queued verbatim.
@@ -138,9 +146,9 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
 
       const readingData: MeterReading = {
         id: `reading-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-        meterType: selectedMeter,
+        meterId: selectedMeterId,
         reading: reading.trim(),
-        unit: selectedMeterConfig.unit,
+        unit: selectedMeter?.unit ?? '',
         // Local URI kept only for the on-screen pending-list thumbnail; the
         // submitted body carries the uploaded storage key, not this URI.
         photoUri: photoUri || undefined,
@@ -158,9 +166,10 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
         endpoint: '/api/v1/meters/readings',
         method: 'POST',
         body: {
-          meterType: readingData.meterType,
+          // `SubmitReading` requires the meter's id; the unit of measure is
+          // the meter's own and is not part of the request.
+          meter_id: readingData.meterId,
           reading: readingData.reading,
-          unit: readingData.unit,
           // The uploaded object's storage key, under the api-server's `photo_url`
           // field (`SubmitReading.photo_url`). Omitted (undefined → dropped by
           // JSON.stringify) when no photo was uploaded, so a reading without a
@@ -198,16 +207,7 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    reading,
-    selectedMeter,
-    selectedMeterConfig,
-    photoUri,
-    isConnected,
-    addToQueue,
-    t,
-    onSuccess,
-  ]);
+  }, [reading, selectedMeterId, selectedMeter, photoUri, isConnected, addToQueue, t, onSuccess]);
 
   return (
     <KeyboardAvoidingView
@@ -249,28 +249,37 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
         {/* Meter type selector */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('meters.selectType')}</Text>
-          <View style={styles.meterTypes}>
-            {METER_TYPES.map((meter) => (
-              <Pressable
-                key={meter.type}
-                style={[
-                  styles.meterTypeButton,
-                  selectedMeter === meter.type && styles.meterTypeSelected,
-                ]}
-                onPress={() => setSelectedMeter(meter.type)}
-              >
-                <Text style={styles.meterTypeIcon}>{meter.icon}</Text>
-                <Text
+          {meters.length > 0 ? (
+            <View style={styles.meterTypes}>
+              {meters.map((meter) => (
+                <Pressable
+                  key={meter.id}
+                  testID={`meter-option-${meter.id}`}
                   style={[
-                    styles.meterTypeLabel,
-                    selectedMeter === meter.type && styles.meterTypeLabelSelected,
+                    styles.meterTypeButton,
+                    selectedMeterId === meter.id && styles.meterTypeSelected,
                   ]}
+                  onPress={() => setPickedMeterId(meter.id)}
                 >
-                  {t(meter.label)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+                  <Text style={styles.meterTypeIcon}>{commodityIcon(meter.commodity)}</Text>
+                  <Text
+                    style={[
+                      styles.meterTypeLabel,
+                      selectedMeterId === meter.id && styles.meterTypeLabelSelected,
+                    ]}
+                  >
+                    {meter.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : metersQuery.isLoading ? (
+            <Text style={styles.meterListNote}>{t('common.loading')}</Text>
+          ) : selectedMeterId ? null : (
+            <Text style={styles.meterListNote}>
+              {metersQuery.error ? t('meters.loadError') : t('meters.emptyText')}
+            </Text>
+          )}
         </View>
 
         {/* Reading input */}
@@ -285,7 +294,7 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
               placeholder={t('meters.readingPlaceholder')}
               placeholderTextColor={colors.textSubtle}
             />
-            <Text style={styles.unitLabel}>{selectedMeterConfig.unit}</Text>
+            <Text style={styles.unitLabel}>{selectedMeter?.unit ?? ''}</Text>
           </View>
         </View>
 
@@ -332,7 +341,9 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
               <View key={item.id} style={styles.pendingItem}>
                 <View style={styles.pendingItemHeader}>
                   <Text style={styles.pendingItemIcon}>
-                    {METER_TYPES.find((m) => m.type === item.meterType)?.icon}
+                    {commodityIcon(
+                      meters.find((m) => m.id === item.meterId)?.commodity ?? 'electricity'
+                    )}
                   </Text>
                   <Text style={styles.pendingItemText}>
                     {item.reading} {item.unit}
@@ -430,6 +441,10 @@ const styles = StyleSheet.create({
   meterTypeIcon: {
     fontSize: 32,
     marginBottom: 8,
+  },
+  meterListNote: {
+    fontSize: 14,
+    color: colors.textSubtle,
   },
   meterTypeLabel: {
     fontSize: 14,

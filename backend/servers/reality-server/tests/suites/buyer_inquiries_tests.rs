@@ -209,3 +209,37 @@ async fn pagination_total_is_full_count(pool: PgPool) {
         "B3: total must be the FULL filtered count (5), not the page length (2)"
     );
 }
+
+// ============================================================================
+// Response notification recipient (email sent when the realtor answers)
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn response_recipient_is_the_inquirer_contact(pool: PgPool) {
+    let org = seed_org(&pool, "rr").await;
+    let realtor = seed_user(&pool, "realtor-rr@buyer.test").await;
+    let buyer = seed_user(&pool, "buyer-rr@buyer.test").await;
+    let listing = seed_listing(&pool, org, realtor).await;
+    let inquiry = seed_buyer_inquiry(&pool, listing, realtor, buyer).await;
+
+    let repo = RealityPortalRepository::new(pool.clone());
+
+    let (email, name, locale) = repo
+        .get_inquiry_response_recipient(inquiry)
+        .await
+        .expect("recipient lookup failed")
+        .expect("inquiry exists");
+    // The contact comes from the inquiry row, not from the account.
+    assert_eq!(email, "buyer@buyer.test");
+    assert_eq!(name, "Buyer");
+    assert!(
+        locale.is_some(),
+        "a signed-in inquirer carries an account locale"
+    );
+
+    let missing = repo
+        .get_inquiry_response_recipient(Uuid::new_v4())
+        .await
+        .expect("recipient lookup failed");
+    assert!(missing.is_none());
+}

@@ -144,6 +144,7 @@ server never implemented):
   unmapped in the sitemap + screen-map tree — a follow-up drift item.
 
 ## Agent Log
+- 2026-11-24 — agent: ppt-web: booking cards only show Edit/Cancel when the page handles them.
 - 2026-11-05 — agent: screen-map-drift-pr-3254-ppt — investigated the drift
   ticket claiming PR #3254 "rewired ppt-web rentals routes to `/bookings/*`".
   **Confirmed the rewire did not happen.** PR #3254
