@@ -476,3 +476,113 @@ async fn force_rls_hides_other_tenant_submissions(pool: PgPool) {
             .ok();
     }
 }
+
+/// Submission-validation and manager-review edge cases that the happy/reject
+/// paths above don't exercise: an over-long note, a period more than 24 months
+/// in the past, an unknown review-status filter, and approving an
+/// already-rejected submission (a decision applies once).
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn submission_validation_and_review_filter_edges(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let f = fixture(&pool).await;
+    let resident_token =
+        mint_tenant_token(f.resident.0, &f.resident.1, f.org, TenantRole::Resident);
+    let manager_token = mint_tenant_token(f.manager.0, &f.manager.1, f.org, TenantRole::Manager);
+    let (year, month) = this_month();
+    let own = format!(
+        "/api/v1/buildings/{}/units/{}/person-months/submissions",
+        f.building, f.unit
+    );
+
+    // A note longer than 500 characters is rejected.
+    let long_note = "x".repeat(501);
+    let resp = app
+        .execute(
+            app.post(&own)
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .json(json!({ "year": year, "month": month, "count": 1, "note": long_note }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
+    assert_eq!(resp.json_value()["code"], "NOTE_TOO_LONG", "{}", resp.text());
+
+    // A period more than 24 months in the past is rejected. Months are counted
+    // 0-indexed here so the conversion back to a 1-12 month is exact.
+    let past = year * 12 + (month - 1) - 25;
+    let (past_year, past_month) = (past.div_euclid(12), past.rem_euclid(12) + 1);
+    let resp = app
+        .execute(
+            app.post(&own)
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .json(json!({ "year": past_year, "month": past_month, "count": 1 }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
+    assert_eq!(resp.json_value()["code"], "INVALID_PERIOD", "{}", resp.text());
+
+    // The manager review list rejects an unknown status filter but accepts `all`.
+    let review = format!("/api/v1/buildings/{}/person-months/submissions", f.building);
+    let resp = app
+        .execute(
+            app.get(&format!("{review}?status=bogus"))
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::BAD_REQUEST, "{}", resp.text());
+    assert_eq!(resp.json_value()["code"], "INVALID_STATUS", "{}", resp.text());
+    let resp = app
+        .execute(
+            app.get(&format!("{review}?status=all"))
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+
+    // Reject a submission, then approving the same one is a 409 — a decision
+    // applies once regardless of which way it first went.
+    let resp = app
+        .execute(
+            app.post(&own)
+                .bearer(&resident_token)
+                .tenant(f.org)
+                .json(json!({ "year": year, "month": month, "count": 2 }))
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CREATED, "{}", resp.text());
+    let id = resp.json_value()["id"].as_str().unwrap().to_string();
+    let resp = app
+        .execute(
+            app.post(&format!("{review}/{id}/reject"))
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::OK, "{}", resp.text());
+    let resp = app
+        .execute(
+            app.post(&format!("{review}/{id}/approve"))
+                .bearer(&manager_token)
+                .tenant(f.org)
+                .build(),
+        )
+        .await;
+    assert_eq!(resp.status, StatusCode::CONFLICT, "{}", resp.text());
+
+    // Nothing was written to person_months for the rejected submission.
+    let written: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM person_months WHERE unit_id = $1")
+        .bind(f.unit)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(written, 0, "a rejected submission writes nothing even after a failed approve");
+}
