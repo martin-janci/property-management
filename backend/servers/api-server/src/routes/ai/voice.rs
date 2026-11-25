@@ -35,15 +35,42 @@ type VoiceLinkTokens = (
 
 /// Token material to persist when the requested voice platform has **no OAuth
 /// client configured** at device-link time.
+///
+/// Fail-open fix: the previous code treated an unconfigured platform as a
+/// successful link on EVERY build — it returned `Ok((None, None, None))`, so the
+/// handler stored a tokenless device and answered `201 Created`. A release
+/// deployment that is simply missing its `ALEXA_*` / `GOOGLE_*` OAuth env would
+/// therefore silently report voice linking as succeeded. We now fail **closed**
+/// in release builds (HTTP 503 `OAUTH_NOT_CONFIGURED`), matching the
+/// `oauth_token_exchange` webhook handler's #890 posture, and reuse the shared
+/// [`crate::services::voice_oauth::voice_simulated_oauth_allowed`] gate so only
+/// debug/dev builds keep the credential-free convenience path. The build flag is
+/// threaded as an explicit argument (not read from `cfg!` inside) so the release
+/// fail-closed path is unit-testable — test binaries always compile with
+/// `debug_assertions` on.
 fn unconfigured_platform_link_tokens(
     platform: &str,
-    _debug_build: bool,
+    debug_build: bool,
 ) -> Result<VoiceLinkTokens, (StatusCode, Json<ErrorResponse>)> {
-    tracing::warn!(
-        "Voice OAuth not configured for platform {}, storing device without tokens",
-        platform
-    );
-    Ok((None, None, None))
+    if crate::services::voice_oauth::voice_simulated_oauth_allowed(debug_build) {
+        tracing::warn!(
+            "Voice OAuth not configured for platform {}, storing device without tokens (debug build)",
+            platform
+        );
+        Ok((None, None, None))
+    } else {
+        tracing::error!(
+            "Voice OAuth not configured for platform {} in a release build; refusing to treat an unconfigured platform as a successful link",
+            platform
+        );
+        Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "OAUTH_NOT_CONFIGURED",
+                "Voice OAuth is not configured for this platform",
+            )),
+        ))
+    }
 }
 
 // ============================================================================
