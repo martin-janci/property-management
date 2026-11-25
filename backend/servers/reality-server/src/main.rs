@@ -449,11 +449,15 @@ async fn main() -> anyhow::Result<()> {
     // BIT-139 / Epic 16: drain enqueued alerts to the email + push transports.
     // Reads the same `search_alert_queue`, fans out to each owner's
     // `device_push_tokens`, and marks delivery via `notified_at` (independent of
-    // the in-app read `status`). Transports are logging stubs until a real
-    // email/push service is wired; disabled-safe via SEARCH_ALERT_DRAINER_* env.
-    let drainer_worker = services::SearchAlertDrainerWorker::new(
+    // the in-app read `status`). Email goes over SMTP when configured; push is
+    // still a logging stub; disabled-safe via SEARCH_ALERT_DRAINER_* env.
+    let drainer_worker = services::SearchAlertDrainerWorker::with_transports(
         db.clone(),
         services::SearchAlertDrainerConfig::from_env(),
+        // SMTP when `SMTP_*` is set, otherwise the logging stub (alerts stay
+        // pending). Push has no reality-server adapter yet.
+        services::email::build_alert_email_transport(),
+        std::sync::Arc::new(services::search_alert_drainer::LogPushTransport),
     );
     let _drainer_worker_handle = drainer_worker.start();
 

@@ -31,6 +31,10 @@ use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
 
+use super::search_alert_drainer::{
+    AlertDelivery, AlertEmailTransport, AlertNotification, LogEmailTransport,
+};
+
 /// How a password-reset request should be handled given the transport state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResetDelivery {
@@ -225,6 +229,88 @@ impl PasswordResetMailer for SmtpPasswordResetMailer {
     }
 }
 
+/// Build the plain-text alert email. Split out from the transport so the
+/// addressing and headers are unit-testable without an SMTP server.
+fn build_alert_message(
+    from: &str,
+    to_email: &str,
+    to_name: &str,
+    notification: &AlertNotification,
+) -> Result<Message> {
+    let from: Mailbox = from
+        .parse()
+        .map_err(|e| anyhow::anyhow!("invalid SMTP from address: {e}"))?;
+    let address = to_email
+        .parse()
+        .map_err(|e| anyhow::anyhow!("invalid recipient address: {e}"))?;
+    let name = to_name.trim();
+    let to = Mailbox::new((!name.is_empty()).then(|| name.to_string()), address);
+
+    Ok(Message::builder()
+        .from(from)
+        .to(to)
+        .subject(notification.subject.as_str())
+        .header(ContentType::TEXT_PLAIN)
+        .body(notification.body.clone())?)
+}
+
+/// SMTP delivery for saved-search alerts. The drainer shipped with a logging
+/// stub only, so alerts were enqueued and never emailed even on deployments
+/// that already had `SMTP_*` configured for password reset.
+pub struct SmtpAlertEmailTransport {
+    transport: AsyncSmtpTransport<Tokio1Executor>,
+    from: String,
+}
+
+#[async_trait]
+impl AlertEmailTransport for SmtpAlertEmailTransport {
+    async fn send_email(
+        &self,
+        to_email: &str,
+        to_name: &str,
+        notification: &AlertNotification,
+    ) -> std::result::Result<AlertDelivery, String> {
+        let message = build_alert_message(&self.from, to_email, to_name, notification)
+            .map_err(|e| e.to_string())?;
+        self.transport
+            .send(message)
+            .await
+            .map_err(|e| format!("SMTP send failed: {e}"))?;
+        Ok(AlertDelivery::Sent)
+    }
+}
+
+/// Select the saved-search alert email transport from the environment: SMTP
+/// when the `SMTP_*` variables are present, the logging stub otherwise (which
+/// reports `Skipped`, so alerts stay pending rather than being dropped).
+pub fn build_alert_email_transport() -> Arc<dyn AlertEmailTransport> {
+    let Some(settings) = SmtpSettings::from_env() else {
+        tracing::info!("SMTP not configured; saved-search alert emails stay pending");
+        return Arc::new(LogEmailTransport);
+    };
+    let from = format!("{} <{}>", settings.from_name, settings.from_address);
+    let creds = Credentials::new(settings.username.clone(), settings.password.clone());
+    let builder = if settings.use_tls {
+        match AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&settings.host) {
+            Ok(builder) => builder,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "Failed to build SMTP transport for saved-search alerts; emails stay pending"
+                );
+                return Arc::new(LogEmailTransport);
+            }
+        }
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&settings.host)
+    };
+    tracing::info!("Saved-search alert SMTP transport configured");
+    Arc::new(SmtpAlertEmailTransport {
+        transport: builder.port(settings.port).credentials(creds).build(),
+        from,
+    })
+}
+
 /// Local/dev fallback: logs the reset link instead of sending it, and reports
 /// itself as **not** configured so the request handler never claims delivery.
 pub struct LogPasswordResetMailer {
@@ -305,6 +391,37 @@ pub fn build_password_reset_mailer() -> Arc<dyn PasswordResetMailer> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn alert() -> AlertNotification {
+        AlertNotification {
+            subject: "3 new listings".to_string(),
+            body: "Your saved search has new matches.".to_string(),
+            locale: "en".to_string(),
+        }
+    }
+
+    #[test]
+    fn alert_message_carries_recipient_subject_and_body() {
+        let message = build_alert_message(
+            "Reality Portal <noreply@example.com>",
+            "jana@example.com",
+            "Jana Nova",
+            &alert(),
+        )
+        .expect("message builds");
+        let raw = String::from_utf8(message.formatted()).expect("utf8");
+        assert!(raw.contains("jana@example.com"));
+        assert!(raw.contains("Jana Nova"));
+        assert!(raw.contains("Subject: 3 new listings"));
+        assert!(raw.contains("Your saved search has new matches."));
+    }
+
+    #[test]
+    fn alert_message_allows_a_blank_name_and_rejects_a_bad_address() {
+        assert!(build_alert_message("a@example.com", "b@example.com", "  ", &alert()).is_ok());
+        assert!(build_alert_message("a@example.com", "not-an-address", "B", &alert()).is_err());
+        assert!(build_alert_message("broken", "b@example.com", "B", &alert()).is_err());
+    }
 
     #[test]
     fn delivery_decision_truth_table() {
