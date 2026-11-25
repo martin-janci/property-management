@@ -29,7 +29,7 @@ interface DsaMetricsDisplay {
 }
 
 export const DsaReportsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showToast } = useToast();
 
   // Report generation form
@@ -146,7 +146,7 @@ export const DsaReportsPage: React.FC = () => {
   );
 
   const formatDate = (dateStr: string): string => {
-    return new Date(dateStr).toLocaleDateString('en-GB', {
+    return new Date(dateStr).toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

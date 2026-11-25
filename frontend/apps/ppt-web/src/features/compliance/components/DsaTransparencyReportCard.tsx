@@ -54,8 +54,8 @@ export interface DsaTransparencyReportCardProps {
   showActions?: boolean;
 }
 
-const formatDate = (dateStr: string): string => {
-  return new Date(dateStr).toLocaleDateString('en-GB', {
+const formatDate = (dateStr: string, locale: string): string => {
+  return new Date(dateStr).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -75,7 +75,7 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
   onDownload,
   showActions = true,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { summary } = report;
 
   const statusLabel = t(`dsa.card.status.${report.status}`, { defaultValue: report.status });
@@ -100,8 +100,8 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
         <div className="dsa-report-period">
           <span>
             {t('dsa.card.period', {
-              start: formatDate(report.period_start),
-              end: formatDate(report.period_end),
+              start: formatDate(report.period_start, i18n.language),
+              end: formatDate(report.period_end, i18n.language),
             })}
           </span>
         </div>
@@ -248,7 +248,9 @@ export const DsaTransparencyReportCard: React.FC<DsaTransparencyReportCardProps>
       {/* Publication Info */}
       {report.published_at && (
         <div className="dsa-published-info">
-          <span>{t('dsa.card.publishedOn', { date: formatDate(report.published_at) })}</span>
+          <span>
+            {t('dsa.card.publishedOn', { date: formatDate(report.published_at, i18n.language) })}
+          </span>
         </div>
       )}
     </div>

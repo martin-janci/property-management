@@ -19,10 +19,7 @@
 import { render, screen } from '@testing-library/react';
 import i18n from 'i18next';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  type DsaTransparencyReport,
-  DsaTransparencyReportCard,
-} from './DsaTransparencyReportCard';
+import { type DsaTransparencyReport, DsaTransparencyReportCard } from './DsaTransparencyReportCard';
 
 const summary: DsaTransparencyReport['summary'] = {
   total_moderation_actions: 0,
