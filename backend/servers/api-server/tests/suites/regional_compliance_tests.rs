@@ -420,3 +420,73 @@ async fn vote_endpoints_are_404_for_another_org(pool: PgPool) {
         }
     }
 }
+
+/// Regression (fabricated-pass): a vote that carries **no usable tally** — zero
+/// eligible-owner count and an empty/uncalculated `results` JSONB — must NOT be
+/// reported as a valid, legally-binding decision.
+///
+/// Before the fix, `validate_slovak_vote` / `validate_czech_vote` substituted a
+/// hardcoded 75 % participation (when `eligible_count == 0`) and 80 % approval
+/// (when the results JSON was unparseable), which cleared the simple-majority
+/// thresholds and returned `is_valid: true` without ever validating anything.
+/// The validator must instead report participation/approval as 0 % (threshold
+/// not met) with an explanatory note, so `quorum_met` and `is_valid` are false.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn unvalidatable_vote_is_not_reported_valid(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let user = seed_user(&pool, "manager@fabpass-compliance.test").await;
+    let org_id = seed_org(&pool, "fabpass-comp").await;
+    seed_membership(&pool, org_id, user, "manager").await;
+    let building_id = seed_building(&pool, org_id).await;
+    let token = access_token(user, Some(org_id));
+
+    // A closed vote with the table defaults: participation_count/eligible_count = 0
+    // and results = '{}' (not a calculable VoteResults). There is nothing to
+    // validate against.
+    let vote: Uuid = sqlx::query_scalar(
+        "INSERT INTO votes (organization_id, building_id, title, start_at, end_at, status, \
+                            created_by, published_by, published_at) \
+         VALUES ($1, $2, 'Empty tally vote', NOW() - INTERVAL '8 days', NOW() - INTERVAL '1 day', \
+                 'closed', $3, $3, NOW() - INTERVAL '8 days') RETURNING id",
+    )
+    .bind(org_id)
+    .bind(building_id)
+    .bind(user)
+    .fetch_one(&pool)
+    .await
+    .expect("seed empty-tally vote");
+
+    let base = "/api/v1/regional-compliance";
+    for uri in [
+        format!("{base}/slovak/voting/validate"),
+        format!("{base}/czech/svj/validate"),
+    ] {
+        let req = RequestBuilder::new(Method::POST, &uri)
+            .bearer(&token)
+            .header("X-Tenant-ID", &org_id.to_string())
+            .json(serde_json::json!({ "vote_id": vote, "decision_type": "simple_majority" }))
+            .build();
+        let resp = app.execute(req).await;
+        resp.assert_status(StatusCode::OK);
+        let body = resp.json_value();
+
+        assert_eq!(
+            body["is_valid"], false,
+            "{uri}: a vote with no eligible count and no calculated results must not \
+             be reported valid (fabricated pass): {body}"
+        );
+        assert_eq!(
+            body["quorum_met"], false,
+            "{uri}: quorum must not be met when participation cannot be verified: {body}"
+        );
+        assert_eq!(
+            body["actual_participation_percentage"], "0",
+            "{uri}: participation must be reported as 0, not a fabricated default: {body}"
+        );
+        assert_eq!(
+            body["approval_percentage"], "0",
+            "{uri}: approval must be reported as 0, not a fabricated default: {body}"
+        );
+    }
+}
