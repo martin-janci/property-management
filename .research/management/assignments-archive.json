@@ -30771,6 +30771,28 @@
       "merge_attempted_at": "2026-11-26T14:38:37Z"
     },
     {
+      "task_id": "gh-issue-3842",
+      "branch": "auto-impl/gh-issue-3842-251e92f2",
+      "status": "merged",
+      "claimed_at": "2026-11-26T18:29:42Z",
+      "last_updated": "2026-11-26T20:33:00Z",
+      "status_changed_at": "2026-11-26T20:33:00Z",
+      "pr_number": 3845,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3845",
+      "merged_at": "2026-11-26T20:32:20Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3845 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=deflaked EmergencyContactDirectoryPage.errorI18n race (getByTestId->findByTestId); verify green; Closes #3842",
+      "reviewer_summary": "verdict=approve head_oid=c2ffa53e19709762022348751c75e763da64b884 note=sound-deflake-findByTestId-waits-for-post-load-render-not-masking-gap-prod-already-uses-t() (COMMENT review — self-approval blocked)",
+      "last_reviewed_oid": "c2ffa53e19709762022348751c75e763da64b884",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "hotfix-no-test-pr-3497",
       "branch": "auto-impl/hotfix-no-test-pr-3497-ecc94f46",
       "status": "done",
@@ -36822,5 +36844,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T18:38:22Z"
+  "archived_at": "2026-11-26T20:34:24Z"
 }
