@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T12:32:58Z",
+  "archived_at": "2026-11-26T12:51:21Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4100,6 +4100,20 @@
         "merged_at": null,
         "at": "2026-11-19T02:26:17Z"
       }
+    },
+    {
+      "id": "code-review-api-core-digest-abandoned-no-terminal-state-retry1",
+      "action": "[STALE-DROP: already fixed on dev PR #3588] report_abandoned has no persisted abandoned_at — abandoned digests are log-only [retry 1/2 of failed code-review-api-core-digest-abandoned-no-terminal-state]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-26T02:25:53Z (retry_of=code-review-api-core-digest-abandoned-no-terminal-state reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T23:09:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T02:25:53Z",
+      "retry_of": "code-review-api-core-digest-abandoned-no-terminal-state",
+      "retry_round": 1
     },
     {
       "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
@@ -9419,6 +9433,20 @@
         "merged_at": null,
         "at": "2026-11-19T04:27:54Z"
       }
+    },
+    {
+      "id": "code-review-mobile-rn-personmonths-screen-no-i18n-retry1",
+      "action": "[STALE-DROP: already i18n'd on dev #3828/#3818] mobile rn personmonths screen no i18n [retry 1/2 of failed code-review-mobile-rn-personmonths-screen-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-26T04:24:37Z (retry_of=code-review-mobile-rn-personmonths-screen-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T02:36:48Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T04:24:37Z",
+      "retry_of": "code-review-mobile-rn-personmonths-screen-no-i18n",
+      "retry_round": 1
     },
     {
       "id": "code-review-mobile-rn-profile-local-only-save",
