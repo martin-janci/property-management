@@ -146,6 +146,17 @@ pub struct CacheMetricsDetail {
     pub size: Option<usize>,
 }
 
+/// Build the client-facing `DependencyHealth.error` string for a failed
+/// database connectivity probe.
+///
+/// `/readiness` is a PUBLIC, unauthenticated endpoint and this value is
+/// serialized straight into the response body, so the raw `sqlx::Error` — which
+/// can carry host / port / dbname / sslmode and other infrastructure detail —
+/// must never reach it.
+fn db_health_error(e: &sqlx::Error) -> String {
+    format!("Database connection failed: {}", e)
+}
+
 /// Check database connectivity and measure latency.
 // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
 // This is a pure connectivity probe (`SELECT 1`); it reads no tenant data.
@@ -178,7 +189,7 @@ async fn check_database(pool: &sqlx::PgPool) -> DependencyHealth {
             name: "database".to_string(),
             status: HealthStatus::Unhealthy,
             latency_ms: Some(latency_ms),
-            error: Some(format!("Database connection failed: {}", e)),
+            error: Some(db_health_error(&e)),
         },
     }
 }
@@ -340,4 +351,43 @@ pub async fn readiness(State(state): State<AppState>) -> (StatusCode, Json<Healt
     };
 
     (status_code, Json(response))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression (reality-server public-error-leak): `/readiness` is a PUBLIC,
+    /// unauthenticated endpoint and `DependencyHealth.error` is serialized
+    /// straight into its response body. A `sqlx::Error` for a connection
+    /// failure can carry host / port / dbname / user / sslmode — infrastructure
+    /// detail an anonymous internet client must never see. The body must be a
+    /// fixed generic string; ops still read the full error from the server log.
+    #[test]
+    fn db_health_error_does_not_leak_raw_db_detail() {
+        // A `sqlx::Error` whose `Display` carries the kind of connection detail
+        // a real probe failure surfaces.
+        let sensitive: Box<dyn std::error::Error + Send + Sync> =
+            "host=db.internal port=5432 dbname=reality user=reality_app \
+             sslmode=require: connection refused"
+                .into();
+        let err = sqlx::Error::Configuration(sensitive);
+
+        let body = db_health_error(&err);
+
+        for needle in [
+            "host=",
+            "port=",
+            "dbname=",
+            "db.internal",
+            "reality_app",
+            "sslmode",
+            "connection refused",
+        ] {
+            assert!(
+                !body.contains(needle),
+                "public /readiness body leaked DB detail: found `{needle}` in `{body}`"
+            );
+        }
+    }
 }
