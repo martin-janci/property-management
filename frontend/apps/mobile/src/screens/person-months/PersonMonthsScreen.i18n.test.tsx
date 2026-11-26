@@ -20,10 +20,11 @@ import sk from '../../locales/sk.json';
 import {
   canReport,
   latestSubmissionByMonth,
-  PersonMonthsScreen,
   parsePersonMonths,
+  parseReportCount,
   visibleMonths,
-} from './PersonMonthsScreen';
+} from './helpers';
+import { PersonMonthsScreen } from './PersonMonthsScreen';
 
 const mockMutate = jest.fn();
 jest.mock('../../hooks/useApi', () => ({
@@ -190,6 +191,18 @@ describe('helpers', () => {
       { id: 'b', month: 1, count: 2, status: 'pending', submitted_at: '2026-02-01' },
     ]);
     expect(map.get(1)?.id).toBe('b');
+  });
+
+  it('parseReportCount accepts whole numbers in range and rejects the rest', () => {
+    expect(parseReportCount('3')).toBe(3);
+    expect(parseReportCount('0')).toBe(0);
+    expect(parseReportCount('50')).toBe(50);
+    expect(parseReportCount('')).toBeNull();
+    expect(parseReportCount('  ')).toBeNull();
+    expect(parseReportCount('99')).toBeNull();
+    expect(parseReportCount('-1')).toBeNull();
+    expect(parseReportCount('2.5')).toBeNull();
+    expect(parseReportCount('abc')).toBeNull();
   });
 });
 

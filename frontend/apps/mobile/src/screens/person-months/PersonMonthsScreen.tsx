@@ -30,77 +30,16 @@ import {
   View,
 } from 'react-native';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
-import { formatDate } from '../../i18n/format';
 import { colors, screenStyles as s } from '../shared/screenStyles';
-
-/** One `PersonMonthResponse` row from the api-server. */
-export interface PersonMonthRow {
-  id: string;
-  unit_id: string;
-  year: number;
-  month: number;
-  count: number;
-  source: string;
-  notes: string | null;
-}
-
-/** One resident submission (`PersonMonthSubmission`). */
-export interface SubmissionRow {
-  id: string;
-  year: number;
-  month: number;
-  count: number;
-  status: 'pending' | 'approved' | 'rejected';
-  submitted_at: string;
-  decision_note: string | null;
-}
-
-/** Validate the raw response and sort newest month first. Exported for tests. */
-export function parsePersonMonths(data: unknown): PersonMonthRow[] {
-  if (!Array.isArray(data)) return [];
-  return data
-    .filter(
-      (r): r is PersonMonthRow =>
-        !!r &&
-        typeof r === 'object' &&
-        typeof (r as PersonMonthRow).id === 'string' &&
-        typeof (r as PersonMonthRow).month === 'number' &&
-        typeof (r as PersonMonthRow).year === 'number' &&
-        typeof (r as PersonMonthRow).count === 'number'
-    )
-    .sort((a, b) => b.year - a.year || b.month - a.month);
-}
-
-/** Latest submission per month (input is newest-first from the server). */
-export function latestSubmissionByMonth(data: unknown): Map<number, SubmissionRow> {
-  const out = new Map<number, SubmissionRow>();
-  if (!Array.isArray(data)) return out;
-  for (const r of data as SubmissionRow[]) {
-    if (!r || typeof r.month !== 'number' || typeof r.status !== 'string') continue;
-    const prev = out.get(r.month);
-    if (!prev || r.submitted_at > prev.submitted_at) out.set(r.month, r);
-  }
-  return out;
-}
-
-/** Months to show for `year`: up to the current month, newest first. */
-export function visibleMonths(year: number, today = new Date()): number[] {
-  const thisYear = today.getFullYear();
-  if (year > thisYear) return [];
-  const last = year === thisYear ? today.getMonth() + 1 : 12;
-  return Array.from({ length: last }, (_, i) => last - i);
-}
-
-/** The server accepts reports for the current month and the 24 before it. */
-export function canReport(year: number, month: number, today = new Date()): boolean {
-  const period = year * 12 + month;
-  const now = today.getFullYear() * 12 + today.getMonth() + 1;
-  return period <= now && period >= now - 24;
-}
-
-function formatMonth(year: number, month: number): string {
-  return formatDate(new Date(year, month - 1, 1), { month: 'long', year: 'numeric' });
-}
+import {
+  canReport,
+  formatMonth,
+  latestSubmissionByMonth,
+  parseReportCount,
+  recordedByMonth,
+  type SubmissionRow,
+  visibleMonths,
+} from './helpers';
 
 interface PersonMonthsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
@@ -139,7 +78,7 @@ export function PersonMonthsScreen(_props: PersonMonthsScreenProps) {
     'POST'
   );
 
-  const recorded = new Map(parsePersonMonths(monthsQuery.data).map((r) => [r.month, r]));
+  const recorded = recordedByMonth(monthsQuery.data);
   const latest = latestSubmissionByMonth(submissionsQuery.data);
   const months = visibleMonths(year);
 
@@ -157,8 +96,8 @@ export function PersonMonthsScreen(_props: PersonMonthsScreenProps) {
   };
 
   const sendReport = (month: number) => {
-    const count = Number(draft);
-    if (draft.trim() === '' || !Number.isInteger(count) || count < 0 || count > 50) {
+    const count = parseReportCount(draft);
+    if (count === null) {
       setFormError(t('personMonths.invalidMessage'));
       return;
     }
