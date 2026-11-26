@@ -213,6 +213,34 @@ fn register_response(
     }
 }
 
+/// Enforce the per-IP portal-login throttle. Returns `Err(429)` once the client
+/// has exceeded the quota (`AppState::login_rate_limiters`), so repeated
+/// password-guessing / credential-stuffing from one source is answered with
+/// HTTP 429 instead of an unbounded stream of credential checks.
+///
+/// Reuses the existing, already-reviewed rate-limit mechanism rather than
+/// inventing a parallel one: the same `TenantRateLimiterSet` the anonymous
+/// inquiry/view throttles use, keyed on the same spoof-resistant client-IP hash
+/// (`crate::routes::inquiries::client_ip_bucket`).
+async fn enforce_login_rate_limit(
+    limiters: &api_core::middleware::TenantRateLimiterSet,
+    headers: &axum::http::HeaderMap,
+    trusted_hops: usize,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    use api_core::middleware::RateLimitDecision;
+    let key = crate::routes::inquiries::client_ip_bucket(headers, trusted_hops);
+    match limiters.check(key).await {
+        RateLimitDecision::Allow => Ok(()),
+        RateLimitDecision::DenyTooManyRequests => {
+            tracing::warn!("Portal login rate limit tripped");
+            Err((
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "Too many login attempts. Please try again in a minute.".to_string(),
+            ))
+        }
+    }
+}
+
 /// Login with email/password.
 #[utoipa::path(
     post,
@@ -221,13 +249,26 @@ fn register_response(
     request_body = LoginRequest,
     responses(
         (status = 200, description = "Login successful", body = LoginResponse),
-        (status = 401, description = "Invalid credentials")
+        (status = 401, description = "Invalid credentials"),
+        (status = 429, description = "Too many login attempts")
     )
 )]
 pub async fn login(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>, (axum::http::StatusCode, String)> {
+    // Brute-force / credential-stuffing throttle: reject once this client's
+    // per-IP quota in the rolling window is exhausted, BEFORE doing any
+    // credential work. Keyed per client-IP bucket so one attacker cannot lock
+    // out other users.
+    enforce_login_rate_limit(
+        &state.login_rate_limiters,
+        &headers,
+        state.inquiry_trusted_proxy_hops,
+    )
+    .await?;
+
     let handler = UserHandler::new(state.portal_repo.clone());
 
     match handler.login(&req.email, &req.password).await {
@@ -650,5 +691,79 @@ mod register_enumeration_tests {
             register_response(RegistrationResult::WeakPassword(vec!["too short".into()]))
                 .unwrap_err();
         assert_eq!(status, StatusCode::BAD_REQUEST);
+    }
+}
+
+#[cfg(test)]
+mod login_rate_limit_tests {
+    use super::*;
+    use api_core::middleware::TenantRateLimiterSet;
+    use axum::http::{HeaderMap, StatusCode};
+
+    /// Rate-limit regression (code-review finding
+    /// `reality-server-users-login-no-rate-limit`): the portal login endpoint
+    /// MUST throttle repeated attempts from one client so an attacker cannot run
+    /// unbounded password-guessing / credential-stuffing against the portal user
+    /// population. Before the fix the endpoint enforced nothing and happily
+    /// accepted an unlimited stream of email/password attempts from a single
+    /// source; `enforce_login_rate_limit` now denies with HTTP 429 once the
+    /// per-IP quota in the rolling window is exceeded. This is genuinely red
+    /// before the fix (no enforcement path existed) and green after.
+    #[tokio::test]
+    async fn login_enforcement_blocks_after_quota() {
+        // Low quota so the governor burst is exhausted quickly and
+        // deterministically (mirrors the inquiry/view throttle tests).
+        let limiters = TenantRateLimiterSet::with_default(5);
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", "198.51.100.23".parse().unwrap());
+
+        let mut allowed = 0u32;
+        let mut blocked = 0u32;
+        for _ in 0..50 {
+            match enforce_login_rate_limit(&limiters, &headers, 1).await {
+                Ok(()) => allowed += 1,
+                Err((status, _)) => {
+                    assert_eq!(
+                        status,
+                        StatusCode::TOO_MANY_REQUESTS,
+                        "login throttle must reject with HTTP 429"
+                    );
+                    blocked += 1;
+                }
+            }
+        }
+        assert!(
+            allowed > 0,
+            "early attempts within the quota must be allowed"
+        );
+        assert!(
+            blocked > 0,
+            "a flood of login attempts from one IP must eventually be blocked \
+             (regression guard: with no throttle the endpoint never blocks)"
+        );
+    }
+
+    /// Distinct clients must not share a budget: one IP exhausting its quota
+    /// cannot lock out another IP's logins (keying is per client-IP bucket).
+    #[tokio::test]
+    async fn login_throttle_is_per_client() {
+        let limiters = TenantRateLimiterSet::with_default(3);
+        let mut a = HeaderMap::new();
+        a.insert("x-forwarded-for", "203.0.113.4".parse().unwrap());
+        // Exhaust client A's budget.
+        for _ in 0..50 {
+            let _ = enforce_login_rate_limit(&limiters, &a, 1).await;
+        }
+        assert!(
+            enforce_login_rate_limit(&limiters, &a, 1).await.is_err(),
+            "client A must be blocked after exhausting its quota"
+        );
+        // A different source IP still gets a fresh budget.
+        let mut b = HeaderMap::new();
+        b.insert("x-forwarded-for", "203.0.113.200".parse().unwrap());
+        assert!(
+            enforce_login_rate_limit(&limiters, &b, 1).await.is_ok(),
+            "a different client must not inherit A's exhausted budget"
+        );
     }
 }
