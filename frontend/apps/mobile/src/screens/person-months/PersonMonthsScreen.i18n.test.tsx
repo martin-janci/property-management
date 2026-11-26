@@ -240,4 +240,17 @@ describe('personMonths keys resolve in every locale', () => {
       expect(locale.personMonths.personCount_other).toContain('{{count}}');
     }
   });
+
+  // The screen renders `personMonths.submissionStatus.<status>` for a report's
+  // badge (pending / rejected — approved reports carry no badge), so every
+  // locale must define those nested keys or the badge would show a raw key.
+  it('every locale defines the submissionStatus badge keys', () => {
+    for (const locale of [en, sk, cs, de, pl, hu]) {
+      const status = locale.personMonths.submissionStatus as unknown as Record<string, string>;
+      for (const key of ['pending', 'rejected']) {
+        expect(typeof status[key]).toBe('string');
+        expect(status[key].length).toBeGreaterThan(0);
+      }
+    }
+  });
 });
