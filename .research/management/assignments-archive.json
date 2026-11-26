@@ -17182,6 +17182,28 @@
       "first_open_at": "2026-11-10T02:29:11Z"
     },
     {
+      "task_id": "code-review-reality-server-pricemap-unbounded-cache-dos",
+      "branch": "auto-impl/code-review-reality-server-pricemap-unbo-9d4fa0cc",
+      "status": "failed",
+      "claimed_at": "2026-11-26T10:28:36Z",
+      "last_updated": "2026-11-26T10:36:29Z",
+      "status_changed_at": "2026-11-26T10:36:29Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed in dev (PRICE_MAP_CACHE BoundedCache 10000-cap+FIFO+TTL with price_map_cache_bounded_under_distinct_key_flood regression test); empty diff vs dev; stale/duplicate finding",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-pw-reset-timing-oracle",
       "branch": "auto-impl/code-review-reality-server-pw-reset-timi-71266d7a",
       "status": "merged",
@@ -17723,6 +17745,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-23T14:37:56Z"
+    },
+    {
+      "task_id": "code-review-reality-server-url-validator-ipv4-mapped-ipv6-ssrf",
+      "branch": "auto-impl/code-review-reality-server-url-validator-5272feaa",
+      "status": "failed",
+      "claimed_at": "2026-11-26T10:28:36Z",
+      "last_updated": "2026-11-26T10:36:48Z",
+      "status_changed_at": "2026-11-26T10:36:48Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend note=already-mitigated on dev (common::url_validation::validate_external_url rejects ipv4-mapped ipv6 + decimal/octal/hex/NAT64; existing test rejects_ipv4_mapped_ipv6_private); empty diff; stale/duplicate finding",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-reality-server-url-validator-triplicated",
@@ -36402,5 +36446,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T08:51:59Z"
+  "archived_at": "2026-11-26T10:39:29Z"
 }
