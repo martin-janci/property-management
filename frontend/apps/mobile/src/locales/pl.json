@@ -358,7 +358,12 @@
     "openErrorMessage": "Przeglądarka plików jest niedostępna na tym urządzeniu.",
     "notFound": "Nie znaleziono dokumentu",
     "open": "Otwórz dokument",
-    "opening": "Otwieranie…"
+    "opening": "Otwieranie…",
+    "detailCategory": "Kategoria",
+    "detailFile": "Plik",
+    "detailCreated": "Utworzono",
+    "backToList": "← Dokumenty",
+    "updatedAt": "Zaktualizowano {{date}}"
   },
   "settings": {
     "title": "Ustawienia",
@@ -469,7 +474,9 @@
       "published": "Opublikowane",
       "draft": "Szkic",
       "scheduled": "Zaplanowane"
-    }
+    },
+    "unreadBadge": "{{count}} nieprzeczytane",
+    "byLine": "Autor: {{author}}"
   },
   "widgets": {
     "addedTitle": "Widget dodany",
@@ -531,7 +538,9 @@
     "latestReading": "Ostatni odczyt",
     "usedSincePrevious": "Zużycie od poprzedniego odczytu: {{amount}} {{unit}}",
     "readingHistory": "Historia odczytów",
-    "submitNewReading": "Prześlij nowy odczyt"
+    "submitNewReading": "Prześlij nowy odczyt",
+    "listTitle": "Liczniki",
+    "listSubtitle": "Liczniki przypisane do Twojego lokalu."
   },
   "esignature": {
     "title": "Prosba o podpis",
@@ -627,7 +636,10 @@
       "under_construction": "W budowie",
       "renovation": "Remont",
       "inactive": "Nieaktywny"
-    }
+    },
+    "title": "Budynki",
+    "subtitle": "Nieruchomości powiązane z Twoim kontem.",
+    "units": "Lokale"
   },
   "messages": {
     "newMessage": "+ Nowa wiadomość",
@@ -651,7 +663,9 @@
     "syncing": "Synchronizowanie…",
     "authorYou": "Ty",
     "authorFallback": "Uczestnik",
-    "send": "Wyślij"
+    "send": "Wyślij",
+    "title": "Wiadomości",
+    "threadUnread": "{{count}} nowe"
   },
   "leases": {
     "loadError": "Nie można załadować umów najmu",
@@ -665,7 +679,19 @@
       "pending": "Oczekująca",
       "expired": "Wygasła",
       "terminated": "Zakończona"
-    }
+    },
+    "title": "Umowy najmu",
+    "subtitle": "Twoje aktywne i minione umowy najmu.",
+    "detailTitle": "Umowa najmu",
+    "monthlyRent": "Czynsz miesięczny",
+    "upcomingPayments": "Nadchodzące płatności",
+    "documentsSection": "Dokumenty",
+    "signedPdfHint": "Podpisany PDF — otwórz, aby przejrzeć lub udostępnić.",
+    "backToList": "← Umowy najmu",
+    "due": "Termin {{date}}",
+    "asRole": "Jako {{role}}",
+    "paidTo": ", płatne na rzecz {{name}}",
+    "leaseAgreement": "Umowa najmu"
   },
   "personMonths": {
     "title": "Osobomiesiące",
@@ -718,7 +744,10 @@
     "availableCount_other": "{{count}} dostępnych formularzy",
     "loadError": "Nie można załadować formularzy",
     "emptyTitle": "Brak formularzy",
-    "emptyText": "Obecnie nie masz żadnych formularzy do wypełnienia."
+    "emptyText": "Obecnie nie masz żadnych formularzy do wypełnienia.",
+    "title": "Formularze",
+    "required": "Wymagane",
+    "due": "Termin {{date}}"
   },
   "neighbors": {
     "loadError": "Nie można załadować sąsiadów",

@@ -129,10 +129,13 @@ describe('MessagesScreen camelCase wire contract (#1780)', () => {
     expect(screen.queryByText('No messages yet.')).toBeNull();
   });
 
-  it("reads unreadCount — renders the '3 new' unread badge", async () => {
+  it('reads unreadCount — renders the localized unread badge', async () => {
     await renderScreen();
     // Proves `unreadCount` is read; with snake_case it was `undefined`, the
-    // `> 0` guard was false, and the badge never rendered.
-    expect(screen.getByText('3 new')).toBeTruthy();
+    // `> 0` guard was false, and the badge never rendered. The badge copy is
+    // now sourced from i18n (`messages.threadUnread`); the test setup mocks
+    // `t(key) => key`, so the key renders in place of the old '3 new' literal.
+    expect(screen.getByText('messages.threadUnread')).toBeTruthy();
+    expect(screen.queryByText('3 new')).toBeNull();
   });
 });

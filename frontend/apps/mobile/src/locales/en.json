@@ -396,7 +396,12 @@
     "openErrorMessage": "The file viewer is unavailable on this device.",
     "notFound": "Document not found",
     "open": "Open document",
-    "opening": "Opening…"
+    "opening": "Opening…",
+    "detailCategory": "Category",
+    "detailFile": "File",
+    "detailCreated": "Created",
+    "backToList": "← Documents",
+    "updatedAt": "Updated {{date}}"
   },
   "settings": {
     "title": "Settings",
@@ -507,7 +512,9 @@
       "published": "Published",
       "draft": "Draft",
       "scheduled": "Scheduled"
-    }
+    },
+    "unreadBadge": "{{count}} unread",
+    "byLine": "By {{author}}"
   },
   "widgets": {
     "addedTitle": "Widget Added",
@@ -569,7 +576,9 @@
     "latestReading": "Latest reading",
     "usedSincePrevious": "Used since previous reading: {{amount}} {{unit}}",
     "readingHistory": "Reading history",
-    "submitNewReading": "Submit new reading"
+    "submitNewReading": "Submit new reading",
+    "listTitle": "Meters",
+    "listSubtitle": "Meters registered to your unit."
   },
   "esignature": {
     "title": "Signature Request",
@@ -665,7 +674,10 @@
       "under_construction": "Under construction",
       "renovation": "Renovation",
       "inactive": "Inactive"
-    }
+    },
+    "title": "Buildings",
+    "subtitle": "Properties associated with your account.",
+    "units": "Units"
   },
   "messages": {
     "newMessage": "+ New message",
@@ -687,7 +699,9 @@
     "syncing": "Syncing…",
     "authorYou": "You",
     "authorFallback": "Participant",
-    "send": "Send"
+    "send": "Send",
+    "title": "Messages",
+    "threadUnread": "{{count}} new"
   },
   "leases": {
     "loadError": "Couldn't load leases",
@@ -701,7 +715,19 @@
       "pending": "Pending",
       "expired": "Expired",
       "terminated": "Terminated"
-    }
+    },
+    "title": "Leases",
+    "subtitle": "Your active and past rental agreements.",
+    "detailTitle": "Lease",
+    "monthlyRent": "Monthly rent",
+    "upcomingPayments": "Upcoming payments",
+    "documentsSection": "Documents",
+    "signedPdfHint": "Signed PDF — open to review or share.",
+    "backToList": "← Leases",
+    "due": "Due {{date}}",
+    "asRole": "As {{role}}",
+    "paidTo": ", paid to {{name}}",
+    "leaseAgreement": "Lease agreement"
   },
   "personMonths": {
     "title": "Person-months",
@@ -750,7 +776,10 @@
     "availableCount_other": "{{count}} forms available",
     "loadError": "Couldn't load forms",
     "emptyTitle": "No forms",
-    "emptyText": "You have no forms to complete right now."
+    "emptyText": "You have no forms to complete right now.",
+    "title": "Forms",
+    "required": "Required",
+    "due": "Due {{date}}"
   },
   "neighbors": {
     "loadError": "Could not load neighbours",

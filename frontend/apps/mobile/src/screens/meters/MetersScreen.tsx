@@ -139,8 +139,8 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Meters</Text>
-        <Text style={s.headerSubtitle}>Meters registered to your unit.</Text>
+        <Text style={s.headerTitle}>{t('meters.listTitle')}</Text>
+        <Text style={s.headerSubtitle}>{t('meters.listSubtitle')}</Text>
       </View>
 
       <ScrollView

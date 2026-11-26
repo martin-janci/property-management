@@ -158,8 +158,8 @@ export function LeasesScreen({ onNavigate }: LeasesScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Leases</Text>
-        <Text style={s.headerSubtitle}>Your active and past rental agreements.</Text>
+        <Text style={s.headerTitle}>{t('leases.title')}</Text>
+        <Text style={s.headerSubtitle}>{t('leases.subtitle')}</Text>
       </View>
 
       <ScrollView

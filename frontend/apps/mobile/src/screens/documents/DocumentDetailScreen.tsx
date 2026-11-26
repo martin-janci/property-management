@@ -128,7 +128,7 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
       <View style={s.header}>
         {onBack && (
           <Pressable onPress={onBack} style={styles.backLink}>
-            <Text style={styles.backLinkText}>← Documents</Text>
+            <Text style={styles.backLinkText}>{t('documents.backToList')}</Text>
           </Pressable>
         )}
         <Text style={s.headerTitle} numberOfLines={2}>
@@ -175,16 +175,22 @@ export function DocumentDetailScreen({ documentId, onBack }: DocumentDetailScree
                 {typeof document.size_bytes === 'number' && document.size_bytes > 0 && (
                   <Text style={s.cardMeta}>{formatBytes(document.size_bytes)}</Text>
                 )}
-                <Text style={s.cardMeta}>Updated {formatDate(document.updated_at)}</Text>
+                <Text style={s.cardMeta}>
+                  {t('documents.updatedAt', { date: formatDate(document.updated_at) })}
+                </Text>
               </View>
             </View>
 
             <View style={s.card}>
-              <Text style={styles.sectionLabel}>Category</Text>
+              <Text style={styles.sectionLabel}>{t('documents.detailCategory')}</Text>
               <Text style={styles.sectionValue}>{document.category}</Text>
-              <Text style={[styles.sectionLabel, { marginTop: 12 }]}>File</Text>
+              <Text style={[styles.sectionLabel, { marginTop: 12 }]}>
+                {t('documents.detailFile')}
+              </Text>
               <Text style={styles.sectionValue}>{document.file_name}</Text>
-              <Text style={[styles.sectionLabel, { marginTop: 12 }]}>Created</Text>
+              <Text style={[styles.sectionLabel, { marginTop: 12 }]}>
+                {t('documents.detailCreated')}
+              </Text>
               <Text style={styles.sectionValue}>{formatDate(document.created_at)}</Text>
             </View>
 
