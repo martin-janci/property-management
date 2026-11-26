@@ -9,7 +9,7 @@
 use crate::state::AppState;
 use api_core::extractors::PortalPrincipal;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{DefaultBodyLimit, Path, Query, State},
     routing::{get, post},
     Json, Router,
 };
@@ -26,6 +26,21 @@ use uuid::Uuid;
 /// 5000 mirrors the existing report-description / inquiry-message caps in this
 /// server so free-text limits stay consistent.
 const MAX_REVIEW_BODY_LEN: usize = 5000;
+
+/// Maximum size (in bytes) of a request body accepted by the agent-review
+/// endpoints.
+///
+/// A review payload carries only a 1–5 integer rating and a `body` capped at
+/// [`MAX_REVIEW_BODY_LEN`] chars, so 64 KiB comfortably fits the largest valid
+/// request (5000 UTF-8 chars + JSON envelope) while bounding what the server
+/// will buffer into memory. Without this per-route cap the endpoints inherited
+/// only the 4 MiB *global* `DefaultBodyLimit` (see `main.rs`), leaving a wide
+/// gap between the ~20 KiB a legitimate review needs and the multi-MiB blob an
+/// authenticated client could force the server to read before the handler's
+/// char-count check ever runs (unbounded-body memory pressure). Mirrors the
+/// per-route caps on deploy-server's webhook (64 KiB) and api-server's upload
+/// route.
+const MAX_REVIEW_REQUEST_BODY_BYTES: usize = 64 * 1024;
 
 /// Guard: a realtor must not review their own profile.
 ///
@@ -53,6 +68,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_reviews))
         .route("/", post(create_review))
+        // Bound the request body these endpoints will buffer. Tighter than the
+        // global 4 MiB cap in main.rs: a review payload is tiny, so a 413 fires
+        // at the layer before the handler reads an oversized body into memory.
+        .layer(DefaultBodyLimit::max(MAX_REVIEW_REQUEST_BODY_BYTES))
 }
 
 /// A single realtor review.
