@@ -195,6 +195,80 @@ async fn get_slovak_voting_config(
     Ok(Json(config))
 }
 
+/// Derive the participation and approval percentages used to validate a vote
+/// from its **persisted** counts and calculated results.
+///
+/// When the underlying data is missing or unparseable the corresponding metric
+/// is reported as `0` — which fails the quorum / approval thresholds — together
+/// with an explanatory validation note, instead of substituting a fabricated
+/// passing default. Previously a vote with no eligible-owner count defaulted
+/// participation to 75 % and a vote whose results were unparseable (or carried
+/// no identifiable "yes" option) defaulted approval to 80 %, so a vote carrying
+/// no usable tally could report `is_valid: true` without ever being validated.
+///
+/// Returns `(actual_participation_percentage, approval_percentage, notes)`.
+fn derive_vote_validation_metrics(vote: &Vote) -> (Decimal, Decimal, Vec<String>) {
+    let mut notes: Vec<String> = Vec::new();
+
+    let participation_count = vote.participation_count.unwrap_or(0).max(0);
+    let eligible_count = vote.eligible_count.unwrap_or(0).max(0);
+
+    let actual_participation = if eligible_count > 0 {
+        let p = Decimal::from(participation_count);
+        let e = Decimal::from(eligible_count);
+        (p / e * Decimal::new(100, 0)).round_dp(2)
+    } else {
+        notes.push(
+            "Eligible-owner count is unknown; participation cannot be verified \
+             and is reported as 0 %."
+                .to_string(),
+        );
+        Decimal::ZERO
+    };
+
+    let approval_percentage = match serde_json::from_value::<VoteResults>(vote.results.clone()) {
+        Ok(vote_results) => match vote_results.questions.first() {
+            Some(q) => {
+                let yes_opt = q.results.iter().find(|o| {
+                    let txt = o.option_text.to_lowercase();
+                    txt == "yes" || txt == "for" || txt == "za" || txt == "schvalujem"
+                });
+                match yes_opt.map(|o| o.percentage) {
+                    Some(percentage) => Decimal::from_f64_retain(percentage)
+                        .unwrap_or(Decimal::ZERO)
+                        .round_dp(2),
+                    None => {
+                        notes.push(
+                            "Vote result contains no identifiable approval ('yes') option; \
+                             approval cannot be verified and is reported as 0 %."
+                                .to_string(),
+                        );
+                        Decimal::ZERO
+                    }
+                }
+            }
+            None => {
+                notes.push(
+                    "Vote result contains no tallied questions; approval cannot be \
+                     verified and is reported as 0 %."
+                        .to_string(),
+                );
+                Decimal::ZERO
+            }
+        },
+        Err(_) => {
+            notes.push(
+                "Vote result has not been calculated or is unparseable; approval \
+                 cannot be verified and is reported as 0 %."
+                    .to_string(),
+            );
+            Decimal::ZERO
+        }
+    };
+
+    (actual_participation, approval_percentage, notes)
+}
+
 #[utoipa::path(post, path = "/api/v1/regional-compliance/slovak/voting/validate", tag = "Regional Compliance", request_body = ValidateSlovakVote, responses((status = 200, description = "Validation result", body = SlovakVoteValidation)))]
 async fn validate_slovak_vote(
     mut rls: RlsConnection,
@@ -245,41 +319,15 @@ async fn validate_slovak_vote(
     let required_quorum = rule.0;
     let legal_reference = rule.1;
 
-    let (participation_count, eligible_count) = (
-        vote.participation_count.unwrap_or(0),
-        vote.eligible_count.unwrap_or(0),
-    );
-
-    let actual_participation = if eligible_count > 0 {
-        let p = Decimal::from(participation_count);
-        let e = Decimal::from(eligible_count);
-        (p / e * Decimal::new(100, 0)).round_dp(2)
-    } else {
-        Decimal::new(7500, 2)
-    };
-
-    let approval_percentage =
-        if let Ok(vote_results) = serde_json::from_value::<VoteResults>(vote.results.clone()) {
-            if let Some(q) = vote_results.questions.first() {
-                let yes_opt = q.results.iter().find(|o| {
-                    let txt = o.option_text.to_lowercase();
-                    txt == "yes" || txt == "for" || txt == "za" || txt == "schvalujem"
-                });
-                let percentage = yes_opt
-                    .map(|o| o.percentage)
-                    .unwrap_or_else(|| q.results.first().map(|o| o.percentage).unwrap_or(80.0));
-                Decimal::from_f64_retain(percentage)
-                    .unwrap_or(Decimal::new(8000, 2))
-                    .round_dp(2)
-            } else {
-                Decimal::new(8000, 2)
-            }
-        } else {
-            Decimal::new(8000, 2)
-        };
+    let (actual_participation, approval_percentage, metric_notes) =
+        derive_vote_validation_metrics(&vote);
 
     let quorum_met = actual_participation >= required_quorum;
     let is_valid = quorum_met && approval_percentage >= required_quorum;
+
+    let mut validation_notes =
+        vec!["Vote validation computed against seeded database jurisdiction rules.".to_string()];
+    validation_notes.extend(metric_notes);
 
     let result = Ok(Json(SlovakVoteValidation {
         vote_id: payload.vote_id,
@@ -291,9 +339,7 @@ async fn validate_slovak_vote(
         approval_required_percentage: required_quorum,
         is_valid,
         legal_reference,
-        validation_notes: vec![
-            "Vote validation computed against seeded database jurisdiction rules.".to_string(),
-        ],
+        validation_notes,
         validated_at: Utc::now(),
     }));
     rls.release().await;
@@ -911,38 +957,8 @@ async fn validate_czech_vote(
     let required_quorum = rule.0;
     let legal_reference = rule.1;
 
-    let (participation_count, eligible_count) = (
-        vote.participation_count.unwrap_or(0),
-        vote.eligible_count.unwrap_or(0),
-    );
-
-    let actual_participation = if eligible_count > 0 {
-        let p = Decimal::from(participation_count);
-        let e = Decimal::from(eligible_count);
-        (p / e * Decimal::new(100, 0)).round_dp(2)
-    } else {
-        Decimal::new(7500, 2)
-    };
-
-    let approval_percentage =
-        if let Ok(vote_results) = serde_json::from_value::<VoteResults>(vote.results.clone()) {
-            if let Some(q) = vote_results.questions.first() {
-                let yes_opt = q.results.iter().find(|o| {
-                    let txt = o.option_text.to_lowercase();
-                    txt == "yes" || txt == "for" || txt == "za" || txt == "schvalujem"
-                });
-                let percentage = yes_opt
-                    .map(|o| o.percentage)
-                    .unwrap_or_else(|| q.results.first().map(|o| o.percentage).unwrap_or(80.0));
-                Decimal::from_f64_retain(percentage)
-                    .unwrap_or(Decimal::new(8000, 2))
-                    .round_dp(2)
-            } else {
-                Decimal::new(8000, 2)
-            }
-        } else {
-            Decimal::new(8000, 2)
-        };
+    let (actual_participation, approval_percentage, metric_notes) =
+        derive_vote_validation_metrics(&vote);
 
     let quorum_met = actual_participation >= required_quorum;
     let is_valid = quorum_met && approval_percentage >= required_quorum;
@@ -951,6 +967,10 @@ async fn validate_czech_vote(
         payload.decision_type,
         CzechDecisionType::ThreeQuartersMajority | CzechDecisionType::AllOwners
     );
+
+    let mut validation_notes =
+        vec!["Vote validation computed against seeded database jurisdiction rules.".to_string()];
+    validation_notes.extend(metric_notes);
 
     let result = Ok(Json(CzechVoteValidation {
         vote_id: payload.vote_id,
@@ -963,9 +983,7 @@ async fn validate_czech_vote(
         is_valid,
         legal_reference,
         requires_notary,
-        validation_notes: vec![
-            "Vote validation computed against seeded database jurisdiction rules.".to_string(),
-        ],
+        validation_notes,
         validated_at: Utc::now(),
     }));
     rls.release().await;
