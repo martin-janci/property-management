@@ -56,6 +56,54 @@ describe('parseApiError — network errors', () => {
   });
 });
 
+describe('parseApiError — network misclassification (regression)', () => {
+  // Regression: `isNetworkError` runs first in `parseApiError` and matched the
+  // word "network" anywhere in `error.message`. A structured backend
+  // `ErrorResponse` carries its OWN authoritative `error` code, and its English
+  // `message` can legitimately mention the word "network" (e.g. a server-side
+  // "network error connecting to database" for an INTERNAL_ERROR). Before the
+  // fix the fuzzy message heuristic hijacked such a server error into a
+  // client-side NETWORK_ERROR, discarding the real code and telling the user to
+  // "check your internet connection" for a server fault. A request that was
+  // classified by the server (structured ErrorResponse) — or that received any
+  // HTTP response — is by definition NOT a transport network failure.
+  it('keeps a structured ErrorResponse code when its message mentions "network"', () => {
+    const result = parseApiError({
+      requestId: 'req-net',
+      error: 'INTERNAL_ERROR',
+      message: 'network error connecting to database',
+    });
+
+    expect(result.code).toBe('INTERNAL_ERROR');
+    expect(result.isNetworkError).toBe(false);
+  });
+
+  it('does not treat an HTTP response carrying a "network" body as a network error', () => {
+    const result = parseApiError({
+      response: {
+        status: 503,
+        data: {
+          requestId: 'r',
+          error: 'SERVICE_UNAVAILABLE',
+          message: 'upstream network unreachable',
+        },
+      },
+    });
+
+    expect(result.code).toBe('SERVICE_UNAVAILABLE');
+    expect(result.statusCode).toBe(503);
+    expect(result.isNetworkError).toBe(false);
+  });
+
+  it('still classifies a bare transport object with a network message as NETWORK_ERROR', () => {
+    // The last-resort message heuristic must still fire for a bare transport
+    // error that has no `error` code and no HTTP `response`.
+    const result = parseApiError({ message: 'Network request failed' });
+    expect(result.code).toBe('NETWORK_ERROR');
+    expect(result.isNetworkError).toBe(true);
+  });
+});
+
 describe('parseApiError — client/request timeouts', () => {
   // Regression: a client-side timeout aborts the axios request with
   // `code: 'ECONNABORTED'` (request timeout) or `'ETIMEDOUT'` (connection
