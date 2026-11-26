@@ -53,6 +53,10 @@ function getPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
+/** Expand a dynamic `t(`${prefix}.${value}`)` call site into its full key set. */
+const withPrefix = (prefix: string, values: readonly string[]): string[] =>
+  values.map((v) => `${prefix}.${v}`);
+
 /** Every `buildings.*` leaf-key path, taken from en.json as the reference. */
 const BUILDINGS_PATHS: string[] = leafPaths((en as Json).buildings, 'buildings');
 
@@ -231,14 +235,14 @@ const PLAIN_PAGE_KEYS: string[] = [
   'aria.unitDetails',
   'aria.yourResidency',
   // Enumerated dynamic variants
-  ...STATUS.map((v) => `buildings.status.${v}`),
-  ...BUILDING_TYPE.map((v) => `buildings.type.${v}`),
-  ...UNIT_TYPE.map((v) => `buildings.unitType.${v}`),
-  ...OCCUPANCY.map((v) => `buildings.occupancy.${v}`),
-  ...RESIDENT_TYPE.map((v) => `buildings.residents.type.${v}`),
-  ...RESIDENT_TYPE.map((v) => `buildings.myUnit.residentType.${v}`),
-  ...COMMON_AREA_TYPE.map((v) => `buildings.commonAreaType.${v}`),
-  ...FORM_ERRORS.map((v) => `buildings.form.errors.${v}`),
+  ...withPrefix('buildings.status', STATUS),
+  ...withPrefix('buildings.type', BUILDING_TYPE),
+  ...withPrefix('buildings.unitType', UNIT_TYPE),
+  ...withPrefix('buildings.occupancy', OCCUPANCY),
+  ...withPrefix('buildings.residents.type', RESIDENT_TYPE),
+  ...withPrefix('buildings.myUnit.residentType', RESIDENT_TYPE),
+  ...withPrefix('buildings.commonAreaType', COMMON_AREA_TYPE),
+  ...withPrefix('buildings.form.errors', FORM_ERRORS),
 ];
 
 /** Keys read with interpolation values, and the tokens they must keep. */
@@ -274,6 +278,18 @@ function makeInstance(lng: string) {
     initImmediate: false,
   });
   return inst;
+}
+
+/**
+ * Assert a `t()` result is a genuine translation: a non-empty string that is
+ * NOT the key itself (which is what i18next echoes on a missing-key fallback).
+ * `note` disambiguates repeated calls for one key (e.g. plural branches).
+ */
+function expectRealTranslation(out: string, key: string, locale: string, note = '') {
+  const where = note ? `${locale} ${note}` : locale;
+  expect(typeof out).toBe('string');
+  expect(out.trim().length, `${key} resolved empty in ${where}`).toBeGreaterThan(0);
+  expect(out, `${key} fell back to the raw key in ${where}`).not.toBe(key);
 }
 
 describe('buildings.* i18n keys', () => {
@@ -327,10 +343,7 @@ describe('buildings.* i18n keys', () => {
 
       for (const key of PLAIN_PAGE_KEYS) {
         it(`t('${key}') returns a real translation`, () => {
-          const out = t(key);
-          expect(typeof out).toBe('string');
-          expect(out.trim().length, `${key} resolved empty in ${locale}`).toBeGreaterThan(0);
-          expect(out, `${key} fell back to the raw key in ${locale}`).not.toBe(key);
+          expectRealTranslation(t(key), key, locale);
         });
       }
 
@@ -346,12 +359,8 @@ describe('buildings.* i18n keys', () => {
 
       for (const key of PLURAL_KEYS) {
         it(`t('${key}', {count}) resolves both plural branches in ${locale}`, () => {
-          const one = t(key, { count: 1 } as never);
-          const many = t(key, { count: 5 } as never);
-          expect(one, `${key} (count=1) fell back to the key in ${locale}`).not.toBe(key);
-          expect(many, `${key} (count=5) fell back to the key in ${locale}`).not.toBe(key);
-          expect(one.trim().length).toBeGreaterThan(0);
-          expect(many.trim().length).toBeGreaterThan(0);
+          expectRealTranslation(t(key, { count: 1 } as never), key, locale, '(count=1)');
+          expectRealTranslation(t(key, { count: 5 } as never), key, locale, '(count=5)');
         });
       }
     });
