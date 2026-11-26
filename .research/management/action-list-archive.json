@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T04:28:09Z",
+  "archived_at": "2026-11-26T06:45:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -1400,6 +1400,30 @@
       }
     },
     {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-handlers-rs",
+      "action": "Churn hotspot: api-server voice_webhooks/handlers.rs — 265 LoC in PR #3760 (RLS release fix)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-26T06:25:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3815,
+        "merged_at": "2026-11-26T04:39:19Z",
+        "at": "2026-11-26T06:25:11Z"
+      }
+    },
+    {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-oauth-rs",
       "action": "Churn hotspot: routes/voice_webhooks/oauth.rs — 2 commits this run (voice OAuth 503 mapping + rate-limit test)",
       "owner_role": "pm-tech-lead",
@@ -2341,6 +2365,20 @@
       }
     },
     {
+      "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx-retry1",
+      "action": "[STALE-DROP: target AnalyticsChart.tsx deleted 2026-11-15 as dead code; not retryable] Churn hotspot: ppt-web features/reports/AnalyticsChart.tsx (reports feature rollout) [retry 1/2 of failed churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx reason=failed-no-pr cooldown_ok newest_failure=2026-11-17T22:32:30Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "retry_of": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx",
+      "retry_round": 1
+    },
+    {
       "id": "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
       "action": "Churn hotspot: ppt-web features/reports/TrendChart.tsx (reports feature rollout)",
       "owner_role": "pm-tech-lead",
@@ -2506,6 +2544,30 @@
         "merged_pr": 3753,
         "merged_at": "2026-11-23T14:42:05Z",
         "at": "2026-11-23T16:25:37Z"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-government-portal-pages-guest-report-submission-page-tsx",
+      "action": "Churn hotspot: ppt-web GuestReportSubmissionPage.tsx — 283 LoC in PR #3756 (i18n route-through)",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=1 conf=high vector=refactor) | gc1-reconcile 2026-11-26T06:25:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3816,
+        "merged_at": "2026-11-26T04:42:18Z",
+        "at": "2026-11-26T06:25:11Z"
       }
     },
     {
@@ -12309,6 +12371,24 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "action": "[STALE-DROP: already fixed on dev in PR#3796/adf0eb2; no gap remains] ppt web core usewebsocket handler dep gap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d ppt-web-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-08-08T00:00:00Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-usewebsocket-subscribe-gate",
       "action": "ppt-web-core useWebSocket subscription effect gates on handlerRef at mount but omits it from the dep array — a handler supplied after mount never triggers subscribe()",
       "owner_role": "pm-backend",
@@ -15516,6 +15596,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-17T20:34:05Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-api-client-no-auth-retry1",
+      "action": "ppt web ui registry api client no auth [retry 1/2 of failed code-review-ppt-web-ui-registry-api-client-no-auth]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=code-review-ppt-web-ui-registry-api-client-no-auth reason=failed-no-pr cooldown_ok newest_failure=2026-11-17T18:41:22Z) | gc1-reconcile 2026-11-26T06:25:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "retry_of": "code-review-ppt-web-ui-registry-api-client-no-auth",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-26T06:25:11Z"
       }
     },
     {
@@ -34928,6 +35029,24 @@
       }
     },
     {
+      "id": "pm-scrum-master-uc-10-followup-watch-2026-11-25",
+      "action": "Land UC-10 follow-up tests/i18n/screen-map for PersonMonthsScreen.tsx (444) and person_months.rs (436) hotspots; consider adding them to the watch list.",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-25 | gc1-reconcile 2026-11-26T06:25:11Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3800,
+        "merged_at": "2026-11-26T04:38:41Z",
+        "at": "2026-11-26T06:25:11Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-upgrade-refresh-token-confidence-2026-11-09",
       "action": "Open the diff for code-review-ppt-web-core-refresh-token-localstorage and upgrade signal confidence from medium to high (or drop) — currently blocks security fast-track at score=2+confidence=medium",
       "owner_role": "pm-scrum-master",
@@ -38353,6 +38472,54 @@
         "merged_pr": 2075,
         "merged_at": "2026-07-04T18:14:24Z",
         "at": "2026-07-05T00:04:44Z"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-journal-pr-3764",
+      "action": "screen-map drift: PR #3764 changed reality-web /journal route without touching docs/screens/reality/journal.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-26T06:25:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3814,
+        "merged_at": "2026-11-26T04:40:56Z",
+        "at": "2026-11-26T06:25:11Z"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-realtor-analytics-pr-3740",
+      "action": "screen-map drift: PR #3740 changed reality-web /realtor/analytics without touching docs/screens/reality/realtor-analytics.md",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-26T06:25:11Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3813,
+        "merged_at": "2026-11-26T04:41:08Z",
+        "at": "2026-11-26T06:25:11Z"
       }
     },
     {

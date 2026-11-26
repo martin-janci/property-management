@@ -17081,7 +17081,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3756"
       ],
@@ -17093,7 +17093,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T06:25:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3816
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-handlers-rs",
@@ -17101,7 +17106,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3760"
       ],
@@ -17113,7 +17118,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T06:25:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3815
+      }
     },
     {
       "id": "test-gap-pr-3762-payment-match-no-test-diff",
@@ -17146,7 +17156,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3764"
       ],
@@ -17159,7 +17169,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T06:25:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3814
+      }
     },
     {
       "id": "test-gap-screen-map-drift-reality-realtor-analytics-pr-3740",
@@ -17167,7 +17182,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3740"
       ],
@@ -17180,7 +17195,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T06:25:11Z",
+        "assignment_status": "merged",
+        "pr_number": 3813
+      }
     },
     {
       "id": "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",

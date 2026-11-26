@@ -2455,6 +2455,30 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "churn-hotspot-frontend-apps-ppt-web-features-reports-analyticschart-tsx-retry1",
+      "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-feat-0eda7e4b",
+      "status": "failed",
+      "claimed_at": "2026-11-26T06:29:50Z",
+      "last_updated": "2026-11-26T06:44:12Z",
+      "status_changed_at": "2026-11-26T06:44:12Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=target file AnalyticsChart.tsx deleted 2026-11-15 as orphaned dead code (guarded by reports.no-analytics-stub route test); stale churn-hotspot, not retryable; recommend dropping from backlog",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "churn-hotspot-frontend-apps-ppt-web-features-reports-trendchart-tsx",
       "branch": "auto-impl/churn-hotspot-frontend-apps-ppt-web-feat-41369870",
       "status": "merged",
@@ -12077,6 +12101,30 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-core-usewebsocket-handler-dep-gap",
+      "branch": "auto-impl/code-review-ppt-web-core-usewebsocket-ha-a5fe175b",
+      "status": "failed",
+      "claimed_at": "2026-11-26T06:29:50Z",
+      "last_updated": "2026-11-26T06:44:25Z",
+      "status_changed_at": "2026-11-26T06:44:25Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already-fixed-on-dev: useWebSocket.ts (PR#3796/adf0eb2) has hasHandler-gated effect + handlerRef routing + pinning regression test; no gap remains; stale signal",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "branch": "auto-impl/code-review-ppt-web-core-usewebsocket-su-4c59e530",
@@ -36128,5 +36176,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T04:46:20Z"
+  "archived_at": "2026-11-26T06:45:17Z"
 }
