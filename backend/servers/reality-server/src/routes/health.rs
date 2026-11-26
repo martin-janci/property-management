@@ -154,7 +154,10 @@ pub struct CacheMetricsDetail {
 /// can carry host / port / dbname / sslmode and other infrastructure detail —
 /// must never reach it.
 fn db_health_error(e: &sqlx::Error) -> String {
-    format!("Database connection failed: {}", e)
+    // Log the full error server-side (where ops can still read it) and return a
+    // fixed, generic string to the public client — never interpolate `e`.
+    tracing::error!(error = %e, "database readiness probe failed");
+    "Database connection failed".to_string()
 }
 
 /// Check database connectivity and measure latency.
