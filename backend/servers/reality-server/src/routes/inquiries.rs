@@ -13,7 +13,10 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use db::models::{CreateListingInquiry, ListingInquiry, SendInquiryMessage};
+use chrono::Utc;
+use db::models::{
+    CreateListingInquiry, ListingInquiry, ScheduleViewing, SendInquiryMessage, ViewingSchedule,
+};
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 use utoipa::{IntoParams, ToSchema};
@@ -218,6 +221,8 @@ pub fn router() -> Router<AppState> {
         .route("/{id}", get(get_inquiry))
         .route("/{id}/read", put(mark_as_read))
         .route("/{id}/respond", post(respond_to_inquiry))
+        // Realtor schedules a confirmed viewing off one of their own inquiries.
+        .route("/{id}/schedule-viewing", post(schedule_viewing))
 }
 
 /// Contact message request.
@@ -856,6 +861,59 @@ pub async fn respond_to_inquiry(
         message: message.message,
         created_at: message.created_at.to_rfc3339(),
     }))
+}
+
+/// Schedule a confirmed viewing for one of the realtor's own inquiries.
+///
+/// Realtor-scoped (the `PortalPrincipal` is the owning realtor). The handler
+/// delegates to [`InquiriesHandler::schedule_viewing`], which creates the
+/// `viewing_schedules` row only when the inquiry belongs to the caller
+/// (`Ok(None)` → 404) and then fires the best-effort viewing reminder.
+#[utoipa::path(
+    post,
+    path = "/api/v1/inquiries/{id}/schedule-viewing",
+    tag = "Inquiries",
+    params(("id" = Uuid, Path, description = "Inquiry ID")),
+    request_body = ScheduleViewing,
+    responses(
+        (status = 201, description = "Viewing scheduled", body = ViewingSchedule),
+        (status = 400, description = "Invalid schedule"),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Inquiry not found")
+    )
+)]
+pub async fn schedule_viewing(
+    State(state): State<AppState>,
+    principal: PortalPrincipal,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ScheduleViewing>,
+) -> Result<(axum::http::StatusCode, Json<ViewingSchedule>), (axum::http::StatusCode, String)> {
+    // A viewing can only be scheduled for a future time.
+    if req.scheduled_at <= Utc::now() {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "scheduled_at must be in the future".to_string(),
+        ));
+    }
+    // Guard the optional duration (DB default is 30); reject non-positive or
+    // absurd values before they reach the INSERT.
+    if let Some(duration) = req.duration_minutes {
+        if !(1..=480).contains(&duration) {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "duration_minutes must be between 1 and 480".to_string(),
+            ));
+        }
+    }
+
+    let viewing = state
+        .inquiries_handler
+        .schedule_viewing(id, principal.user_id, req)
+        .await
+        .map_err(|e| crate::util::errors::db_error("schedule viewing", e))?
+        .ok_or_else(inquiry_not_found)?;
+
+    Ok((axum::http::StatusCode::CREATED, Json(viewing)))
 }
 
 fn message_response(m: db::models::InquiryMessage) -> InquiryMessageResponse {
