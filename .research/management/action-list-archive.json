@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T14:40:39Z",
+  "archived_at": "2026-11-26T18:38:30Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -17136,6 +17136,31 @@
       }
     },
     {
+      "id": "code-review-reality-server-get-inquiry-empty-messages",
+      "action": "reality server get inquiry empty messages",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-26T18:38:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3844,
+        "merged_at": "2026-11-26T18:37:35Z",
+        "at": "2026-11-26T18:38:30Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-import-fetch-ssrf-revalidation",
       "action": "reality server import fetch ssrf revalidation",
       "owner_role": "pm-backend",
@@ -17871,6 +17896,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-26T12:25:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-public-error-leak",
+      "action": "reality server public error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-26T18:38:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3843,
+        "merged_at": "2026-11-26T18:37:38Z",
+        "at": "2026-11-26T18:38:30Z"
       }
     },
     {
