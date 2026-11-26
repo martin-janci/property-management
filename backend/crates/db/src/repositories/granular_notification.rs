@@ -933,11 +933,33 @@ impl GranularNotificationRepository {
         &self,
         mut conn: PoolConnection<Postgres>,
     ) -> Result<(), SqlxError> {
-        sqlx::query("SELECT pg_advisory_unlock(hashtextextended('notification_digest_sweep', 0))")
-            .execute(&mut *conn)
-            .await?;
-        // Lock released; `conn` drops here -> returns to the pool clean.
-        Ok(())
+        match sqlx::query(
+            "SELECT pg_advisory_unlock(hashtextextended('notification_digest_sweep', 0))",
+        )
+        .execute(&mut *conn)
+        .await
+        {
+            Ok(_) => {
+                // Lock released; `conn` drops here -> returns to the pool clean.
+                Ok(())
+            }
+            Err(e) => {
+                // The unlock failed, so this session may still hold the lock.
+                // Detach it from the pool so it is NOT recycled, then hard-close
+                // it to tear down the session (which drops the lock). The pool
+                // opens a fresh, lock-free connection on the next acquire.
+                let detached = conn.detach();
+                if let Err(close_err) = detached.close().await {
+                    tracing::warn!(
+                        error = %close_err,
+                        "failed to hard-close digest-sweep connection after a failed \
+                         advisory unlock (already detached from the pool, so it will \
+                         not be reused regardless)"
+                    );
+                }
+                Err(e)
+            }
+        }
     }
 
     /// Create a notification digest.
