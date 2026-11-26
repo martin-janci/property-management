@@ -452,12 +452,27 @@ function isNetworkError(error: unknown): boolean {
     return false;
   }
 
-  // Axios network error
+  // Axios network error — authoritative transport-level signal.
   if ('code' in error && error.code === 'ERR_NETWORK') {
     return true;
   }
 
-  // Check message for network-related keywords
+  // A request that received an HTTP response, or a structured backend
+  // `ErrorResponse` (which carries its own authoritative `error` code), was
+  // classified by the server and is NOT a transport network failure. Bail out
+  // before the fuzzy message-keyword heuristic below so a server message that
+  // merely mentions "network" (e.g. an INTERNAL_ERROR whose text reads
+  // "network error connecting to database") is not hijacked into NETWORK_ERROR,
+  // discarding the real code/status.
+  if ('response' in error && error.response) {
+    return false;
+  }
+  if (isErrorResponse(error)) {
+    return false;
+  }
+
+  // Check message for network-related keywords. Last-resort heuristic for bare
+  // transport errors that surface only a message, with no code or response.
   if ('message' in error && typeof error.message === 'string') {
     const message = error.message.toLowerCase();
     return (
