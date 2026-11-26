@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T18:38:30Z",
+  "archived_at": "2026-11-26T22:28:02Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4690,6 +4690,31 @@
         "merged_pr": 3145,
         "merged_at": "2026-10-24T06:37:10Z",
         "at": "2026-10-24T10:28:51Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-push-fanout-reqwest-expect",
+      "action": "api core push fanout reqwest expect",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-26T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-26T22:23:46Z"
       }
     },
     {
@@ -17070,6 +17095,31 @@
       "last_updated": "2026-11-21T22:52:37Z"
     },
     {
+      "id": "code-review-reality-server-drainer-stub-silent-drop",
+      "action": "reality server drainer stub silent drop",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-26T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-26T22:23:46Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-dup-url-validator",
       "action": "reality-server carries a duplicated URL-validation helper — merge into shared crate",
       "owner_role": "pm-tech-lead",
@@ -17998,6 +18048,31 @@
       }
     },
     {
+      "id": "code-review-reality-server-redirect-backslash-bypass",
+      "action": "reality server redirect backslash bypass",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-26T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-26T22:23:46Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-register-account-enumeration",
       "action": "reality-server: POST /api/v1/users/register leaks existence via 409+differentiated body (account-enumeration oracle)",
       "owner_role": "pm-backend",
@@ -18135,6 +18210,31 @@
         "merged_pr": 3616,
         "merged_at": "2026-11-18T12:42:17Z",
         "at": "2026-11-18T14:23:52Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-ss-alert-watermark-swallow",
+      "action": "reality server ss alert watermark swallow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-26T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-26T22:23:46Z"
       }
     },
     {
@@ -33128,6 +33228,34 @@
         "merged_pr": 3795,
         "merged_at": "2026-11-25T11:28:25Z",
         "at": "2026-11-25T11:28:26Z"
+      }
+    },
+    {
+      "id": "gh-issue-3842",
+      "action": "dev CI red: EmergencyContactDirectoryPage.errorI18n.test.tsx failing (getElementError) — blocks frontend PR merges (Closes #3842)",
+      "owner_role": "pm-frontend",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-issue-ingest 2026-11-26T18:25:34Z (#3842) | gc1-reconcile 2026-11-26T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T18:25:34Z",
+      "issue_ref": {
+        "number": 3842,
+        "url": "https://github.com/martin-janci/property-management/issues/3842",
+        "labels": [
+          "bug",
+          "frontend",
+          "follow-up"
+        ]
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3845,
+        "merged_at": "2026-11-26T20:32:20Z",
+        "at": "2026-11-26T22:23:46Z"
       }
     },
     {

@@ -5764,6 +5764,28 @@
       "merge_attempted_at": "2026-11-21T00:30:13Z"
     },
     {
+      "status": "merged",
+      "claimed_at": "2026-11-26T20:33:00Z",
+      "last_updated": "2026-11-26T22:41:55Z",
+      "status_changed_at": "2026-11-26T22:41:55Z",
+      "pr_number": 3847,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3847",
+      "merged_at": "2026-11-26T22:39:23Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3847 status=done (PR auto-opened by dispatcher; verify deferred to CI): MAX_INTERPOLATION_INPUT 64KiB cap in integrations crate + 2 IG3 tests; 9/9+clippy green; branch pushed",
+      "reviewer_summary": "verdict=approve head_oid=71fad73de2c962c9744a3c67b51528151458eba9 note=clean-64KiB-interpolation-cap-ig3-valid-ci-green-approve-posted-as-comment(self-review-block)",
+      "last_reviewed_oid": "71fad73de2c962c9744a3c67b51528151458eba9",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-26T22:37:44Z",
+      "task_id": "code-review-api-core-workflow-regex-recompiled-uncapped",
+      "branch": "auto-impl/code-review-api-core-workflow-regex-reco-2f2dc143"
+    },
+    {
       "task_id": "code-review-api-handlers-ai-list-unclamped-limit",
       "branch": "auto-impl/code-review-api-handlers-ai-list-unclamp-2d5b3ea2",
       "status": "merged",
@@ -16153,6 +16175,28 @@
       "merge_attempted_at": "2026-08-21T16:48:48Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-templatelibrary-silent-mutation-fail",
+      "branch": "auto-impl/code-review-ppt-web-ui-templatelibrary-s-a0216b68",
+      "status": "merged",
+      "claimed_at": "2026-11-26T14:28:36Z",
+      "last_updated": "2026-11-26T22:41:55Z",
+      "status_changed_at": "2026-11-26T22:41:55Z",
+      "pr_number": 3840,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3840",
+      "merged_at": "2026-11-26T22:40:32Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3840 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=finding already fixed in dev; shipped missing regression guard test; verify green",
+      "reviewer_summary": "verdict=approve head_oid=2ac8ee46b278a00515feaa7af76b02b41291345f note=test-only-regression-guard-verified-against-prod+i18n-CI-green",
+      "last_reviewed_oid": "2ac8ee46b278a00515feaa7af76b02b41291345f",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-26T22:37:44Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-toast-copy-timer-no-cleanup",
       "branch": "auto-impl/code-review-ppt-web-ui-toast-copy-timer-119dac7c",
       "status": "merged",
@@ -16419,6 +16463,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-09T14:11:09Z"
+    },
+    {
+      "task_id": "code-review-reality-server-agent-review-body-unbounded",
+      "branch": "auto-impl/code-review-reality-server-agent-review-6988b8da",
+      "status": "merged",
+      "claimed_at": "2026-11-26T16:28:24Z",
+      "last_updated": "2026-11-26T22:41:55Z",
+      "status_changed_at": "2026-11-26T22:41:55Z",
+      "pr_number": 3846,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3846",
+      "merged_at": "2026-11-26T22:39:04Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3846 status=done: per-route DefaultBodyLimit::max(64KiB) on agent-reviews router + 413 IG3 test; verify green vs live DB",
+      "reviewer_summary": "verdict=approve head_oid=650a1a0bce645bf06f1c459057ffc8559763fea6 note=clean-64KiB-body-cap-on-agent-reviews-router-correct-inner-layer-no-regression-413-test-solid; posted as COMMENT (self-approval blocked by GitHub)",
+      "last_reviewed_oid": "650a1a0bce645bf06f1c459057ffc8559763fea6",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-26T22:37:44Z"
     },
     {
       "task_id": "code-review-reality-server-agent-review-self-review",
@@ -36932,5 +36998,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T21:27:44Z"
+  "archived_at": "2026-11-26T22:41:56Z"
 }
