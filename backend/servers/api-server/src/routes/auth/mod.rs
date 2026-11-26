@@ -259,7 +259,9 @@ fn mfa_gate_for(lookup: Result<Option<db::models::TwoFactorAuth>, sqlx::Error>) 
     match lookup {
         Ok(Some(record)) if record.enabled => MfaGate::Challenge(Box::new(record)),
         Ok(_) => MfaGate::Skip,
-        Err(_) => MfaGate::Skip,
+        // Fail closed: surface the lookup failure instead of defaulting the
+        // enabled flag to `false`. A DB error must never bypass MFA.
+        Err(_) => MfaGate::LookupFailed,
     }
 }
 
