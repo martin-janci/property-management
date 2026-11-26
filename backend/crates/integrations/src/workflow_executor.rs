@@ -661,6 +661,18 @@ impl WorkflowExecutor {
 static INTERPOLATION_RE: LazyLock<regex_lite::Regex> =
     LazyLock::new(|| regex_lite::Regex::new(r"\{\{([^}]+)\}\}").unwrap());
 
+/// Maximum length (in bytes) of a single string node the interpolation regex
+/// is allowed to scan.
+///
+/// Workflow action config and context values are user-influenced, so a string
+/// node of unbounded size would let a caller force the regex engine (and the
+/// subsequent `String::replace` passes) to do arbitrarily large work on a
+/// workflow-execution hot path. Anything over this cap is passed through
+/// verbatim instead of being interpolated. 64 KiB comfortably exceeds any
+/// legitimate templated field (subjects, bodies, URLs) while bounding the
+/// worst case.
+const MAX_INTERPOLATION_INPUT: usize = 64 * 1024;
+
 /// Interpolate context variables in a JSON value.
 /// Replaces {{variable}} patterns with values from context.
 fn interpolate_variables(value: &Value, context: &Value) -> Value {
@@ -753,6 +765,44 @@ mod tests {
 
         assert_eq!(result["subject"], "New fault: Broken elevator");
         assert_eq!(result["body"], "A fault has been reported by John Doe");
+    }
+
+    #[test]
+    fn test_interpolate_variables_oversized_input_is_capped() {
+        // A single string node larger than MAX_INTERPOLATION_INPUT is
+        // user-influenced (it comes straight from a workflow action config),
+        // so running the interpolation regex over it is unbounded work. Such
+        // oversized input must be passed through verbatim instead of being
+        // scanned/interpolated.
+        let filler = "x".repeat(MAX_INTERPOLATION_INPUT + 1);
+        let oversized = format!("{filler}{{{{name}}}}");
+        let config = serde_json::json!({ "body": oversized });
+        let context = serde_json::json!({ "name": "Alice" });
+
+        let result = interpolate_variables(&config, &context);
+        let body = result["body"].as_str().unwrap();
+
+        // Over the cap: the {{name}} token is NOT interpolated — the input is
+        // returned unchanged (length preserved, token still present).
+        assert_eq!(body.len(), filler.len() + "{{name}}".len());
+        assert!(body.ends_with("{{name}}"));
+    }
+
+    #[test]
+    fn test_interpolate_variables_at_cap_still_interpolates() {
+        // Input at or below the cap must still interpolate normally.
+        let token = "{{name}}";
+        let filler = "y".repeat(MAX_INTERPOLATION_INPUT - token.len());
+        let within = format!("{filler}{token}");
+        assert!(within.len() <= MAX_INTERPOLATION_INPUT);
+        let config = serde_json::json!({ "body": within });
+        let context = serde_json::json!({ "name": "Alice" });
+
+        let result = interpolate_variables(&config, &context);
+        let body = result["body"].as_str().unwrap();
+
+        assert!(body.ends_with("Alice"));
+        assert!(!body.contains("{{name}}"));
     }
 
     #[test]
