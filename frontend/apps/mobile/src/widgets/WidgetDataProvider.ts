@@ -393,12 +393,17 @@ export class WidgetDataProvider {
 
       return response.json();
     } catch (error) {
-      // Log error for debugging; in production, integrate with error reporting
+      // Log error for debugging; in production, integrate with error reporting.
       if (__DEV__) {
         console.error(`Widget API request failed for ${endpoint}:`, error);
       }
-      // Return empty object for mock data fallback
-      return {} as T;
+      // Surface the failure to the caller. Previously this swallowed the error
+      // and returned `{} as T`, which made a failed fetch indistinguishable
+      // from a successful fetch of empty data — silently defeating the
+      // cache-fallback path in `updateAllWidgets` and hiding outages behind
+      // zeroed widget content. Re-throwing lets callers fall back to cached
+      // data (or report the error) instead.
+      throw error instanceof Error ? error : new Error(`Widget API request failed for ${endpoint}`);
     }
   }
 }
