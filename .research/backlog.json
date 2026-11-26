@@ -17061,7 +17061,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3745"
       ],
@@ -17073,7 +17073,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T10:24:19Z",
+        "assignment_status": "merged",
+        "pr_number": 3819
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-ppt-web-src-features-government-portal-pages-guest-report-submission-page-tsx",
@@ -17234,7 +17239,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review ppt-web-ui 2026-11-24"
       ],
@@ -17247,7 +17252,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T10:24:19Z",
+        "assignment_status": "merged",
+        "pr_number": 3821
+      }
     },
     {
       "id": "code-review-ppt-web-ui-confirm-dialog-static-ids",
@@ -17255,7 +17265,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review ppt-web-ui 2026-11-24"
       ],
@@ -17268,7 +17278,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T10:24:19Z",
+        "assignment_status": "merged",
+        "pr_number": 3820
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-mobile-src-screens-person-months-personmonthsscreen-tsx",
@@ -17276,7 +17291,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3775"
       ],
@@ -17288,7 +17303,12 @@
       ],
       "created_at": "2026-11-25",
       "updated_at": "2026-11-25",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T10:24:19Z",
+        "assignment_status": "merged",
+        "pr_number": 3818
+      }
     },
     {
       "id": "churn-hotspot-backend-servers-api-server-src-routes-person-months-rs",
@@ -17296,7 +17316,7 @@
       "vector": "refactor",
       "confidence": "medium",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3775"
       ],
@@ -17308,7 +17328,12 @@
       ],
       "created_at": "2026-11-25",
       "updated_at": "2026-11-25",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T10:24:19Z",
+        "assignment_status": "merged",
+        "pr_number": 3817
+      }
     }
   ]
 }
