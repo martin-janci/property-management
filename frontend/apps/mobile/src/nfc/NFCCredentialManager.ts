@@ -88,9 +88,61 @@ export class NFCCredentialManager {
   private apiBaseUrl: string;
   private authToken: string | null = null;
   private credentials: NFCCredential[] = [];
+  // Offset (ms) between the server clock and this device's clock, i.e.
+  // `serverNow - deviceNow`, learned from the `Date` response header of every
+  // successful API call (see syncServerClock). The device clock is attacker-
+  // controlled: a resident can wind it back to make an EXPIRED credential read
+  // as still-valid in the client-side pre-check (validateAccess), or forward to
+  // slip past a not-yet-valid window. The physical door remains server-
+  // authoritative (the reader re-validates `encryptedData` on the server), but
+  // the on-device gate must not grant on a spoofed clock either. We therefore
+  // judge expiry against `now()` — the device clock corrected by this offset —
+  // rather than against the raw device clock. 0 until the first sync, so a cold
+  // start before any network call falls back to the device clock (fail-safe:
+  // the server still has the final say at the reader).
+  private serverTimeOffsetMs = 0;
 
   constructor(apiBaseUrl: string) {
     this.apiBaseUrl = apiBaseUrl;
+  }
+
+  /**
+   * Current wall-clock time in epoch-ms, corrected by the most recent observed
+   * server/device clock offset. Expiry and validity-window checks MUST use this
+   * instead of `Date.now()` / `new Date()` so a tampered device clock cannot
+   * extend an expired credential (see serverTimeOffsetMs).
+   */
+  now(): number {
+    return Date.now() + this.serverTimeOffsetMs;
+  }
+
+  /**
+   * Observed server/device clock offset in ms (`serverNow - deviceNow`), or 0
+   * before the first successful sync. Exposed for diagnostics and tests.
+   */
+  getServerTimeOffsetMs(): number {
+    return this.serverTimeOffsetMs;
+  }
+
+  /**
+   * Learn the server/device clock offset from a response's `Date` header. Best
+   * effort: a missing/unparseable header, or a `headers` object that doesn't
+   * support `.get` (some fetch polyfills / test doubles), leaves the previous
+   * offset untouched. Never throws — the caller is in the API hot path.
+   */
+  private syncServerClock(headers: unknown): void {
+    try {
+      const get = (headers as { get?: (name: string) => string | null } | undefined)?.get;
+      if (typeof get !== 'function') return;
+      const dateHeader = get.call(headers, 'date');
+      if (!dateHeader) return;
+      const serverMs = Date.parse(dateHeader);
+      if (Number.isNaN(serverMs)) return;
+      this.serverTimeOffsetMs = serverMs - Date.now();
+    } catch {
+      // Header access can throw in some fetch implementations; keep the prior
+      // offset and fall back to the device clock rather than crash the request.
+    }
   }
 
   /**
@@ -138,7 +190,7 @@ export class NFCCredentialManager {
    * Get all active credentials.
    */
   getActiveCredentials(): NFCCredential[] {
-    const nowMs = Date.now();
+    const nowMs = this.now();
     return this.credentials.filter(
       (c) => c.status === 'active' && new Date(c.validUntil).getTime() > nowMs
     );
@@ -311,7 +363,7 @@ export class NFCCredentialManager {
    */
   credentialsNeedRefresh(): boolean {
     const refreshThreshold = 24 * 60 * 60 * 1000; // 24 hours
-    const now = Date.now();
+    const now = this.now();
 
     for (const credential of this.credentials) {
       if (credential.status !== 'active') continue;
@@ -505,6 +557,10 @@ export class NFCCredentialManager {
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
+
+    // Learn the server clock from every response (success or error) so a
+    // tampered device clock can't defeat the client-side expiry pre-check.
+    this.syncServerClock((response as { headers?: unknown }).headers);
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);

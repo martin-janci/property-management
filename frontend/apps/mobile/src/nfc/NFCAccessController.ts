@@ -247,7 +247,15 @@ export class NFCAccessController {
    * Validate access for a credential and access point.
    */
   private validateAccess(credential: NFCCredential, accessPointId: string): AccessAttemptResult {
-    const now = new Date();
+    // Judge expiry and time-of-day windows against the server-corrected clock,
+    // not the raw device clock. The device clock is attacker-controlled (a
+    // resident can wind it back so an EXPIRED credential's `validUntil` still
+    // reads as "in the future"); `NFCCredentialManager.now()` folds in the
+    // server/device offset learned from API `Date` headers so this on-device
+    // gate can't be defeated that way. Before the first server sync the offset
+    // is 0 and this is exactly the device clock — the server reader remains the
+    // final authority at the door either way.
+    const now = new Date(this.credentialManager.now());
     const timestamp = now.toISOString();
 
     // Check credential status
