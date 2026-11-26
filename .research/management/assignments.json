@@ -135,18 +135,18 @@
     {
       "task_id": "churn-hotspot-backend-servers-api-server-src-routes-voice-webhooks-handlers-rs",
       "branch": "auto-impl/churn-hotspot-backend-servers-api-server-d0d18fdb",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-26T00:28:12Z",
-      "last_updated": "2026-11-26T00:28:12Z",
-      "status_changed_at": "2026-11-26T00:28:12Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-26T00:51:13Z",
+      "status_changed_at": "2026-11-26T00:51:13Z",
+      "pr_number": 3815,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3815",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3815 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=refactor-only: extracted build_command_processor + lookup_voice_device helpers in voice_webhooks/handlers.rs (dedupes Alexa+Google), strengthened RLS-release test (500/PROCESSING_ERROR); fmt clean; clippy/test deferred to CI (no DB/sqlx cache in cloud); +59/-44 1 file",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -155,5 +155,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-26T00:42:52Z"
+  "generated": "2026-11-26T00:51:13Z"
 }
