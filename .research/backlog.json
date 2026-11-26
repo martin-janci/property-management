@@ -17121,7 +17121,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3762"
       ],
@@ -17133,7 +17133,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T04:23:35Z",
+        "assignment_status": "merged",
+        "pr_number": 3812
+      }
     },
     {
       "id": "test-gap-screen-map-drift-reality-journal-pr-3764",
@@ -17183,7 +17188,7 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "rotating-expert-review ppt-web-ui 2026-11-24"
       ],
@@ -17196,7 +17201,12 @@
       ],
       "created_at": "2026-11-24",
       "updated_at": "2026-11-24",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-26T04:23:35Z",
+        "assignment_status": "merged",
+        "pr_number": 3811
+      }
     },
     {
       "id": "code-review-ppt-web-ui-toast-role-alert-mismatch",

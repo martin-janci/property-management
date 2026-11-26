@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T02:28:34Z",
+  "archived_at": "2026-11-26T04:28:09Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -12933,6 +12933,30 @@
       "last_updated": "2026-08-22T10:24:03Z"
     },
     {
+      "id": "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",
+      "action": "ppt-web AppShell UserMenu declares role=\"menu\" but missing arrow-key navigation + focus return — SR users cannot operate",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=bug) | gc1-reconcile 2026-11-26T04:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "bug"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3811,
+        "merged_at": "2026-11-26T02:34:03Z",
+        "at": "2026-11-26T04:23:34Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-aria-label-i18n",
       "action": "ppt-web: 103 hardcoded English aria-label attributes across feature components — screen readers hear English on sk/cs/de",
       "owner_role": "pm-backend",
@@ -13413,6 +13437,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-22T02:24:51Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "action": "ppt web ui conditionbuilder number coerce zero",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-26T04:23:34Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-24T00:24:47Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-09T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3810,
+        "merged_at": "2026-11-26T02:33:35Z",
+        "at": "2026-11-26T04:23:34Z"
       }
     },
     {
@@ -38105,6 +38154,30 @@
       "dependency": null,
       "depends_on": [],
       "gc1_closed": "merged via PR #1154"
+    },
+    {
+      "id": "test-gap-pr-3762-payment-match-no-test-diff",
+      "action": "PR #3762 (payment-match date tiebreak + admin-web capability gates) added 70 LoC to accounting.rs with no test diff",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=test-gap) | gc1-reconcile 2026-11-26T04:23:34Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-24T18:26:32Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3812,
+        "merged_at": "2026-11-26T02:36:23Z",
+        "at": "2026-11-26T04:23:34Z"
+      }
     },
     {
       "id": "test-gap-repeated-churn-oauth-integration-tests",
