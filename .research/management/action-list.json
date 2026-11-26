@@ -446,24 +446,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-pricemap-unbounded-cache-dos",
-      "action": "reality server pricemap unbounded cache dos",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T20:24:30Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-01T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-mobile-rn-hardcoded-i18n-screens",
       "action": "mobile rn hardcoded i18n screens",
       "owner_role": "pm-backend",
@@ -486,7 +468,7 @@
       "action": "release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak) [retry 1/2 of failed code-review-api-core-digest-sweep-lock-release-leak]",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-11-26T02:25:53Z (retry_of=code-review-api-core-digest-sweep-lock-release-leak reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T20:45:56Z)",
       "deadline": null,
       "dependency": null,
@@ -500,7 +482,7 @@
       "action": "report_abandoned has no persisted abandoned_at — abandoned digests are log-only [retry 1/2 of failed code-review-api-core-digest-abandoned-no-terminal-state]",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-11-26T02:25:53Z (retry_of=code-review-api-core-digest-abandoned-no-terminal-state reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T23:09:11Z)",
       "deadline": null,
       "dependency": null,
@@ -514,7 +496,7 @@
       "action": "mobile rn personmonths screen no i18n [retry 1/2 of failed code-review-mobile-rn-personmonths-screen-no-i18n]",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-11-26T04:24:37Z (retry_of=code-review-mobile-rn-personmonths-screen-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T02:36:48Z)",
       "deadline": null,
       "dependency": null,
@@ -528,7 +510,7 @@
       "action": "mobile rn untested nfc credentials",
       "owner_role": "pm-tech-lead",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d mobile-rn score=1 vector=test)",
       "deadline": null,
       "dependency": null,
@@ -546,7 +528,7 @@
       "action": "ppt web ui financial feature no i18n",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d ppt-web-ui score=1 vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -794,24 +776,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-url-validator-ipv4-mapped-ipv6-ssrf",
-      "action": "reality server url validator ipv4 mapped ipv6 ssrf",
-      "owner_role": "pm-backend",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-26T10:25:48Z (tier1d reality-server score=3 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T10:25:48Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 3,
-        "vector": "bug",
-        "generated": "2026-07-30T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-users-login-no-rate-limit",
       "action": "reality server users login no rate limit",
       "owner_role": "pm-security",
@@ -953,6 +917,26 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-07-30T00:00:00Z"
+      }
+    },
+    {
+      "id": "gh-issue-3834",
+      "action": "Follow-up: guest-report submission dates hardcoded to en-GB despite full i18n (PR #3816) (Closes #3834)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "in-progress",
+      "source": "dispatcher-issue-ingest 2026-11-26T12:25:50Z (#3834)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T12:25:50Z",
+      "issue_ref": {
+        "number": 3834,
+        "url": null,
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
       }
     }
   ],
