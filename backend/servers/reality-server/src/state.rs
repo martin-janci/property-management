@@ -942,6 +942,17 @@ pub struct AppState {
     /// budget. Bounded like the inquiry set so a rotating-IP flood can't grow
     /// the map without bound.
     pub view_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    /// Per-IP throttle for the UNAUTHENTICATED portal login endpoint
+    /// (`POST /api/v1/users/login`, `routes::users::login`). Without it the
+    /// endpoint accepts unbounded email/password attempts from one source,
+    /// enabling offline-speed password guessing and credential-stuffing against
+    /// the portal user population. Keyed on the SAME spoof-resistant client-IP
+    /// hash the inquiry/view throttles use (`routes::inquiries::client_ip_bucket`)
+    /// but held in a SEPARATE set with a deliberately low quota
+    /// (`LOGIN_RATE_LIMIT_RPM`): a human mistyping a password retries a handful
+    /// of times per minute, while a guessing bot needs far more. Bounded like the
+    /// inquiry/view sets so a rotating-IP flood can't grow the map without bound.
+    pub login_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
     /// Number of trusted reverse-proxy hops in front of reality-server, used to
     /// pick a **spoof-resistant** client address out of `X-Forwarded-For` (the
     /// hop our own trusted proxy appended, counted from the right — see
@@ -974,6 +985,14 @@ pub const INQUIRY_RATE_LIMIT_IDLE_TTL: Duration = Duration::from_secs(300);
 /// view-counter-poisoning bot replays the same listing far more often.
 /// Override with `VIEW_RATE_LIMIT_RPM`.
 pub const VIEW_RATE_LIMIT_RPM: u32 = 120;
+
+/// Default per-IP quota (requests/minute) for the unauthenticated portal login
+/// endpoint (`routes::users::login`). Deliberately low: a legitimate user
+/// mistyping their password retries only a handful of times per minute, whereas
+/// a password-guessing / credential-stuffing bot needs far more throughput to be
+/// effective. This is the brute-force throttle, not a UX limit. Override with
+/// `LOGIN_RATE_LIMIT_RPM`.
+pub const LOGIN_RATE_LIMIT_RPM: u32 = 10;
 
 impl AppState {
     /// Create a new AppState with database pool.
@@ -1060,6 +1079,22 @@ impl AppState {
                 inquiry_max_ips,
             ),
         );
+        // Per-IP throttle for the unauthenticated portal login endpoint. Same
+        // bounded construction and client-IP keying as the inquiry/view sets,
+        // but a separate, deliberately low quota so it acts as a brute-force /
+        // credential-stuffing throttle without affecting other anonymous traffic.
+        let login_rpm = std::env::var("LOGIN_RATE_LIMIT_RPM")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(LOGIN_RATE_LIMIT_RPM);
+        let login_rate_limiters = Arc::new(
+            api_core::middleware::TenantRateLimiterSet::with_default_bounded(
+                login_rpm,
+                INQUIRY_RATE_LIMIT_IDLE_TTL,
+                inquiry_max_ips,
+            ),
+        );
         // Trusted reverse-proxy hop count for spoof-resistant client-IP
         // derivation (default 1 = a single reverse proxy in front of us).
         let inquiry_trusted_proxy_hops = std::env::var("INQUIRY_TRUSTED_PROXY_HOPS")
@@ -1092,6 +1127,8 @@ impl AppState {
             inquiry_rate_limiters,
             // Per-IP throttle for the unauthenticated listing view beacon.
             view_rate_limiters,
+            // Per-IP throttle for the unauthenticated portal login endpoint.
+            login_rate_limiters,
             inquiry_trusted_proxy_hops,
         }
     }

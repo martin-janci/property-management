@@ -213,6 +213,34 @@ fn register_response(
     }
 }
 
+/// Enforce the per-IP portal-login throttle. Returns `Err(429)` once the client
+/// has exceeded the quota (`AppState::login_rate_limiters`), so repeated
+/// password-guessing / credential-stuffing from one source is answered with
+/// HTTP 429 instead of an unbounded stream of credential checks.
+///
+/// Reuses the existing, already-reviewed rate-limit mechanism rather than
+/// inventing a parallel one: the same `TenantRateLimiterSet` the anonymous
+/// inquiry/view throttles use, keyed on the same spoof-resistant client-IP hash
+/// (`crate::routes::inquiries::client_ip_bucket`).
+async fn enforce_login_rate_limit(
+    limiters: &api_core::middleware::TenantRateLimiterSet,
+    headers: &axum::http::HeaderMap,
+    trusted_hops: usize,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    use api_core::middleware::RateLimitDecision;
+    let key = crate::routes::inquiries::client_ip_bucket(headers, trusted_hops);
+    match limiters.check(key).await {
+        RateLimitDecision::Allow => Ok(()),
+        RateLimitDecision::DenyTooManyRequests => {
+            tracing::warn!("Portal login rate limit tripped");
+            Err((
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                "Too many login attempts. Please try again in a minute.".to_string(),
+            ))
+        }
+    }
+}
+
 /// Login with email/password.
 #[utoipa::path(
     post,
@@ -221,13 +249,26 @@ fn register_response(
     request_body = LoginRequest,
     responses(
         (status = 200, description = "Login successful", body = LoginResponse),
-        (status = 401, description = "Invalid credentials")
+        (status = 401, description = "Invalid credentials"),
+        (status = 429, description = "Too many login attempts")
     )
 )]
 pub async fn login(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>, (axum::http::StatusCode, String)> {
+    // Brute-force / credential-stuffing throttle: reject once this client's
+    // per-IP quota in the rolling window is exhausted, BEFORE doing any
+    // credential work. Keyed per client-IP bucket so one attacker cannot lock
+    // out other users.
+    enforce_login_rate_limit(
+        &state.login_rate_limiters,
+        &headers,
+        state.inquiry_trusted_proxy_hops,
+    )
+    .await?;
+
     let handler = UserHandler::new(state.portal_repo.clone());
 
     match handler.login(&req.email, &req.password).await {
@@ -691,7 +732,10 @@ mod login_rate_limit_tests {
                 }
             }
         }
-        assert!(allowed > 0, "early attempts within the quota must be allowed");
+        assert!(
+            allowed > 0,
+            "early attempts within the quota must be allowed"
+        );
         assert!(
             blocked > 0,
             "a flood of login attempts from one IP must eventually be blocked \
