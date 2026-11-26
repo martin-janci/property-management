@@ -12636,6 +12636,28 @@
       "merge_attempted_at": "2026-08-22T12:30:25Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-appshell-usermenu-arrow-keys",
+      "branch": "auto-impl/code-review-ppt-web-ui-appshell-usermenu-78cc0e7b",
+      "status": "merged",
+      "claimed_at": "2026-11-25T22:34:21Z",
+      "last_updated": "2026-11-26T02:35:45Z",
+      "status_changed_at": "2026-11-26T02:35:45Z",
+      "pr_number": 3811,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3811",
+      "merged_at": "2026-11-26T02:34:03Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=40c56afdf93d8eb184b140d2594856bb5b11ef55 note=waiaria-menu-nav-correct-ci-green-scope-justified-approve-posted-as-comment(self-pr)",
+      "last_reviewed_oid": "40c56afdf93d8eb184b140d2594856bb5b11ef55",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-26T02:31:29Z"
+    },
+    {
       "task_id": "code-review-ppt-web-ui-aria-label-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-aria-label-i18n-9e5a6cf1",
       "status": "merged",
@@ -13105,6 +13127,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-conditionbuilder-number-coerce-zero",
+      "branch": "auto-impl/code-review-ppt-web-ui-conditionbuilder-298e4a39",
+      "status": "merged",
+      "claimed_at": "2026-11-25T22:34:21Z",
+      "last_updated": "2026-11-26T02:35:45Z",
+      "status_changed_at": "2026-11-26T02:35:45Z",
+      "pr_number": 3810,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3810",
+      "merged_at": "2026-11-26T02:33:35Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=0f1e09ca40752c4219834a088af2b38f2f7dad1c note=conditionbuilder-zero-coerce-fix-correct-tested-scope-ok; formal APPROVE blocked (self-PR), posted as COMMENT",
+      "last_reviewed_oid": "0f1e09ca40752c4219834a088af2b38f2f7dad1c",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-26T02:31:29Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-confirm-dialog-i18n",
@@ -35508,6 +35552,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "test-gap-pr-3762-payment-match-no-test-diff",
+      "branch": "auto-impl/test-gap-pr-3762-payment-match-no-test-d-4991f3ee",
+      "status": "merged",
+      "claimed_at": "2026-11-25T22:34:21Z",
+      "last_updated": "2026-11-26T02:36:54Z",
+      "status_changed_at": "2026-11-26T02:36:54Z",
+      "pr_number": 3812,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3812",
+      "merged_at": "2026-11-26T02:36:23Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=df32fca24637d07a4829054273cd813869822cb1 note=test-only coverage backfill; integration tests pin due-date tiebreak via run_payment_matcher; CI green incl DB test-shards; no scope drift; COMMENT(self-pr)",
+      "last_reviewed_oid": "df32fca24637d07a4829054273cd813869822cb1",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-26T02:31:29Z"
+    },
+    {
       "task_id": "test-gap-repeated-churn-oauth-integration-tests",
       "branch": "auto-impl/test-gap-repeated-churn-oauth-integratio-5515cdd4",
       "status": "failed",
@@ -35930,5 +35996,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T00:40:52Z"
+  "archived_at": "2026-11-26T02:36:54Z"
 }

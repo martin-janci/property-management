@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T00:28:25Z",
+  "archived_at": "2026-11-26T02:28:34Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9867,6 +9867,31 @@
         "merged_pr": 3401,
         "merged_at": "2026-11-10T20:32:04Z",
         "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallows-errors",
+      "action": "mobile rn widget apirequest swallows errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-26T02:24:39Z",
+      "deadline": null,
+      "dependency": "none",
+      "depends_on": [],
+      "first_open_at": "2026-11-24T00:24:47Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-11T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3806,
+        "merged_at": "2026-11-26T00:36:20Z",
+        "at": "2026-11-26T02:24:39Z"
       }
     },
     {

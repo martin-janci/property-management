@@ -316,24 +316,6 @@
       "last_updated": "2026-11-25T12:37:56Z"
     },
     {
-      "id": "code-review-mobile-rn-widget-apirequest-swallows-errors",
-      "action": "mobile rn widget apirequest swallows errors",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": "none",
-      "depends_on": [],
-      "first_open_at": "2026-11-24T00:24:47Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-11T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-core-idempotency-tx-across-handler",
       "action": "[NEEDS-RESCOPE: confirmed real bug; true fix needs a db-migration slice (pending-claim ledger) + #[sqlx::test] w/ Postgres — out of rust-backend scope] api core idempotency tx across handler",
       "owner_role": "pm-backend",
@@ -850,6 +832,34 @@
         "vector": "bug",
         "generated": "2026-08-01T00:00:00Z"
       }
+    },
+    {
+      "id": "code-review-api-core-digest-sweep-lock-release-leak-retry1",
+      "action": "release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak) [retry 1/2 of failed code-review-api-core-digest-sweep-lock-release-leak]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-26T02:25:53Z (retry_of=code-review-api-core-digest-sweep-lock-release-leak reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T20:45:56Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T02:25:53Z",
+      "retry_of": "code-review-api-core-digest-sweep-lock-release-leak",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-api-core-digest-abandoned-no-terminal-state-retry1",
+      "action": "report_abandoned has no persisted abandoned_at — abandoned digests are log-only [retry 1/2 of failed code-review-api-core-digest-abandoned-no-terminal-state]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-26T02:25:53Z (retry_of=code-review-api-core-digest-abandoned-no-terminal-state reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T23:09:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T02:25:53Z",
+      "retry_of": "code-review-api-core-digest-abandoned-no-terminal-state",
+      "retry_round": 1
     }
   ],
   "generated": "2026-11-25T04:15:10Z"
