@@ -13,20 +13,45 @@ import type {
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  buildSubmissionRequest,
+  filterPortalConnections,
+  filterReportTemplates,
+  formatSubmissionDate,
+  type GuestRecord,
+  type SubmissionCountry,
+} from './guestReportSubmission';
 
-/** Guest record for submission */
-export interface GuestRecord {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  nationality: string;
-  documentType: string;
-  documentNumber: string;
-  checkInDate: string;
-  checkOutDate?: string;
-  unitNumber: string;
-  buildingName: string;
+export type { GuestRecord } from './guestReportSubmission';
+
+/** Back-arrow (chevron-left) icon used by the header and preview actions. */
+function ArrowLeftIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+/** Check-mark icon used by completed steps and the completion screen. */
+function CheckIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  );
 }
 
 interface GuestReportSubmissionPageProps {
@@ -65,26 +90,15 @@ export function GuestReportSubmissionPage({
 }: GuestReportSubmissionPageProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState<SubmissionStep>('select');
-  const [selectedCountry, setSelectedCountry] = useState<'SK' | 'CZ'>('SK');
+  const [selectedCountry, setSelectedCountry] = useState<SubmissionCountry>('SK');
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [selectedGuests, setSelectedGuests] = useState<string[]>(guests.map((g) => g.id));
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Filter connections and templates by country
-  const filteredConnections = connections.filter(
-    (c) =>
-      c.countryCode === selectedCountry &&
-      (c.portalType === 'police_registry' || c.portalType === 'housing_registry') &&
-      c.isActive
-  );
-
-  const filteredTemplates = templates.filter(
-    (template) =>
-      template.countryCode === selectedCountry &&
-      (template.portalType === 'police_registry' || template.portalType === 'housing_registry') &&
-      template.isActive
-  );
+  const filteredConnections = filterPortalConnections(connections, selectedCountry);
+  const filteredTemplates = filterReportTemplates(templates, selectedCountry);
 
   const selectedConnection = connections.find((c) => c.id === selectedConnectionId);
   const selectedTemplate = templates.find((tpl) => tpl.id === selectedTemplateId);
@@ -145,38 +159,14 @@ export function GuestReportSubmissionPage({
     setStep('submitting');
 
     try {
-      const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-      const reportData: Record<string, unknown> = {
-        guests: selectedGuestRecords.map((guest) => ({
-          firstName: guest.firstName,
-          lastName: guest.lastName,
-          dateOfBirth: guest.dateOfBirth,
-          nationality: guest.nationality,
-          documentType: guest.documentType,
-          documentNumber: guest.documentNumber,
-          checkInDate: guest.checkInDate,
-          checkOutDate: guest.checkOutDate,
-          accommodation: {
-            unitNumber: guest.unitNumber,
-            buildingName: guest.buildingName,
-          },
-        })),
-        submissionDate: today.toISOString(),
-        countryCode: selectedCountry,
-        totalGuests: selectedGuestRecords.length,
-      };
-
-      await onSubmit({
-        portalConnectionId: selectedConnectionId,
-        templateId: selectedTemplateId,
-        reportType: 'guest_registration',
-        reportPeriodStart: startOfMonth.toISOString().split('T')[0],
-        reportPeriodEnd: endOfMonth.toISOString().split('T')[0],
-        reportData,
-      });
+      await onSubmit(
+        buildSubmissionRequest({
+          portalConnectionId: selectedConnectionId,
+          templateId: selectedTemplateId,
+          country: selectedCountry,
+          guests: selectedGuestRecords,
+        })
+      );
 
       setStep('complete');
     } catch (err) {
@@ -189,14 +179,6 @@ export function GuestReportSubmissionPage({
       );
       setStep('preview');
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
   };
 
   // Static placeholder IDs for loading skeleton
@@ -226,20 +208,7 @@ export function GuestReportSubmissionPage({
           onClick={onBack}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          <ArrowLeftIcon />
           {t('governmentPortal.guestReport.backToDashboard', { defaultValue: 'Back to Dashboard' })}
         </button>
         <h1 className="text-2xl font-bold text-gray-900">
@@ -282,24 +251,7 @@ export function GuestReportSubmissionPage({
                         : 'bg-gray-200 text-gray-500'
                   }`}
                 >
-                  {isCompleted ? (
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  ) : (
-                    stepNumber
-                  )}
+                  {isCompleted ? <CheckIcon /> : stepNumber}
                 </div>
                 <span
                   className={`ml-2 text-sm ${
@@ -535,7 +487,7 @@ export function GuestReportSubmissionPage({
                       </p>
                       <p className="text-sm text-gray-500">
                         {guest.nationality} | {guest.documentType}: {guest.documentNumber} |{' '}
-                        Check-in: {formatDate(guest.checkInDate)}
+                        Check-in: {formatSubmissionDate(guest.checkInDate)}
                       </p>
                     </div>
                     <div className="text-right text-sm text-gray-500">
@@ -711,14 +663,14 @@ export function GuestReportSubmissionPage({
                             {guest.firstName} {guest.lastName}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">
-                            {formatDate(guest.dateOfBirth)}
+                            {formatSubmissionDate(guest.dateOfBirth)}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">{guest.nationality}</td>
                           <td className="px-3 py-2 text-sm text-gray-500">
                             {guest.documentType}: {guest.documentNumber}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">
-                            {formatDate(guest.checkInDate)}
+                            {formatSubmissionDate(guest.checkInDate)}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">{guest.unitNumber}</td>
                         </tr>
@@ -737,20 +689,7 @@ export function GuestReportSubmissionPage({
               onClick={() => setStep('select')}
               className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
+              <ArrowLeftIcon />
               {t('governmentPortal.guestReport.actions.backToSelection', {
                 defaultValue: 'Back to Selection',
               })}
@@ -844,20 +783,7 @@ export function GuestReportSubmissionPage({
       {step === 'complete' && (
         <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
           <div className="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-6">
-            <svg
-              className="h-8 w-8 text-green-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+            <CheckIcon className="h-8 w-8 text-green-600" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
             {t('governmentPortal.guestReport.complete.title', {
