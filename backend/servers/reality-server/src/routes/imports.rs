@@ -14,12 +14,9 @@ use axum::{
     Json, Router,
 };
 use common::url_validation::validate_external_url;
-use db::{
-    models::{
-        CreateFeedSubscription, CreatePortalImportJob, PortalImportJob, PortalImportJobWithStats,
-        RealityFeedSubscription, UpdateFeedSubscription, UpdatePortalImportJob,
-    },
-    SqlxError,
+use db::models::{
+    CreateFeedSubscription, CreatePortalImportJob, PortalImportJob, PortalImportJobWithStats,
+    RealityFeedSubscription, UpdateFeedSubscription, UpdatePortalImportJob,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
@@ -255,15 +252,18 @@ pub async fn update_import_job(
         .reality_portal_repo
         .update_import_job(id, principal.user_id, data)
         .await
-        .map_err(|e| match e {
-            SqlxError::RowNotFound => (
+        .map_err(|e| {
+            // Map RowNotFound → 404; everything else is logged server-side and
+            // returned as a generic 500. Never serialize the raw sqlx::Error
+            // into the internet-facing body (it carries column/constraint names
+            // and pool/TLS state). See `crate::util::errors`.
+            crate::util::errors::db_error_or(
+                &e,
+                "update import job",
+                crate::util::errors::DbErrorClass::NotFound,
                 axum::http::StatusCode::NOT_FOUND,
-                "Import job not found".to_string(),
-            ),
-            other => (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update import job: {}", other),
-            ),
+                "Import job not found",
+            )
         })?;
 
     Ok(Json(ImportJobResponse { job }))
@@ -291,15 +291,14 @@ pub async fn start_import_job(
         .reality_portal_repo
         .start_import_job(id, principal.user_id)
         .await
-        .map_err(|e| match e {
-            SqlxError::RowNotFound => (
+        .map_err(|e| {
+            crate::util::errors::db_error_or(
+                &e,
+                "start import job",
+                crate::util::errors::DbErrorClass::NotFound,
                 axum::http::StatusCode::NOT_FOUND,
-                "Import job not found".to_string(),
-            ),
-            other => (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to start import job: {}", other),
-            ),
+                "Import job not found",
+            )
         })?;
 
     Ok(Json(ImportJobResponse { job }))
@@ -326,15 +325,14 @@ pub async fn cancel_import_job(
         .reality_portal_repo
         .cancel_import_job(id, principal.user_id)
         .await
-        .map_err(|e| match e {
-            SqlxError::RowNotFound => (
+        .map_err(|e| {
+            crate::util::errors::db_error_or(
+                &e,
+                "cancel import job",
+                crate::util::errors::DbErrorClass::NotFound,
                 axum::http::StatusCode::NOT_FOUND,
-                "Import job not found".to_string(),
-            ),
-            other => (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to cancel import job: {}", other),
-            ),
+                "Import job not found",
+            )
         })?;
 
     Ok(Json(ImportJobResponse { job }))
@@ -474,15 +472,14 @@ pub async fn update_feed(
         .reality_portal_repo
         .update_feed_subscription(id, agency_id, data)
         .await
-        .map_err(|e| match e {
-            SqlxError::RowNotFound => (
+        .map_err(|e| {
+            crate::util::errors::db_error_or(
+                &e,
+                "update feed subscription",
+                crate::util::errors::DbErrorClass::NotFound,
                 axum::http::StatusCode::NOT_FOUND,
-                "Feed not found".to_string(),
-            ),
-            other => (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update feed: {}", other),
-            ),
+                "Feed not found",
+            )
         })?;
 
     Ok(Json(FeedResponse { feed }))
@@ -543,15 +540,14 @@ pub async fn sync_feed(
         .reality_portal_repo
         .trigger_feed_sync(id, agency_id)
         .await
-        .map_err(|e| match e {
-            SqlxError::RowNotFound => (
+        .map_err(|e| {
+            crate::util::errors::db_error_or(
+                &e,
+                "trigger feed sync",
+                crate::util::errors::DbErrorClass::NotFound,
                 axum::http::StatusCode::NOT_FOUND,
-                "Feed not found".to_string(),
-            ),
-            other => (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to trigger feed sync: {}", other),
-            ),
+                "Feed not found",
+            )
         })?;
 
     Ok(Json(FeedResponse { feed }))
