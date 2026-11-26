@@ -364,104 +364,15 @@
       "action": "[CLOSED-STALE: already fixed in cd88a22 2026-11-17] reality web agent profile mock stub [retry 1/2 of failed code-review-reality-web-agent-profile-mock-stub]",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=code-review-reality-web-agent-profile-mock-stub reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T08:37:10Z)",
       "deadline": null,
       "dependency": null,
       "depends_on": [],
       "first_open_at": "2026-11-25T16:26:39Z",
       "retry_of": "code-review-reality-web-agent-profile-mock-stub",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-mobile-rn-nfc-device-clock-expiry",
-      "action": "mobile rn nfc device clock expiry",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T20:24:30Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-nfc-modules-no-tests",
-      "action": "mobile rn nfc modules no tests",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T20:24:30Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-02T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-untested-qr-deeplink-parsers",
-      "action": "mobile rn untested qr deeplink parsers",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=2 vector=test)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T20:24:30Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "test",
-        "generated": "2026-08-01T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
-      "action": "ppt web ui budgetform index key editable list",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T20:24:30Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-01T00:00:00Z"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-hardcoded-i18n-screens",
-      "action": "mobile rn hardcoded i18n screens",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T20:24:30Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-08-01T00:00:00Z"
-      }
+      "retry_round": 1,
+      "last_updated": "2026-11-26T14:28:36Z"
     },
     {
       "id": "code-review-api-core-digest-sweep-lock-release-leak-retry1",
@@ -518,7 +429,7 @@
       "action": "ppt web ui templatelibrary silent mutation fail",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d ppt-web-ui score=2 vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -529,14 +440,15 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-07-31T14:10:00Z"
-      }
+      },
+      "last_updated": "2026-11-26T14:28:36Z"
     },
     {
       "id": "code-review-ppt-web-ui-sessions-unsafe-double-cast",
       "action": "ppt web ui sessions unsafe double cast",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d ppt-web-ui score=1 vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -547,14 +459,15 @@
         "score": 1,
         "vector": "bug",
         "generated": "2026-07-31T14:10:00Z"
-      }
+      },
+      "last_updated": "2026-11-26T14:28:36Z"
     },
     {
       "id": "code-review-api-handlers-install-empty-cred-default",
       "action": "api handlers install empty cred default",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "in-progress",
       "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d api-handlers score=2 vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -565,7 +478,8 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-07-31T00:00:00Z"
-      }
+      },
+      "last_updated": "2026-11-26T14:28:36Z"
     },
     {
       "id": "code-review-reality-server-agent-review-body-unbounded",
@@ -748,24 +662,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-users-login-no-rate-limit",
-      "action": "reality server users login no rate limit",
-      "owner_role": "pm-security",
-      "priority": "medium",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-26T10:25:48Z (tier1d reality-server score=3 vector=security)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T10:25:48Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 3,
-        "vector": "security",
-        "generated": "2026-07-30T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-api-core-workflow-regex-recompiled-uncapped",
       "action": "api core workflow regex recompiled uncapped",
       "owner_role": "pm-backend",
@@ -910,6 +806,62 @@
           "from-merged-review"
         ]
       }
+    },
+    {
+      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens-retry1",
+      "action": "find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row [retry 1/2 of failed code-review-api-core-digest-candidates-inner-join-refresh-tokens]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-api-core-digest-candidates-inner-join-refresh-tokens reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T06:42:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T14:25:01Z",
+      "retry_of": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-server-categories-labels-sk-only-retry1",
+      "action": "reality server categories labels sk only [retry 1/2 of failed code-review-reality-server-categories-labels-sk-only]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-reality-server-categories-labels-sk-only reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T06:42:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T14:25:01Z",
+      "retry_of": "code-review-reality-server-categories-labels-sk-only",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-api-core-notif-push-channel-noop-retry1",
+      "action": "api core notif push channel noop [retry 1/2 of failed code-review-api-core-notif-push-channel-noop]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-api-core-notif-push-channel-noop reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T08:36:11Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T14:25:01Z",
+      "retry_of": "code-review-api-core-notif-push-channel-noop",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-server-import-jobs-limit-unclamped-retry2",
+      "action": "reality server import jobs limit unclamped [retry 2/2 of failed code-review-reality-server-import-jobs-limit-unclamped]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-reality-server-import-jobs-limit-unclamped reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T12:52:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T14:25:01Z",
+      "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
+      "retry_round": 2
     }
   ],
   "generated": "2026-11-25T04:15:10Z"
