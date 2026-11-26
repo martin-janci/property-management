@@ -61,7 +61,10 @@ function renderPage() {
 }
 
 function alerts() {
-  return screen.queryAllByRole('alert');
+  // Toasts expose a live-region role by severity: role="alert" (assertive)
+  // for error/warning, role="status" (polite) for success/info. Query both so
+  // success-toast assertions keep working after the severity-aware role fix.
+  return [...screen.queryAllByRole('alert'), ...screen.queryAllByRole('status')];
 }
 
 function hasToast(pattern: RegExp) {
