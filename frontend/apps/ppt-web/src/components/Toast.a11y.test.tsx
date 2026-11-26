@@ -109,6 +109,54 @@ describe('Toast Accessibility', () => {
     expect(results).toHaveNoViolations();
   });
 
+  it('uses role="status" (polite) for success and info toasts', async () => {
+    // Success/info are non-interrupting feedback. They must map to the polite
+    // live region (role="status") so they do not interrupt whatever the
+    // screen reader is currently announcing. role="alert" implies
+    // aria-live="assertive", which would barge in — wrong for these variants.
+    for (const type of ['success', 'info'] as const) {
+      const user = userEvent.setup();
+      const { unmount } = render(
+        <ToastProvider>
+          <TestToastTrigger type={type} title={`${type} toast`} />
+        </ToastProvider>
+      );
+
+      await user.click(screen.getByText('Show Toast'));
+      expect(screen.getByText(`${type} toast`)).toBeInTheDocument();
+
+      const live = screen.getByRole('status');
+      expect(live).toHaveAttribute('aria-live', 'polite');
+      // A polite toast must not also carry the assertive alert role.
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+      unmount();
+    }
+  });
+
+  it('uses role="alert" (assertive) for error and warning toasts', async () => {
+    // Errors/warnings are time-sensitive and should interrupt. They map to the
+    // assertive live region (role="alert", aria-live="assertive").
+    for (const type of ['error', 'warning'] as const) {
+      const user = userEvent.setup();
+      const { unmount } = render(
+        <ToastProvider>
+          <TestToastTrigger type={type} title={`${type} toast`} />
+        </ToastProvider>
+      );
+
+      await user.click(screen.getByText('Show Toast'));
+      expect(screen.getByText(`${type} toast`)).toBeInTheDocument();
+
+      const live = screen.getByRole('alert');
+      expect(live).toHaveAttribute('aria-live', 'assertive');
+      // An assertive toast must not be exposed as a polite status region.
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+      unmount();
+    }
+  });
+
   it('dismiss button should be keyboard accessible', async () => {
     const user = userEvent.setup();
 

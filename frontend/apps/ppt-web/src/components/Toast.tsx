@@ -279,13 +279,22 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
     }
   }, [toast.title, message, detail]);
 
-  const ariaLive = toast.type === 'error' ? 'assertive' : 'polite';
+  // Map severity to the ARIA-correct live region. error/warning are
+  // time-sensitive and should interrupt (role="alert" ⇒ assertive);
+  // success/info are non-interrupting feedback and must stay polite
+  // (role="status" ⇒ polite) so they don't barge in on whatever the screen
+  // reader is currently reading. role="alert" implies aria-live="assertive",
+  // so a hardcoded role="alert" silently overrode the polite aria-live for
+  // success/info — hence both attributes are derived together here.
+  const assertive = toast.type === 'error' || toast.type === 'warning';
+  const ariaRole = assertive ? 'alert' : 'status';
+  const ariaLive = assertive ? 'assertive' : 'polite';
   const copiedLabel = t('common.copied');
   const copyLabel = t('common.copyErrorMessage');
   const dismissLabel = t('common.dismissNotification');
 
   return (
-    <output className={`toast toast--${toast.type}`} role="alert" aria-live={ariaLive}>
+    <output className={`toast toast--${toast.type}`} role={ariaRole} aria-live={ariaLive}>
       <div className="toast-icon">{getIcon(toast.type)}</div>
       <div className="toast-content">
         <div className="toast-title">{toast.title}</div>
