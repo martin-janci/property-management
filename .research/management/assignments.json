@@ -117,15 +117,15 @@
       "branch": "auto-impl/code-review-reality-server-users-login-n-513dcc17",
       "status": "review",
       "claimed_at": "2026-11-26T10:28:36Z",
-      "last_updated": "2026-11-26T10:55:55Z",
+      "last_updated": "2026-11-26T10:58:19Z",
       "status_changed_at": "2026-11-26T10:55:55Z",
       "pr_number": 3835,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3835",
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=3835 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=reality-server portal login per-IP throttled via existing TenantRateLimiterSet+client_ip_bucket (429, default 10/min/IP); IG3 two-commit split; verify green incl DB integration tests",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=9ec7fd0b679d048e748ed5f9a9a13eae38c49918 note=per-IP login throttle correctly reuses TenantRateLimiterSet+client_ip_bucket, enforced pre-credential; IG3 red-before-fix valid; scope_drift justified; CI/verify green (approval posted as COMMENT, self-approve blocked)",
+      "last_reviewed_oid": "9ec7fd0b679d048e748ed5f9a9a13eae38c49918",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -135,5 +135,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-26T10:55:55Z"
+  "generated": "2026-11-26T10:58:19Z"
 }
