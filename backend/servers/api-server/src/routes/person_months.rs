@@ -154,6 +154,76 @@ async fn authorize_building(
     res
 }
 
+/// Verify a unit belongs to the given building, returning 404 otherwise.
+///
+/// This check does not use the RLS connection, so callers may release it
+/// before invoking this helper.
+async fn ensure_unit_in_building(
+    state: &AppState,
+    unit_id: Uuid,
+    building_id: Uuid,
+) -> Result<(), PersonMonthApiError> {
+    let belongs = state
+        .unit_repo
+        .belongs_to_building(unit_id, building_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to check unit building");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+    if !belongs {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Unit not found in this building",
+            )),
+        ));
+    }
+    Ok(())
+}
+
+/// Load a person month by id, returning 404 if it is missing or does not
+/// belong to `unit_id`. Does not use the RLS connection.
+async fn load_unit_person_month(
+    state: &AppState,
+    id: Uuid,
+    unit_id: Uuid,
+) -> Result<PersonMonth, PersonMonthApiError> {
+    let entry = state
+        .person_month_repo
+        .find_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get person month");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Person month not found")),
+            )
+        })?;
+
+    if entry.unit_id != unit_id {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Person month not found for this unit",
+            )),
+        ));
+    }
+
+    Ok(entry)
+}
+
 /// Create person months router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -392,27 +462,7 @@ pub async fn get_unit_person_months(
     rls.release().await;
 
     // Verify unit belongs to building
-    let belongs = state
-        .unit_repo
-        .belongs_to_building(unit_id, building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check unit building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !belongs {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Unit not found in this building",
-            )),
-        ));
-    }
+    ensure_unit_in_building(&state, unit_id, building_id).await?;
 
     // Get person months
     let entries = if let Some(month) = query.month {
@@ -493,27 +543,7 @@ async fn upsert_person_month_inner(
     authorize_building(state, rls, auth.user_id, building_id, Some(unit_id), true).await?;
 
     // Verify unit belongs to building
-    let belongs = state
-        .unit_repo
-        .belongs_to_building(unit_id, building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check unit building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !belongs {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Unit not found in this building",
-            )),
-        ));
-    }
+    ensure_unit_in_building(state, unit_id, building_id).await?;
 
     // Validate month
     if req.month < 1 || req.month > 12 {
@@ -627,34 +657,7 @@ pub async fn get_person_month(
     // Authorization is the last use of the RLS connection here.
     rls.release().await;
 
-    let entry = state
-        .person_month_repo
-        .find_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get person month");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Person month not found")),
-            )
-        })?;
-
-    // Verify it belongs to the unit
-    if entry.unit_id != unit_id {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Person month not found for this unit",
-            )),
-        ));
-    }
+    let entry = load_unit_person_month(&state, id, unit_id).await?;
 
     Ok(Json(PersonMonthResponse::from(entry)))
 }
@@ -701,33 +704,7 @@ pub async fn update_person_month(
     rls.release().await;
 
     // Verify entry exists and belongs to unit
-    let existing = state
-        .person_month_repo
-        .find_by_id(id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to get person month");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("NOT_FOUND", "Person month not found")),
-            )
-        })?;
-
-    if existing.unit_id != unit_id {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Person month not found for this unit",
-            )),
-        ));
-    }
+    load_unit_person_month(&state, id, unit_id).await?;
 
     // Validate count if provided
     if let Some(count) = req.count {
@@ -921,27 +898,7 @@ pub async fn get_yearly_summary(
     rls.release().await;
 
     // Verify unit belongs to building
-    let belongs = state
-        .unit_repo
-        .belongs_to_building(unit_id, building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check unit building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !belongs {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Unit not found in this building",
-            )),
-        ));
-    }
+    ensure_unit_in_building(&state, unit_id, building_id).await?;
 
     let summary = state
         .person_month_repo
@@ -998,27 +955,7 @@ pub async fn calculate_from_residents(
     rls.release().await;
 
     // Verify unit belongs to building
-    let belongs = state
-        .unit_repo
-        .belongs_to_building(unit_id, building_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check unit building");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
-
-    if !belongs {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new(
-                "NOT_FOUND",
-                "Unit not found in this building",
-            )),
-        ));
-    }
+    ensure_unit_in_building(&state, unit_id, building_id).await?;
 
     let month = req.month.unwrap_or(1);
 
