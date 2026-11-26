@@ -277,8 +277,20 @@ export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBu
                   ) : getFieldType(condition.field) === 'number' ? (
                     <input
                       type="number"
-                      value={condition.value as number}
-                      onChange={(e) => updateCondition(index, { value: Number(e.target.value) })}
+                      value={
+                        condition.value === '' ||
+                        condition.value === null ||
+                        condition.value === undefined
+                          ? ''
+                          : (condition.value as number)
+                      }
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        // Keep an empty field empty rather than coercing it to 0
+                        // (Number('') === 0), so a legitimate 0 the user typed is
+                        // preserved and stays distinguishable from "no value".
+                        updateCondition(index, { value: raw === '' ? '' : Number(raw) });
+                      }}
                       disabled={disabled}
                       placeholder={t('automation.conditionBuilder.valuePlaceholder')}
                       className="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
