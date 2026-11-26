@@ -16,8 +16,13 @@
  * back device clock no longer extends an expired credential.
  *
  * These drive the REAL sync path (`fetchCredentials` reading a response `Date`
- * header), then reach the private `validateAccess` core through a typed cast —
- * the same technique the sibling time-restriction suite uses.
+ * header), then reach the private `validateAccess` core through a typed cast.
+ * The device clock is spoofed with `jest.useFakeTimers()` +
+ * `jest.setSystemTime()` (the same technique the sibling time-restriction suite
+ * uses) rather than a `Date.now` spy, because the pre-fix `validateAccess` read
+ * the clock via `new Date()` — which a `Date.now` spy does not move — so only a
+ * faked system clock makes the headline spoof test genuinely fail against the
+ * vulnerable code and pass against the fix.
  */
 import { NFCAccessController } from './NFCAccessController';
 import type { AccessAttemptResult, NFCCredential } from './types';
@@ -69,18 +74,25 @@ describe('NFCAccessController expiry — server-authoritative clock', () => {
   // The true (server) time, comfortably AFTER expiry.
   const SERVER_REAL = '2024-06-01T00:00:00.000Z';
 
-  let dateNow: jest.SpyInstance;
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
-    // Pin the DEVICE clock to the spoofed (wound-back) instant. `Date.now()` is
-    // what both the credential manager's offset calc and `now()` read.
-    dateNow = jest.spyOn(Date, 'now').mockReturnValue(DEVICE_SPOOFED);
+    // Pin the DEVICE clock to the spoofed (wound-back) instant with Jest's fake
+    // timers. `setSystemTime` governs BOTH `Date.now()` (the credential
+    // manager's offset calc and `now()`) AND `new Date()` (the expiry
+    // comparison in the pre-fix `validateAccess`). A `jest.spyOn(Date, 'now')`
+    // would only move `Date.now()`, leaving `new Date()` on the real wall clock
+    // — against the pre-fix code that read the clock via `new Date()` the spoof
+    // test would then pass regardless of the vulnerability. Faking the system
+    // time (the technique the sibling time-restriction suite uses) is what makes
+    // this regression genuinely red before the fix and green after.
+    jest.useFakeTimers();
+    jest.setSystemTime(DEVICE_SPOOFED);
   });
 
   afterEach(() => {
-    dateNow.mockRestore();
+    jest.useRealTimers();
     globalThis.fetch = originalFetch;
     jest.restoreAllMocks();
   });
