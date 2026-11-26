@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T06:45:17Z",
+  "archived_at": "2026-11-26T06:49:45Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -9667,6 +9667,24 @@
         "merged_pr": 3765,
         "merged_at": "2026-11-24T00:37:08Z",
         "at": "2026-11-24T00:39:24Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "action": "[STALE-DROP: already fixed on dev PR#3796/adf0eb2; not reproducible] mobile rn useapi no refresh retry",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T20:24:30Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-08-02T00:00:00Z"
       }
     },
     {

@@ -9522,6 +9522,30 @@
       "merge_attempted_at": "2026-11-24T00:33:46Z"
     },
     {
+      "task_id": "code-review-mobile-rn-useapi-no-refresh-retry",
+      "branch": "auto-impl/code-review-mobile-rn-useapi-no-refresh-e855e4f8",
+      "status": "failed",
+      "claimed_at": "2026-11-26T06:29:50Z",
+      "last_updated": "2026-11-26T06:49:30Z",
+      "status_changed_at": "2026-11-26T06:49:30Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=none status=blocked specialist=react-native scope_drift=false code_reuse_warn=none note=already-fixed on dev: useApi.ts replays once after refresh (requestWithRefresh, allowRefresh guard) + full 401-refresh test suite 22/22; landed PR#3796/adf0eb2; stale signal, not reproducible",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
       "task_id": "code-review-mobile-rn-voice-cmd-hardcoded-en",
       "branch": "auto-impl/code-review-mobile-rn-voice-cmd-hardcode-5527d8ad",
       "status": "merged",
@@ -36176,5 +36200,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T06:45:17Z"
+  "archived_at": "2026-11-26T06:49:45Z"
 }

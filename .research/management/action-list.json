@@ -495,24 +495,6 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-useapi-no-refresh-retry",
-      "action": "mobile rn useapi no refresh retry",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-25T20:24:30Z (tier1d mobile-rn score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T20:24:30Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-08-02T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-regional-compliance-vote-validation-fabricated-pass",
       "action": "regional compliance vote validation fabricated pass",
       "owner_role": "pm-backend",
