@@ -128,6 +128,38 @@ async fn create_review_unauthenticated_returns_401(pool: PgPool) {
     assert_eq!(status, axum::http::StatusCode::UNAUTHORIZED);
 }
 
+/// A request body larger than the per-route `DefaultBodyLimit` is rejected at
+/// the HTTP layer with `413 Payload Too Large`, BEFORE the handler buffers the
+/// whole body or the char-count cap runs.
+///
+/// This pins the body *bound* (memory-DoS guard), not the field validation:
+/// without the per-route limit the oversized JSON is fully read and the
+/// handler's `MAX_REVIEW_BODY_LEN` char cap answers `400` instead — so a `413`
+/// here proves the layer short-circuits before the body is buffered. A valid
+/// token is minted so `PortalPrincipal` resolves and the request reaches the
+/// body-consuming `Json` extractor where the limit fires.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_review_body_over_limit_returns_413(pool: PgPool) {
+    let user_id = Uuid::new_v4();
+    seed_user(&pool, user_id, "body-limit").await;
+
+    let router = agent_reviews_router(pool);
+    let realtor_id = Uuid::new_v4();
+    let token = common::mint_token(user_id);
+    // ~70 KiB of body text — comfortably past the 64 KiB per-route
+    // DefaultBodyLimit, and also past the global 4 MiB cap's little sibling.
+    let huge = "a".repeat(70 * 1024);
+    let status = common::send_json(
+        &router,
+        Method::POST,
+        &format!("/api/v1/realtors/{realtor_id}/reviews"),
+        Some(&token),
+        serde_json::json!({ "rating": 5, "body": huge }),
+    )
+    .await;
+    assert_eq!(status, axum::http::StatusCode::PAYLOAD_TOO_LARGE);
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn create_review_oversized_body_returns_400(pool: PgPool) {
     // RequestPrincipal looks up the user in the DB; seed principal_kind='platform'
