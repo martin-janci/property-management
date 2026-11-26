@@ -360,21 +360,6 @@
       "source": "pm-analysis 2026-11-25"
     },
     {
-      "id": "code-review-reality-web-agent-profile-mock-stub-retry1",
-      "action": "[CLOSED-STALE: already fixed in cd88a22 2026-11-17] reality web agent profile mock stub [retry 1/2 of failed code-review-reality-web-agent-profile-mock-stub]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=code-review-reality-web-agent-profile-mock-stub reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T08:37:10Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-25T16:26:39Z",
-      "retry_of": "code-review-reality-web-agent-profile-mock-stub",
-      "retry_round": 1,
-      "last_updated": "2026-11-26T14:28:36Z"
-    },
-    {
       "id": "code-review-api-core-digest-sweep-lock-release-leak-retry1",
       "action": "release_digest_sweep returns a failed-unlock connection to the pool (advisory-lock leak) [retry 1/2 of failed code-review-api-core-digest-sweep-lock-release-leak]",
       "owner_role": "pm-tech-lead",
@@ -438,25 +423,6 @@
       "signal_ref": {
         "segment": "ppt-web-ui",
         "score": 2,
-        "vector": "bug",
-        "generated": "2026-07-31T14:10:00Z"
-      },
-      "last_updated": "2026-11-26T14:28:36Z"
-    },
-    {
-      "id": "code-review-ppt-web-ui-sessions-unsafe-double-cast",
-      "action": "ppt web ui sessions unsafe double cast",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "in-progress",
-      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T06:26:22Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
         "vector": "bug",
         "generated": "2026-07-31T14:10:00Z"
       },
