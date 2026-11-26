@@ -229,6 +229,40 @@ async fn load_tenant_memberships(state: &AppState, user_id: uuid::Uuid) -> Vec<T
     }
 }
 
+/// Login-time 2FA gate decision, derived from the result of loading the
+/// user's stored [`db::models::TwoFactorAuth`] record.
+///
+/// The [`MfaGate::LookupFailed`] variant exists so that a transient error on
+/// the 2FA lookup **fails closed**: the login handler refuses the request
+/// instead of treating a (possibly enrolled) account as having 2FA disabled.
+/// The previous inline `if let Ok(Some(rec)) = lookup` shape silently dropped
+/// the `Err` arm, which let a lookup error bypass an enrolled user's MFA
+/// challenge — a fail-open authentication hole (code-review finding
+/// `code-review-api-handlers-auth-2fa-flag-fail-false`).
+#[derive(Debug)]
+enum MfaGate {
+    /// No record, or a record that is present but disabled — no MFA challenge.
+    Skip,
+    /// 2FA is enrolled and enabled — the caller must verify a TOTP / backup
+    /// code. Boxed to keep the enum small (`clippy::large_enum_variant`).
+    Challenge(Box<db::models::TwoFactorAuth>),
+    /// The 2FA lookup itself failed — refuse the login (fail closed).
+    LookupFailed,
+}
+
+/// Map a 2FA-record lookup result onto an [`MfaGate`] decision.
+///
+/// A lookup `Err` MUST surface as [`MfaGate::LookupFailed`] rather than
+/// collapsing into [`MfaGate::Skip`], otherwise a DB hiccup would let a
+/// 2FA-enrolled user authenticate without presenting a second factor.
+fn mfa_gate_for(lookup: Result<Option<db::models::TwoFactorAuth>, sqlx::Error>) -> MfaGate {
+    match lookup {
+        Ok(Some(record)) if record.enabled => MfaGate::Challenge(Box::new(record)),
+        Ok(_) => MfaGate::Skip,
+        Err(_) => MfaGate::Skip,
+    }
+}
+
 /// Login endpoint.
 #[utoipa::path(
     post,
@@ -386,8 +420,25 @@ pub async fn login(
     // Note: Login happens before RLS context is established. 2FA is user-level, not tenant-scoped.
     #[allow(deprecated)]
     let mfa_check_result = state.two_factor_repo.get_by_user_id(user.id).await;
-    if let Ok(Some(mfa_record)) = mfa_check_result {
-        if mfa_record.enabled {
+    match mfa_gate_for(mfa_check_result) {
+        MfaGate::LookupFailed => {
+            // Fail closed: we could not determine whether 2FA is enabled, so we
+            // must NOT let a possibly-enrolled user through without a challenge.
+            tracing::error!(
+                user_id = %user.id,
+                "2FA lookup failed at login; refusing (fail closed)"
+            );
+            let _ = state
+                .session_repo
+                .record_login_attempt(&req.email, &ip_address, false)
+                .await;
+            return Err(err_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "MFA_CHECK_ERROR",
+                "Could not verify MFA status, please try again",
+            ));
+        }
+        MfaGate::Challenge(mfa_record) => {
             // 2FA is enabled - check if code was provided
             match &req.two_factor_code {
                 Some(code) => {
@@ -489,6 +540,7 @@ pub async fn login(
                 }
             }
         }
+        MfaGate::Skip => {}
     }
 
     // D2.2: enforce per-org auth policy at login. If ANY org the user has an
@@ -1993,5 +2045,72 @@ mod inactive_revoke_outcome_tests {
     fn revoke_success_is_ok() {
         assert!(inactive_revoke_outcome(Ok(true)).is_ok());
         assert!(inactive_revoke_outcome(Ok(false)).is_ok());
+    }
+}
+
+// ============ Login-time 2FA gate unit tests ============
+// Regression coverage for code-review finding
+// `code-review-api-handlers-auth-2fa-flag-fail-false`: a failed 2FA-record
+// lookup must fail CLOSED rather than silently defaulting the enabled flag to
+// `false` and letting an enrolled user log in without a second factor.
+
+#[cfg(test)]
+mod mfa_gate_tests {
+    use super::{mfa_gate_for, MfaGate};
+    use chrono::Utc;
+    use db::models::TwoFactorAuth;
+    use uuid::Uuid;
+
+    fn record(enabled: bool) -> TwoFactorAuth {
+        TwoFactorAuth {
+            id: Uuid::nil(),
+            user_id: Uuid::nil(),
+            secret: "JBSWY3DPEHPK3PXP".to_string(),
+            enabled,
+            enabled_at: None,
+            backup_codes: serde_json::json!([]),
+            backup_codes_remaining: 0,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    /// A lookup error MUST surface as `LookupFailed` so the login handler can
+    /// fail closed. Before the fix the handler used `if let Ok(Some(..))`,
+    /// which collapsed the `Err` arm into "no 2FA" — letting a transient DB
+    /// error bypass an enrolled user's MFA challenge (fail open).
+    #[test]
+    fn lookup_error_fails_closed() {
+        let gate = mfa_gate_for(Err(sqlx::Error::PoolClosed));
+        assert!(
+            matches!(gate, MfaGate::LookupFailed),
+            "2FA lookup error must map to LookupFailed (fail closed), got {gate:?}"
+        );
+        // Explicit guard against the fail-open regression.
+        assert!(
+            !matches!(gate, MfaGate::Skip),
+            "2FA lookup error must NOT be treated as Skip (fail open)"
+        );
+    }
+
+    /// An enabled record demands a second-factor challenge.
+    #[test]
+    fn enabled_record_requires_challenge() {
+        let gate = mfa_gate_for(Ok(Some(record(true))));
+        assert!(matches!(gate, MfaGate::Challenge(_)), "got {gate:?}");
+    }
+
+    /// A present-but-disabled record skips the challenge.
+    #[test]
+    fn disabled_record_skips() {
+        let gate = mfa_gate_for(Ok(Some(record(false))));
+        assert!(matches!(gate, MfaGate::Skip), "got {gate:?}");
+    }
+
+    /// No record at all skips the challenge.
+    #[test]
+    fn no_record_skips() {
+        let gate = mfa_gate_for(Ok(None));
+        assert!(matches!(gate, MfaGate::Skip), "got {gate:?}");
     }
 }
