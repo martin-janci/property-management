@@ -828,6 +828,222 @@
       "first_open_at": "2026-11-26T14:25:01Z",
       "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
       "retry_round": 2
+    },
+    {
+      "id": "code-review-api-core-accounting-decimal-literal-unwrap",
+      "action": "api core accounting decimal literal unwrap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-30T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-movefolder-i18n",
+      "action": "ppt web ui movefolder i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-30T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-sharepanel-i18n",
+      "action": "ppt web ui sharepanel i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-30T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-fcm-legacy-api-decommissioned",
+      "action": "api core fcm legacy api decommissioned",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-fcm-oauth-token-not-refreshed",
+      "action": "api core fcm oauth token not refreshed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-timing-cmp",
+      "action": "api handlers voice timing cmp",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-handlers score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-inquiries-no-rate-limit",
+      "action": "reality server inquiries no rate limit",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d reality-server score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-client-no-timeout",
+      "action": "reality server sso client no timeout",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d reality-server score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-notification-random-group-key",
+      "action": "api core notification random group key",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-get-inquiry-empty-msgs",
+      "action": "reality server get inquiry empty msgs",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d reality-server score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-ts-client-unconfigured",
+      "action": "ppt web core api ts client unconfigured",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-24T00:00:00Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-ts-retry-nonidempotent",
+      "action": "ppt web core api ts retry nonidempotent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-core score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-24T00:00:00Z"
+      }
     }
   ],
   "generated": "2026-11-25T04:15:10Z"
