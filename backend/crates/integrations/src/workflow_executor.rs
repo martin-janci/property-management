@@ -678,6 +678,13 @@ const MAX_INTERPOLATION_INPUT: usize = 64 * 1024;
 fn interpolate_variables(value: &Value, context: &Value) -> Value {
     match value {
         Value::String(s) => {
+            // User-influenced string nodes are capped before the regex runs:
+            // an oversized value is passed through verbatim rather than
+            // letting an unbounded input drive the interpolation scan/replace.
+            if s.len() > MAX_INTERPOLATION_INPUT {
+                return value.clone();
+            }
+
             let mut result = s.clone();
 
             // Find all {{variable}} patterns
