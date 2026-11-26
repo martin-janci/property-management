@@ -32,13 +32,41 @@ use uuid::Uuid;
 
 /// Encode optional integration credentials for storage.
 ///
-/// Returns `Ok(None)` when the caller supplied no credentials.
+/// Returns `Ok(None)` when the caller supplied no credentials. When credentials
+/// ARE supplied they must be a non-empty, serializable payload: a blank/empty
+/// credential (null, blank string, empty object/array, or a value that fails to
+/// serialize) is rejected with `AppError::BadRequest` rather than silently
+/// defaulted to an empty string and persisted.
 fn encode_integration_credentials(
     credentials: Option<&serde_json::Value>,
 ) -> Result<Option<String>, AppError> {
-    // NOTE (pre-fix behavior): a provided credential is serialized and, on any
-    // failure, silently defaulted to an empty string via `unwrap_or_default`.
-    Ok(credentials.map(|c| serde_json::to_string(c).unwrap_or_default()))
+    let Some(value) = credentials else {
+        return Ok(None);
+    };
+    if is_blank_credential(value) {
+        return Err(AppError::BadRequest(
+            "integration credentials must not be empty".to_string(),
+        ));
+    }
+    let encoded = serde_json::to_string(value)
+        .map_err(|e| AppError::BadRequest(format!("invalid integration credentials: {e}")))?;
+    if encoded.is_empty() {
+        return Err(AppError::BadRequest(
+            "integration credentials must not be empty".to_string(),
+        ));
+    }
+    Ok(Some(encoded))
+}
+
+/// A credential payload that carries no secret material to store.
+fn is_blank_credential(value: &serde_json::Value) -> bool {
+    match value {
+        serde_json::Value::Null => true,
+        serde_json::Value::String(s) => s.trim().is_empty(),
+        serde_json::Value::Object(map) => map.is_empty(),
+        serde_json::Value::Array(arr) => arr.is_empty(),
+        _ => false,
+    }
 }
 
 /// Repository for API Ecosystem operations.
