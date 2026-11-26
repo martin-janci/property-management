@@ -27,6 +27,29 @@ interface FormErrors {
   items?: string;
 }
 
+/**
+ * A line item plus a stable client-side row id. The id keys the editable list
+ * so React reconciles rows by identity (not by array position); it is stripped
+ * from the payload before submit. Using the array index as the key caused
+ * insert/remove to reuse a sibling row's DOM node (focus/selection/node identity
+ * followed the slot, not the row).
+ */
+interface InvoiceFormItem extends CreateInvoiceItem {
+  _rowId: string;
+}
+
+let rowIdSeq = 0;
+const makeRowId = (): string => {
+  const g = globalThis as { crypto?: { randomUUID?: () => string } };
+  if (typeof g.crypto?.randomUUID === 'function') {
+    return g.crypto.randomUUID();
+  }
+  rowIdSeq += 1;
+  return `row-${rowIdSeq}`;
+};
+
+const toFormItem = (item: CreateInvoiceItem): InvoiceFormItem => ({ ...item, _rowId: makeRowId() });
+
 export function InvoiceForm({
   units,
   initialData,
@@ -43,8 +66,8 @@ export function InvoiceForm({
   const [dueDate, setDueDate] = useState(initialData?.due_date || '');
   const [currency, setCurrency] = useState(initialData?.currency || 'EUR');
   const [notes, setNotes] = useState(initialData?.notes || '');
-  const [items, setItems] = useState<CreateInvoiceItem[]>(
-    initialData?.items || [{ description: '', quantity: 1, unit_price: 0 }]
+  const [items, setItems] = useState<InvoiceFormItem[]>(() =>
+    (initialData?.items ?? [{ description: '', quantity: 1, unit_price: 0 }]).map(toFormItem)
   );
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -74,7 +97,9 @@ export function InvoiceForm({
       return;
     }
 
-    const validItems = items.filter((item) => item.description.trim());
+    const validItems = items
+      .filter((item) => item.description.trim())
+      .map(({ _rowId, ...item }) => item);
 
     onSubmit({
       unit_id: unitId,
@@ -88,7 +113,7 @@ export function InvoiceForm({
   };
 
   const addItem = () => {
-    setItems([...items, { description: '', quantity: 1, unit_price: 0 }]);
+    setItems([...items, toFormItem({ description: '', quantity: 1, unit_price: 0 })]);
   };
 
   const removeItem = (index: number) => {
@@ -231,7 +256,7 @@ export function InvoiceForm({
         {errors.items && <p className="mb-2 text-sm text-red-600">{errors.items}</p>}
         <div className="space-y-3">
           {items.map((item, index) => (
-            <div key={`item-${index}`} className="grid grid-cols-12 gap-2 items-start">
+            <div key={item._rowId} className="grid grid-cols-12 gap-2 items-start">
               <div className="col-span-5">
                 <input
                   type="text"
