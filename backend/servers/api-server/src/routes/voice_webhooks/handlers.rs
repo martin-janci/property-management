@@ -91,6 +91,49 @@ async fn run_voice_command(
     Ok(result)
 }
 
+/// Build the [`VoiceCommandProcessor`] from the shared [`AppState`] repositories.
+///
+/// The exact same six-repository construction was previously open-coded in both
+/// the Alexa and Google handlers; centralising it here keeps the two call sites
+/// in lock-step (adding a repo dependency now changes one place, not two) and
+/// removes the risk of the two copies silently diverging.
+fn build_command_processor(state: &AppState) -> VoiceCommandProcessor {
+    VoiceCommandProcessor::new(
+        state.llm_document_repo.clone(),
+        state.fault_repo.clone(),
+        state.unit_repo.clone(),
+        state.announcement_repo.clone(),
+        state.meter_repo.clone(),
+        state.org_repo.clone(),
+    )
+}
+
+/// Resolve the linked [`VoiceAssistantDevice`] for an OAuth `token` on a
+/// context-cleared **public** connection.
+///
+/// The `voice_assistant_devices` lookup is not RLS-bound (migration 00226), so
+/// it runs on a public connection — mirroring `oauth_token_refresh`. The
+/// connection is drawn from the caller's `rls_pool` (reused afterwards by
+/// [`run_voice_command`]) and is released back to the pool before this helper
+/// returns. This sequence was identical in both webhook handlers; factoring it
+/// out gives each a single lookup site and the same acquire-error handling.
+async fn lookup_voice_device(
+    rls_pool: &RlsPool,
+    token: &str,
+    platform: &str,
+) -> Result<VoiceAssistantDevice, (StatusCode, Json<ErrorResponse>)> {
+    let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
+        tracing::error!("Failed to acquire database connection: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
+        )
+    })?;
+    let device = authenticate_voice_user(lookup.conn(), token, platform).await?;
+    drop(lookup);
+    Ok(device)
+}
+
 // ============================================================================
 // Alexa Skills Kit Webhook
 // ============================================================================
@@ -155,19 +198,11 @@ pub(crate) async fn alexa_webhook(
         return Ok(Json(build_alexa_link_account_response()));
     };
 
-    // Resolve the linked voice device from the presented OAuth access token. The
-    // `voice_assistant_devices` lookup is not RLS-bound (migration 00226), so it
-    // runs on a context-cleared public connection — mirroring `oauth_token_refresh`.
+    // Resolve the linked voice device from the presented OAuth access token on a
+    // context-cleared public connection (see `lookup_voice_device`). `rls_pool`
+    // is reused below by `run_voice_command`.
     let rls_pool = RlsPool::new(state.db.clone());
-    let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
-        tracing::error!("Failed to acquire database connection: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-        )
-    })?;
-    let device = authenticate_voice_user(lookup.conn(), token, voice_platform::ALEXA).await?;
-    drop(lookup);
+    let device = lookup_voice_device(&rls_pool, token, voice_platform::ALEXA).await?;
 
     // Process the request based on type.
     let locale = match &request.request {
@@ -182,14 +217,7 @@ pub(crate) async fn alexa_webhook(
     // device above (never a context-cleared or caller-derived context).
     // `run_voice_command` owns the RLS acquire → process → release lifecycle and
     // releases the connection on every path.
-    let processor = VoiceCommandProcessor::new(
-        state.llm_document_repo.clone(),
-        state.fault_repo.clone(),
-        state.unit_repo.clone(),
-        state.announcement_repo.clone(),
-        state.meter_repo.clone(),
-        state.org_repo.clone(),
-    );
+    let processor = build_command_processor(&state);
 
     let response = match &request.request {
         AlexaRequestBody::LaunchRequest { .. } => {
@@ -290,19 +318,10 @@ pub(crate) async fn google_actions_webhook(
     };
 
     // Resolve the linked voice device from the presented OAuth access token on a
-    // context-cleared public connection (`voice_assistant_devices` is not
-    // RLS-bound; migration 00226), mirroring `oauth_token_refresh`.
+    // context-cleared public connection (see `lookup_voice_device`). `rls_pool`
+    // is reused below by `run_voice_command`.
     let rls_pool = RlsPool::new(state.db.clone());
-    let mut lookup = rls_pool.acquire_public().await.map_err(|e| {
-        tracing::error!("Failed to acquire database connection: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", "Database error")),
-        )
-    })?;
-    let device =
-        authenticate_voice_user(lookup.conn(), token, voice_platform::GOOGLE_ASSISTANT).await?;
-    drop(lookup);
+    let device = lookup_voice_device(&rls_pool, token, voice_platform::GOOGLE_ASSISTANT).await?;
 
     // Get locale from session
     let locale = request.session.language_code.as_deref().unwrap_or("en-US");
@@ -318,14 +337,7 @@ pub(crate) async fn google_actions_webhook(
     // tenant the linked device belongs to, resolved from the authenticated device
     // above (command processing reads tenant-scoped tables). `run_voice_command`
     // releases the RLS connection on every path.
-    let processor = VoiceCommandProcessor::new(
-        state.llm_document_repo.clone(),
-        state.fault_repo.clone(),
-        state.unit_repo.clone(),
-        state.announcement_repo.clone(),
-        state.meter_repo.clone(),
-        state.org_repo.clone(),
-    );
+    let processor = build_command_processor(&state);
     let result = run_voice_command(&rls_pool, &processor, &device, command_text, locale).await?;
 
     Ok(Json(build_google_response(&request.session.id, &result)))
@@ -450,10 +462,13 @@ mod tests {
             run_voice_command(&rls_pool, &processor, &device, "help", "en-US").await
         };
 
-        assert!(
-            result.is_err(),
-            "an unseeded device must fail command processing (DeviceNotFound)"
-        );
+        let (status, body) =
+            result.expect_err("an unseeded device must fail command processing (DeviceNotFound)");
+        // The error branch must surface a 500 with the PROCESSING_ERROR code —
+        // asserting the mapped shape (not merely `is_err`) pins the contract the
+        // caller relies on when a command fails under the device-owner RLS context.
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.code, "PROCESSING_ERROR");
 
         let logs = messages.lock().expect("capture lock");
         assert!(
