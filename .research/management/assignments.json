@@ -5,19 +5,19 @@
       "branch": "auto-impl/pm-scrum-master-uc-10-followup-watch-202-30d6e44c",
       "status": "review",
       "claimed_at": "2026-11-25T14:30:27Z",
-      "last_updated": "2026-11-26T00:28:12Z",
+      "last_updated": "2026-11-26T00:42:52Z",
       "status_changed_at": "2026-11-25T18:23:40Z",
       "pr_number": 3800,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3800",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3800 status=done scope_drift=true: UC-10 submission edge-case BE tests (NOTE_TOO_LONG/INVALID_PERIOD/INVALID_STATUS filter/approve-after-reject 409, suite_7) + mobile submissionStatus i18n (6 locales) + screen-map log; FE green, BE compiles clean (sqlx in CI). [5.7 respawn round1: reviewer verdict=changes — cargo fmt --check red on new test lines; respawned to run cargo fmt --all + push] [5.5 merge attempt: dirty/real-conflict in person_month_submissions_tests.rs vs sibling suite_7 tests; draft->ready promoted; needs rebase (status_changed_at<4h so Phase 5.6 defers to next run)]",
+      "implementer_summary": "pr=3800 status=done scope_drift=true: UC-10 submission edge-case BE tests (NOTE_TOO_LONG/INVALID_PERIOD/INVALID_STATUS filter/approve-after-reject 409, suite_7) + mobile submissionStatus i18n (6 locales) + screen-map log; FE green, BE compiles clean (sqlx in CI). [5.7 respawn round1: reviewer verdict=changes — cargo fmt --check red on new test lines; respawned to run cargo fmt --all + push] [5.5 merge attempt: dirty/real-conflict in person_month_submissions_tests.rs vs sibling suite_7 tests; draft->ready promoted; needs rebase (status_changed_at<4h so Phase 5.6 defers to next run)] [5.6 rebase round2: rebased=true onto dev 09e9f3561; cleanly-additive suite_7+edge test conflict resolved (kept both); force-pushed head d32ff5342; now mergeable — re-review next cycle]",
       "reviewer_summary": "verdict=approve head_oid=2d223e7e9ee3db1c2e1988fe5e3bf4ed04b53731 note=fmt-fixed-reformat-only-rustfmt-check-green; re-review after 5.7 round1 clean",
       "last_reviewed_oid": "2d223e7e9ee3db1c2e1988fe5e3bf4ed04b53731",
       "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": 1,
+      "rebase_attempts": 2,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
       "merge_attempted_at": "2026-11-25T20:31:04Z"
@@ -155,5 +155,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-26T00:40:45Z"
+  "generated": "2026-11-26T00:42:52Z"
 }
