@@ -137,18 +137,18 @@
     {
       "task_id": "code-review-mobile-rn-nfc-device-clock-expiry",
       "branch": "auto-impl/code-review-mobile-rn-nfc-device-clock-e-8e42fff9",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-26T06:29:50Z",
-      "last_updated": "2026-11-26T06:29:50Z",
-      "status_changed_at": "2026-11-26T06:29:50Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-26T06:51:15Z",
+      "status_changed_at": "2026-11-26T06:51:15Z",
+      "pr_number": 3822,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3822",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=3822 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=NFC expiry now server-clock-corrected (syncServerClock from Date header); device-clock spoof no longer bypasses on-device expiry pre-check; IG3 regression added; verify green 103 suites/1066 tests",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -183,5 +183,5 @@
       "quarantine_reason": null
     }
   ],
-  "generated": "2026-11-26T06:49:45Z"
+  "generated": "2026-11-26T06:51:28Z"
 }
