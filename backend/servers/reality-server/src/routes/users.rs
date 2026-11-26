@@ -652,3 +652,74 @@ mod register_enumeration_tests {
         assert_eq!(status, StatusCode::BAD_REQUEST);
     }
 }
+
+#[cfg(test)]
+mod login_rate_limit_tests {
+    use super::*;
+    use api_core::middleware::TenantRateLimiterSet;
+    use axum::http::{HeaderMap, StatusCode};
+
+    /// Rate-limit regression (code-review finding
+    /// `reality-server-users-login-no-rate-limit`): the portal login endpoint
+    /// MUST throttle repeated attempts from one client so an attacker cannot run
+    /// unbounded password-guessing / credential-stuffing against the portal user
+    /// population. Before the fix the endpoint enforced nothing and happily
+    /// accepted an unlimited stream of email/password attempts from a single
+    /// source; `enforce_login_rate_limit` now denies with HTTP 429 once the
+    /// per-IP quota in the rolling window is exceeded. This is genuinely red
+    /// before the fix (no enforcement path existed) and green after.
+    #[tokio::test]
+    async fn login_enforcement_blocks_after_quota() {
+        // Low quota so the governor burst is exhausted quickly and
+        // deterministically (mirrors the inquiry/view throttle tests).
+        let limiters = TenantRateLimiterSet::with_default(5);
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", "198.51.100.23".parse().unwrap());
+
+        let mut allowed = 0u32;
+        let mut blocked = 0u32;
+        for _ in 0..50 {
+            match enforce_login_rate_limit(&limiters, &headers, 1).await {
+                Ok(()) => allowed += 1,
+                Err((status, _)) => {
+                    assert_eq!(
+                        status,
+                        StatusCode::TOO_MANY_REQUESTS,
+                        "login throttle must reject with HTTP 429"
+                    );
+                    blocked += 1;
+                }
+            }
+        }
+        assert!(allowed > 0, "early attempts within the quota must be allowed");
+        assert!(
+            blocked > 0,
+            "a flood of login attempts from one IP must eventually be blocked \
+             (regression guard: with no throttle the endpoint never blocks)"
+        );
+    }
+
+    /// Distinct clients must not share a budget: one IP exhausting its quota
+    /// cannot lock out another IP's logins (keying is per client-IP bucket).
+    #[tokio::test]
+    async fn login_throttle_is_per_client() {
+        let limiters = TenantRateLimiterSet::with_default(3);
+        let mut a = HeaderMap::new();
+        a.insert("x-forwarded-for", "203.0.113.4".parse().unwrap());
+        // Exhaust client A's budget.
+        for _ in 0..50 {
+            let _ = enforce_login_rate_limit(&limiters, &a, 1).await;
+        }
+        assert!(
+            enforce_login_rate_limit(&limiters, &a, 1).await.is_err(),
+            "client A must be blocked after exhausting its quota"
+        );
+        // A different source IP still gets a fresh budget.
+        let mut b = HeaderMap::new();
+        b.insert("x-forwarded-for", "203.0.113.200".parse().unwrap());
+        assert!(
+            enforce_login_rate_limit(&limiters, &b, 1).await.is_ok(),
+            "a different client must not inherit A's exhausted budget"
+        );
+    }
+}
