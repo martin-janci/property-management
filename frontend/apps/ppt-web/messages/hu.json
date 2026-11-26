@@ -2677,6 +2677,8 @@
       "asOf": "Fordulónap",
       "export": "Exportálás:",
       "exporting": "Exportálás…",
+      "pdf": "PDF",
+      "excel": "Excel",
       "exportFailed": "Az exportálás sikertelen",
       "noEntries": "Nincsenek tételek",
       "balance": "Egyenleg",

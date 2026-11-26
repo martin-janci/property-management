@@ -2731,6 +2731,8 @@
       "asOf": "Na dzień",
       "export": "Eksport:",
       "exporting": "Eksportowanie…",
+      "pdf": "PDF",
+      "excel": "Excel",
       "exportFailed": "Eksport nie powiódł się",
       "noEntries": "Brak pozycji",
       "balance": "Saldo",

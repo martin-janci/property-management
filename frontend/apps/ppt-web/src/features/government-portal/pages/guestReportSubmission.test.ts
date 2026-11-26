@@ -98,8 +98,17 @@ describe('filterReportTemplates', () => {
 });
 
 describe('formatSubmissionDate', () => {
-  it('renders a day/short-month/year string', () => {
-    expect(formatSubmissionDate('2026-08-01')).toBe('01 Aug 2026');
+  it('renders a day/short-month/year string for the English locale', () => {
+    expect(formatSubmissionDate('2026-08-01', 'en-GB')).toBe('01 Aug 2026');
+  });
+
+  it('formats the month using the active locale (regression #3834)', () => {
+    // October's short form differs between en-GB ("Oct") and German ("Okt."),
+    // so it cleanly discriminates whether the active locale is honoured rather
+    // than a hardcoded 'en-GB'. Fails while the helper is frozen to en-GB.
+    const formatted = formatSubmissionDate('2026-10-01', 'de');
+    expect(formatted).toContain('Okt');
+    expect(formatted).not.toContain('Oct');
   });
 });
 

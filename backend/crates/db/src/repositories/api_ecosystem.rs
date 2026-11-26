@@ -30,6 +30,45 @@ use common::AppError;
 use sqlx::{Connection, Executor, PgConnection, Postgres};
 use uuid::Uuid;
 
+/// Encode optional integration credentials for storage.
+///
+/// Returns `Ok(None)` when the caller supplied no credentials. When credentials
+/// ARE supplied they must be a non-empty, serializable payload: a blank/empty
+/// credential (null, blank string, empty object/array, or a value that fails to
+/// serialize) is rejected with `AppError::BadRequest` rather than silently
+/// defaulted to an empty string and persisted.
+fn encode_integration_credentials(
+    credentials: Option<&serde_json::Value>,
+) -> Result<Option<String>, AppError> {
+    let Some(value) = credentials else {
+        return Ok(None);
+    };
+    if is_blank_credential(value) {
+        return Err(AppError::BadRequest(
+            "integration credentials must not be empty".to_string(),
+        ));
+    }
+    let encoded = serde_json::to_string(value)
+        .map_err(|e| AppError::BadRequest(format!("invalid integration credentials: {e}")))?;
+    if encoded.is_empty() {
+        return Err(AppError::BadRequest(
+            "integration credentials must not be empty".to_string(),
+        ));
+    }
+    Ok(Some(encoded))
+}
+
+/// A credential payload that carries no secret material to store.
+fn is_blank_credential(value: &serde_json::Value) -> bool {
+    match value {
+        serde_json::Value::Null => true,
+        serde_json::Value::String(s) => s.trim().is_empty(),
+        serde_json::Value::Object(map) => map.is_empty(),
+        serde_json::Value::Array(arr) => arr.is_empty(),
+        _ => false,
+    }
+}
+
 /// Repository for API Ecosystem operations.
 ///
 /// Stateless: every method receives an executor from the caller. Org-scoped
@@ -303,10 +342,7 @@ impl ApiEcosystemRepository {
         req: &InstallIntegration,
     ) -> Result<OrganizationIntegration, AppError> {
         // Encrypt credentials if provided (in production, use proper encryption)
-        let credentials_encrypted = req
-            .credentials
-            .as_ref()
-            .map(|c| serde_json::to_string(c).unwrap_or_default());
+        let credentials_encrypted = encode_integration_credentials(req.credentials.as_ref())?;
 
         // Use a transaction to ensure atomicity
         let mut tx = conn
@@ -2190,5 +2226,57 @@ impl ApiEcosystemRepository {
         .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(connectors)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    // Regression (code-review: api handlers install empty cred default):
+    // `install_integration` must reject an empty/blank credential payload
+    // instead of defaulting it to an empty string and persisting it.
+
+    #[test]
+    fn encode_credentials_absent_is_none() {
+        assert_eq!(encode_integration_credentials(None).unwrap(), None);
+    }
+
+    #[test]
+    fn encode_credentials_valid_is_serialized() {
+        let creds = json!({ "api_key": "k-123" });
+        let encoded = encode_integration_credentials(Some(&creds))
+            .expect("valid credentials must be accepted")
+            .expect("valid credentials must serialize to Some");
+        assert!(encoded.contains("k-123"));
+    }
+
+    #[test]
+    fn encode_credentials_rejects_empty_object() {
+        let err = encode_integration_credentials(Some(&json!({})))
+            .expect_err("an empty credential object must be rejected, not stored blank");
+        assert!(matches!(err, AppError::BadRequest(_)), "got {err:?}");
+    }
+
+    #[test]
+    fn encode_credentials_rejects_null() {
+        let err = encode_integration_credentials(Some(&serde_json::Value::Null))
+            .expect_err("a null credential must be rejected, not stored blank");
+        assert!(matches!(err, AppError::BadRequest(_)), "got {err:?}");
+    }
+
+    #[test]
+    fn encode_credentials_rejects_blank_string() {
+        let err = encode_integration_credentials(Some(&json!("   ")))
+            .expect_err("a blank credential string must be rejected, not stored blank");
+        assert!(matches!(err, AppError::BadRequest(_)), "got {err:?}");
+    }
+
+    #[test]
+    fn encode_credentials_rejects_empty_array() {
+        let err = encode_integration_credentials(Some(&json!([])))
+            .expect_err("an empty credential array must be rejected, not stored blank");
+        assert!(matches!(err, AppError::BadRequest(_)), "got {err:?}");
     }
 }

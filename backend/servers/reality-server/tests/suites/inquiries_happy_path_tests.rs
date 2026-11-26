@@ -12,7 +12,7 @@
 //!   clear the tenant gate on the tenant-less test router, and owned inquiry
 //!   rows are seeded with `realtor_id` = that user.
 
-use crate::common::{make_app_state, mint_token, send, send_json};
+use crate::common::{make_app_state, mint_token, send, send_json, send_read};
 use axum::{http::Method, Router};
 use reality_server::routes;
 use serde_json::json;
@@ -218,6 +218,62 @@ async fn get_inquiry_returns_2xx(pool: PgPool) {
     )
     .await;
     assert!(status.is_success(), "expected 2xx, got {status}");
+}
+
+/// Seed a conversation message on `inquiry_id` from the realtor side.
+async fn seed_inquiry_message(pool: &PgPool, inquiry_id: Uuid, sender: Uuid, body: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO inquiry_messages (inquiry_id, sender_type, sender_id, message)
+        VALUES ($1, 'realtor', $2, $3)
+        RETURNING id
+        "#,
+    )
+    .bind(inquiry_id)
+    .bind(sender)
+    .bind(body)
+    .fetch_one(pool)
+    .await
+    .unwrap_or_else(|e| panic!("seed_inquiry_message: {e}"))
+}
+
+// Regression (code-review-reality-server-get-inquiry-empty-messages):
+// `get_inquiry` once hardcoded `messages: vec![]` with a "Would fetch
+// conversation messages" comment, so the realtor detail view always showed an
+// empty conversation even when messages existed. The handler must now load the
+// persisted thread and return it in the `messages` array.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_inquiry_returns_persisted_messages(pool: PgPool) {
+    let realtor = seed_user(&pool, "msgs-realtor").await;
+    let listing_id = seed_listing(&pool, "msgs", realtor).await;
+    let inquiry_id = seed_inquiry(&pool, listing_id, realtor).await;
+    seed_inquiry_message(&pool, inquiry_id, realtor, "Yes, still available.").await;
+    let token = mint_token(realtor);
+    let app = inquiries_router(pool);
+
+    let (status, body) = send_read(
+        &app,
+        Method::GET,
+        &format!("/api/v1/inquiries/{inquiry_id}"),
+        Some(&token),
+    )
+    .await;
+
+    assert!(status.is_success(), "expected 2xx, got {status}");
+    let messages = body
+        .get("messages")
+        .and_then(|m| m.as_array())
+        .expect("response must carry a `messages` array");
+    assert_eq!(
+        messages.len(),
+        1,
+        "the persisted conversation message must be returned, got {messages:?}"
+    );
+    assert_eq!(
+        messages[0].get("message").and_then(|m| m.as_str()),
+        Some("Yes, still available."),
+        "the returned message content must match the persisted thread"
+    );
 }
 
 // ── mark_as_read (PUT /{id}/read) ────────────────────────────────────────────

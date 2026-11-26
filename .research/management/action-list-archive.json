@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-26T14:28:50Z",
+  "archived_at": "2026-11-26T18:38:30Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -16396,6 +16396,25 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-sessions-unsafe-double-cast",
+      "action": "ppt web ui sessions unsafe double cast",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-31T14:10:00Z"
+      },
+      "last_updated": "2026-11-26T14:40:32Z"
+    },
+    {
       "id": "code-review-ppt-web-ui-signature-modal-raw-err",
       "action": "ppt web ui signature modal raw err",
       "owner_role": "pm-backend",
@@ -17114,6 +17133,31 @@
         "merged_pr": 3424,
         "merged_at": "2026-11-11T20:30:20Z",
         "at": "2026-11-11T20:30:30Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-get-inquiry-empty-messages",
+      "action": "reality server get inquiry empty messages",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-26T18:38:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3844,
+        "merged_at": "2026-11-26T18:37:35Z",
+        "at": "2026-11-26T18:38:30Z"
       }
     },
     {
@@ -17852,6 +17896,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-26T12:25:22Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-public-error-leak",
+      "action": "reality server public error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T06:26:22Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-26T18:38:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T06:26:22Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-31T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3843,
+        "merged_at": "2026-11-26T18:37:38Z",
+        "at": "2026-11-26T18:38:30Z"
       }
     },
     {
@@ -18848,6 +18917,21 @@
         "vector": "bug",
         "generated": "2026-09-02T08:33:34Z"
       }
+    },
+    {
+      "id": "code-review-reality-web-agent-profile-mock-stub-retry1",
+      "action": "[CLOSED-STALE: already fixed in cd88a22 2026-11-17] reality web agent profile mock stub [retry 1/2 of failed code-review-reality-web-agent-profile-mock-stub]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-25T16:26:39Z (retry_of=code-review-reality-web-agent-profile-mock-stub reason=failed-no-pr cooldown_ok newest_failure=2026-11-18T08:37:10Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-25T16:26:39Z",
+      "retry_of": "code-review-reality-web-agent-profile-mock-stub",
+      "retry_round": 1,
+      "last_updated": "2026-11-26T14:40:32Z"
     },
     {
       "id": "code-review-reality-web-analytics-no-i18n",

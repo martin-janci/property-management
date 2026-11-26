@@ -72,6 +72,34 @@ pub async fn send(router: &Router, method: Method, path: &str, token: Option<&st
     response.status()
 }
 
+/// Like [`send`], but also returns the response body parsed as JSON.
+///
+/// Used by tests that must assert on the response payload (not just the
+/// status), e.g. that a detail endpoint actually populates a nested array.
+#[allow(dead_code)]
+pub async fn send_read(
+    router: &Router,
+    method: Method,
+    path: &str,
+    token: Option<&str>,
+) -> (StatusCode, serde_json::Value) {
+    let mut req = Request::builder().method(method).uri(path);
+    if let Some(t) = token {
+        req = req.header(header::AUTHORIZATION, format!("Bearer {t}"));
+    }
+    let response = router
+        .clone()
+        .oneshot(req.body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let status = response.status();
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json = serde_json::from_slice(&bytes).unwrap_or(serde_json::Value::Null);
+    (status, json)
+}
+
 #[allow(dead_code)]
 pub async fn send_json(
     router: &Router,
