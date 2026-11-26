@@ -21,7 +21,7 @@
  * create / update / delete paths are driven through stubbed child components.
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../../../../messages/en.json';
 import { OrganizationContext } from '../../../hooks/useOrganization';
@@ -129,10 +129,14 @@ describe('EmergencyContactDirectoryPage error copy is localized, not raw', () =>
     updateEmergencyContact.mockRejectedValueOnce(new Error(RAW));
 
     renderPage();
-    // Wait for initial load to settle, then edit an existing contact so the
-    // form's submit is routed to handleUpdate (editingContact is set).
-    await waitFor(() => expect(listEmergencyContacts).toHaveBeenCalled());
-    fireEvent.click(screen.getByTestId('list-edit'));
+    // Wait for the list itself to render (initial load resolved and isLoading
+    // flipped false), then edit an existing contact so the form's submit is
+    // routed to handleUpdate (editingContact is set). Using findByTestId here —
+    // rather than getByTestId gated on a weak `listEmergencyContacts` call-count
+    // waitFor — is what makes this deterministic: the list button only exists
+    // once loading settles, and on a contended CI runner that settles a macro-
+    // task after the call fires (see #3842).
+    fireEvent.click(await screen.findByTestId('list-edit'));
     fireEvent.click(screen.getByTestId('form-submit'));
 
     const alert = await screen.findByRole('alert');
@@ -145,9 +149,11 @@ describe('EmergencyContactDirectoryPage error copy is localized, not raw', () =>
     deleteEmergencyContact.mockRejectedValueOnce(new Error(RAW));
 
     renderPage();
-    // Wait for initial load to settle, then drive delete -> confirm.
-    await waitFor(() => expect(listEmergencyContacts).toHaveBeenCalled());
-    fireEvent.click(screen.getByTestId('list-delete'));
+    // Wait for the list itself to render (initial load resolved and isLoading
+    // flipped false), then drive delete -> confirm. findByTestId retries until
+    // the list button exists; a plain getByTestId raced the load resolution on
+    // CI and threw getElementError (see #3842).
+    fireEvent.click(await screen.findByTestId('list-delete'));
     fireEvent.click(screen.getByTestId('confirm-delete'));
 
     const alert = await screen.findByRole('alert');
