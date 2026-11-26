@@ -17,7 +17,8 @@
 use std::sync::Arc;
 
 use db::repositories::GranularNotificationRepository;
-use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
+use sqlx::{Executor, PgPool};
 use tokio::sync::Barrier;
 
 /// The sweep lock is mutually exclusive across replicas: while one replica
@@ -115,4 +116,90 @@ async fn concurrent_replicas_grant_the_sweep_to_at_most_one(pool: PgPool) {
         won_a ^ won_b,
         "exactly one replica must run the sweep (won_a={won_a}, won_b={won_b})"
     );
+}
+
+/// A failed advisory unlock must DISCARD the lock-holding connection — it must
+/// NOT be returned to the pool.
+///
+/// The sweep lease is a *session-scoped* `pg_advisory_lock`: it is dropped only
+/// when its session ends or `pg_advisory_unlock` runs on that same session. A
+/// live, idle, pooled session never releases it on its own. So if
+/// `release_digest_sweep` returned a connection whose unlock had failed back to
+/// the pool, that pooled session would strand the `notification_digest_sweep`
+/// lock for its whole lifetime, and every later tick's `try_claim_digest_sweep`
+/// — on every replica — would keep failing, silently stopping all digests until
+/// the process restarts. The hardened primitive therefore detaches + hard-closes
+/// the connection on unlock failure (tearing down the session, which drops the
+/// lock) instead of recycling it.
+///
+/// We force a real unlock failure by poisoning the lock-holding connection with
+/// an aborted transaction (`BEGIN` then a division-by-zero), after which every
+/// statement on it — including `SELECT pg_advisory_unlock(...)` — errors with
+/// "current transaction is aborted" while the session stays alive and keeps the
+/// lock. On a `max_connections = 1` pool we then assert the pool holds zero
+/// connections (the tainted one was discarded, not recycled) and that a fresh
+/// claim can take the now-dropped lock.
+///
+/// Mirrors `rls_context_bleed_tests::failed_clear_discards_connection`.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn failed_unlock_discards_connection(pool: PgPool) {
+    // A single-connection pool against the same (isolated) test DB lets us
+    // observe whether the one physical connection is recycled or discarded.
+    let opts = (*pool.connect_options()).clone();
+    let single = PgPoolOptions::new()
+        .max_connections(1)
+        .connect_with(opts)
+        .await
+        .expect("open single-connection pool");
+
+    let repo = GranularNotificationRepository::new(single.clone());
+
+    // Claim the sweep lease: `conn` now holds the session-scoped advisory lock.
+    let mut conn = repo
+        .try_claim_digest_sweep()
+        .await
+        .expect("claim sweep lock")
+        .expect("the uncontended sweep lock must be claimable");
+
+    // Poison the lock-holding connection: open a transaction then run a failing
+    // statement so the session enters the "current transaction is aborted"
+    // state. Every subsequent query — including the unlock — now fails, while
+    // the session stays alive and still holds the lock.
+    (&mut *conn).execute("BEGIN").await.expect("begin txn");
+    assert!(
+        (&mut *conn).execute("SELECT 1 / 0").await.is_err(),
+        "division by zero must error and abort the transaction"
+    );
+
+    // Release via the hardened primitive. The unlock fails (aborted txn), so the
+    // connection must be detached + closed, NOT returned to the pool.
+    let result = repo.release_digest_sweep(conn).await;
+    assert!(
+        result.is_err(),
+        "release_digest_sweep must surface the unlock failure"
+    );
+
+    // The tainted, still-locked connection must have been discarded: the max=1
+    // pool now holds zero connections. A recycled connection would have stranded
+    // the advisory lock on an idle pooled session.
+    assert_eq!(
+        single.size(),
+        0,
+        "connection whose advisory unlock failed must be discarded, not returned to the pool"
+    );
+
+    // The lock is genuinely free again: a fresh claim opens a new, lock-free
+    // session and wins the lease. Had the poisoned connection been recycled
+    // still holding the lock, this claim would be refused.
+    let reclaim = repo
+        .try_claim_digest_sweep()
+        .await
+        .expect("post-discard claim query");
+    assert!(
+        reclaim.is_some(),
+        "the sweep lock must be reclaimable once the failed-unlock connection is discarded"
+    );
+    repo.release_digest_sweep(reclaim.unwrap())
+        .await
+        .expect("release reclaimed sweep lock");
 }
