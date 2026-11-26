@@ -2677,6 +2677,8 @@
       "asOf": "As of",
       "export": "Export:",
       "exporting": "Exporting…",
+      "pdf": "PDF",
+      "excel": "Excel",
       "exportFailed": "Export failed",
       "noEntries": "No entries",
       "balance": "Balance",

@@ -2731,6 +2731,8 @@
       "asOf": "K dátumu",
       "export": "Exportovať:",
       "exporting": "Exportuje sa…",
+      "pdf": "PDF",
+      "excel": "Excel",
       "exportFailed": "Export zlyhal",
       "noEntries": "Žiadne položky",
       "balance": "Zostatok",

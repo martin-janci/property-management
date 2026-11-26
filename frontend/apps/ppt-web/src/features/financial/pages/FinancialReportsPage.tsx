@@ -158,7 +158,9 @@ export function FinancialReportsPage({
                 disabled={!!exportingFormat}
                 className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {exportingFormat === 'pdf' ? t('financial.reports.exporting') : 'PDF'}
+                {exportingFormat === 'pdf'
+                  ? t('financial.reports.exporting')
+                  : t('financial.reports.pdf')}
               </button>
               <button
                 type="button"
@@ -166,7 +168,9 @@ export function FinancialReportsPage({
                 disabled={!!exportingFormat}
                 className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {exportingFormat === 'xlsx' ? t('financial.reports.exporting') : 'Excel'}
+                {exportingFormat === 'xlsx'
+                  ? t('financial.reports.exporting')
+                  : t('financial.reports.excel')}
               </button>
             </div>
           </div>
