@@ -4722,6 +4722,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-push-fanout-reqwest-expect",
+      "branch": "auto-impl/code-review-api-core-push-fanout-reqwest-0f019ddd",
+      "status": "failed",
+      "claimed_at": "2026-11-26T16:28:24Z",
+      "last_updated": "2026-11-26T21:27:35Z",
+      "status_changed_at": "2026-11-26T21:27:35Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked: already-fixed-on-dev (stale code-review finding; no production defect; IG3 unreproducible)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-pushfanout-queue-drops-transient",
       "branch": "auto-impl/code-review-api-core-pushfanout-queue-dr-692770cd",
       "status": "merged",
@@ -16713,6 +16735,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-reality-server-drainer-stub-silent-drop",
+      "branch": "auto-impl/code-review-reality-server-drainer-stub-331d7327",
+      "status": "failed",
+      "claimed_at": "2026-11-26T16:28:24Z",
+      "last_updated": "2026-11-26T21:27:35Z",
+      "status_changed_at": "2026-11-26T21:27:35Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked: real attempt-exhaustion silent-drop fix written (test:+fix:, clippy-clean) but branch not pushed; verify gate unrunnable on DB-less cloud runner (DATABASE_URL unset for sqlx tests)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-dup-url-validator",
       "branch": "auto-impl/code-review-reality-server-dup-url-valid-2b7a2046",
       "status": "merged",
@@ -17585,6 +17629,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-reality-server-redirect-backslash-bypass",
+      "branch": "auto-impl/code-review-reality-server-redirect-back-09c6f5a3",
+      "status": "failed",
+      "claimed_at": "2026-11-26T16:28:24Z",
+      "last_updated": "2026-11-26T21:27:35Z",
+      "status_changed_at": "2026-11-26T21:27:35Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked: already-fixed-on-dev (stale code-review finding; no production defect; IG3 unreproducible)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 1,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "branch": "auto-impl/code-review-reality-server-register-acco-6ca37dea",
       "claimed_at": "2026-10-18T02:36:26Z",
       "code_reuse_warn": null,
@@ -17721,6 +17787,28 @@
       "merge_attempted_at": null,
       "quarantined_at": null,
       "quarantine_reason": null
+    },
+    {
+      "status": "failed",
+      "claimed_at": "2026-11-26T20:33:00Z",
+      "last_updated": "2026-11-26T21:27:35Z",
+      "status_changed_at": "2026-11-26T21:27:35Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked: already-fixed-on-dev (stale code-review finding; no production defect; IG3 unreproducible)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "task_id": "code-review-reality-server-ss-alert-watermark-swallow",
+      "branch": "auto-impl/code-review-reality-server-ss-alert-wate-d4eae8c9"
     },
     {
       "task_id": "code-review-reality-server-sso-backslash-redirect",
@@ -36844,5 +36932,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T20:34:24Z"
+  "archived_at": "2026-11-26T21:27:44Z"
 }
