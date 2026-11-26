@@ -121,6 +121,62 @@ describe('AppShell navigation per role', () => {
   );
 });
 
+describe('UserMenu keyboard interaction (WAI-ARIA menu pattern)', () => {
+  function openUserMenu() {
+    const trigger = screen.getByRole('button', { expanded: false, name: /Jana/ });
+    fireEvent.click(trigger);
+    return trigger;
+  }
+
+  it('moves focus into the menu on open and roves with Arrow keys', () => {
+    renderShellAs('manager');
+    openUserMenu();
+    const items = within(screen.getByRole('menu')).getAllByRole('menuitem');
+    expect(items.length).toBeGreaterThan(1);
+
+    // Opening the menu lands focus on the first item.
+    expect(document.activeElement).toBe(items[0]);
+
+    // ArrowDown advances, ArrowUp retreats.
+    fireEvent.keyDown(items[0], { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(items[1]);
+    fireEvent.keyDown(items[1], { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(items[0]);
+
+    // Focus wraps: ArrowUp from the first item lands on the last.
+    fireEvent.keyDown(items[0], { key: 'ArrowUp' });
+    expect(document.activeElement).toBe(items[items.length - 1]);
+    // ArrowDown from the last item wraps back to the first.
+    fireEvent.keyDown(items[items.length - 1], { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(items[0]);
+
+    // Home/End jump to the ends.
+    fireEvent.keyDown(items[0], { key: 'End' });
+    expect(document.activeElement).toBe(items[items.length - 1]);
+    fireEvent.keyDown(items[items.length - 1], { key: 'Home' });
+    expect(document.activeElement).toBe(items[0]);
+  });
+
+  it('opens on ArrowUp with focus on the last item', () => {
+    renderShellAs('manager');
+    const trigger = screen.getByRole('button', { expanded: false, name: /Jana/ });
+    fireEvent.keyDown(trigger, { key: 'ArrowUp' });
+    const items = within(screen.getByRole('menu')).getAllByRole('menuitem');
+    expect(document.activeElement).toBe(items[items.length - 1]);
+  });
+
+  it('returns focus to the trigger when closed with Escape', () => {
+    renderShellAs('manager');
+    const trigger = openUserMenu();
+    expect(screen.queryByRole('menu')).not.toBeNull();
+
+    fireEvent.keyDown(document.activeElement ?? document, { key: 'Escape' });
+
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+});
+
 const LOCALES = { cs, de, en, hu, pl, sk } as Record<string, Record<string, unknown>>;
 
 function lookup(bundle: Record<string, unknown>, key: string): unknown {

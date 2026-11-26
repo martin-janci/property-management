@@ -7,7 +7,14 @@
  * visitors — while omitting core modules such as Faults, Voting, Financial and
  * Announcements altogether.
  */
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts';
@@ -46,19 +53,45 @@ function UserMenu({ isManager }: { isManager: boolean }) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // When the menu is opened via ArrowUp, focus lands on the last item (WAI-ARIA
+  // menu-button pattern); any other open path focuses the first item.
+  const openToLastRef = useRef(false);
+
+  const menuItems = () =>
+    menuRef.current
+      ? Array.from(menuRef.current.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+      : [];
 
   // Close on navigation.
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger
   useEffect(() => setOpen(false), [pathname]);
 
-  // Close on outside click / Escape.
+  // On open, move focus into the menu (first item, or last when opened via
+  // ArrowUp) per the WAI-ARIA menu pattern.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: menuItems reads a stable ref
+  useEffect(() => {
+    if (!open) return;
+    const items = menuItems();
+    const target = openToLastRef.current ? items[items.length - 1] : items[0];
+    openToLastRef.current = false;
+    target?.focus();
+  }, [open]);
+
+  // Close on outside click / Escape. Escape also returns focus to the trigger
+  // (WAI-ARIA: Escape returns focus to the menu button; an outside click does
+  // not).
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -67,6 +100,48 @@ function UserMenu({ isManager }: { isManager: boolean }) {
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  // Roving focus within the open menu.
+  const onMenuKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const items = menuItems();
+    if (items.length === 0) return;
+    const active = document.activeElement as HTMLElement | null;
+    const index = active ? items.indexOf(active) : -1;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        items[(index + 1) % items.length]?.focus();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        items[(index - 1 + items.length) % items.length]?.focus();
+        break;
+      case 'Home':
+        e.preventDefault();
+        items[0]?.focus();
+        break;
+      case 'End':
+        e.preventDefault();
+        items[items.length - 1]?.focus();
+        break;
+      case 'Tab':
+        // Tabbing out of the menu closes it but lets focus proceed naturally.
+        setOpen(false);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Open the menu from the trigger with the arrow keys, landing focus on the
+  // first (ArrowDown) or last (ArrowUp) item.
+  const onTriggerKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      openToLastRef.current = e.key === 'ArrowUp';
+      setOpen(true);
+    }
+  };
 
   const displayName =
     [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || '';
@@ -82,12 +157,14 @@ function UserMenu({ isManager }: { isManager: boolean }) {
   return (
     <div className="shell-user" ref={rootRef}>
       <button
+        ref={triggerRef}
         type="button"
         className="shell-user__trigger"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={onTriggerKeyDown}
       >
         <span className="shell-user__avatar" aria-hidden="true">
           {initialsOf(user?.firstName, user?.lastName, user?.email)}
@@ -98,7 +175,13 @@ function UserMenu({ isManager }: { isManager: boolean }) {
         </span>
       </button>
       {open && (
-        <div className="shell-user__menu" id={menuId} role="menu">
+        <div
+          className="shell-user__menu"
+          id={menuId}
+          role="menu"
+          ref={menuRef}
+          onKeyDown={onMenuKeyDown}
+        >
           {user?.organizationName && (
             <div className="shell-user__org" role="presentation">
               {user.organizationName}
