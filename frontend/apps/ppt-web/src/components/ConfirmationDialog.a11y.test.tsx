@@ -34,17 +34,32 @@ describe('ConfirmationDialog Accessibility', () => {
 
     const dialog = screen.getByRole('alertdialog');
     expect(dialog).toHaveAttribute('aria-modal', 'true');
-    expect(dialog).toHaveAttribute('aria-labelledby', 'confirmation-dialog-title');
-    expect(dialog).toHaveAttribute('aria-describedby', 'confirmation-dialog-description');
+    // Ids are generated per-instance (React useId) rather than hardcoded, so
+    // assert they exist and point at the title/description — not literal values.
+    expect(dialog.getAttribute('aria-labelledby')).toBeTruthy();
+    expect(dialog.getAttribute('aria-describedby')).toBeTruthy();
+    expect(screen.getByText('Confirm Action')).toHaveAttribute(
+      'id',
+      dialog.getAttribute('aria-labelledby')
+    );
+    expect(screen.getByText('Are you sure you want to proceed?')).toHaveAttribute(
+      'id',
+      dialog.getAttribute('aria-describedby')
+    );
   });
 
   it('should have accessible title and description', () => {
     render(<ConfirmationDialog {...defaultProps} />);
 
-    expect(screen.getByText('Confirm Action')).toHaveAttribute('id', 'confirmation-dialog-title');
+    const dialog = screen.getByRole('alertdialog');
+    // Title/description carry the ids referenced by the dialog's aria-* attrs.
+    expect(screen.getByText('Confirm Action')).toHaveAttribute(
+      'id',
+      dialog.getAttribute('aria-labelledby')
+    );
     expect(screen.getByText('Are you sure you want to proceed?')).toHaveAttribute(
       'id',
-      'confirmation-dialog-description'
+      dialog.getAttribute('aria-describedby')
     );
   });
 
