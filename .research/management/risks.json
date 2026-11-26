@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-11-25T04:15:57Z",
+  "generated": "2026-11-26T04:15:48Z",
   "items": [
     {
       "id": "pm-devops-swagger-ui-egress-blocking-security-2026-10-01",
@@ -903,6 +903,46 @@
       "impact": "medium",
       "mitigation": "Repo-wide audit (tracked in pm-security-audit-non-force-rls-pool-bypass-2026-11-25).",
       "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-quarantine-burn-down-has-no-weekly-metric-201-rows-to-zero-b-2026-11-26",
+      "risk": "Quarantine burn-down has no weekly metric; 201 rows to zero by 2027-02-19 is a schedule-visible cliff only through manual grep. CI fails LATE, not when burn-down stalls.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Phase 1.6 counter from workflow output; alert when weekly delta < required run-rate (currently 201/13 weeks ≈ 15.5 rows/week)",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-push-transport-metrics-apns-eviction-fcm-parity-apns-push-ty-2026-11-26",
+      "risk": "Push transport metrics (APNs eviction, FCM parity, apns-push-type) are code-only without counter emission — regressions surface as user complaints, not alerts.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Add Prometheus counters alongside the hardening PRs that just merged (#3769, #3771, #3790)",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-multi-unit-authz-regressions-on-person-month-tables-are-now--2026-11-26",
+      "risk": "Multi-unit authz regressions on person-month tables are now test-gated (#3796, #3801) but not metric-gated; a code path that bypasses RLS wouldn't trigger the tests until review.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Dashboard panel: 403 rate by route × role; alert on sudden drop (missing enforcement) or spike (misconfig)",
+      "owner_role": "pm-data",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-data-dispatcher-claim-review-throughput-research-management-assig-2026-11-26",
+      "risk": "Dispatcher claim+review throughput (research/management/assignments.json) has no time-to-merge histogram; today's queue has 5 approved PRs in review — if they stall the backlog grows but the digest doesn't scream.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Emit queue-age percentiles from the dispatcher into the digest; block new claims past a threshold",
+      "owner_role": "pm-data",
       "trigger": null,
       "status": "open"
     }

@@ -1,42 +1,38 @@
 # pm-data
 
-<sub>Generated: 2026-11-17 — rotating role analysis for the research routine.</sub>
+<sub>Generated: 2026-11-26 — rotating role analysis for the research routine.</sub>
 
 ## Summary
 
-Static check only. ppt-web has a `trackEvent` / `registerAnalyticsSink` layer and admin-web has onboarding analytics, but I did not verify that moderation routing (PR #3562) or mobile ReportFault (PR #3567) emit events, and mobile has no obvious analytics layer. The three Phase 1.5 digest findings are reporting-correctness defects: an INNER JOIN cohort drop, no persisted abandoned state, and no digest metrics in the api-server source.
+Hardening sprint is producing a high rate of UC-scoped data-shape fixes (UC-10 own-unit person-counts #3792, UC-67 DSA i18n #3795, FORCE RLS on person_month_submissions + submission repo on RLS conn #3797/#3796) but the analytics surface for the quarantine burn-down and the APNs/FCM push reliability track is still thin. 193 pm-backend quarantine rows due 2027-02-19 have no week-over-week burndown metric, and the APNs eviction/push-type-header fixes (#3769, #3790) landed without an emitted counter that an alert could hang off.
 
 ## Next actions
 
-- **[high · backend]** Fix `find_inactive_digest_candidates` to `LEFT JOIN last_activity` with `COALESCE(la.last_active, u.created_at)`, and add a regression test for users with no refresh_tokens row.
-  - DoD: users with no or pruned refresh tokens are included in the sweep; test passes.
-- **[high · backend]** Add `notification_digests.abandoned_at TIMESTAMPTZ` (new migration after 00061) and set it in `report_abandoned`, so abandoned state is queryable.
-  - DoD: migration merged; abandoned rows are queryable and counted; `report_abandoned` is idempotent.
-- **[medium · backend]** Define digest KPIs and emit counters (`candidates_considered`, `sent`, `failed`, `abandoned`, `excluded_by_filter`) plus a per-sweep summary log or metric.
-  - DoD: metrics are documented in the sprint doc or analytics spec and visible on a dashboard.
-- **[medium · frontend]** Add `trackEvent` calls for `fault_report_submitted`/`failed` (mobile ReportFault) and moderation route decisions (SPA), with a name, trigger and property schema, using the existing ppt-web `trackEvent` sink; mobile needs an equivalent sink.
-  - DoD: event catalogue entry exists for each; tests assert emission; no PII in properties.
-- **[low · pm]** Backfill KPI definitions for shipped stories in `sprint-status.yaml` or the epic docs, and add an events/KPI column to the story template.
-  - DoD: each in-progress/review story names its KPI and events.
+- **[high · pm-devops]** Emit a weekly quarantine-burndown counter from the quarantine-age-gate workflow (open rows + days-to-earliest-due) and surface it on the Phase 1.6 scrum-master digest — makes the 2027-02-19 cliff visible before it bites
+  - DoD: metric (rows_open, days_to_earliest_due) collected on every main CI run and added to the delivery digest
+- **[medium · none]** Add KPI counters for APNs push eviction + apns-push-type header path (success/failure/410) alongside the FCM parity already covered by #3771 regression tests
+  - DoD: counters emitted in api-server/src/services/push/apns.rs, documented in the metrics catalog, backfilled onto the delivery dashboard
+- **[medium · none]** Add negative-authz observability: count 403 responses from cross-unit person-month reads (now that #3792 narrowed scope to own-unit and #3796 added the negative-authz matrix) — flags a policy regression before customers notice
+  - DoD: 403 counter per endpoint with route+role labels; dashboard panel showing baseline
+- **[low · pm-backend]** Define 'abandoned' semantics (carried from 2026-11-17): either `notification_digests.abandoned_at TIMESTAMPTZ` column (new migration after 00251) or a dead-letter table; wire report_abandoned to the chosen shape
+  - DoD: migration merged, report_abandoned writes the chosen shape, alert wired on abandoned_count > N/sweep
+- **[low · none]** Normalize code-review-finding throughput telemetry: today's run resolved 14 code-review signals but signals/<date>.json never emitted a done-rate time series — add 'resolved_signals_per_run' so the delivery picture shows throughput
+  - DoD: field in signals schema, backfilled for last 7 runs, charted in roadmap.md 'State of the project'
 
 ## Risks
 
-- **[high · high] Digest engagement/re-activation KPIs biased by INNER JOIN.** The cohort with no live refresh token (long-tail inactive users) is excluded without any record. Mitigate: LEFT JOIN fix, then backfill the cohort size and report it as `excluded_by_filter`.
-- **[medium · high] Abandoned digests visible only in logs.** After log loss or a restart the failure rate is under-reported and cannot be audited. Mitigate: add `abandoned_at` and alert on count.
-- **[low · medium] Advisory-lock release leak can silently skip sweep runs.** Creates unreported gaps in digest delivery data. Mitigate: detach or close the connection on release error; emit a sweep-skipped counter.
-- **[medium · medium] Mobile has no evident analytics layer.** Mobile fault-report attempt and conversion funnels cannot be measured; web and mobile metric definitions may diverge. Mitigate: agree one event catalogue and a shared event schema.
-- **[medium · low] Events added late to shipped features have no baseline.** Before/after comparisons are weak. Mitigate: make events part of the story definition of done.
+- **[high · high]** Quarantine burn-down has no weekly metric; 201 rows to zero by 2027-02-19 is a schedule-visible cliff only through manual grep. CI fails LATE, not when burn-down stalls.. Mitigation: Phase 1.6 counter from workflow output; alert when weekly delta < required run-rate (currently 201/13 weeks ≈ 15.5 rows/week)
+- **[medium · medium]** Push transport metrics (APNs eviction, FCM parity, apns-push-type) are code-only without counter emission — regressions surface as user complaints, not alerts.. Mitigation: Add Prometheus counters alongside the hardening PRs that just merged (#3769, #3771, #3790)
+- **[medium · high]** Multi-unit authz regressions on person-month tables are now test-gated (#3796, #3801) but not metric-gated; a code path that bypasses RLS wouldn't trigger the tests until review.. Mitigation: Dashboard panel: 403 rate by route × role; alert on sudden drop (missing enforcement) or spike (misconfig)
+- **[medium · medium]** Dispatcher claim+review throughput (research/management/assignments.json) has no time-to-merge histogram; today's queue has 5 approved PRs in review — if they stall the backlog grows but the digest doesn't scream.. Mitigation: Emit queue-age percentiles from the dispatcher into the digest; block new claims past a threshold
 
 ## Open questions
 
-- Do PR #3562 and PR #3567 add `trackEvent` calls? I did not open the diffs or `merged_prs_meta.json`.
-- Is there a central event catalogue or metrics doc? I found none in the files I read.
-- Does mobile have a telemetry SDK? Grep found only 21 incidental matches and no sink.
-- Does any Prometheus or metrics module cover the digest service? Search of api-server metric files returned no matches.
-- What are the retention and privacy rules for `notification_digests` rows and `refresh_tokens.last_used_at` (used as an activity signal)?
+- Is there any metrics backend plugged into api-server (Prometheus exporter, StatsD, OpenTelemetry) or are all counters dead-ended?
+- Does the quarantine-age-gate workflow emit structured output a scraper can consume, or only a boolean pass/fail?
+- Who owns the cross-cutting 'delivery KPIs' dashboard — pm-data vs pm-devops?
 
 ## Decisions needed
 
-- Define 'abandoned' semantics and retention (soft-terminal column vs. dead-letter table) — owner: backend/architect.
-- Choose the canonical analytics event schema and naming convention, and the mobile sink — owner: pm/frontend lead.
-- Decide whether inactivity should be computed from `refresh_tokens` or from a dedicated `last_active_at` column — owner: backend/architect.
+- Standardize the metrics stack (Prometheus vs vendor) before more counters land on push/auth — owner: pm-tech-lead
+- Confirm 'abandoned' semantics for notification_digests (column vs dead-letter) — carried from 2026-11-17 — owner: pm-backend

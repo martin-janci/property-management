@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "run_iso": "2026-11-26T04:19:00Z",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-person-month-submissions-rs",
+      "type": "churn-hotspot",
+      "source": "PR #3797",
+      "score_delta": 1,
+      "evidence": "PR #3797 (FORCE RLS on person_month_submissions + submission repo on RLS conn) churned 178 LoC on backend/crates/db/src/repositories/person_month_submissions.rs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-person-month-rs",
+      "type": "churn-hotspot",
+      "source": "PR #3797",
+      "score_delta": 1,
+      "evidence": "PR #3797 churned 142 LoC on backend/crates/db/src/repositories/person_month.rs",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-crates-api-core-src-middleware-authorization-rs",
+      "type": "churn-hotspot",
+      "source": "PR #3802",
+      "score_delta": 1,
+      "evidence": "PR #3802 churned 120 LoC on backend/crates/api-core/src/middleware/authorization.rs - fail-closed require-auth guard (no Guest default)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-person-months-rs",
+      "type": "churn-hotspot",
+      "source": "PR #3797",
+      "score_delta": 0,
+      "evidence": "cumulative re-emit: runs_seen 1 -> 2; additional 108 LoC churn this run (PR #3792 and PR #3797 both touched this file). score_delta=0 because this id is already in state.seen_signals (cumulative allowlist).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "screen-map-drift-pr-3788-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3788",
+      "score_delta": 2,
+      "evidence": "PR #3788 touched frontend/apps/reality-web/src/app/[locale]/compare/page.tsx without a matching docs/screens/reality/*.md update",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3793-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3793",
+      "score_delta": 2,
+      "evidence": "PR #3793 touched 3 reality-web account/* page.tsx files without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3809-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3809",
+      "score_delta": 2,
+      "evidence": "PR #3809 touched frontend/apps/reality-web/src/app/[locale]/layout.tsx without updating docs/screens/reality/*.md",
+      "confidence": "medium",
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate: no signal met confidence=high + score>=3 + allowlist this run",
+  "notes": {
+    "dep_update_noise": [
+      "PR #3443 utoipa-swagger-ui",
+      "PR #3444 jsonwebtoken",
+      "PR #3446 expo-secure-store",
+      "PR #3447 vitest",
+      "PR #3448 expo-device",
+      "PR #3449 expo-status-bar"
+    ],
+    "lag_hours": 23,
+    "merged_pr_range": "#3787-#3812",
+    "merged_pr_count": 22
+  },
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/$(date -u +%F).md && head -1 .research/briefs/$(date -u +%F).md | grep -q '^# $(date -u +%F)$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq --slurpfile prev ... 'state changed vs HEAD'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq '[.items[].id] | (length == (unique | length))'",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no re-emit of non-cumulative id with score_delta != 0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap (<=8) + decay (no open items >14d)",
+      "observed": "all items <=8; empty decay set",
+      "expected": "all <=8; decay satisfied"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial-pass annotation for new plans",
+      "observed": "0 new plans — trivial pass",
+      "expected": "annotation present per new plan"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c '.md$'",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "regenerate backlog.md and diff",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phase-failure honesty",
+      "observed": "no phase failures this run",
+      "expected": "pass"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "plan convergence (prior plans still present)",
+      "observed": "all prior plans present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "staged=24 head=24",
+      "expected": "staged>=head"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "regenerate IDEAS_TRIAGE.md and diff",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "auto_fix_actions=0 (no candidate)",
+      "expected": "<=3 actions, idempotent"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "pm artifacts valid + pm/coverage cursors advanced",
+      "observed": "epics=13 cc_now=0 cc_head=12 pm_now=7 pm_head=6 (both advanced)",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram token leaked",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

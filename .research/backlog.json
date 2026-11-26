@@ -17121,18 +17121,20 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "PR #3762"
+        "PR #3762",
+        "PR #3812"
       ],
       "evidence": [
-        "PR #3762 fix(payment-match date tiebreak + admin-web capability gates) added 70 lines to backend/servers/api-server/src/services/accounting.rs and 4 admin-web TSX files with 0 test file touched — tie-break behaviour and capability gating unsorted-covered"
+        "PR #3762 fix(payment-match date tiebreak + admin-web capability gates) added 70 lines to backend/servers/api-server/src/services/accounting.rs and 4 admin-web TSX files with 0 test file touched — tie-break behaviour and capability gating unsorted-covered",
+        "resolved: PR #3812 merged 2026-11-26 — pin payment-match due-date tiebreak at integration level (added accounting_payment_matcher_suggest_tests.rs)"
       ],
       "files": [
         "backend/servers/api-server/src/services/accounting.rs"
       ],
       "created_at": "2026-11-24",
-      "updated_at": "2026-11-24",
+      "updated_at": "2026-11-26",
       "plan": null
     },
     {
@@ -17183,19 +17185,21 @@
       "vector": "bug",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
-        "rotating-expert-review ppt-web-ui 2026-11-24"
+        "rotating-expert-review ppt-web-ui 2026-11-24",
+        "PR #3811"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/components/AppShell/AppShell.tsx:101-121 — <div role=\"menu\"> with Link role=\"menuitem\" items but onKeyDown only closes on Escape; no Up/Down/Home/End handling, no focus returned to trigger on close, no roving tabindex",
-        "ARIA Authoring Practices require arrow-key navigation + explicit focus management for role=\"menu\""
+        "ARIA Authoring Practices require arrow-key navigation + explicit focus management for role=\"menu\"",
+        "resolved: PR #3811 merged 2026-11-26 — AppShell UserMenu arrow-key nav + focus return (WAI-ARIA)"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/AppShell/AppShell.tsx"
       ],
       "created_at": "2026-11-24",
-      "updated_at": "2026-11-24",
+      "updated_at": "2026-11-26",
       "plan": null
     },
     {
@@ -17278,6 +17282,129 @@
       ],
       "created_at": "2026-11-25",
       "updated_at": "2026-11-25",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-person-month-submissions-rs",
+      "title": "Churn hotspot: db person_month_submissions repo — 178 LoC in PR #3797 (FORCE RLS + submission repo migration)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3797"
+      ],
+      "evidence": [
+        "PR #3797 (FORCE RLS on person_month_submissions + submission repo on RLS conn) churned 178 LoC on backend/crates/db/src/repositories/person_month_submissions.rs"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/person_month_submissions.rs"
+      ],
+      "created_at": "2026-11-26",
+      "updated_at": "2026-11-26",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-db-src-repositories-person-month-rs",
+      "title": "Churn hotspot: db person_month repo — 142 LoC in PR #3797 (FORCE RLS for submissions)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3797"
+      ],
+      "evidence": [
+        "PR #3797 churned 142 LoC on backend/crates/db/src/repositories/person_month.rs — related repo touched by RLS migration"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/person_month.rs"
+      ],
+      "created_at": "2026-11-26",
+      "updated_at": "2026-11-26",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-backend-crates-api-core-src-middleware-authorization-rs",
+      "title": "Churn hotspot: api-core authorization middleware — 120 LoC in PR #3802 (fail-closed require-auth)",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #3802"
+      ],
+      "evidence": [
+        "PR #3802 churned 120 LoC on backend/crates/api-core/src/middleware/authorization.rs — fail-closed require-auth guard (no Guest default)"
+      ],
+      "files": [
+        "backend/crates/api-core/src/middleware/authorization.rs"
+      ],
+      "created_at": "2026-11-26",
+      "updated_at": "2026-11-26",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3788",
+      "title": "screen-map drift: PR #3788 changed reality-web /compare without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3788"
+      ],
+      "evidence": [
+        "PR #3788 touched frontend/apps/reality-web/src/app/[locale]/compare/page.tsx + comparison helpers without a matching docs/screens/reality/*.md update (heuristic — basename match may miss real screen slug)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/compare/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-11-26",
+      "updated_at": "2026-11-26",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3793",
+      "title": "screen-map drift: PR #3793 changed reality-web /account/{listings,password,profile} without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3793"
+      ],
+      "evidence": [
+        "PR #3793 touched 3 reality-web account/* page.tsx files (route change) without updating docs/screens/reality/*.md — i18n of error copy is still a route-handler semantic change (heuristic — basename match may miss real screen slug)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-11-26",
+      "updated_at": "2026-11-26",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3809",
+      "title": "screen-map drift: PR #3809 changed reality-web [locale]/layout.tsx without updating docs/screens/reality/",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3809"
+      ],
+      "evidence": [
+        "PR #3809 touched frontend/apps/reality-web/src/app/[locale]/layout.tsx (maintenance-fallback i18n) without updating docs/screens/reality/*.md (heuristic — root layout drift may not warrant a per-screen doc edit)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx",
+        "docs/screens/reality/"
+      ],
+      "created_at": "2026-11-26",
+      "updated_at": "2026-11-26",
       "plan": null
     }
   ]

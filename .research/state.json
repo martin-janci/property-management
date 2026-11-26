@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-25T04:19:46Z",
+  "last_run_iso": "2026-11-26T04:19:00Z",
   "last_run_ms": 1800000,
-  "last_pr_seen": 3785,
+  "last_pr_seen": 3812,
   "last_issue_seen": 3781,
-  "last_commit_sha": "12e0bbfee52af3541fdeab2d1acd615b0a630427",
+  "last_commit_sha": "ab177314e2fe7a73f14d35c76fd1d4f095c5c682",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -808,9 +808,24 @@
       "recent_churn": 444
     },
     "backend/servers/api-server/src/routes/person_months.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-11-26",
+      "recent_churn": 108
+    },
+    "backend/crates/db/src/repositories/person_month_submissions.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-11-25",
-      "recent_churn": 436
+      "last_seen": "2026-11-26",
+      "recent_churn": 178
+    },
+    "backend/crates/db/src/repositories/person_month.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-26",
+      "recent_churn": 142
+    },
+    "backend/crates/api-core/src/middleware/authorization.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-11-26",
+      "recent_churn": 120
     }
   },
   "seen_signals": [
@@ -818,9 +833,12 @@
     "buffer-low-2026-09-25-payload",
     "buffer-low-2026-09-26-payload",
     "buffer-refill-blocked-quarantined-pr-3294-2026-11-09",
+    "churn-hotspot-backend-crates-api-core-src-middleware-authorization-rs",
     "churn-hotspot-backend-crates-db-src-models-mod-rs",
     "churn-hotspot-backend-crates-db-src-repositories-document-rs",
     "churn-hotspot-backend-crates-db-src-repositories-form-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-person-month-rs",
+    "churn-hotspot-backend-crates-db-src-repositories-person-month-submissions-rs",
     "churn-hotspot-backend-crates-db-src-repositories-reality-portal-rs",
     "churn-hotspot-backend-crates-db-src-repositories-rental-rs",
     "churn-hotspot-backend-crates-db-src-repositories-sensor-rs",
@@ -1501,6 +1519,9 @@
     "screen-map-drift-pr-3700-ppt",
     "screen-map-drift-pr-3740-reality",
     "screen-map-drift-pr-3764-reality",
+    "screen-map-drift-pr-3788-reality",
+    "screen-map-drift-pr-3793-reality",
+    "screen-map-drift-pr-3809-reality",
     "screen-map-drift-pr-460-reality",
     "screen-map-drift-pr-464-ppt",
     "screen-map-drift-pr-547-ppt",
@@ -1602,8 +1623,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 129,
-    "vectors_created": 588,
+    "runs": 130,
+    "vectors_created": 594,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
@@ -1619,7 +1640,7 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 6,
+    "next_index": 7,
     "role_last_run": {
       "pm-tech-lead": "2026-11-20",
       "pm-backend": "2026-11-21",
@@ -1627,12 +1648,12 @@
       "pm-qa": "2026-11-23",
       "pm-devops": "2026-11-24",
       "pm-security": "2026-11-25",
-      "pm-data": "2026-11-17",
+      "pm-data": "2026-11-26",
       "pm-integration": "2026-11-19",
-      "pm-scrum-master": "2026-11-25"
+      "pm-scrum-master": "2026-11-26"
     }
   },
   "coverage_cursor": {
-    "next_index": 12
+    "next_index": 0
   }
 }

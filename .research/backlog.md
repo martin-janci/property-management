@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-11-25 04:18 UTC by routine</sub>
+<sub>Last regenerated: 2026-11-26 04:17 UTC by routine</sub>
 
 | Score | Vector | Title | Files | Source | Updated | Status | Plan |
 |-------|--------|-------|-------|--------|---------|--------|------|
@@ -48,10 +48,13 @@
 | 3 | security | IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-25 (+2) | 2026-05-25 | done | plans/_archive/security-equipment-idor.md |
 | 3 | security | SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs | `backend/servers/api-server/src/routes/signatures.rs` (+2) | issue #439 (+3) | 2026-05-25 | done | plans/_archive/security-ssrf-outbound-url-validation.md |
 | 3 | security | IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping | `backend/servers/api-server/src/routes/ai.rs` (+1) | code-review api-core 2026-05-23 (+2) | 2026-05-25 | done | plans/_archive/security-voice-device-idor.md |
-| 2 | test-gap | PR #3762 (payment-match date tiebreak + admin-web capability gates) added 70 LoC to accounting.rs with no test diff | `backend/servers/api-server/src/services/accounting.rs` | PR #3762 | 2026-11-24 | open | — |
+| 2 | test-gap | PR #3762 (payment-match date tiebreak + admin-web capability gates) added 70 LoC to accounting.rs with no test diff | `backend/servers/api-server/src/services/accounting.rs` | PR #3762 (+1) | 2026-11-26 | done | — |
+| 2 | bug | ppt-web AppShell UserMenu declares role="menu" but missing arrow-key navigation + focus return — SR users cannot operate | `frontend/apps/ppt-web/src/components/AppShell/AppShell.tsx` | rotating-expert-review ppt-web-ui 2026-11-24 (+1) | 2026-11-26 | done | — |
+| 2 | test-gap | screen-map drift: PR #3788 changed reality-web /compare without updating docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/compare/page.tsx` (+1) | PR #3788 | 2026-11-26 | open | — |
+| 2 | test-gap | screen-map drift: PR #3793 changed reality-web /account/{listings,password,profile} without updating docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx` (+1) | PR #3793 | 2026-11-26 | open | — |
+| 2 | test-gap | screen-map drift: PR #3809 changed reality-web [locale]/layout.tsx without updating docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/layout.tsx` (+1) | PR #3809 | 2026-11-26 | open | — |
 | 2 | test-gap | screen-map drift: PR #3764 changed reality-web /journal route without touching docs/screens/reality/journal.md | `docs/screens/reality/journal.md` (+1) | PR #3764 | 2026-11-24 | open | — |
 | 2 | test-gap | screen-map drift: PR #3740 changed reality-web /realtor/analytics without touching docs/screens/reality/realtor-analytics.md | `docs/screens/reality/realtor-analytics.md` (+1) | PR #3740 | 2026-11-24 | open | — |
-| 2 | bug | ppt-web AppShell UserMenu declares role="menu" but missing arrow-key navigation + focus return — SR users cannot operate | `frontend/apps/ppt-web/src/components/AppShell/AppShell.tsx` | rotating-expert-review ppt-web-ui 2026-11-24 | 2026-11-24 | open | — |
 | 2 | bug | api-server push/apns.rs loses APNs 410-Gone eviction signal when error body fails to parse — stale tokens stay in device_push_tokens | `backend/servers/api-server/src/services/push/apns.rs` | rotating-expert-review api-core 2026-11-23 | 2026-11-23 | done | — |
 | 2 | test-gap | screen-map drift: PR #3695 changed reality-web /report route without touching docs/screens/reality/ | `frontend/apps/reality-web/src/app/[locale]/report/page.tsx` (+1) | PR #3695 | 2026-11-22 | done | — |
 | 2 | test-gap | screen-map drift: PR #3700 changed ppt-web routes/groups/leases.tsx without touching docs/screens/ppt/ | `frontend/apps/ppt-web/src/routes/groups/leases.tsx` (+1) | PR #3700 | 2026-11-22 | done | — |
@@ -296,7 +299,10 @@
 | 2 | test-gap | Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update | `frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx` | PR #460 | 2026-05-25 | closed | — |
 | 2 | refactor | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | `backend/servers/api-server/src/handlers/auth/mod.rs` (+2) | code-review api-handlers 2026-05-23 (+1) | 2026-05-24 | done | — |
 | 2 | security | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | `backend/servers/api-server/src/handlers/voting/mod.rs` (+4) | issue #160 (+2) | 2026-05-23 | done | — |
-| 1 | refactor | Churn hotspot: services/push/apns.rs — 2 commits this run (push stack instability under watch) | `backend/servers/api-server/src/services/push/apns.rs` | PR #3724 (+3) | 2026-11-25 | open | — |
+| 1 | refactor | Churn hotspot: db person_month_submissions repo — 178 LoC in PR #3797 (FORCE RLS + submission repo migration) | `backend/crates/db/src/repositories/person_month_submissions.rs` | PR #3797 | 2026-11-26 | open | — |
+| 1 | refactor | Churn hotspot: db person_month repo — 142 LoC in PR #3797 (FORCE RLS for submissions) | `backend/crates/db/src/repositories/person_month.rs` | PR #3797 | 2026-11-26 | open | — |
+| 1 | refactor | Churn hotspot: api-core authorization middleware — 120 LoC in PR #3802 (fail-closed require-auth) | `backend/crates/api-core/src/middleware/authorization.rs` | PR #3802 | 2026-11-26 | open | — |
+| 1 | refactor | Churn hotspot: services/push/apns.rs — 2 commits this run (push stack instability under watch) | `backend/servers/api-server/src/services/push/apns.rs` | PR #3724 (+3) | 2026-11-25 | done | — |
 | 1 | refactor | churn-hotspot: frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx | `frontend/apps/mobile/src/screens/person-months/PersonMonthsScreen.tsx` | PR #3775 | 2026-11-25 | open | — |
 | 1 | refactor | churn-hotspot: backend/servers/api-server/src/routes/person_months.rs | `backend/servers/api-server/src/routes/person_months.rs` | PR #3775 | 2026-11-25 | open | — |
 | 1 | refactor | Churn hotspot: ppt-web buildingsI18n.test.ts — 379 LoC in PR #3745 (i18n regression lock) | `frontend/apps/ppt-web/src/i18n/buildingsI18n.test.ts` | PR #3745 | 2026-11-24 | open | — |

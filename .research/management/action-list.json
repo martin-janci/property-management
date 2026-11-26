@@ -301,7 +301,7 @@
       "action": "reality web layoutsections dup key",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "in-progress",
+      "status": "done",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d reality-web score=2 vector=bug)",
       "deadline": null,
       "dependency": "none",
@@ -313,7 +313,9 @@
         "vector": "bug",
         "generated": "2026-08-11T18:00:00Z"
       },
-      "last_updated": "2026-11-25T12:37:56Z"
+      "last_updated": "2026-11-25T12:37:56Z",
+      "completed_at": "2026-11-26T04:15:48Z",
+      "resolution": "merged in PR #3798"
     },
     {
       "id": "code-review-api-core-idempotency-tx-across-handler",
@@ -339,7 +341,7 @@
       "action": "ppt web ui conditionbuilder number coerce zero",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-signals-promote 2026-11-24T00:24:47Z (tier1d ppt-web-ui score=2 vector=bug)",
       "deadline": null,
       "dependency": "none",
@@ -350,7 +352,9 @@
         "score": 2,
         "vector": "bug",
         "generated": "2026-08-09T00:00:00Z"
-      }
+      },
+      "completed_at": "2026-11-26T04:15:48Z",
+      "resolution": "merged in PR #3810"
     },
     {
       "id": "pm-scrum-master-unblock-kmp-and-swagger-ui-egress-2652-2966-2026-11-24",
@@ -369,7 +373,7 @@
       "action": "ppt-web AppShell UserMenu declares role=\"menu\" but missing arrow-key navigation + focus return — SR users cannot operate",
       "owner_role": "pm-backend",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=bug)",
       "deadline": null,
       "dependency": null,
@@ -379,14 +383,16 @@
         "plan": null,
         "score": 2,
         "vector": "bug"
-      }
+      },
+      "completed_at": "2026-11-26T04:15:48Z",
+      "resolution": "merged in PR #3811"
     },
     {
       "id": "test-gap-pr-3762-payment-match-no-test-diff",
       "action": "PR #3762 (payment-match date tiebreak + admin-web capability gates) added 70 LoC to accounting.rs with no test diff",
       "owner_role": "pm-qa",
       "priority": "low",
-      "status": "open",
+      "status": "done",
       "source": "dispatcher-backlog-refill 2026-11-24T18:26:32Z (score=2 conf=medium vector=test-gap)",
       "deadline": null,
       "dependency": null,
@@ -396,7 +402,9 @@
         "plan": null,
         "score": 2,
         "vector": "test-gap"
-      }
+      },
+      "completed_at": "2026-11-26T04:15:48Z",
+      "resolution": "merged in PR #3812"
     },
     {
       "id": "test-gap-screen-map-drift-reality-journal-pr-3764",
@@ -860,7 +868,127 @@
       "first_open_at": "2026-11-26T02:25:53Z",
       "retry_of": "code-review-api-core-digest-abandoned-no-terminal-state",
       "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-merge-the-5-approved-prs-in-review-queue-3800-pm-scrum-uc-10-2026-11-26",
+      "action": "Merge the 5 approved PRs in review queue (#3800 pm-scrum uc-10-followup, #3813/#3814 screen-map drift, #3815 voice_webhooks dedupe, #3816 GuestReportSubmissionPage extract)",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-scrum-master-continue-track-1-watch-module-decomposition-pr-3815-is-a-sta-2026-11-26",
+      "action": "Continue Track 1 watch-module decomposition — PR #3815 is a start on voice_webhooks/handlers.rs; queue reports/mod.rs (~80K) and llm_document.rs (~79K) next",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-scrum-master-track-2-quarantine-burn-down-start-pm-backend-s-193-rows-gat-2026-11-26",
+      "action": "Track 2 (quarantine burn-down): start pm-backend's 193 rows — gated integration-test-lane proposal",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-scrum-master-track-3-mobile-native-continue-blocked-pm-devops-to-unblock--2026-11-26",
+      "action": "Track 3 (mobile-native): continue blocked — pm-devops to unblock KMP + swagger-ui egress in cloud runner (#2652, #2966)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-scrum-master-pm-data-wire-up-add-quarantine-burndown-weekly-counter-apns--2026-11-26",
+      "action": "pm-data wire-up: add quarantine-burndown weekly counter + APNs/auth negative-authz observability metrics",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-data-emit-a-weekly-quarantine-burndown-counter-from-the-quarantin-2026-11-26",
+      "action": "Emit a weekly quarantine-burndown counter from the quarantine-age-gate workflow (open rows + days-to-earliest-due) and surface it on the Phase 1.6 scrum-master digest — makes the 2027-02-19 cliff visible before it bites",
+      "owner_role": "pm-data",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-data-add-kpi-counters-for-apns-push-eviction-apns-push-type-heade-2026-11-26",
+      "action": "Add KPI counters for APNs push eviction + apns-push-type header path (success/failure/410) alongside the FCM parity already covered by #3771 regression tests",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-data-add-negative-authz-observability-count-403-responses-from-cr-2026-11-26",
+      "action": "Add negative-authz observability: count 403 responses from cross-unit person-month reads (now that #3792 narrowed scope to own-unit and #3796 added the negative-authz matrix) — flags a policy regression before customers notice",
+      "owner_role": "pm-data",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-data-define-abandoned-semantics-carried-from-2026-11-17-either-no-2026-11-26",
+      "action": "Define 'abandoned' semantics (carried from 2026-11-17): either `notification_digests.abandoned_at TIMESTAMPTZ` column (new migration after 00251) or a dead-letter table; wire report_abandoned to the chosen shape",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
+    },
+    {
+      "id": "pm-data-normalize-code-review-finding-throughput-telemetry-today-s-r-2026-11-26",
+      "action": "Normalize code-review-finding throughput telemetry: today's run resolved 14 code-review signals but signals/<date>.json never emitted a done-rate time series — add 'resolved_signals_per_run' so the delivery picture shows throughput",
+      "owner_role": "pm-data",
+      "priority": "low",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-26",
+      "first_open_at": "2026-11-26T04:15:48Z"
     }
   ],
-  "generated": "2026-11-25T04:15:10Z"
+  "generated": "2026-11-26T04:15:48Z"
 }
