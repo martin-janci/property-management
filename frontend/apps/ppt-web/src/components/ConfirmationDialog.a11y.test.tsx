@@ -82,6 +82,63 @@ describe('ConfirmationDialog Accessibility', () => {
     expect(cancelButton).toHaveFocus();
   });
 
+  it('generates unique, correctly-paired ids for concurrent dialog instances', () => {
+    // Two dialogs mounted at once (e.g. nested confirmations) must not share
+    // DOM ids, otherwise `aria-labelledby` / `aria-describedby` resolve to the
+    // wrong title/description and screen readers announce the wrong content.
+    render(
+      <>
+        <ConfirmationDialog
+          {...defaultProps}
+          title="First Dialog Title"
+          message="First dialog description"
+        />
+        <ConfirmationDialog
+          {...defaultProps}
+          title="Second Dialog Title"
+          message="Second dialog description"
+        />
+      </>
+    );
+
+    const dialogs = screen.getAllByRole('alertdialog');
+    expect(dialogs).toHaveLength(2);
+
+    const [first, second] = dialogs;
+
+    const firstLabelledBy = first.getAttribute('aria-labelledby');
+    const firstDescribedBy = first.getAttribute('aria-describedby');
+    const secondLabelledBy = second.getAttribute('aria-labelledby');
+    const secondDescribedBy = second.getAttribute('aria-describedby');
+
+    expect(firstLabelledBy).toBeTruthy();
+    expect(firstDescribedBy).toBeTruthy();
+
+    // Distinct per-instance ids — no duplicate DOM ids across the two dialogs.
+    expect(firstLabelledBy).not.toBe(secondLabelledBy);
+    expect(firstDescribedBy).not.toBe(secondDescribedBy);
+
+    // Each aria reference must resolve to an element inside its OWN dialog,
+    // carrying that dialog's own title/description text.
+    // biome-ignore lint/style/noNonNullAssertion: asserted truthy above
+    const firstTitle = document.getElementById(firstLabelledBy!);
+    // biome-ignore lint/style/noNonNullAssertion: asserted truthy above
+    const firstDesc = document.getElementById(firstDescribedBy!);
+    expect(first).toContainElement(firstTitle);
+    expect(first).toContainElement(firstDesc);
+    expect(firstTitle).toHaveTextContent('First Dialog Title');
+    expect(firstDesc).toHaveTextContent('First dialog description');
+
+    // biome-ignore lint/style/noNonNullAssertion: resolved below is checked by containment
+    const secondTitle = document.getElementById(secondLabelledBy!);
+    // biome-ignore lint/style/noNonNullAssertion: resolved below is checked by containment
+    const secondDesc = document.getElementById(secondDescribedBy!);
+    expect(second).toContainElement(secondTitle);
+    expect(second).toContainElement(secondDesc);
+    expect(secondTitle).toHaveTextContent('Second Dialog Title');
+    expect(secondDesc).toHaveTextContent('Second dialog description');
+  });
+
   it('should have no violations for danger variant', async () => {
     const { container } = render(<ConfirmationDialog {...defaultProps} variant="danger" />);
 
