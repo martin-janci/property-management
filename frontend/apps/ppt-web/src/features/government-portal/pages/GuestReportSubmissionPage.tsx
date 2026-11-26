@@ -88,7 +88,7 @@ export function GuestReportSubmissionPage({
   onSubmit,
   onBack,
 }: GuestReportSubmissionPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [step, setStep] = useState<SubmissionStep>('select');
   const [selectedCountry, setSelectedCountry] = useState<SubmissionCountry>('SK');
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>('');
@@ -487,7 +487,7 @@ export function GuestReportSubmissionPage({
                       </p>
                       <p className="text-sm text-gray-500">
                         {guest.nationality} | {guest.documentType}: {guest.documentNumber} |{' '}
-                        Check-in: {formatSubmissionDate(guest.checkInDate)}
+                        Check-in: {formatSubmissionDate(guest.checkInDate, i18n.language)}
                       </p>
                     </div>
                     <div className="text-right text-sm text-gray-500">
@@ -663,14 +663,14 @@ export function GuestReportSubmissionPage({
                             {guest.firstName} {guest.lastName}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">
-                            {formatSubmissionDate(guest.dateOfBirth)}
+                            {formatSubmissionDate(guest.dateOfBirth, i18n.language)}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">{guest.nationality}</td>
                           <td className="px-3 py-2 text-sm text-gray-500">
                             {guest.documentType}: {guest.documentNumber}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">
-                            {formatSubmissionDate(guest.checkInDate)}
+                            {formatSubmissionDate(guest.checkInDate, i18n.language)}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-500">{guest.unitNumber}</td>
                         </tr>

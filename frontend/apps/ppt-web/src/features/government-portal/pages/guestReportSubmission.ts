@@ -57,9 +57,14 @@ export function filterReportTemplates(
   );
 }
 
-/** Display format for dates (e.g. "01 Aug 2026"). */
-export function formatSubmissionDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-GB', {
+/**
+ * Display format for dates (e.g. "01 Aug 2026"), rendered in the active
+ * i18n locale. Pass `i18n.language` from the calling component so Slovak/
+ * Czech/German/Polish/Hungarian managers see localized month abbreviations
+ * instead of a hardcoded `en-GB` form.
+ */
+export function formatSubmissionDate(dateString: string, locale: string): string {
+  return new Date(dateString).toLocaleDateString(locale, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
