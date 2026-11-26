@@ -6,7 +6,7 @@
  */
 
 import type React from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import './ConfirmationDialog.css';
 
@@ -49,6 +49,11 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   loadingLabel,
 }) => {
   const { t } = useTranslation();
+  // Per-instance ids so two concurrently-mounted dialogs never collide on the
+  // same DOM id (duplicate ids break the aria-labelledby / aria-describedby
+  // pairing — screen readers would announce another dialog's title/description).
+  const titleId = useId();
+  const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
@@ -147,16 +152,16 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         className="confirmation-dialog"
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="confirmation-dialog-title"
-        aria-describedby="confirmation-dialog-description"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         // Programmatically focusable (not in the Tab order) so focus can rest
         // on the dialog itself when every interactive control is disabled.
         tabIndex={-1}
       >
-        <h2 id="confirmation-dialog-title" className="confirmation-dialog-title">
+        <h2 id={titleId} className="confirmation-dialog-title">
           {title}
         </h2>
-        <p id="confirmation-dialog-description" className="confirmation-dialog-message">
+        <p id={descriptionId} className="confirmation-dialog-message">
           {message}
         </p>
         <div className="confirmation-dialog-actions">
