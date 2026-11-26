@@ -147,7 +147,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
       <View style={s.header}>
         {onBack && (
           <Pressable onPress={onBack} style={styles.backLink}>
-            <Text style={styles.backLinkText}>← Leases</Text>
+            <Text style={styles.backLinkText}>{t('leases.backToList')}</Text>
           </Pressable>
         )}
         {lease ? (
@@ -161,7 +161,7 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
             </Text>
           </>
         ) : (
-          <Text style={s.headerTitle}>Lease</Text>
+          <Text style={s.headerTitle}>{t('leases.detailTitle')}</Text>
         )}
       </View>
 
@@ -182,17 +182,17 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
         ) : (
           <>
             <View style={s.card}>
-              <Text style={styles.metricLabel}>Monthly rent</Text>
+              <Text style={styles.metricLabel}>{t('leases.monthlyRent')}</Text>
               <Text style={styles.metricValue}>
                 {lease.rentAmount} {lease.currency}
               </Text>
               <Text style={[s.cardMeta, { marginTop: 8 }]}>
-                As {lease.role}
-                {lease.counterpartyName ? `, paid to ${lease.counterpartyName}` : ''}
+                {t('leases.asRole', { role: lease.role })}
+                {lease.counterpartyName ? t('leases.paidTo', { name: lease.counterpartyName }) : ''}
               </Text>
             </View>
 
-            <Text style={styles.sectionTitle}>Upcoming payments</Text>
+            <Text style={styles.sectionTitle}>{t('leases.upcomingPayments')}</Text>
             {payments.length === 0 ? (
               <View style={s.card}>
                 <Text style={s.cardBody}>{t('leases.noPayments')}</Text>
@@ -206,12 +206,14 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
                       {payment.amount} {lease.currency}
                     </Text>
                   </View>
-                  <Text style={s.cardBody}>Due {formatDate(payment.dueDate)}</Text>
+                  <Text style={s.cardBody}>
+                    {t('leases.due', { date: formatDate(payment.dueDate) })}
+                  </Text>
                 </View>
               ))
             )}
 
-            <Text style={styles.sectionTitle}>Documents</Text>
+            <Text style={styles.sectionTitle}>{t('leases.documentsSection')}</Text>
             <Pressable
               style={s.card}
               onPress={() =>
@@ -220,8 +222,8 @@ export function LeaseDetailScreen({ leaseId, onBack, onNavigate }: LeaseDetailSc
                 })
               }
             >
-              <Text style={s.cardTitle}>📄 Lease agreement</Text>
-              <Text style={s.cardMeta}>Signed PDF — open to review or share.</Text>
+              <Text style={s.cardTitle}>📄 {t('leases.leaseAgreement')}</Text>
+              <Text style={s.cardMeta}>{t('leases.signedPdfHint')}</Text>
             </Pressable>
           </>
         )}

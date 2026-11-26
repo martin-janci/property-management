@@ -398,7 +398,12 @@
     "openErrorMessage": "Prehliadač súborov nie je na tomto zariadení dostupný.",
     "notFound": "Dokument sa nenašiel",
     "open": "Otvoriť dokument",
-    "opening": "Otvára sa…"
+    "opening": "Otvára sa…",
+    "detailCategory": "Kategória",
+    "detailFile": "Súbor",
+    "detailCreated": "Vytvorené",
+    "backToList": "← Dokumenty",
+    "updatedAt": "Aktualizované {{date}}"
   },
   "settings": {
     "title": "Nastavenia",
@@ -509,7 +514,9 @@
       "published": "Zverejnené",
       "draft": "Koncept",
       "scheduled": "Plánované"
-    }
+    },
+    "unreadBadge": "{{count}} neprečítaných",
+    "byLine": "Od {{author}}"
   },
   "widgets": {
     "addedTitle": "Widget pridany",
@@ -571,7 +578,9 @@
     "latestReading": "Posledný odpočet",
     "usedSincePrevious": "Spotreba od predchádzajúceho odpočtu: {{amount}} {{unit}}",
     "readingHistory": "História odpočtov",
-    "submitNewReading": "Odoslať nový odpočet"
+    "submitNewReading": "Odoslať nový odpočet",
+    "listTitle": "Merače",
+    "listSubtitle": "Merače registrované k vašej jednotke."
   },
   "esignature": {
     "title": "Ziadost o podpis",
@@ -667,7 +676,10 @@
       "under_construction": "Vo výstavbe",
       "renovation": "Rekonštrukcia",
       "inactive": "Neaktívna"
-    }
+    },
+    "title": "Budovy",
+    "subtitle": "Nehnuteľnosti priradené k vášmu účtu.",
+    "units": "Jednotky"
   },
   "messages": {
     "newMessage": "+ Nová správa",
@@ -691,7 +703,9 @@
     "syncing": "Synchronizuje sa…",
     "authorYou": "Vy",
     "authorFallback": "Účastník",
-    "send": "Odoslať"
+    "send": "Odoslať",
+    "title": "Správy",
+    "threadUnread": "{{count}} nové"
   },
   "leases": {
     "loadError": "Nepodarilo sa načítať nájomné zmluvy",
@@ -705,7 +719,19 @@
       "pending": "Čakajúca",
       "expired": "Vypršaná",
       "terminated": "Ukončená"
-    }
+    },
+    "title": "Nájmy",
+    "subtitle": "Vaše aktívne a minulé nájomné zmluvy.",
+    "detailTitle": "Nájom",
+    "monthlyRent": "Mesačné nájomné",
+    "upcomingPayments": "Nadchádzajúce platby",
+    "documentsSection": "Dokumenty",
+    "signedPdfHint": "Podpísané PDF — otvorte na prezretie alebo zdieľanie.",
+    "backToList": "← Nájmy",
+    "due": "Splatné {{date}}",
+    "asRole": "Ako {{role}}",
+    "paidTo": ", platené {{name}}",
+    "leaseAgreement": "Nájomná zmluva"
   },
   "personMonths": {
     "title": "Osobomesiace",
@@ -758,7 +784,10 @@
     "availableCount_other": "{{count}} dostupných formulárov",
     "loadError": "Nepodarilo sa načítať formuláre",
     "emptyTitle": "Žiadne formuláre",
-    "emptyText": "Momentálne nemáte žiadne formuláre na vyplnenie."
+    "emptyText": "Momentálne nemáte žiadne formuláre na vyplnenie.",
+    "title": "Formuláre",
+    "required": "Povinné",
+    "due": "Splatné {{date}}"
   },
   "neighbors": {
     "loadError": "Nepodarilo sa načítať susedov",

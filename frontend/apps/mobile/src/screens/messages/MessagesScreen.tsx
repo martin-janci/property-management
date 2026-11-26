@@ -111,7 +111,7 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Messages</Text>
+        <Text style={s.headerTitle}>{t('messages.title')}</Text>
         {unreadTotal > 0 && (
           <Text style={s.headerSubtitle}>{t('messages.unreadCount', { count: unreadTotal })}</Text>
         )}
@@ -169,7 +169,9 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
                 {thread.unreadCount > 0 && (
                   <View style={s.cardFooter}>
                     <View style={[s.badge, { backgroundColor: colors.accent }]}>
-                      <Text style={[s.badgeText, { color: '#fff' }]}>{thread.unreadCount} new</Text>
+                      <Text style={[s.badgeText, { color: '#fff' }]}>
+                        {t('messages.threadUnread', { count: thread.unreadCount })}
+                      </Text>
                     </View>
                   </View>
                 )}

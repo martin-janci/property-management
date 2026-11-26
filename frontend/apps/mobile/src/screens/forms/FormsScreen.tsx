@@ -115,7 +115,7 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Forms</Text>
+        <Text style={s.headerTitle}>{t('forms.title')}</Text>
         {forms.length > 0 && (
           <Text style={s.headerSubtitle}>{t('forms.availableCount', { count: forms.length })}</Text>
         )}
@@ -156,12 +156,14 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
               <View style={s.cardFooter}>
                 {form.required && (
                   <View style={[s.badge, { backgroundColor: colors.dangerBg }]}>
-                    <Text style={[s.badgeText, { color: colors.danger }]}>Required</Text>
+                    <Text style={[s.badgeText, { color: colors.danger }]}>
+                      {t('forms.required')}
+                    </Text>
                   </View>
                 )}
                 {form.dueAt && (
                   <Text style={[s.cardMeta, { marginLeft: 'auto' }]}>
-                    Due {formatDate(form.dueAt)}
+                    {t('forms.due', { date: formatDate(form.dueAt) })}
                   </Text>
                 )}
               </View>

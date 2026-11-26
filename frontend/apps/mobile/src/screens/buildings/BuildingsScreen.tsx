@@ -115,8 +115,8 @@ export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.headerTitle}>Buildings</Text>
-        <Text style={s.headerSubtitle}>Properties associated with your account.</Text>
+        <Text style={s.headerTitle}>{t('buildings.title')}</Text>
+        <Text style={s.headerSubtitle}>{t('buildings.subtitle')}</Text>
       </View>
 
       <ScrollView
@@ -153,8 +153,8 @@ export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
               </View>
               <Text style={styles.address}>📍 {building.address}</Text>
               <View style={styles.statsRow}>
-                <Stat label="Units" value={String(building.unitCount)} />
-                <Stat label="Floors" value={String(building.floors)} />
+                <Stat label={t('buildings.units')} value={String(building.unitCount)} />
+                <Stat label={t('buildings.floors')} value={String(building.floors)} />
               </View>
             </Pressable>
           ))

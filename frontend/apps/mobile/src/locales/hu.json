@@ -356,7 +356,12 @@
     "openErrorMessage": "A fájlnézegető nem érhető el ezen az eszközön.",
     "notFound": "A dokumentum nem található",
     "open": "Dokumentum megnyitása",
-    "opening": "Megnyitás…"
+    "opening": "Megnyitás…",
+    "detailCategory": "Kategória",
+    "detailFile": "Fájl",
+    "detailCreated": "Létrehozva",
+    "backToList": "← Dokumentumok",
+    "updatedAt": "Frissítve: {{date}}"
   },
   "settings": {
     "title": "Beallitasok",
@@ -467,7 +472,9 @@
       "published": "Közzétéve",
       "draft": "Piszkozat",
       "scheduled": "Ütemezett"
-    }
+    },
+    "unreadBadge": "{{count}} olvasatlan",
+    "byLine": "Szerző: {{author}}"
   },
   "widgets": {
     "addedTitle": "Widget hozzaadva",
@@ -529,7 +536,9 @@
     "latestReading": "Legutóbbi leolvasás",
     "usedSincePrevious": "Fogyasztás az előző leolvasás óta: {{amount}} {{unit}}",
     "readingHistory": "Leolvasási előzmények",
-    "submitNewReading": "Új leolvasás beküldése"
+    "submitNewReading": "Új leolvasás beküldése",
+    "listTitle": "Mérők",
+    "listSubtitle": "Az Ön egységéhez regisztrált mérők."
   },
   "esignature": {
     "title": "Alairasi keres",
@@ -625,7 +634,10 @@
       "under_construction": "Építés alatt",
       "renovation": "Felújítás",
       "inactive": "Inaktív"
-    }
+    },
+    "title": "Épületek",
+    "subtitle": "A fiókjához társított ingatlanok.",
+    "units": "Egységek"
   },
   "messages": {
     "newMessage": "+ Új üzenet",
@@ -647,7 +659,9 @@
     "syncing": "Szinkronizálás…",
     "authorYou": "Ön",
     "authorFallback": "Résztvevő",
-    "send": "Küldés"
+    "send": "Küldés",
+    "title": "Üzenetek",
+    "threadUnread": "{{count}} új"
   },
   "leases": {
     "loadError": "A bérleti szerződések nem tölthetők be",
@@ -661,7 +675,19 @@
       "pending": "Függőben",
       "expired": "Lejárt",
       "terminated": "Megszüntetett"
-    }
+    },
+    "title": "Bérletek",
+    "subtitle": "Az Ön aktív és korábbi bérleti szerződései.",
+    "detailTitle": "Bérlet",
+    "monthlyRent": "Havi bérleti díj",
+    "upcomingPayments": "Közelgő fizetések",
+    "documentsSection": "Dokumentumok",
+    "signedPdfHint": "Aláírt PDF — nyissa meg megtekintéshez vagy megosztáshoz.",
+    "backToList": "← Bérletek",
+    "due": "Esedékes: {{date}}",
+    "asRole": "Mint {{role}}",
+    "paidTo": ", neki fizetve: {{name}}",
+    "leaseAgreement": "Bérleti szerződés"
   },
   "personMonths": {
     "title": "Személyhónapok",
@@ -710,7 +736,10 @@
     "availableCount_other": "{{count}} elérhető űrlap",
     "loadError": "Az űrlapok nem tölthetők be",
     "emptyTitle": "Nincsenek űrlapok",
-    "emptyText": "Jelenleg nincs kitöltendő űrlapja."
+    "emptyText": "Jelenleg nincs kitöltendő űrlapja.",
+    "title": "Űrlapok",
+    "required": "Kötelező",
+    "due": "Esedékes: {{date}}"
   },
   "neighbors": {
     "loadError": "A szomszédok nem tölthetők be",

@@ -206,8 +206,12 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Announcements</Text>
-          {unreadCount > 0 && <Text style={styles.unreadBadge}>{unreadCount} unread</Text>}
+          <Text style={styles.headerTitle}>{t('announcements.title')}</Text>
+          {unreadCount > 0 && (
+            <Text style={styles.unreadBadge}>
+              {t('announcements.unreadBadge', { count: unreadCount })}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -215,7 +219,7 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       {pinnedItems.length > 0 && (
         <View style={styles.pinnedBand}>
           <View style={styles.pinnedBandLabel}>
-            <Text style={styles.pinnedBandLabelText}>Pinned</Text>
+            <Text style={styles.pinnedBandLabelText}>{t('announcements.pinned')}</Text>
           </View>
           <ScrollView
             horizontal
@@ -287,7 +291,9 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
               <Text style={styles.announcementTitle}>{announcement.title}</Text>
 
               <View style={styles.announcementFooter}>
-                <Text style={styles.authorText}>By {announcement.author}</Text>
+                <Text style={styles.authorText}>
+                  {t('announcements.byLine', { author: announcement.author })}
+                </Text>
                 <View style={styles.footerRight}>
                   {announcement.attachments.length > 0 && (
                     <Text style={styles.attachmentBadge}>📎 {announcement.attachments.length}</Text>

@@ -356,7 +356,12 @@
     "openErrorMessage": "Der Dateibetrachter ist auf diesem Gerät nicht verfügbar.",
     "notFound": "Dokument nicht gefunden",
     "open": "Dokument öffnen",
-    "opening": "Wird geöffnet…"
+    "opening": "Wird geöffnet…",
+    "detailCategory": "Kategorie",
+    "detailFile": "Datei",
+    "detailCreated": "Erstellt",
+    "backToList": "← Dokumente",
+    "updatedAt": "Aktualisiert {{date}}"
   },
   "settings": {
     "title": "Einstellungen",
@@ -467,7 +472,9 @@
       "published": "Veröffentlicht",
       "draft": "Entwurf",
       "scheduled": "Geplant"
-    }
+    },
+    "unreadBadge": "{{count}} ungelesen",
+    "byLine": "Von {{author}}"
   },
   "widgets": {
     "addedTitle": "Widget hinzugefugt",
@@ -529,7 +536,9 @@
     "latestReading": "Letzter Stand",
     "usedSincePrevious": "Verbrauch seit letztem Stand: {{amount}} {{unit}}",
     "readingHistory": "Ableseverlauf",
-    "submitNewReading": "Neuen Stand absenden"
+    "submitNewReading": "Neuen Stand absenden",
+    "listTitle": "Zähler",
+    "listSubtitle": "Für Ihre Einheit registrierte Zähler."
   },
   "esignature": {
     "title": "Unterschriftsanfrage",
@@ -625,7 +634,10 @@
       "under_construction": "Im Bau",
       "renovation": "Renovierung",
       "inactive": "Inaktiv"
-    }
+    },
+    "title": "Gebäude",
+    "subtitle": "Mit Ihrem Konto verknüpfte Immobilien.",
+    "units": "Einheiten"
   },
   "messages": {
     "newMessage": "+ Neue Nachricht",
@@ -647,7 +659,9 @@
     "syncing": "Wird synchronisiert…",
     "authorYou": "Sie",
     "authorFallback": "Teilnehmer",
-    "send": "Senden"
+    "send": "Senden",
+    "title": "Nachrichten",
+    "threadUnread": "{{count}} neu"
   },
   "leases": {
     "loadError": "Mietverträge konnten nicht geladen werden",
@@ -661,7 +675,19 @@
       "pending": "Ausstehend",
       "expired": "Abgelaufen",
       "terminated": "Beendet"
-    }
+    },
+    "title": "Mietverträge",
+    "subtitle": "Ihre aktuellen und vergangenen Mietverträge.",
+    "detailTitle": "Mietvertrag",
+    "monthlyRent": "Monatliche Miete",
+    "upcomingPayments": "Anstehende Zahlungen",
+    "documentsSection": "Dokumente",
+    "signedPdfHint": "Signiertes PDF — zum Ansehen oder Teilen öffnen.",
+    "backToList": "← Mietverträge",
+    "due": "Fällig {{date}}",
+    "asRole": "Als {{role}}",
+    "paidTo": ", gezahlt an {{name}}",
+    "leaseAgreement": "Mietvertrag"
   },
   "personMonths": {
     "title": "Personenmonate",
@@ -710,7 +736,10 @@
     "availableCount_other": "{{count}} Formulare verfügbar",
     "loadError": "Formulare konnten nicht geladen werden",
     "emptyTitle": "Keine Formulare",
-    "emptyText": "Sie haben derzeit keine Formulare auszufüllen."
+    "emptyText": "Sie haben derzeit keine Formulare auszufüllen.",
+    "title": "Formulare",
+    "required": "Erforderlich",
+    "due": "Fällig {{date}}"
   },
   "neighbors": {
     "loadError": "Nachbarn konnten nicht geladen werden",
