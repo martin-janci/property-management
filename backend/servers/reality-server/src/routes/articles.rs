@@ -149,7 +149,13 @@ pub struct CommentsQuery {
 /// backslash, so we backslash-escape those three characters (backslash first)
 /// before wrapping in the substring wildcards.
 fn search_like_pattern(term: &str) -> String {
-    format!("%{term}%")
+    // Backslash-escape LIKE metacharacters (backslash first) so user input is
+    // matched literally under Postgres ILIKE's default `\` escape character.
+    let escaped = term
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    format!("%{escaped}%")
 }
 
 /// List articles with optional filters.
