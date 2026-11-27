@@ -17334,6 +17334,107 @@
         "assignment_status": "merged",
         "pr_number": 3817
       }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3809",
+      "title": "Screen-map drift: PR #3809 touched reality-web layout.tsx without doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3809"
+      ],
+      "evidence": [
+        "PR #3809 touched frontend/apps/reality-web/src/app/[locale]/layout.tsx without updating any docs/screens/reality/*.md (heuristic: route basename vs doc slug)"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/layout.tsx"
+      ],
+      "created_at": "2026-11-27",
+      "updated_at": "2026-11-27",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3793",
+      "title": "Screen-map drift: PR #3793 touched reality-web account listings-edit + password pages without doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3793"
+      ],
+      "evidence": [
+        "PR #3793 touched reality-web account pages (listings/[id]/edit + password) without updating docs/screens/reality/account-*.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/account/listings/[id]/edit/page.tsx",
+        "frontend/apps/reality-web/src/app/[locale]/account/password/page.tsx"
+      ],
+      "created_at": "2026-11-27",
+      "updated_at": "2026-11-27",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3788",
+      "title": "Screen-map drift: PR #3788 touched reality-web /compare page without doc update",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3788"
+      ],
+      "evidence": [
+        "PR #3788 touched frontend/apps/reality-web/src/app/[locale]/compare/page.tsx without updating docs/screens/reality/compare-properties.md"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/compare/page.tsx"
+      ],
+      "created_at": "2026-11-27",
+      "updated_at": "2026-11-27",
+      "plan": null
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-lib-auth-api-ts",
+      "title": "Churn hotspot: frontend/apps/reality-web/src/lib/auth-api.ts touched by 2 PRs since last run",
+      "vector": "refactor",
+      "confidence": "high",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "merged-PR-churn-window"
+      ],
+      "evidence": [
+        "Phase 1 churn count = 2 PRs this run"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts"
+      ],
+      "created_at": "2026-11-27",
+      "updated_at": "2026-11-27",
+      "plan": null
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-3848",
+      "title": "Hotfix-no-test: PR #3848 fix(api-server) 2FA fail-closed ships without a dedicated test file",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #3848"
+      ],
+      "evidence": [
+        "PR #3848 touched only backend/servers/api-server/src/routes/auth/mod.rs — no test file in diff; PR body says inline regression test was added but no separate *test* file to anchor on"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/auth/mod.rs"
+      ],
+      "created_at": "2026-11-27",
+      "updated_at": "2026-11-27",
+      "plan": null
     }
   ]
 }

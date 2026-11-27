@@ -1,0 +1,269 @@
+{
+  "signals": [
+    {
+      "id": "lag-warning-2026-11-27",
+      "type": "lag_warning",
+      "source": "routine-cadence",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "last_run_iso=2026-11-25T04:19:46Z, now=2026-11-27T04:12:49Z → 47h gap (threshold 36h)"
+      ],
+      "candidate_vector": null
+    },
+    {
+      "id": "screen-map-drift-pr-3809-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3809",
+      "score_delta": 2,
+      "confidence": "medium",
+      "evidence": [
+        "PR #3809 touched frontend/apps/reality-web/src/app/[locale]/layout.tsx without updating any docs/screens/reality/*.md"
+      ],
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3793-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3793",
+      "score_delta": 2,
+      "confidence": "medium",
+      "evidence": [
+        "PR #3793 touched reality-web account pages (listings edit + password) without updating docs/screens/reality/account-*.md"
+      ],
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "screen-map-drift-pr-3788-reality",
+      "type": "screen-map-drift",
+      "source": "PR #3788",
+      "score_delta": 2,
+      "confidence": "medium",
+      "evidence": [
+        "PR #3788 touched reality-web /compare page without updating docs/screens/reality/compare-properties.md"
+      ],
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "dep-update-noise-pr-3833",
+      "type": "dep-update-noise",
+      "source": "PR #3833",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "dependabot npm-minor-patch 28 updates — open"
+      ],
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3832",
+      "type": "dep-update-noise",
+      "source": "PR #3832",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "dependabot cargo-minor-patch 8 updates — open"
+      ],
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3831",
+      "type": "dep-update-noise",
+      "source": "PR #3831",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "dependabot sqlx 0.9.0 → 0.9.1 — open"
+      ],
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3830",
+      "type": "dep-update-noise",
+      "source": "PR #3830",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "dependabot gradle-minor-patch 5 updates — open"
+      ],
+      "candidate_vector": null
+    },
+    {
+      "id": "dep-update-noise-pr-3829",
+      "type": "dep-update-noise",
+      "source": "PR #3829",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "dependabot compose-bom 2026.09.00 → 2026.11.01 — open"
+      ],
+      "candidate_vector": null
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-routes-person-months-rs",
+      "type": "churn-hotspot",
+      "source": "merged-PR-churn-window",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "backend/servers/api-server/src/routes/person_months.rs touched by 3 PRs this run (cumulative re-emit; already in seen_signals, not re-scored)"
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-lib-auth-api-ts",
+      "type": "churn-hotspot",
+      "source": "merged-PR-churn-window",
+      "score_delta": 1,
+      "confidence": "high",
+      "evidence": [
+        "frontend/apps/reality-web/src/lib/auth-api.ts touched by 2 PRs this run"
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-ppt-web-src-features-government-portal-pages-guest-report-submission-page-tsx",
+      "type": "churn-hotspot",
+      "source": "merged-PR-churn-window",
+      "score_delta": 0,
+      "confidence": "high",
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx touched by 2 PRs this run (cumulative re-emit; already in seen_signals, not re-scored)"
+      ],
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "hotfix-no-test-pr-3848",
+      "type": "hotfix-no-test",
+      "source": "PR #3848",
+      "score_delta": 2,
+      "confidence": "medium",
+      "evidence": [
+        "PR #3848 fix(api-server) 2FA-flag fail-closed: single file backend/servers/api-server/src/routes/auth/mod.rs, no *test* file in diff; PR body claims inline regression test added but no separate test file"
+      ],
+      "candidate_vector": "test-gap"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f .research/briefs/2026-11-27.md && head -1 | grep '^# 2026-11-27$'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev HEAD:state.json; compare cursors/seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq items unique length",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signal-dedup carveout",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap + decay",
+      "observed": "cap=true decay=N/A (0 open>14d)",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "git diff --cached --diff-filter=A plans/",
+      "observed": "no new plans",
+      "expected": "all new plans annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new-plan count + sections",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached | grep -v ^.research",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep secrets",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief lists Phase-failure + cursor unchanged",
+      "observed": "phase-1.6 listed; pm_cursor + coverage_cursor unchanged",
+      "expected": "listed + cursor held"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "all present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive size staged>=HEAD",
+      "observed": "24==24",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions caps + idempotency",
+      "observed": "0 actions",
+      "expected": "<=1 pr,<=1 issue,<=1 comment"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped → no-op",
+      "observed": "pm_cursor + coverage_cursor unchanged (phase skipped by design — fork cannot spawn subagents)",
+      "expected": "no-op if Phase 1.6 skipped"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep telegram token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

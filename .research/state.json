@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-11-25T04:19:46Z",
-  "last_run_ms": 1800000,
-  "last_pr_seen": 3785,
-  "last_issue_seen": 3781,
-  "last_commit_sha": "12e0bbfee52af3541fdeab2d1acd615b0a630427",
+  "last_run_iso": "2026-11-27T04:12:49Z",
+  "last_run_ms": 0,
+  "last_pr_seen": 3854,
+  "last_issue_seen": 3842,
+  "last_commit_sha": "aac1a60e0d47c17f8dfddde6056df5a4dc0de38b",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -793,9 +793,9 @@
       "recent_churn": 379
     },
     "frontend/apps/ppt-web/src/features/government-portal/pages/GuestReportSubmissionPage.tsx": {
-      "runs_seen": 1,
-      "last_seen": "2026-11-24",
-      "recent_churn": 283
+      "runs_seen": 2,
+      "last_seen": "2026-11-27",
+      "recent_churn": 2
     },
     "backend/servers/api-server/src/routes/voice_webhooks/handlers.rs": {
       "runs_seen": 1,
@@ -808,9 +808,14 @@
       "recent_churn": 444
     },
     "backend/servers/api-server/src/routes/person_months.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-11-27",
+      "recent_churn": 3
+    },
+    "frontend/apps/reality-web/src/lib/auth-api.ts": {
       "runs_seen": 1,
-      "last_seen": "2026-11-25",
-      "recent_churn": 436
+      "last_seen": "2026-11-27",
+      "recent_churn": 2
     }
   },
   "seen_signals": [
@@ -1588,12 +1593,23 @@
     "untriaged-issue-920",
     "untriaged-issue-950",
     "untriaged-issue-951",
-    "untriaged-issue-952"
+    "untriaged-issue-952",
+    "lag-warning-2026-11-27",
+    "screen-map-drift-pr-3809-reality",
+    "screen-map-drift-pr-3793-reality",
+    "screen-map-drift-pr-3788-reality",
+    "dep-update-noise-pr-3833",
+    "dep-update-noise-pr-3832",
+    "dep-update-noise-pr-3831",
+    "dep-update-noise-pr-3830",
+    "dep-update-noise-pr-3829",
+    "churn-hotspot-frontend-apps-reality-web-src-lib-auth-api-ts",
+    "hotfix-no-test-pr-3848"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-11-20",
-    "api-core": "2026-11-23",
+    "api-core": "2026-11-27",
     "reality-server": "2026-11-16",
     "ppt-web-ui": "2026-11-24",
     "ppt-web-core": "2026-11-04",
@@ -1602,8 +1618,8 @@
     "mobile-native-kmp": "2026-11-04"
   },
   "stats": {
-    "runs": 129,
-    "vectors_created": 588,
+    "runs": 130,
+    "vectors_created": 593,
     "plans_created": 38,
     "quiet_days": 8,
     "auto_fix_count": 0
