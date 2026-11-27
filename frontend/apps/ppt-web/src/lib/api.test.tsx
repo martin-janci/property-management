@@ -784,3 +784,38 @@ describe('api module — no eager default export', () => {
     expect(typeof mod.getApiClient).toBe('function');
   });
 });
+
+// ---------------------------------------------------------------------------
+// 8. Fail-fast when used unconfigured (regression)
+//
+//    getApiClient() used to LAZILY AUTO-CREATE a *default* instance when called
+//    before configureApiClient() had ever run (or after resetApiClient()). That
+//    default instance had no token getter and no onUnauthorized handler, so
+//    every request went out WITHOUT an Authorization header and silently
+//    swallowed 401s (no refresh-and-replay) — the "unconfigured client makes
+//    bad requests" footgun this suite guards. getApiClient() must now FAIL FAST
+//    with a clear, actionable error instead of leaking unauthenticated requests
+//    onto the wire. An EXPLICIT empty config (`configureApiClient({})`) remains
+//    a valid opt-in to an unauthenticated client — only the never-configured
+//    state is rejected.
+// ---------------------------------------------------------------------------
+
+describe('api client — fail-fast when unconfigured', () => {
+  it('throws a clear, actionable error when called before configureApiClient()', () => {
+    // `beforeEach` already reset the singleton; assert the unconfigured state
+    // throws rather than silently minting a token-less default instance.
+    resetApiClient();
+    expect(() => getApiClient()).toThrowError(/configureApiClient/);
+  });
+
+  it('returns the configured singleton once configureApiClient() has run', () => {
+    const instance = configureApiClient({});
+    expect(getApiClient()).toBe(instance);
+  });
+
+  it('throws again after resetApiClient() (e.g. logout teardown)', () => {
+    configureApiClient({ getToken: () => 'tok' });
+    resetApiClient();
+    expect(() => getApiClient()).toThrowError(/configureApiClient/);
+  });
+});
