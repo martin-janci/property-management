@@ -56,6 +56,21 @@ fn unknown_screen() -> ErrorResponse {
     error_response(StatusCode::NOT_FOUND, "unknown screen")
 }
 
+/// Parse a `RegistryManifest` loaded from the DB (stored, internal data).
+///
+/// Unlike a manifest supplied in a *request body* (whose parse failure is the
+/// client's own `422` — see `put_manifest`), the stored manifest is internal
+/// state: a parse failure means the persisted row is corrupt, an infra fault,
+/// not caller input. It therefore maps through [`internal_error`] to a
+/// sanitized `500` so the raw serde error text (which embeds the stored JSON's
+/// shape) never reaches the client — mirroring `resolved.rs`'s treatment of the
+/// identical "stored manifest invalid" case.
+fn parse_stored_manifest(
+    raw: serde_json::Value,
+) -> Result<layout_core::RegistryManifest, ErrorResponse> {
+    serde_json::from_value(raw).map_err(internal_error)
+}
+
 /// Platform-admin gate shared by every handler: validate the super-admin bearer
 /// token and map any rejection to a uniform 403. Returns the admin id (+ token
 /// string) for handlers that record it on change events.
@@ -431,7 +446,8 @@ pub async fn kill(
     security(("bearer_auth" = [])), request_body = PreviewResolveRequest,
     responses((status = 200, description = "Resolved section list for the given config"),
               (status = 404, description = "No manifest stored for the platform"),
-              (status = 422, description = "Invalid config, unknown platform, or stored manifest unparseable")))]
+              (status = 422, description = "Invalid config or unknown platform"),
+              (status = 500, description = "Stored manifest is corrupt (sanitized)")))]
 pub async fn preview_resolve(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
@@ -462,8 +478,7 @@ pub async fn preview_resolve(
         .ok_or_else(|| {
             error_response(StatusCode::NOT_FOUND, "no registry manifest for platform")
         })?;
-    let manifest: layout_core::RegistryManifest = serde_json::from_value(manifest_row.manifest)
-        .map_err(|e| bad_request(vec![format!("stored manifest invalid: {e}")]))?;
+    let manifest: layout_core::RegistryManifest = parse_stored_manifest(manifest_row.manifest)?;
 
     let kills: std::collections::BTreeSet<layout_core::SectionType> = repo
         .list_kills(&mut **conn, &config.screen)
@@ -515,5 +530,40 @@ pub async fn unkill(
         Ok(StatusCode::NO_CONTENT)
     } else {
         Err(error_response(StatusCode::NOT_FOUND, "no such kill flag"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Regression: the `preview-resolve` layout-admin handler reads a manifest
+    // row from the DB (internal, stored data). A corrupt stored manifest is an
+    // infra fault, not caller input, so its parse failure must map to a
+    // sanitized 500 — never echo the raw serde error (which embeds the stored
+    // JSON's shape) to the client the way a request-body validation error does.
+    // Before the fix, `preview_resolve` surfaced `stored manifest invalid: {e}`
+    // verbatim with a 422, leaking internal detail; this asserts that no longer
+    // happens.
+    #[test]
+    fn stored_manifest_parse_error_is_sanitized() {
+        // A value that cannot deserialize into `RegistryManifest` (a struct):
+        // a bare string triggers serde's "invalid type … expected struct …".
+        let corrupt = serde_json::json!("this is not a registry manifest object");
+        let (status, Json(body)) =
+            parse_stored_manifest(corrupt).expect_err("a corrupt stored manifest must be rejected");
+
+        // Sanitized internal error — not a client-facing 4xx with raw detail.
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.errors, vec!["internal server error".to_string()]);
+        // No fragment of the raw serde error may reach the client body.
+        for e in &body.errors {
+            assert!(
+                !e.contains("stored manifest invalid"),
+                "leaked raw prefix: {e}"
+            );
+            assert!(!e.contains("invalid type"), "leaked serde detail: {e}");
+            assert!(!e.contains("expected struct"), "leaked serde detail: {e}");
+        }
     }
 }
