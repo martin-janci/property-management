@@ -62,6 +62,15 @@ fn score_invoice_match(
     line_iban: Option<&str>,
     contact_iban: &HashMap<Uuid, String>,
 ) -> Decimal {
+    // A bank line and an invoice in different currencies are never a match:
+    // amounts across currencies are not comparable, and a shared variable symbol
+    // must not auto-suggest a cross-currency invoice. Mismatched currency scores
+    // zero — below any threshold — so the line stays unmatched for manual review.
+    // Compared case-insensitively since bank exports vary in ISO-code casing.
+    if !line.currency.eq_ignore_ascii_case(&invoice.currency) {
+        return Decimal::ZERO;
+    }
+
     let mut confidence = Decimal::ZERO;
 
     // 1. Variable Symbol match (highest weight).
