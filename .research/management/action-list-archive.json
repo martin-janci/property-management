@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-27T10:28:50Z",
+  "archived_at": "2026-11-27T14:28:25Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -4656,6 +4656,31 @@
         "merged_pr": 3857,
         "merged_at": "2026-11-27T04:33:26Z",
         "at": "2026-11-27T04:34:28Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-notification-random-group-key",
+      "action": "api core notification random group key",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-27T14:24:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3863,
+        "merged_at": "2026-11-27T12:27:47Z",
+        "at": "2026-11-27T14:24:31Z"
       }
     },
     {
@@ -10890,6 +10915,31 @@
         "merged_pr": 2640,
         "merged_at": "2026-08-03T20:24:47Z",
         "at": "2026-08-03T20:27:32Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-api-ts-client-unconfigured",
+      "action": "ppt web core api ts client unconfigured",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-27T14:24:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-24T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3862,
+        "merged_at": "2026-11-27T12:27:47Z",
+        "at": "2026-11-27T14:24:31Z"
       }
     },
     {
@@ -17571,6 +17621,31 @@
         "merged_pr": 3844,
         "merged_at": "2026-11-26T18:37:35Z",
         "at": "2026-11-26T18:38:30Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-get-inquiry-empty-msgs",
+      "action": "reality server get inquiry empty msgs",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-27T14:24:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3864,
+        "merged_at": "2026-11-27T12:27:47Z",
+        "at": "2026-11-27T14:24:31Z"
       }
     },
     {
@@ -36726,6 +36801,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-20T06:23:32Z"
+      }
+    },
+    {
+      "id": "pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20-retry1",
+      "action": "Resolve issue #3357 (stalled dispatcher): decide which approved PRs to rebase manually, and define an escalation path for non-mechanical conflicts that replaces the dead-end Tier-1d signal. [retry 1/2 of failed pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20]",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z) | gc1-reconcile 2026-11-27T14:24:31Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3861,
+        "merged_at": "2026-11-27T12:27:47Z",
+        "at": "2026-11-27T14:24:31Z"
       }
     },
     {
