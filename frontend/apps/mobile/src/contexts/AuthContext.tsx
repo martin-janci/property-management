@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { feedbackManager } from '../onboarding/FeedbackManager';
 import { resetLocalData } from '../services/resetLocalData';
 import { isJwtExpired } from '../utils/jwt';
-import { buildSessionUser, readTokenPair, TENANT_ID_KEY } from '../utils/session';
+import { buildSessionUser, parseStoredUser, readTokenPair, TENANT_ID_KEY } from '../utils/session';
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
@@ -344,8 +344,8 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
         const userJson = await SecureStore.getItemAsync(USER_KEY);
 
-        if (accessToken && userJson) {
-          const user = JSON.parse(userJson) as User;
+        const user = parseStoredUser(userJson);
+        if (accessToken && user) {
           // The device may have sat locked past the access-token TTL, so the
           // stored bearer can be expired even though the refresh token is still
           // valid. Refresh it before restoring the session — but preserve the
@@ -404,8 +404,11 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         const userJson = await SecureStore.getItemAsync(USER_KEY);
         const biometricEnabled = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
 
-        if (accessToken && userJson) {
-          const user = JSON.parse(userJson) as User;
+        // Validate the persisted user rather than casting the raw blob: a
+        // corrupt or tampered `ppt_user` (e.g. an arbitrary `role`) must drop
+        // to the login screen instead of restoring a trusted session.
+        const user = parseStoredUser(userJson);
+        if (accessToken && user) {
           const biometricEnabledFlag = biometricEnabled === 'true';
 
           // Access tokens are short-lived: a cold start after the TTL would
