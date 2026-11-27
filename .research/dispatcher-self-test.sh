@@ -799,6 +799,15 @@ if [ -f "$PROMPT" ]; then
   grep -q 'retry-remint.sh' "$PROMPT"      && note "prompt wires Tier 1c retry re-mint" || fail "prompt missing retry-remint wiring"
   grep -q 'Phase 5.8 — Merge-confirm sweep' "$PROMPT" && note "prompt encodes merge-confirm sweep" || fail "prompt missing Phase 5.8 merge-confirm sweep"
   grep -q 'quarantine escalation SLA' "$PROMPT" && note "prompt encodes escalation SLA" || fail "prompt missing escalation SLA"
+  # issue #3357: Phase 5.6's rebase_attempts>=3 exit must escalate (open a
+  # needs-human-review follow-up issue + quarantine the approved PR), not
+  # dead-end. Guard the escalation clause so it can't be silently removed.
+  grep -q 'Non-mechanical-conflict escalation (issue #3357' "$PROMPT" \
+    && note "prompt encodes Phase 5.6 non-mechanical-conflict escalation (#3357)" \
+    || fail "prompt missing Phase 5.6 non-mechanical-conflict escalation (#3357)"
+  grep -q 'non-mechanical conflict — needs manual rebase' "$PROMPT" \
+    && note "escalation parks the PR via quarantine with a non-mechanical reason" \
+    || fail "prompt missing non-mechanical-conflict quarantine_reason"
 fi
 if [ -f "$ACTION_LIST" ]; then
   BAD31=$(jq -r '
