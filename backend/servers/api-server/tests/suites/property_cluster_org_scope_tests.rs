@@ -565,6 +565,38 @@ async fn residents_resident_cannot_manage_manager_can(pool: PgPool) {
     expect(&resp, StatusCode::FORBIDDEN, "resident remove resident");
 }
 
+/// A manager may only add a resident who is a member of the building's own
+/// organization. Adding a user who exists but belongs to a *different* org must
+/// be refused (cross-org / tenant-isolation gap), and no residency row created.
+/// `mgr_b` is an active member of org B, not org A.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn residents_add_cross_org_user_refused(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let w = world(&pool).await;
+    let base = format!("/api/v1/buildings/{}/units/{}/residents", w.bld_a, w.unit_a);
+    let body = json!({
+        "user_id": w.mgr_b.user_id,
+        "resident_type": "tenant",
+        "start_date": "2020-01-01"
+    });
+    let resp = call(&app, "POST", &base, &w.mgr_a, Some(body)).await;
+    expect(
+        &resp,
+        StatusCode::BAD_REQUEST,
+        "add cross-org user as resident",
+    );
+
+    let created: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM unit_residents WHERE unit_id = $1 AND user_id = $2",
+    )
+    .bind(w.unit_a)
+    .bind(w.mgr_b.user_id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(created, 0, "no cross-org residency created");
+}
+
 // ---------------------------------------------------------------------------
 // Person months
 // ---------------------------------------------------------------------------
