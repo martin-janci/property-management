@@ -2455,6 +2455,40 @@ mod sso_consumer_security_tests {
         assert!(check_redirect_uri_allowed("//evil.com", &empty).is_err());
     }
 
+    /// Regression (open-redirect, backslash + stripped control char): browsers
+    /// remove ASCII tab (`\t`), newline (`\n`) and carriage return (`\r`) from a
+    /// URL *before* normalising `\` to `/`. A literal-prefix check that only
+    /// rejects a backslash **immediately** after the leading slash therefore
+    /// misses a control char smuggled between them: the server sees
+    /// `/<tab>\evil.com` (second char is the tab, so neither `//` nor `/\`), but
+    /// the browser strips the tab and resolves `/\evil.com` -> `//evil.com`, the
+    /// foreign authority `evil.com`. All such forms must be rejected, while a
+    /// legitimate relative path is still allowed.
+    #[test]
+    fn redirect_backslash_with_stripped_control_char_is_not_treated_as_relative() {
+        let empty: Vec<String> = Vec::new();
+        for raw in [
+            "/\t\\evil.com",   // tab between slash and backslash
+            "/\n\\evil.com",   // newline
+            "/\r\\evil.com",   // carriage return
+            "/\r\n\\evil.com", // CRLF
+            "/\t/evil.com",    // tab then protocol-relative slash
+            "\\\\evil.com",    // bare leading double backslash -> //evil.com
+            "\\/evil.com",     // backslash + slash -> //evil.com
+        ] {
+            let res = check_redirect_uri_allowed(raw, &empty);
+            assert!(
+                res.is_err(),
+                "backslash authority with stripped control char must not bypass the allowlist: {raw:?} -> {res:?}"
+            );
+        }
+        // Guard against over-tightening: a plain relative path, and a relative
+        // path that merely contains a (same-origin) backslash deeper in the
+        // path, still pass.
+        assert!(check_redirect_uri_allowed("/dashboard", &empty).is_ok());
+        assert!(check_redirect_uri_allowed("/a\\b", &empty).is_ok());
+    }
+
     /// Regression (issue #820): dangerous non-http(s) schemes (`javascript:`,
     /// `data:`, `file:`) must be blocked outright.
     #[test]
