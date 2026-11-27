@@ -25,18 +25,18 @@
     {
       "task_id": "code-review-api-handlers-unit-residents-add-xorg-user",
       "branch": "auto-impl/code-review-api-handlers-unit-residents-0d00e769",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-27T20:27:05Z",
-      "last_updated": "2026-11-27T20:27:05Z",
-      "status_changed_at": "2026-11-27T20:27:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-27T21:09:23Z",
+      "status_changed_at": "2026-11-27T21:09:23Z",
+      "pr_number": 3882,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3882",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3882 status=done specialist=rust-backend scope_drift=false note=confirmed real xorg gap: add_resident validated target via non-RLS user_repo.find_by_id; now requires active org membership (org_member_repo.is_member); returns USER_NOT_FOUND to avoid leak; TDD split; fmt+clippy+new regression green; CI backend.yml authoritative",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -45,5 +45,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-27T20:39:50Z"
+  "generated": "2026-11-27T21:09:23Z"
 }
