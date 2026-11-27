@@ -136,8 +136,13 @@ export function MeterReadingScreen({ meterId, onSuccess, onCancel }: MeterReadin
           try {
             photoStorageKey = await uploadMeterPhoto(photoUri);
           } catch (uploadError) {
-            console.error('Failed to upload meter photo:', uploadError);
+            // The photo upload failed, but the reading itself is still saved.
+            // The dropped photo is surfaced to the resident via the
+            // `photoNotUploaded` alert below — a raw console.error never
+            // reaches the user and is stripped from release builds. Mirrors
+            // ReportFaultScreen's `void error` convention (issue #2999).
             photoDropped = true;
+            void uploadError;
           }
         } else {
           photoDropped = true;
@@ -202,8 +207,12 @@ export function MeterReadingScreen({ meterId, onSuccess, onCancel }: MeterReadin
       setReading('');
       setPhotoUri(null);
     } catch (error) {
-      console.error('Failed to submit meter reading:', error);
+      // Persisting the reading to the offline queue failed (e.g. a local
+      // storage write error). Surface it to the resident with a user-facing
+      // alert instead of a raw console.error that never reaches them and is
+      // stripped from release builds. Mirrors ReportFaultScreen's handling.
       Alert.alert(t('common.error'), t('meters.submitFailed'));
+      void error;
     } finally {
       setIsSubmitting(false);
     }
