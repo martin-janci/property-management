@@ -192,19 +192,38 @@ fn ensure_redirect_uri_allowed(state: &AppState, raw: &str) -> Result<(), String
 /// - Absolute URLs must use `http`/`https` (blocks `javascript:`, `data:`,
 ///   `file:`, …) and their origin (`scheme://host[:port]`) must appear in
 ///   `allowed_origins`.
+///
+/// The relative-path decision is taken on a **browser-normalised** copy of the
+/// input: browsers strip ASCII tab/newline/CR and treat `\` as `/` *before*
+/// resolving a redirect target, so we must do the same. A literal check on the
+/// raw bytes would miss a control char smuggled between the leading slash and a
+/// backslash (`/<tab>\evil.com`), which the browser collapses to the foreign
+/// authority `//evil.com` — an open-redirect bypass.
 fn check_redirect_uri_allowed(raw: &str, allowed_origins: &[String]) -> Result<(), String> {
+    // Normalise exactly as a browser does when resolving a Location/redirect
+    // target: remove ASCII tab (U+0009), LF (U+000A) and CR (U+000D), then map
+    // every backslash to a forward slash. The relative-path and allowlist
+    // decisions below are taken on this normalised form so no control-char or
+    // backslash obfuscation can smuggle a foreign authority past the check.
+    let normalized: String = raw
+        .chars()
+        .filter(|c| !matches!(c, '\t' | '\n' | '\r'))
+        .map(|c| if c == '\\' { '/' } else { c })
+        .collect();
+
     // Allow same-origin relative paths (e.g. "/dashboard") unconditionally —
     // the browser will resolve them against the reality-web origin that
     // initiated the flow, which by definition the user already trusts.
     //
-    // A leading "/" is a same-origin relative path ONLY when the next char is
-    // neither "/" nor "\" — browsers normalise "\" to "/", so "/\evil.com" and
-    // "//evil.com" both resolve to a foreign authority (open-redirect bypass).
-    if raw.starts_with('/') && !raw.starts_with("//") && !raw.starts_with("/\\") {
+    // After normalisation a leading "/" is a same-origin relative path ONLY
+    // when the next char is not also "/": "//evil.com" (and its backslash /
+    // control-char obfuscations, already collapsed above) resolve to a foreign
+    // authority and must fall through to allowlist matching.
+    if normalized.starts_with('/') && !normalized.starts_with("//") {
         return Ok(());
     }
 
-    let parsed = url::Url::parse(raw).map_err(|e| format!("invalid URL: {}", e))?;
+    let parsed = url::Url::parse(&normalized).map_err(|e| format!("invalid URL: {}", e))?;
     // Only http(s) — block javascript:, data:, file:, etc.
     match parsed.scheme() {
         "http" | "https" => {}
