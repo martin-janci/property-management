@@ -1,9 +1,32 @@
 {
-  "generated": "2026-11-26T10:27:25Z",
+  "generated": "2026-11-27T10:35:54Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-11-27T10:35:54Z",
+      "prs_scanned": 15,
+      "clean": [
+        3860,
+        3859,
+        3858,
+        3857,
+        3856,
+        3855,
+        3854,
+        3853,
+        3852,
+        3851,
+        3850,
+        3849,
+        3848,
+        3847,
+        3846
+      ],
+      "with_issues": [],
+      "note": "Dispatcher Phase 2.5 post-merge review (DISPATCHER_OWNED_COMMIT=1). repo=martin-janci/property-management, window=14d (merged>=2026-11-13), base=dev, max_prs=15, labels=follow-up,from-merged-review. No Task fan-out tool available to this reviewer; all 15 diffs reviewed inline. Scanned the 15 newest in-window dev merges lacking post-merge-reviewed/no-review-needed (merged 2026-11-26..27); the prior run's rolled-over older tail (#3809..#3787 etc.) has since been superseded by a burst of newer code-review-remediation merges that now fill the newest-15 window. ALL 15 CLEAN, 0 follow-ups opened (no-noise rule honoured). Uniformly high-quality, tightly-scoped code-review / scrum-master auto-impl products, each shipping an IG3-style regression or characterization test. Security/correctness highlights: #3860 maps the AML review mutation's org-scoped RowNotFound to 404 (was blanket 500), closing the cross-tenant 403-vs-404 oracle divergence + cross-org IDOR mutation suite asserting no write lands; #3856 normalises SSO redirect targets exactly as a browser does (strip tab/LF/CR, map backslash->slash) BEFORE the relative-path check, closing the `/<tab>\\evil.com` open-redirect bypass the prior literal-prefix check missed + regression covering CRLF/backslash forms; #3854 routes the SSO mobile token-exchange/validate/session-sync persistence failures through sso_callback_internal_error so raw sqlx/anyhow DB detail (table/column/constraint, pool/TLS state) never reaches the SsoError body + body-leak + source-guard tests; #3849 does the same for reality-server import-job/feed handlers via db_error_or (RowNotFound->404, else sanitized 500) + a VARCHAR(255)-overflow-driven 22001 leak test; #3851 maps a corrupt STORED layout manifest (internal data) to a sanitized 500 instead of echoing the raw serde error with a 422 + test; #3852 validates agency branding primary/secondary_color as canonical #rgb/#rgba/#rrggbb/#rrggbbaa hex before it lands in an inline style sink (reflected-content/CSS-injection guard, generic 400 that doesn't echo input) + new util::color module w/ injection tests; #3848 replaces the login 2FA `if let Ok(Some(..))` with an MfaGate that fails CLOSED on a lookup Err (was fail-open: a DB hiccup let an enrolled user skip the second factor -> 500 MFA_CHECK_ERROR) + exhaustive gate unit tests; #3847 caps workflow interpolation input at 64KiB (passes oversized user-influenced string nodes through verbatim, bounding regex/replace work on the exec hot path) + at-cap/over-cap tests; #3846 adds a per-route 64KiB DefaultBodyLimit on the agent-review endpoints (tighter than the 4MiB global) so a 413 fires before the handler buffers an oversized body + 413 integration test; #3857 extracts NotificationService's Push arm into deliver_push_channel and pins that Push actually dispatches through the transport (was once a log-only no-op) via a spy-transport unit test w/ no live DB. Behaviour-preserving / correctness: #3855 swaps accounting payment-matcher confidence weights from Decimal::from_str(..).unwrap() to compile-time dec! literals + an invariants test (VS=0.8 clears the 0.5 auto-suggest threshold alone, corroboration signals don't, VS+amount+IBAN sums to exactly 1.0); #3853 removes the orphaned PublicListingDetail model stub (dead code, compiles clean); #3850 implements the realtor schedule-viewing endpoint (Story 33.3) copying attendee contact from the owning inquiry, IDOR-safe (INSERT...SELECT WHERE realtor_id matches -> Ok(None)->404), future-time + 1..480 duration validation, and wires the previously-dead viewing-reminder notifier seam (best-effort, swallowed) + owning/foreign-realtor/past-time + notifier-dispatch tests. Tooling/research: #3859 adds a Phase 1 preflight unshallow guard to dispatcher-prompt.md (a shallow cron clone leaves no merge-base with origin/dev, mis-classifying in-flight PRs as orphaned and dead-ending the Phase 5.6 rebaser; #3784 only guarded the LATE rebaser) + a dispatcher-self-test T10b anchor assertion; #3858 adds a MoveFolderDialog i18n guard test (per-locale key presence across 6 bundles + source guard rejecting hardcoded aria-label/title/placeholder). No JSON-key-case (PR #473) regressions: reviewed Rust test diffs (#3860/#3857/#3855/#3854/#3851/#3852/#3848/#3847/#3846/#3850) use pure-fn asserts or single-word json accessors, no snake_case json[] against rename_all=camelCase DTOs. GitHub I/O MCP-primary (gh/git writes proxy-403'd): enumeration via gh api search/issues REST (is:pr is:merged base:dev merged:>=2026-11-13); diffs via gh api pulls/<n> Accept:diff. All 15 PRs labeled post-merge-reviewed via mcp__github__issue_write update (none carried prior labels, so label-set writes clobbered nothing); no issues opened so no breadcrumbs. DISPATCHER_OWNED_COMMIT=1: wrote post-merge-review.json + last-merged-review.txt only; deferred commit/push to the orchestrator's Phase 6; did NOT touch assignments.json/action-list.json/archives."
+    },
     {
       "run_at": "2026-11-26T10:27:25Z",
       "prs_scanned": 15,
@@ -535,35 +558,6 @@
           "findings": 1,
           "specialist": "pm-rust",
           "note": "authenticated change_password updates the password hash but never revokes refresh tokens/sessions; reset_password does (force re-login). Pre-change sessions (incl. an attacker's) survive a deliberate password change."
-        }
-      ]
-    },
-    {
-      "run_at": "2026-11-06T04:31:36Z",
-      "prs_scanned": 15,
-      "clean": [
-        3340,
-        3335,
-        3337,
-        3336,
-        3334,
-        3339,
-        3338,
-        3332,
-        3330,
-        3331,
-        3313,
-        3303,
-        3302,
-        3298
-      ],
-      "with_issues": [
-        {
-          "pr": 3300,
-          "issue": 3341,
-          "findings": 1,
-          "specialist": "pm-rust",
-          "note": "payment_webhook_dead_letters RLS manage policy gates on org membership only (no role predicate) despite its 'admins/managers' comment; latent over-grant once a resolve endpoint runs through RLS"
         }
       ]
     }
