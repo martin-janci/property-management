@@ -205,6 +205,20 @@ for m in "${MARKERS[@]}"; do
 done
 echo
 
+# --- T10b: Phase 1 preflight unshallow guard (issue #3781 / stall #3357) ----
+# A fresh cron clone can be shallow, leaving no merge-base with origin/dev, which
+# silently orphans in-flight PRs (Phase 2 mis-classify) and dead-ends the Phase
+# 5.6 rebaser. #3784 guarded only the LATE rebaser; the real fix for the
+# recurrence is to deepen ONCE in Phase 1 preflight, before the first merge-base.
+# Assert the guard is present in dispatcher-prompt.md so it can't silently
+# regress (grep -F literal anchors; hard-fail — this is the stall root cause).
+echo "T10b Phase 1 preflight deepens a shallow clone (issue #3781 / stall #3357)"
+for anchor in "git rev-parse --is-shallow-repository" "git fetch --unshallow origin"; do
+  if grep -qF -- "$anchor" "$PROMPT"; then note "preflight unshallow anchor present: '$anchor'"
+  else fail "$PROMPT missing Phase 1 preflight unshallow anchor: '$anchor' (stall #3357 can recur)"; fi
+done
+echo
+
 # --- T11: per-row hardening fields backfilled (allow null, just must exist) -
 # Only checks rows claimed AFTER the hardening date; older rows are legacy.
 # Combined active + archive (issue #9).
