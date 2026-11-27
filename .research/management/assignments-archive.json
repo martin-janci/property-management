@@ -3981,6 +3981,28 @@
       "merge_attempted_at": "2026-11-10T20:27:10Z"
     },
     {
+      "task_id": "code-review-api-core-authz-require-perm-fail-open",
+      "branch": "auto-impl/code-review-api-core-authz-require-perm-66df9e7d",
+      "status": "merged",
+      "claimed_at": "2026-11-27T10:26:00Z",
+      "last_updated": "2026-11-27T12:43:57Z",
+      "status_changed_at": "2026-11-27T12:43:57Z",
+      "pr_number": 3869,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3869",
+      "merged_at": "2026-11-27T12:43:57Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=64d8e85090e4537797e47974f6a8ee50bd37c602 note=fail-closed deny-on-missing-role; is_platform_admin requires role=Some so legit path preserved; tests+CI green",
+      "last_reviewed_oid": "64d8e85090e4537797e47974f6a8ee50bd37c602",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-27T12:40:56Z"
+    },
+    {
       "task_id": "code-review-api-core-client-ip-cf-spoof",
       "branch": "auto-impl/code-review-api-core-client-ip-cf-spoof-07819907",
       "status": "merged",
@@ -8768,6 +8790,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-mobile-rn-fault-category-i18n",
+      "branch": "auto-impl/code-review-mobile-rn-fault-category-i18-79fe2828",
+      "status": "merged",
+      "claimed_at": "2026-11-27T10:26:00Z",
+      "last_updated": "2026-11-27T12:43:57Z",
+      "status_changed_at": "2026-11-27T12:43:57Z",
+      "pr_number": 3865,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3865",
+      "merged_at": "2026-11-27T12:43:57Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=040e37ba2d9ad806760415ed1a36ff3ee37dd0f7 note=i18n-fix-clean-ci-green-self-approval-blocked",
+      "last_reviewed_oid": "040e37ba2d9ad806760415ed1a36ff3ee37dd0f7",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-mobile-rn-fault-photos-silently-dropped",
       "branch": "auto-impl/code-review-mobile-rn-fault-photos-silen-a6a1063f",
       "status": "merged",
@@ -12775,6 +12819,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-core-websocket-prod-console",
+      "branch": "auto-impl/code-review-ppt-web-core-websocket-prod-63ba31f4",
+      "status": "merged",
+      "claimed_at": "2026-11-27T10:26:00Z",
+      "last_updated": "2026-11-27T12:43:57Z",
+      "status_changed_at": "2026-11-27T12:43:57Z",
+      "pr_number": 3866,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3866",
+      "merged_at": "2026-11-27T12:43:57Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=4b1a4fdce11d73a0646ed0513c82cd0b08b6ed52 note=test-only WS prod-console regression guard; prod code already DEV-gates wsWarn/wsError, CI green, self-approval-blocked",
+      "last_reviewed_oid": "4b1a4fdce11d73a0646ed0513c82cd0b08b6ed52",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-core-ws-category-map-gap",
       "branch": "auto-impl/code-review-ppt-web-core-ws-category-map-d4ae905b",
       "status": "merged",
@@ -12994,6 +13060,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-17T20:36:46Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-core-ws-stale-token-on-refresh",
+      "branch": "auto-impl/code-review-ppt-web-core-ws-stale-token-b6f9c3c4",
+      "status": "merged",
+      "claimed_at": "2026-11-27T10:26:00Z",
+      "last_updated": "2026-11-27T12:43:57Z",
+      "status_changed_at": "2026-11-27T12:43:57Z",
+      "pr_number": 3867,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3867",
+      "merged_at": "2026-11-27T12:43:57Z",
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": "verdict=approve head_oid=195a93c96a4701db4775184095ffbf30fc478a0a note=test-only-ws-token-refresh-regression-coverage-verified-self-approval-blocked",
+      "last_reviewed_oid": "195a93c96a4701db4775184095ffbf30fc478a0a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-core-ws-token-rotation-stale",
@@ -37658,5 +37746,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-27T12:34:44Z"
+  "archived_at": "2026-11-27T12:45:32Z"
 }
