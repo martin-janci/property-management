@@ -5,6 +5,8 @@
 
 mod common;
 
+#[path = "suites/document_classification_history_rls_repo_tests.rs"]
+mod document_classification_history_rls_repo_tests;
 #[path = "suites/documents_rls_cross_tenant_tests.rs"]
 mod documents_rls_cross_tenant_tests;
 #[path = "suites/emergency_rls_repo_tests.rs"]
