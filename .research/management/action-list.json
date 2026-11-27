@@ -666,20 +666,6 @@
       }
     },
     {
-      "id": "stalled-review-pr-3380-retry1",
-      "action": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3380]",
-      "owner_role": "pm-devops",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=stalled-review-pr-3380 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T02:45:34Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T06:25:40Z",
-      "retry_of": "stalled-review-pr-3380",
-      "retry_round": 1
-    },
-    {
       "id": "code-review-api-handlers-unit-residents-add-xorg-user",
       "action": "api handlers unit residents add xorg user",
       "owner_role": "pm-backend",

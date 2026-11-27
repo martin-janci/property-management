@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-27T16:36:44Z",
+  "archived_at": "2026-11-27T18:43:02Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -39473,6 +39473,20 @@
         "merged_at": null,
         "at": "2026-11-20T04:25:12Z"
       }
+    },
+    {
+      "id": "stalled-review-pr-3380-retry1",
+      "action": "[MOOT-DROP: retry of stalled-review for PR #3380, which was closed-without-merge 2026-11-19; nothing to retry] Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3380]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=stalled-review-pr-3380 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T02:45:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "stalled-review-pr-3380",
+      "retry_round": 1
     },
     {
       "id": "test-gap-81-2-report-exec-history-download-e2e",
