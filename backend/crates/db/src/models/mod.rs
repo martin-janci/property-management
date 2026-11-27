@@ -453,7 +453,7 @@ pub use legal::{
     CreateLegalDocumentVersion, CreateLegalNotice, LegalDocument, LegalDocumentQuery,
     LegalDocumentSummary, LegalDocumentVersion, LegalNotice, LegalNoticeQuery,
     LegalNoticeRecipient, NoticeAcknowledgmentStats, NoticeRecipientInput, NoticeStatistics,
-    NoticeTypeCount, NoticeWithRecipients, UpdateComplianceRequirement,
+    NoticeTypeCount, NoticeWithRecipients, UpcomingVerification, UpdateComplianceRequirement,
     UpdateComplianceTemplate, UpdateLegalDocument, UpdateLegalNotice,
 };
 
