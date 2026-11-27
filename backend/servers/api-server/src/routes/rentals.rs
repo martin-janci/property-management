@@ -140,19 +140,18 @@ pub fn router() -> Router<AppState> {
 /// finding: raw DB error leaked in rentals handlers; mirrors the sanitized
 /// convention in `help.rs` and `signatures.rs::db_error_response`).
 fn db_err(context: &str, e: impl std::fmt::Display) -> (StatusCode, String) {
-    (StatusCode::INTERNAL_SERVER_ERROR, format!("{context}: {e}"))
+    tracing::error!(error = %e, context = context, "Rental request database error");
+    (StatusCode::INTERNAL_SERVER_ERROR, context.to_string())
 }
 
 /// `ErrorResponse`-bodied sibling of [`db_err`] for the multipart handlers that
 /// return `Json<ErrorResponse>`. Logs the full error server-side and returns a
 /// fixed `DATABASE_ERROR` body carrying only the sanitized `context` phrase.
 fn db_err_json(context: &str, e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!(error = %e, context = context, "Rental request database error");
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ErrorResponse::new(
-            "DATABASE_ERROR",
-            format!("{context}: {e}"),
-        )),
+        Json(ErrorResponse::new("DATABASE_ERROR", context.to_string())),
     )
 }
 
@@ -1842,7 +1841,10 @@ mod db_error_leak_tests {
         let (status, body) = db_err("Failed to list bookings", RAW);
         assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(body, "Failed to list bookings");
-        assert!(!body.contains("rental_guests"), "schema detail leaked: {body}");
+        assert!(
+            !body.contains("rental_guests"),
+            "schema detail leaked: {body}"
+        );
         assert!(!body.contains("column"), "raw SQL detail leaked: {body}");
         assert!(
             !body.contains("does not exist"),
