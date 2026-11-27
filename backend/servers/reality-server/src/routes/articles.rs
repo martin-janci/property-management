@@ -138,6 +138,20 @@ pub struct CommentsQuery {
     pub offset: Option<i64>,
 }
 
+/// Build the ILIKE substring pattern for the optional `search` filter.
+///
+/// The user-supplied `search` term is matched as a substring (`%…%`) against
+/// `title`/`excerpt`, but LIKE/ILIKE metacharacters (`%`, `_`, and the `\`
+/// escape char) inside the user's own input must be matched *literally* —
+/// otherwise `?search=50%` degrades to "match every article" and `?search=a_b`
+/// matches `axb`, silently returning the wrong result set on this public,
+/// unauthenticated endpoint. Postgres LIKE's default escape character is
+/// backslash, so we backslash-escape those three characters (backslash first)
+/// before wrapping in the substring wildcards.
+fn search_like_pattern(term: &str) -> String {
+    format!("%{term}%")
+}
+
 /// List articles with optional filters.
 #[utoipa::path(
     get,
@@ -155,7 +169,7 @@ pub async fn list_articles(
     let per_page = query.per_page.unwrap_or(20).clamp(1, 100);
     let page = query.page.unwrap_or(1).max(1);
     let offset = (page - 1) * per_page;
-    let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+    let search_pattern = query.search.as_ref().map(|s| search_like_pattern(s));
 
     let mut conn = state
         .acquire_public_conn()
@@ -528,4 +542,28 @@ pub async fn create_comment(
     };
 
     Ok((axum::http::StatusCode::CREATED, Json(comment)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: the `search` substring filter must treat LIKE/ILIKE
+    /// metacharacters in the *user's* input literally. Before the escape fix,
+    /// `?search=50%` built the pattern `%50%%` — where the embedded `%` is a
+    /// wildcard — so the filter matched every article instead of the literal
+    /// "50%", and `?search=a_b` matched `axb`. The public, unauthenticated
+    /// endpoint then returned a wrong (over-broad) result set. After the fix
+    /// the metacharacters are backslash-escaped and only plain substrings pass
+    /// through unchanged.
+    #[test]
+    fn search_like_pattern_escapes_like_metacharacters() {
+        // Plain input is unchanged — backward-compatible substring match.
+        assert_eq!(search_like_pattern("bratislava"), "%bratislava%");
+        // `%` and `_` in user input must be escaped so they match literally.
+        assert_eq!(search_like_pattern("50%"), "%50\\%%");
+        assert_eq!(search_like_pattern("a_b"), "%a\\_b%");
+        // The escape character itself must be escaped first.
+        assert_eq!(search_like_pattern("c:\\d"), "%c:\\\\d%");
+    }
 }
