@@ -8,11 +8,11 @@ use db::models::accounting::{
 };
 use db::repositories::{AccConfigRepository, AccountingRepository};
 use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use serde::Deserialize;
 use sqlx::{Connection, PgConnection};
 use std::collections::HashMap;
 use std::io::Cursor;
-use std::str::FromStr;
 use uuid::Uuid;
 
 /// Normalise an IBAN for comparison: drop all whitespace and upper-case it, so
@@ -221,7 +221,7 @@ impl AccountingService {
             })
             .collect();
 
-        let threshold = Decimal::from_str("0.5").unwrap();
+        let threshold = dec!(0.5);
 
         for line in lines {
             if line.match_state != "unmatched" && line.match_state != "suggested" {
@@ -259,16 +259,16 @@ impl AccountingService {
                 if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol)
                 {
                     if l_vs == i_vs && !l_vs.is_empty() {
-                        confidence += Decimal::from_str("0.8").unwrap();
+                        confidence += dec!(0.8);
                     }
                 }
 
                 // 2. Amount match (corroboration / tie-breaker)
                 let remaining_amount = invoice.total_amount - invoice.paid_amount;
                 if line.amount == remaining_amount {
-                    confidence += Decimal::from_str("0.15").unwrap();
+                    confidence += dec!(0.15);
                 } else if line.amount > Decimal::ZERO && line.amount <= remaining_amount {
-                    confidence += Decimal::from_str("0.05").unwrap();
+                    confidence += dec!(0.05);
                 }
 
                 // 3. Counterparty IBAN match (corroboration / tie-breaker).
@@ -278,7 +278,7 @@ impl AccountingService {
                 //    the originating IBAN above its VS-only peers.
                 if let Some(l_iban) = &line_iban {
                     if contact_iban.get(&invoice.contact_id) == Some(l_iban) {
-                        confidence += Decimal::from_str("0.05").unwrap();
+                        confidence += dec!(0.05);
                     }
                 }
 
@@ -583,5 +583,37 @@ mod tests {
     #[test]
     fn statement_account_iban_falls_back_to_empty_when_unconfigured() {
         assert_eq!(AccountingService::statement_account_iban(None), "");
+    }
+
+    // The payment-matching confidence weights are hardcoded decimal literals in
+    // `run_payment_matcher`. They used to be built with `Decimal::from_str("..").unwrap()`
+    // — a runtime parse that could panic on a typo and carried a needless unwrap on
+    // a constant. They are now `dec!` literals, parsed at compile time. This test
+    // pins their exact values and the documented 0..1 scoring invariants so a future
+    // edit to a weight can't silently drift the auto-suggest behaviour (FR-16.8):
+    //   - a Variable-Symbol match alone (0.8) must clear the auto-suggest threshold
+    //     (0.5), since VS is the only signal strong enough on its own;
+    //   - amount/IBAN corroboration alone must NOT clear it;
+    //   - the full weight set must sum to exactly 1.0 (the clamped maximum).
+    #[test]
+    fn confidence_weights_match_documented_scoring_invariants() {
+        let threshold = dec!(0.5);
+        let w_vs = dec!(0.8);
+        let w_amount_exact = dec!(0.15);
+        let w_amount_partial = dec!(0.05);
+        let w_iban = dec!(0.05);
+
+        // VS match alone clears the auto-suggest threshold.
+        assert!(w_vs >= threshold, "VS match must auto-suggest on its own");
+        // Corroboration signals alone must never clear the threshold.
+        assert!(w_amount_exact < threshold);
+        assert!(w_amount_partial < threshold);
+        assert!(w_iban < threshold);
+        // Exact-amount corroboration outweighs partial-amount corroboration.
+        assert!(w_amount_exact > w_amount_partial);
+        // The strongest combination (VS + exact amount + IBAN) sums to the
+        // documented maximum of 1.0, so the `.min(Decimal::ONE)` clamp is exact,
+        // never lossy.
+        assert_eq!(w_vs + w_amount_exact + w_iban, Decimal::ONE);
     }
 }
