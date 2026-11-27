@@ -174,6 +174,33 @@ fn claim_send_in_cache(
     false
 }
 
+/// Derive the stable `(entity_type, entity_id)` grouping pair for an in-app
+/// notification written to `notification_groups` / `grouped_notifications`.
+///
+/// The group key the DB function builds is `entity_type || '_' || entity_id`,
+/// and `(user_id, group_key)` is unique — so the pair returned here is what
+/// decides whether two notifications collapse into one group or each land in
+/// their own.
+///
+/// * When the notification refers to a concrete entity (a fault, a vote, …)
+///   `entity_id` is `Some(id)`: that id groups every notification about the
+///   same entity together under the generic `"notification"` entity type.
+/// * When there is **no** concrete entity, the notification must still group
+///   deterministically. Using a fresh random id as the fallback dropped every
+///   entity-less notification into its own singleton group, defeating grouping
+///   entirely. Instead we key the group on the notification's *event type*
+///   (with a fixed nil `entity_id`), so repeated entity-less notifications of
+///   the same type collapse into a single, stable group.
+fn in_app_group_key(event_type: &str, entity_id: Option<Uuid>) -> (&str, Uuid) {
+    match entity_id {
+        Some(id) => ("notification", id),
+        // No concrete entity: key the group on the event type with a fixed nil
+        // id so repeated entity-less notifications of the same type collapse
+        // into one stable group instead of each getting a fresh random group.
+        None => (event_type, Uuid::nil()),
+    }
+}
+
 /// Notification service for sending notifications across channels.
 pub struct NotificationService {
     pool: DbPool,
@@ -419,13 +446,17 @@ impl NotificationService {
                         .await;
                 }
                 NotificationChannel::InApp => {
-                    // Create in-app notification using granular notification repository
+                    // Create in-app notification using granular notification repository.
+                    // Derive a stable grouping key so related notifications group
+                    // together instead of each landing in its own group.
+                    let (group_entity_type, group_entity_id) =
+                        in_app_group_key(event_type, entity_id);
                     if let Err(e) = self
                         .granular_notification_repo
                         .add_notification_to_group_for_user(
                             user_id,
-                            "notification",
-                            entity_id.unwrap_or(Uuid::new_v4()),
+                            group_entity_type,
+                            group_entity_id,
                             &notification.title,
                             event_type,
                             &notification.title,
@@ -1033,6 +1064,56 @@ mod tests {
         assert!(
             !claim_send_in_cache(&mut cache, key, 300, later),
             "a send past the dedup window must be allowed again"
+        );
+    }
+
+    /// Regression (`code-review-api-core-notification-random-group-key`): an
+    /// in-app notification with no concrete entity must still group
+    /// deterministically. The grouping key used a random `Uuid::new_v4()`
+    /// fallback, so every entity-less notification of the same event type for a
+    /// user produced a *different* `(entity_type, entity_id)` pair — i.e. a
+    /// distinct group — defeating grouping entirely.
+    ///
+    /// Two entity-less notifications of the same event type must therefore
+    /// resolve to the same grouping key.
+    #[test]
+    fn in_app_group_key_is_deterministic_for_entity_less_notifications() {
+        let event_type = NotificationType::SessionExpiringSoon.as_event_type();
+
+        let first = in_app_group_key(event_type, None);
+        let second = in_app_group_key(event_type, None);
+
+        assert_eq!(
+            first, second,
+            "entity-less notifications of the same event type must share one \
+             stable grouping key, not a random per-notification one"
+        );
+    }
+
+    /// Different event types must still fall into different groups, and a
+    /// concrete entity id must group by that entity (not by event type).
+    #[test]
+    fn in_app_group_key_separates_event_types_and_honours_entity_id() {
+        let vote = in_app_group_key(NotificationType::VoteStarted.as_event_type(), None);
+        let payment = in_app_group_key(NotificationType::PaymentDue.as_event_type(), None);
+        assert_ne!(
+            vote, payment,
+            "distinct event types must not collapse into the same group"
+        );
+
+        // A concrete entity groups by that entity under the generic type.
+        let entity = Uuid::new_v4();
+        let with_entity =
+            in_app_group_key(NotificationType::VoteStarted.as_event_type(), Some(entity));
+        assert_eq!(
+            with_entity,
+            ("notification", entity),
+            "a concrete entity id must drive the group key"
+        );
+        // Same entity id → same key regardless of how many times we ask.
+        assert_eq!(
+            with_entity,
+            in_app_group_key(NotificationType::VoteStarted.as_event_type(), Some(entity))
         );
     }
 }
