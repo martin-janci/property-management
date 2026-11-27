@@ -362,8 +362,13 @@ fn sso_callback_sanitized_error(
     (status, Json(SsoError::new(code, client_message)))
 }
 
-/// `500` specialization of [`sso_callback_sanitized_error`] for SSO-callback
-/// persistence-step failures (user upsert, session creation).
+/// `500` specialization of [`sso_callback_sanitized_error`] for SSO
+/// persistence-step failures (user upsert, session creation). Used by every
+/// SSO JSON handler that persists via a DB-backed service — the OAuth callback
+/// as well as the mobile token exchange / validation and session-sync handlers
+/// — so a raw `sqlx`/`anyhow` DB error (table, column and constraint names,
+/// sometimes pool/TLS state) is logged server-side but never interpolated into
+/// the client-facing `SsoError` body.
 fn sso_callback_internal_error(
     code: &'static str,
     client_message: &'static str,
@@ -700,10 +705,7 @@ pub async fn validate_mobile_sso_token(
         .upsert_sso_user(&user_info)
         .await
         .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("user_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("user_create_failed", "Failed to create or update user", &e)
         })?;
 
     // Create session
@@ -712,10 +714,7 @@ pub async fn validate_mobile_sso_token(
         .create_mobile_session(portal_user.id)
         .await
         .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("session_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("session_create_failed", "Failed to create session", &e)
         })?;
 
     Ok(Json(SessionResponse {
@@ -1181,11 +1180,7 @@ pub async fn exchange_pm_token(
         .upsert_sso_user(&user_info)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create portal user");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("user_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("user_create_failed", "Failed to create or update user", &e)
         })?;
 
     // Create session (role is stored with user, not in session)
@@ -1194,11 +1189,7 @@ pub async fn exchange_pm_token(
         .create_mobile_session(portal_user.id)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, "Failed to create session");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SsoError::new("session_create_failed", &e.to_string())),
-            )
+            sso_callback_internal_error("session_create_failed", "Failed to create session", &e)
         })?;
 
     tracing::info!(
@@ -1355,9 +1346,10 @@ pub async fn sync_session(
                     .upsert_sso_user(&user_info)
                     .await
                     .map_err(|e| {
-                        (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(SsoError::new("user_create_failed", &e.to_string())),
+                        sso_callback_internal_error(
+                            "user_create_failed",
+                            "Failed to create or update user",
+                            &e,
                         )
                     })?;
 
@@ -1366,9 +1358,10 @@ pub async fn sync_session(
                     .create_mobile_session(portal_user.id)
                     .await
                     .map_err(|e| {
-                        (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(SsoError::new("session_create_failed", &e.to_string())),
+                        sso_callback_internal_error(
+                            "session_create_failed",
+                            "Failed to create session",
+                            &e,
                         )
                     })?;
 
@@ -1382,9 +1375,10 @@ pub async fn sync_session(
             .upsert_sso_user(&user_info)
             .await
             .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(SsoError::new("user_create_failed", &e.to_string())),
+                sso_callback_internal_error(
+                    "user_create_failed",
+                    "Failed to create or update user",
+                    &e,
                 )
             })?;
 
@@ -1393,10 +1387,7 @@ pub async fn sync_session(
             .create_mobile_session(portal_user.id)
             .await
             .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(SsoError::new("session_create_failed", &e.to_string())),
-                )
+                sso_callback_internal_error("session_create_failed", "Failed to create session", &e)
             })?;
 
         (new_session, false)
