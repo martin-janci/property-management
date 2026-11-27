@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-27T08:28:46Z",
+  "archived_at": "2026-11-27T10:28:50Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -10893,6 +10893,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-api-ts-retry-nonidempotent",
+      "action": "ppt web core api ts retry nonidempotent",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-27T10:24:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-24T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T10:24:30Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-apiclient-never-configured",
       "action": "frontend/apps/ppt-web/src/lib/api.ts:258 (configureApiClient) is NEVER called in production code. A repo-wide grep for `configureApiClient(` finds hits only in lib/api.test.tsx (7 test calls) and the docstring — no call in main.tsx / App.ts",
       "owner_role": "pm-backend",
@@ -18840,6 +18865,31 @@
         "merged_pr": 3384,
         "merged_at": "2026-11-10T12:47:00Z",
         "at": "2026-11-10T14:27:10Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-client-no-timeout",
+      "action": "reality server sso client no timeout",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-27T10:24:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T10:24:30Z"
       }
     },
     {
@@ -36131,6 +36181,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-20T06:23:32Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20-retry1",
+      "action": "Sweep violations mutation handlers (moderation.rs/aml_dsa.rs) for the 403-vs-404 cross-tenant contract (assign still returns 403 per #3187) [retry 1/2 of failed pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z) | gc1-reconcile 2026-11-27T10:24:30Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3860,
+        "merged_at": "2026-11-27T08:34:18Z",
+        "at": "2026-11-27T10:24:30Z"
       }
     },
     {
