@@ -556,24 +556,6 @@
       }
     },
     {
-      "id": "code-review-reality-server-pwreset-email-not-wired",
-      "action": "reality server pwreset email not wired",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-26T10:25:48Z (tier1d reality-server score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T10:25:48Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-07-30T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-raw-db-error-leak-multi",
       "action": "reality server raw db error leak multi",
       "owner_role": "pm-backend",
