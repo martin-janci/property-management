@@ -2,7 +2,13 @@
  * The fault detail reads the server's `{ fault, timeline, attachments }`
  * envelope (snake_case, `FaultWithDetails` flattened into `fault`).
  */
-import { FAULT_STATUS_LABEL_KEY, parseFaultDetail, parseFaultTimeline } from './FaultDetailScreen';
+import en from '../../locales/en.json';
+import {
+  FAULT_CATEGORY_LABEL_KEY,
+  FAULT_STATUS_LABEL_KEY,
+  parseFaultDetail,
+  parseFaultTimeline,
+} from './FaultDetailScreen';
 
 const envelope = {
   fault: {
@@ -99,6 +105,40 @@ describe('FAULT_STATUS_LABEL_KEY', () => {
       'reopened',
     ]) {
       expect(FAULT_STATUS_LABEL_KEY[status]).toMatch(/^faults\.status/);
+    }
+  });
+});
+
+describe('FAULT_CATEGORY_LABEL_KEY', () => {
+  // Resolve a dotted i18n key (e.g. "faults.categoryPlumbing") against the
+  // English catalog, returning undefined for a dangling reference.
+  const resolve = (key: string): unknown =>
+    key.split('.').reduce<unknown>((node, part) => {
+      if (node && typeof node === 'object' && part in node) {
+        return (node as Record<string, unknown>)[part];
+      }
+      return undefined;
+    }, en);
+
+  it('has a faults.category* key for every server fault category value', () => {
+    for (const category of [
+      'plumbing',
+      'electrical',
+      'structural',
+      'heating',
+      'elevator',
+      'security',
+      'other',
+    ]) {
+      expect(FAULT_CATEGORY_LABEL_KEY[category]).toMatch(/^faults\.category/);
+    }
+  });
+
+  it('maps every category to a real, non-empty catalog entry (no dangling keys)', () => {
+    for (const key of Object.values(FAULT_CATEGORY_LABEL_KEY)) {
+      const value = resolve(key);
+      expect(typeof value).toBe('string');
+      expect((value as string).length).toBeGreaterThan(0);
     }
   });
 });
