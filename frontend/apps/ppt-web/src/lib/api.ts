@@ -388,12 +388,35 @@ function createAxiosInstance(config: ApiClientConfig = {}): AxiosInstance {
 let apiInstance: AxiosInstance | null = null;
 
 /**
- * Get the API client instance.
- * Creates the instance on first call with default configuration.
+ * Get the configured API client instance.
+ *
+ * Fails fast when the client has not been configured. `configureApiClient()`
+ * (called once from AuthContext's layout effect) installs the token getter and
+ * the 401 refresh-and-replay handler. Before that runs — or after
+ * `resetApiClient()` tears it down on logout — this accessor previously lazily
+ * auto-created a *default* instance with NEITHER a token getter NOR an
+ * `onUnauthorized` handler. Every request through it went out WITHOUT an
+ * `Authorization` header and its 401 branch was dead (no silent refresh), so an
+ * ordering bug leaked unauthenticated requests onto the wire and surfaced only
+ * as confusing downstream 401s. Throwing here surfaces the misconfiguration
+ * immediately with an actionable message instead.
+ *
+ * Note: an EXPLICIT empty config (`configureApiClient({})`) is still a valid
+ * opt-in to an unauthenticated client — only the never-configured (or
+ * post-reset) state is rejected.
+ *
+ * @throws {Error} when called before `configureApiClient()` or after
+ * `resetApiClient()`.
  */
 export function getApiClient(): AxiosInstance {
   if (!apiInstance) {
-    apiInstance = createAxiosInstance();
+    throw new Error(
+      'ppt-web API client used before configureApiClient(): call ' +
+        'configureApiClient({ getToken, onUnauthorized }) during app ' +
+        'initialization (AuthProvider mounts it in a layout effect) before ' +
+        'issuing requests. An unconfigured client would send requests without ' +
+        'an Authorization header and silently swallow 401s.'
+    );
   }
   return apiInstance;
 }
