@@ -576,80 +576,8 @@
       }
     },
     {
-      "id": "code-review-mobile-rn-onboarding-untested",
-      "action": "mobile rn onboarding untested",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T00:24:56Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-07-14T12:10:00Z"
-      }
-    },
-    {
-      "id": "code-review-reality-server-articles-like-wildcard",
-      "action": "reality server articles like wildcard",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d reality-server score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T00:24:56Z",
-      "signal_ref": {
-        "segment": "reality-server",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-09"
-      }
-    },
-    {
-      "id": "code-review-api-core-workflow-exec-unbounded-spawn",
-      "action": "api core workflow exec unbounded spawn",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T00:24:56Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
       "id": "code-review-api-handlers-delegation-xorg-delegate",
       "action": "api handlers delegation xorg delegate",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T00:24:56Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-signatures-raw-db-err-leak",
-      "action": "api handlers signatures raw db err leak",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -680,42 +608,6 @@
         "segment": "api-handlers",
         "score": 2,
         "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-page-silent-mutation-errors",
-      "action": "ppt web ui registry page silent mutation errors",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d ppt-web-ui score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T10:25:35Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
-      "id": "code-review-api-core-accounting-decimal-literal-parse",
-      "action": "api core accounting decimal literal parse",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d api-core score=1 vector=refactor)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T10:25:35Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 1,
-        "vector": "refactor",
         "generated": "2026-11-08"
       }
     },

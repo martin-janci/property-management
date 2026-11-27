@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-27T20:27:18Z",
+  "archived_at": "2026-11-27T22:27:19Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3804,6 +3804,31 @@
       }
     },
     {
+      "id": "code-review-api-core-accounting-decimal-literal-parse",
+      "action": "api core accounting decimal literal parse",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d api-core score=1 vector=refactor) | gc1-reconcile 2026-11-27T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "refactor",
+        "generated": "2026-11-08"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T22:23:46Z"
+      }
+    },
+    {
       "id": "code-review-api-core-accounting-decimal-literal-unwrap",
       "action": "api core accounting decimal literal unwrap",
       "owner_role": "pm-backend",
@@ -5919,6 +5944,31 @@
       }
     },
     {
+      "id": "code-review-api-core-workflow-exec-unbounded-spawn",
+      "action": "api core workflow exec unbounded spawn",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-27T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T00:24:56Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-08"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3879,
+        "merged_at": "2026-11-27T20:36:38Z",
+        "at": "2026-11-27T22:23:46Z"
+      }
+    },
+    {
       "id": "code-review-api-core-workflow-not-group-drops-conds",
       "action": "backend/servers/api-server/src/services/workflow_executor.rs:527-538 — evaluate_condition_group() for LogicalOperator::Not silently evaluates only ONE child. It negates `group.conditions.first()` and, when that Some-branch is taken, entirel",
       "owner_role": "pm-backend",
@@ -7361,6 +7411,31 @@
         "merged_pr": 2181,
         "merged_at": "2026-07-08T18:03:00Z",
         "at": "2026-07-08T18:10:39Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-signatures-raw-db-err-leak",
+      "action": "api handlers signatures raw db err leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-27T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T00:24:56Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-08"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3880,
+        "merged_at": "2026-11-27T20:38:34Z",
+        "at": "2026-11-27T22:23:46Z"
       }
     },
     {
@@ -9682,6 +9757,31 @@
         "commit": "4d80705f7d5911a48c05ecce0670633c8ed2d9cf",
         "subject": "code-review-mobile-rn-offline-terminal-drop-dataloss: preserve transient-failing offline queue actions (#2645)",
         "at": "2026-08-04T02:18:22Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-onboarding-untested",
+      "action": "mobile rn onboarding untested",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-27T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T00:24:56Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-14T12:10:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3877,
+        "merged_at": "2026-11-27T20:37:02Z",
+        "at": "2026-11-27T22:23:46Z"
       }
     },
     {
@@ -16592,6 +16692,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-registry-page-silent-mutation-errors",
+      "action": "ppt web ui registry page silent mutation errors",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d ppt-web-ui score=2 vector=bug) | gc1-reconcile 2026-11-27T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-08"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T22:23:46Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
       "action": "RegistryRulesPage save silently swallows errors and gives no success feedback",
       "owner_role": "pm-backend",
@@ -17278,6 +17403,31 @@
         "merged_pr": 2896,
         "merged_at": "2026-08-30T18:32:11Z",
         "at": "2026-08-30T18:54:59Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-articles-like-wildcard",
+      "action": "reality server articles like wildcard",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-27T22:23:46Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T00:24:56Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-09"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3878,
+        "merged_at": "2026-11-27T20:38:14Z",
+        "at": "2026-11-27T22:23:46Z"
       }
     },
     {
