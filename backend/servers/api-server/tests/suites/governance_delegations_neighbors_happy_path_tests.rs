@@ -288,6 +288,47 @@ async fn create_delegation_for_other_owner_unit_rejects_non_owner(pool: PgPool) 
     );
 }
 
+/// Regression (tenant isolation, cross-org): the delegate named in a
+/// `create_delegation` request must be a member of the caller's organization.
+/// A delegation grants org-scoped access (voting / documents / financial /
+/// faults) over the owner's units, so delegating to a user who belongs only to
+/// a *different* organization is a cross-tenant ("xorg") leak. The owner uses
+/// their own seeded unit (so the owner-check passes) and targets an outsider
+/// whose only membership is in a second org — the request must be rejected with
+/// 403, not silently created.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_delegation_for_cross_org_delegate_is_rejected(pool: PgPool) {
+    let ctx = setup(pool.clone(), "xorg-del").await;
+
+    // An outsider who is an active member of a *different* organization only.
+    let other_org = seed_org(&pool, "xorg-other").await;
+    let outsider_email = format!("outsider-{}@gov-hp.test", Uuid::new_v4());
+    let outsider_id = seed_user(&pool, &outsider_email).await;
+    seed_membership(&pool, other_org, outsider_id, "member").await;
+
+    // Owner (member of ctx.org_id, owns owner_unit_id) tries to delegate rights
+    // on their own unit to the cross-org outsider — must be forbidden.
+    let body = json!({
+        "delegate_user_id": outsider_id,
+        "unit_id": ctx.owner_unit_id,
+        "scopes": ["voting"],
+    });
+    let resp = ctx
+        .app
+        .execute(
+            ctx.post("/api/v1/delegations", &ctx.owner_token, body)
+                .build(),
+        )
+        .await;
+
+    assert_eq!(
+        resp.status,
+        StatusCode::FORBIDDEN,
+        "delegating to a user outside the caller's org must be 403, got: {}",
+        resp.text()
+    );
+}
+
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn list_my_delegations_returns_200(pool: PgPool) {
     let ctx = setup(pool, "list-mine").await;
