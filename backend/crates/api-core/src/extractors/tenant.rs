@@ -43,6 +43,28 @@ pub fn parse_db_role_type(role_type: &str) -> Option<TenantRole> {
     }
 }
 
+/// Resolve the effective [`TenantRole`] for a request that has already cleared
+/// the platform-admin gate (`AuthUser::is_platform_admin()`).
+///
+/// Returns `Some(role)` to admit the request with that role, or `None` to
+/// **deny** it (the caller maps `None` to `401 Unauthorized`).
+///
+/// `is_platform_admin()` only returns `true` when the role claim is already
+/// `Some(SuperAdmin | PlatformAdmin)`, so in practice the role is always
+/// present when this runs. This helper is the defensive floor for that
+/// invariant: if the role is ever absent — for example a future refactor that
+/// keys `is_platform_admin()` off a separate claim — we must NOT fabricate an
+/// identity from the missing value, least of all `SuperAdmin`, the single
+/// most-privileged role. A missing role is ambiguous, so a correct check fails
+/// closed and denies.
+fn platform_admin_role(role: Option<TenantRole>) -> Option<TenantRole> {
+    // Fail CLOSED: admit only with the role actually proven by the JWT. Never
+    // substitute a default for a missing role — a fail-open default (previously
+    // `SuperAdmin`) turns an unknown/absent permission into maximum privilege.
+    // `None` here means "ambiguous / unauthenticated" and the caller denies.
+    role
+}
+
 #[derive(Debug, Clone)]
 pub struct TenantExtractor(pub TenantContext);
 
@@ -256,7 +278,17 @@ where
         // SECURITY: Platform admins bypass tenant membership check
         // They can access any tenant for administrative purposes
         if auth_user.is_platform_admin() {
-            let role = auth_user.role.unwrap_or(TenantRole::SuperAdmin);
+            // Fail closed: resolve the role through `platform_admin_role`, which
+            // denies (returns `None`) rather than fabricating a `SuperAdmin`
+            // identity when the role is somehow absent. Never admit on ambiguity.
+            let Some(role) = platform_admin_role(auth_user.role) else {
+                tracing::warn!(
+                    user_id = %user_id,
+                    tenant_id = %tenant_id,
+                    "Platform-admin gate passed but no role resolved; denying (fail-closed)"
+                );
+                return Err((StatusCode::UNAUTHORIZED, "Authentication required"));
+            };
             // Insert role into extensions for authorization middleware
             parts.extensions.insert(role);
             return Ok(ValidatedTenantExtractor(TenantContext::new(
@@ -392,5 +424,43 @@ mod parse_db_role_type_tests {
     fn unknown_is_none() {
         assert_eq!(parse_db_role_type("janitor"), None);
         assert_eq!(parse_db_role_type(""), None);
+    }
+}
+
+#[cfg(test)]
+mod platform_admin_role_tests {
+    use super::platform_admin_role;
+    use common::TenantRole;
+
+    /// Fail-closed contract (regression): a request that cleared the
+    /// platform-admin gate but carries NO resolved role must be DENIED
+    /// (`None`), never admitted with a fabricated identity.
+    ///
+    /// Before the fix, `ValidatedTenantExtractor` did
+    /// `auth_user.role.unwrap_or(TenantRole::SuperAdmin)`, so a missing role
+    /// became `SuperAdmin` (level 100, the single most-privileged role) — a
+    /// fail-OPEN where an unknown/absent permission turned into maximum
+    /// privilege. A permission check must fail closed on ambiguity.
+    #[test]
+    fn missing_role_denies_never_defaults_to_superadmin() {
+        assert_eq!(
+            platform_admin_role(None),
+            None,
+            "a missing role must fail closed (deny), not default to SuperAdmin"
+        );
+    }
+
+    /// The fix must not change the legitimate path: a present role is admitted
+    /// exactly as proven, with no silent elevation.
+    #[test]
+    fn present_role_is_preserved_exactly() {
+        assert_eq!(
+            platform_admin_role(Some(TenantRole::PlatformAdmin)),
+            Some(TenantRole::PlatformAdmin),
+        );
+        assert_eq!(
+            platform_admin_role(Some(TenantRole::SuperAdmin)),
+            Some(TenantRole::SuperAdmin),
+        );
     }
 }
