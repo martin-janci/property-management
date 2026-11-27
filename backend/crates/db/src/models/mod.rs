@@ -327,9 +327,9 @@ pub use listing::{
 // Epic 16: Portal Search & Discovery
 pub use portal::{
     AddFavorite, CreatePortalUser, Favorite, FavoriteWithListing, FavoriteWithListingRow,
-    FavoritesResponse, MatchedListing, PortalSession, PortalUser, PublicListingDetail,
-    PublicListingQuery, PublicListingSearchResponse, PublicListingSummary, SearchAlert,
-    SearchCriteria, SearchSuggestions, UpdatePortalUser,
+    FavoritesResponse, MatchedListing, PortalSession, PortalUser, PublicListingQuery,
+    PublicListingSearchResponse, PublicListingSummary, SearchAlert, SearchCriteria,
+    SearchSuggestions, UpdatePortalUser,
 };
 
 // Epic 17: Agency & Realtor Management
