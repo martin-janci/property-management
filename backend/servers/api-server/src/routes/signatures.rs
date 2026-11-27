@@ -83,10 +83,16 @@ type SignatureApiError = (StatusCode, Json<ErrorResponse>);
 /// fixed, generic message to the caller. Handlers MUST route DB errors through
 /// this helper instead of putting `e.to_string()` in the response body
 /// (code-review finding: raw DB error leaked in signatures handlers).
-fn db_error_response(_context: &str, e: impl std::fmt::Display) -> SignatureApiError {
+fn db_error_response(context: &str, e: impl std::fmt::Display) -> SignatureApiError {
+    // Log the full error server-side for operators; return a fixed generic
+    // message to the client so raw SQL/schema detail never leaves the server.
+    error!(error = %e, context = context, "Signature request database error");
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+        Json(ErrorResponse::new(
+            "DATABASE_ERROR",
+            "A database error occurred",
+        )),
     )
 }
 
