@@ -17341,7 +17341,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3809"
       ],
@@ -17353,7 +17353,12 @@
       ],
       "created_at": "2026-11-27",
       "updated_at": "2026-11-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-27T16:35:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3871
+      }
     },
     {
       "id": "test-gap-screen-map-drift-reality-pr-3793",
@@ -17361,7 +17366,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3793"
       ],
@@ -17374,7 +17379,12 @@
       ],
       "created_at": "2026-11-27",
       "updated_at": "2026-11-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-27T16:35:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3872
+      }
     },
     {
       "id": "test-gap-screen-map-drift-reality-pr-3788",
@@ -17382,7 +17392,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3788"
       ],
@@ -17394,7 +17404,12 @@
       ],
       "created_at": "2026-11-27",
       "updated_at": "2026-11-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-27T16:35:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3870
+      }
     },
     {
       "id": "churn-hotspot-frontend-apps-reality-web-src-lib-auth-api-ts",
@@ -17402,7 +17417,7 @@
       "vector": "refactor",
       "confidence": "high",
       "score": 1,
-      "status": "open",
+      "status": "done",
       "sources": [
         "merged-PR-churn-window"
       ],
@@ -17414,7 +17429,12 @@
       ],
       "created_at": "2026-11-27",
       "updated_at": "2026-11-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-27T16:35:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3874
+      }
     },
     {
       "id": "test-gap-hotfix-no-test-pr-3848",
@@ -17422,7 +17442,7 @@
       "vector": "test-gap",
       "confidence": "medium",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #3848"
       ],
@@ -17434,7 +17454,12 @@
       ],
       "created_at": "2026-11-27",
       "updated_at": "2026-11-27",
-      "plan": null
+      "plan": null,
+      "reconciled": {
+        "at": "2026-11-27T16:35:27Z",
+        "assignment_status": "merged",
+        "pr_number": 3875
+      }
     }
   ]
 }
