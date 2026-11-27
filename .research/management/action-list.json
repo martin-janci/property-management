@@ -702,24 +702,6 @@
       }
     },
     {
-      "id": "code-review-api-core-accounting-date-proximity-todo",
-      "action": "api core accounting date proximity todo",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d api-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T10:25:35Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
       "id": "code-review-api-core-accounting-decimal-literal-parse",
       "action": "api core accounting decimal literal parse",
       "owner_role": "pm-tech-lead",
@@ -1078,6 +1060,90 @@
         "vector": "security",
         "generated": "2026-11-06"
       }
+    },
+    {
+      "id": "stalled-review-pr-3380-retry1",
+      "action": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3380]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=stalled-review-pr-3380 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T02:45:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "stalled-review-pr-3380",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-account-routes-i18n-retry1",
+      "action": "reality web account routes i18n [retry 1/2 of failed code-review-reality-web-account-routes-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-reality-web-account-routes-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T14:34:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-reality-web-account-routes-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-i18n-retry1",
+      "action": "reality web listing edit slovak i18n [retry 1/2 of failed code-review-reality-web-listing-edit-slovak-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-reality-web-listing-edit-slovak-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T14:34:14Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-reality-web-listing-edit-slovak-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash-retry2",
+      "action": "ppt web core disputes uidispute nonnull crash [retry 2/2 of failed code-review-ppt-web-core-disputes-uidispute-nonnull-crash]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-ppt-web-core-disputes-uidispute-nonnull-crash reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash",
+      "retry_round": 2
+    },
+    {
+      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n-retry2",
+      "action": "ppt web ui ballotquestion yesno i18n [retry 2/2 of failed code-review-ppt-web-ui-ballotquestion-yesno-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-ppt-web-ui-ballotquestion-yesno-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "retry_round": 2
+    },
+    {
+      "id": "code-review-ppt-web-ui-filedisputedialog-i18n-retry2",
+      "action": "ppt web ui filedisputedialog i18n [retry 2/2 of failed code-review-ppt-web-ui-filedisputedialog-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-ppt-web-ui-filedisputedialog-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-ppt-web-ui-filedisputedialog-i18n",
+      "retry_round": 2
     }
   ],
   "generated": "2026-11-25T04:15:10Z"

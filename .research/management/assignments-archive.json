@@ -3805,6 +3805,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-api-core-accounting-decimal-literal-parse",
+      "branch": "auto-impl/code-review-api-core-accounting-decimal-63cd0100",
+      "status": "failed",
+      "claimed_at": "2026-11-27T20:27:05Z",
+      "last_updated": "2026-11-27T20:35:30Z",
+      "status_changed_at": "2026-11-27T20:35:30Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend note=finding-not-real: accounting matcher weights already dec! w/ pinning test (services/accounting.rs:596); remaining from_str().unwrap() are cfg(test) helpers; CSV import uses serde Decimal w/ ? handling; no live panic/lossy decimal parse. No change.",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-accounting-decimal-literal-unwrap",
       "branch": "auto-impl/code-review-api-core-accounting-decimal-2c61cfde",
       "status": "merged",
@@ -5918,6 +5940,28 @@
       "merge_attempted_at": "2026-08-30T04:35:02Z"
     },
     {
+      "task_id": "code-review-api-core-workflow-exec-unbounded-spawn",
+      "branch": "auto-impl/code-review-api-core-workflow-exec-unbou-043c8546",
+      "status": "merged",
+      "claimed_at": "2026-11-27T18:31:11Z",
+      "last_updated": "2026-11-27T20:39:08Z",
+      "status_changed_at": "2026-11-27T20:39:08Z",
+      "pr_number": 3879,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3879",
+      "merged_at": "2026-11-27T20:36:38Z",
+      "specialist": "pm-backend",
+      "implementer_summary": "pr=3879 status=done specialist=pm-backend scope_drift=false code_reuse_warn=none note=enforced-dead-max_concurrent_executions-via-Arc<Semaphore>; IG3 red->green; verify OK (api-server lib/fmt/clippy)",
+      "reviewer_summary": "verdict=approve head_oid=3ef6b6517dd4f268a4b4a813937d634540740fa7 note=permit-held-across-body-correct-single-trigger-unchanged",
+      "last_reviewed_oid": "3ef6b6517dd4f268a4b4a813937d634540740fa7",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-27T20:35:17Z"
+    },
+    {
       "task_id": "code-review-api-core-workflow-not-group-drops-conds",
       "branch": "auto-impl/code-review-api-core-workflow-not-group-e28d30f6",
       "status": "merged",
@@ -7378,6 +7422,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-07-08T18:03:00Z"
+    },
+    {
+      "task_id": "code-review-api-handlers-signatures-raw-db-err-leak",
+      "branch": "auto-impl/code-review-api-handlers-signatures-raw-7e905ee2",
+      "status": "merged",
+      "claimed_at": "2026-11-27T18:31:11Z",
+      "last_updated": "2026-11-27T20:39:08Z",
+      "status_changed_at": "2026-11-27T20:39:08Z",
+      "pr_number": 3880,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3880",
+      "merged_at": "2026-11-27T20:38:34Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3880 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=sanitized 12 raw-DB-error-leak sites via db_error_response helper; IG3 red->green; fmt+clippy+new test pass; full api-server test gate awaits CI Postgres (unrelated no-DB sqlx::test fails)",
+      "reviewer_summary": "verdict=approve head_oid=5f1f6b9c74a537024f68a172a5a6cd0c3b3a55e3 note=db-err-sanitized-12-sites-500-unchanged-rownotfound-400-preserved-ig3-ci-green",
+      "last_reviewed_oid": "5f1f6b9c74a537024f68a172a5a6cd0c3b3a55e3",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-27T20:35:17Z"
     },
     {
       "task_id": "code-review-api-handlers-stripe-webhook-drops-settlement",
@@ -9630,6 +9696,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-04T00:13:43Z"
+    },
+    {
+      "task_id": "code-review-mobile-rn-onboarding-untested",
+      "branch": "auto-impl/code-review-mobile-rn-onboarding-unteste-ef77cb90",
+      "status": "merged",
+      "claimed_at": "2026-11-27T18:31:11Z",
+      "last_updated": "2026-11-27T20:39:08Z",
+      "status_changed_at": "2026-11-27T20:39:08Z",
+      "pr_number": 3877,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3877",
+      "merged_at": "2026-11-27T20:37:02Z",
+      "specialist": "react-native",
+      "implementer_summary": "pr=3877 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=added-jest-expo-TourManager-onboarding-test-14-tests-VERIFY-OK",
+      "reviewer_summary": "verdict=approve head_oid=3a32907f87c5b9a95aff789cbf9d199db30c32a4 note=test-only-tourmanager-coverage-verified-ci-green-scopedrift-benign-mislabel",
+      "last_reviewed_oid": "3a32907f87c5b9a95aff789cbf9d199db30c32a4",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-27T20:35:17Z"
     },
     {
       "task_id": "code-review-mobile-rn-outage-news-detail-dead-nav",
@@ -16326,6 +16414,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-ppt-web-ui-registry-page-silent-mutation-errors",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-page-sil-2bb6c6ee",
+      "status": "failed",
+      "claimed_at": "2026-11-27T20:27:05Z",
+      "last_updated": "2026-11-27T20:35:17Z",
+      "status_changed_at": "2026-11-27T20:35:17Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=react-web note=finding-not-real: ppt-web registry pages already surface mutation errors via toast (PR#3359/#3009), locked by RegistryPage.toast.test.tsx; no change warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-registry-rules-save-silent-fail",
       "branch": "auto-impl/code-review-ppt-web-ui-registry-rules-sa-813d957c",
       "status": "merged",
@@ -17013,6 +17123,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-08-30T18:28:27Z"
+    },
+    {
+      "task_id": "code-review-reality-server-articles-like-wildcard",
+      "branch": "auto-impl/code-review-reality-server-articles-like-98b49418",
+      "status": "merged",
+      "claimed_at": "2026-11-27T18:31:11Z",
+      "last_updated": "2026-11-27T20:39:08Z",
+      "status_changed_at": "2026-11-27T20:39:08Z",
+      "pr_number": 3878,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3878",
+      "merged_at": "2026-11-27T20:38:14Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none->3878 status=partial(branch-exists,draft-opened-for-CI) specialist=rust-backend note=articles-LIKE-wildcard-escape-fix; IG3 green; local verify RED only on 3 preexisting unrelated no-DB sqlx::test integration tests",
+      "reviewer_summary": "verdict=approve head_oid=940055ef9aa05351ff64ebd41af795a8ea9bce8c note=correct-like-escape-both-queries-tested-dup-noted-nonblocking",
+      "last_reviewed_oid": "940055ef9aa05351ff64ebd41af795a8ea9bce8c",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-27T20:35:17Z"
     },
     {
       "task_id": "code-review-reality-server-assertsqlsafe-format-sql",
@@ -37944,5 +38076,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-27T18:43:02Z"
+  "archived_at": "2026-11-27T20:39:30Z"
 }
