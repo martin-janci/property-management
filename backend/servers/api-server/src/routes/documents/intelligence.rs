@@ -426,7 +426,16 @@ async fn get_classification_history(
         ));
     }
 
-    match state.document_repo.get_classification_history(id).await {
+    // RLS-scoped: document_classification_history is under FORCE RLS (#754/00179).
+    // Running this read on the request's org-scoped connection (not the shared
+    // pool, which carries no tenant context) keeps the AI classification history
+    // both correct and tenant-isolated — the pool variant would deny-all under
+    // FORCE RLS and bypasses the per-request tenant context.
+    match state
+        .document_repo
+        .get_classification_history_rls(&mut **rls.conn(), id)
+        .await
+    {
         Ok(history) => {
             rls.release().await;
             Ok(Json(ClassificationHistoryResponse { history }))
