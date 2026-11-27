@@ -468,66 +468,6 @@
       }
     },
     {
-      "id": "code-review-api-core-digest-candidates-inner-join-refresh-tokens-retry1",
-      "action": "find_inactive_digest_candidates INNER JOIN silently excludes users without a refresh-tokens row [retry 1/2 of failed code-review-api-core-digest-candidates-inner-join-refresh-tokens]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-api-core-digest-candidates-inner-join-refresh-tokens reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T06:42:14Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T14:25:01Z",
-      "retry_of": "code-review-api-core-digest-candidates-inner-join-refresh-tokens",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-reality-server-categories-labels-sk-only-retry1",
-      "action": "reality server categories labels sk only [retry 1/2 of failed code-review-reality-server-categories-labels-sk-only]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-reality-server-categories-labels-sk-only reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T06:42:14Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T14:25:01Z",
-      "retry_of": "code-review-reality-server-categories-labels-sk-only",
-      "retry_round": 1
-    },
-    {
-      "id": "code-review-reality-server-import-jobs-limit-unclamped-retry2",
-      "action": "reality server import jobs limit unclamped [retry 2/2 of failed code-review-reality-server-import-jobs-limit-unclamped]",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-reality-server-import-jobs-limit-unclamped reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T12:52:00Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T14:25:01Z",
-      "retry_of": "code-review-reality-server-import-jobs-limit-unclamped",
-      "retry_round": 2
-    },
-    {
-      "id": "code-review-ppt-web-ui-movefolder-i18n",
-      "action": "ppt web ui movefolder i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-26T16:25:12Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-07-30T00:00:00Z"
-      }
-    },
-    {
       "id": "code-review-reality-server-sso-client-no-timeout",
       "action": "reality server sso client no timeout",
       "owner_role": "pm-backend",
@@ -930,34 +870,6 @@
       "depends_on": [],
       "first_open_at": "2026-11-27T06:25:40Z",
       "retry_of": "stalled-review-pr-3380",
-      "retry_round": 1
-    },
-    {
-      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20-retry1",
-      "action": "Resolve dispatcher stall #3357: rebase or manually resolve the 3 approved conflicting PRs, merging security-flavored ones first [retry 1/2 of failed pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20]",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T06:25:40Z",
-      "retry_of": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20",
-      "retry_round": 1
-    },
-    {
-      "id": "pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20-retry1",
-      "action": "Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and merge before #3628 follow-up; fix #3649 so region de does not seed Wien [retry 1/2 of failed pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20]",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "status": "open",
-      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T06:25:40Z",
-      "retry_of": "pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20",
       "retry_round": 1
     },
     {
