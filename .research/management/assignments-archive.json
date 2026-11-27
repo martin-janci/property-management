@@ -3849,6 +3849,28 @@
       "merge_attempted_at": "2026-11-27T04:31:34Z"
     },
     {
+      "task_id": "code-review-api-core-accounting-nonatomic-statement-ingest",
+      "branch": "auto-impl/code-review-api-core-accounting-nonatomi-bb80e0dd",
+      "status": "failed",
+      "claimed_at": "2026-11-27T22:27:08Z",
+      "last_updated": "2026-11-27T22:33:00Z",
+      "status_changed_at": "2026-11-27T22:33:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=already-fixed on dev #3526 (40ad2d546); process_statement_upload wraps ingest in one tx w/ regression test; duplicate finding",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-api-core-admin-rs-swallowed-serialize",
       "branch": "auto-impl/code-review-api-core-admin-rs-swallowed-43a1d63b",
       "status": "merged",
@@ -16300,6 +16322,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-06T22:30:09Z"
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-registry-page-hard-navigation",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-page-har-4ee8a29b",
+      "status": "failed",
+      "claimed_at": "2026-11-27T22:27:08Z",
+      "last_updated": "2026-11-27T22:33:00Z",
+      "status_changed_at": "2026-11-27T22:33:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=already fixed on dev by #3755 (09c1f3cc5); RegistryPage uses useNavigate, regression test present; duplicate finding",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "code-review-ppt-web-ui-registry-page-i18n-gap",
@@ -38076,5 +38120,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-27T20:39:30Z"
+  "archived_at": "2026-11-27T22:34:35Z"
 }
