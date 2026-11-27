@@ -58,11 +58,11 @@ pub fn parse_db_role_type(role_type: &str) -> Option<TenantRole> {
 /// most-privileged role. A missing role is ambiguous, so a correct check fails
 /// closed and denies.
 fn platform_admin_role(role: Option<TenantRole>) -> Option<TenantRole> {
-    // NOTE: current (fail-OPEN) behaviour — a missing role silently becomes
-    // `SuperAdmin`, turning an unknown/absent permission into the highest
-    // privilege. Locked by a failing test; replaced with a fail-closed body in
-    // the following commit.
-    Some(role.unwrap_or(TenantRole::SuperAdmin))
+    // Fail CLOSED: admit only with the role actually proven by the JWT. Never
+    // substitute a default for a missing role — a fail-open default (previously
+    // `SuperAdmin`) turns an unknown/absent permission into maximum privilege.
+    // `None` here means "ambiguous / unauthenticated" and the caller denies.
+    role
 }
 
 #[derive(Debug, Clone)]
