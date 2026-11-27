@@ -2630,3 +2630,79 @@ mod pkce_verifier_tests {
         assert_ne!(a, b, "PKCE verifiers must be unique per login");
     }
 }
+
+#[cfg(test)]
+mod sso_persistence_db_error_leak_tests {
+    use super::sso_callback_internal_error;
+    use axum::http::StatusCode;
+
+    /// Security regression (code-review finding
+    /// `code-review-reality-server-raw-db-error-leak-multi`): the SSO JSON
+    /// handlers that persist via DB-backed services — `validate_mobile_sso_token`,
+    /// `exchange_pm_token` and `sync_session` — must map a failed user upsert or
+    /// session creation to a `500` whose body carries ONLY a generic message.
+    /// Before the fix each handler passed `&e.to_string()` straight into the
+    /// `SsoError` body, leaking the raw `sqlx`/`anyhow` DB error (Postgres
+    /// table, column and constraint names, sometimes pool/TLS state) to an
+    /// unauthenticated SSO caller — exactly the class
+    /// `util::errors::db_error` exists to prevent, but on the `SsoError` JSON
+    /// surface. The three handlers now delegate to `sso_callback_internal_error`,
+    /// which logs the detail server-side and returns the fixed generic message.
+    ///
+    /// Covers `session_create_failed`; the `user_create_failed` code is already
+    /// locked by `sso_callback_error_sanitization_tests`.
+    #[test]
+    fn session_create_db_error_is_not_leaked_to_client_body() {
+        // Representative anyhow-wrapped sqlx error, exactly as
+        // `SessionService::create_mobile_session` wraps a driver failure.
+        let raw = "Failed to create mobile session: error returned from database: \
+                   insert or update on table \"portal_sessions\" violates foreign key \
+                   constraint \"portal_sessions_user_id_fkey\"";
+
+        let (status, body) =
+            sso_callback_internal_error("session_create_failed", "Failed to create session", &raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.error, "session_create_failed");
+        assert_eq!(
+            body.0.error_description.as_deref(),
+            Some("Failed to create session"),
+        );
+
+        // No fragment of the raw DB error may reach the client body.
+        let serialized = serde_json::to_string(&body.0).expect("serialize SsoError");
+        for needle in [
+            "portal_sessions",
+            "portal_sessions_user_id_fkey",
+            "constraint",
+            "foreign key",
+            "error returned from database",
+        ] {
+            assert!(
+                !serialized.contains(needle),
+                "raw DB error detail `{needle}` leaked into client body: {serialized}"
+            );
+        }
+    }
+
+    /// Source-level regression lock mirroring the grep guard the db-error-leak
+    /// plan calls for: the DB-backed persistence failures in the SSO JSON
+    /// handlers must route through `sso_callback_internal_error`, never
+    /// interpolate the raw error into the `SsoError` body. Fails fast if a
+    /// future edit reintroduces a `SsoError::new("<persistence-code>", <raw-error>)`
+    /// leak. The needles are assembled at runtime from fragments so this test's
+    /// own source can never match itself.
+    #[test]
+    fn persistence_handlers_do_not_interpolate_raw_db_error_into_body() {
+        let src = include_str!("sso.rs");
+        let raw_interp = ["&e.", "to_string()"].concat();
+        for code in ["user_create_failed", "session_create_failed"] {
+            let needle = ["SsoError::new(\"", code, "\", ", &raw_interp].concat();
+            assert!(
+                !src.contains(&needle),
+                "raw DB error leaked into SsoError body for `{code}` — route it \
+                 through sso_callback_internal_error instead of interpolating the error"
+            );
+        }
+    }
+}
