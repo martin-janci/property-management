@@ -204,6 +204,40 @@ pub async fn create_delegation(
         ));
     }
 
+    // Enforce the organization boundary (tenant isolation). A delegation grants
+    // org-scoped rights (voting/documents/financial/faults) over the owner's
+    // units, so the delegate MUST be a member of the caller's organization.
+    // Without this check a unit owner could delegate those rights to a user in
+    // a *different* org (cross-org / "xorg" leak). `rls.tenant_id()` is the
+    // caller's resolved org for this request; membership is read from
+    // `organization_members`, the same source the tenant extractor uses.
+    let delegate_in_org = match state
+        .org_member_repo
+        .is_member(rls.tenant_id(), req.delegate_user_id)
+        .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to check delegate org membership");
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            ));
+        }
+    };
+
+    if !delegate_in_org {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "DELEGATE_NOT_IN_ORG",
+                "The delegate must be a member of your organization",
+            )),
+        ));
+    }
+
     // Verify the caller is actually an owner before any delegation is created.
     // - unit-scoped delegation: must own that specific unit.
     // - all-units delegation (unit_id omitted): must own at least one unit, otherwise
