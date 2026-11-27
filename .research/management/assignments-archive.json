@@ -6646,6 +6646,28 @@
       "quarantine_reason": null
     },
     {
+      "task_id": "code-review-api-handlers-delegation-xorg-delegate",
+      "branch": "auto-impl/code-review-api-handlers-delegation-xorg-51c5d376",
+      "status": "merged",
+      "claimed_at": "2026-11-27T18:31:11Z",
+      "last_updated": "2026-11-27T22:35:51Z",
+      "status_changed_at": "2026-11-27T22:35:51Z",
+      "pr_number": 3881,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3881",
+      "merged_at": "2026-11-27T22:34:29Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3881 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=enforced org boundary in create_delegation (403 DELEGATE_NOT_IN_ORG); xorg tenant-isolation gap confirmed+fixed; 14/14 tests green IG3 (201->403); sole verify red is out-of-diff dns-rebinding env test (needs network); CI gates it",
+      "reviewer_summary": "verdict=approve head_oid=721c72436737d4c5c43615691cfd0f23ce5330be note=org-boundary-check-same-organization_members-source;same-org-unaffected;rls-released;ci-green-shards",
+      "last_reviewed_oid": "721c72436737d4c5c43615691cfd0f23ce5330be",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-27T22:32:08Z"
+    },
+    {
       "task_id": "code-review-api-handlers-enhanced-chat-stub",
       "branch": "auto-impl/code-review-api-handlers-enhanced-chat-s-daae5bb3",
       "status": "merged",
@@ -38120,5 +38142,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-27T22:34:35Z"
+  "archived_at": "2026-11-27T22:35:51Z"
 }
