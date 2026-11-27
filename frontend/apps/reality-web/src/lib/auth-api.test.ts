@@ -19,8 +19,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Deterministic base URL and no localStorage side effects from the token store.
 vi.mock('./env', () => ({ getApiBase: () => '' }));
 const setSession = vi.fn();
+// Controllable so a test can assert the bearer token is merged into the
+// outgoing request headers; defaults to no auth header (anonymous).
+const getAuthHeader = vi.fn<() => Record<string, string>>(() => ({}));
 vi.mock('./auth-token', () => ({
-  getAuthHeader: () => ({}),
+  getAuthHeader: () => getAuthHeader(),
   setSession: (...args: unknown[]) => setSession(...args),
   clearSession: vi.fn(),
 }));
@@ -31,6 +34,7 @@ import {
   login,
   register,
   requestPasswordReset,
+  updateProfile,
 } from './auth-api';
 
 describe('auth-api requestJson success-body guard', () => {
@@ -137,5 +141,95 @@ describe('auth-api password reset', () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/v1/users/password-reset/confirm');
     expect(JSON.parse(init.body)).toEqual({ token: 'tok-1', new_password: 'N3w-password!' });
+  });
+});
+
+// The non-ok / network / 204 branches of `requestJson` carry no coverage, yet
+// they are exactly what the recent churn (i18n error copy, gap-audit wiring)
+// kept editing. Lock in the error-surface contract the auth pages depend on:
+// a typed `AuthApiError` with the right `status` / `code` / `serverMessage`.
+describe('auth-api error + transport surface', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    getAuthHeader.mockReturnValue({});
+  });
+
+  it('maps a JSON error body to AuthApiError carrying status, code and serverMessage', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ message: 'Invalid email or password.', code: 'INVALID_CREDENTIALS' }),
+    });
+    const err = await login('e@example.com', 'bad').catch((e) => e);
+    expect(err).toBeInstanceOf(AuthApiError);
+    expect(err.status).toBe(401);
+    expect(err.code).toBe('INVALID_CREDENTIALS');
+    // UI surfaces translate off `code`, falling back to the backend-owned copy.
+    expect(err.serverMessage).toBe('Invalid email or password.');
+    // A failed login must never persist a session.
+    expect(setSession).not.toHaveBeenCalled();
+  });
+
+  it('falls back to a default message (no code/serverMessage) when the error body is not JSON', async () => {
+    // e.g. a 502 HTML page from an upstream proxy.
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => {
+        throw new SyntaxError('Unexpected token < in JSON');
+      },
+    });
+    const err = await register({ email: 'e@example.com', password: 'pw', name: 'Eva' }).catch(
+      (e) => e
+    );
+    expect(err).toBeInstanceOf(AuthApiError);
+    expect(err.status).toBe(502);
+    expect(err.message).toBe('Request failed with status 502');
+    expect(err.code).toBeUndefined();
+    expect(err.serverMessage).toBeUndefined();
+  });
+
+  it('maps a fetch rejection (offline/DNS) to a NETWORK_ERROR with status 0', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    const err = await requestPasswordReset('eva@example.com').catch((e) => e);
+    expect(err).toBeInstanceOf(AuthApiError);
+    expect(err.status).toBe(0);
+    expect(err.code).toBe('NETWORK_ERROR');
+  });
+
+  it('resolves a 204 No Content response as undefined without reading the body', async () => {
+    const json = vi.fn(async () => {
+      throw new Error('body must not be read on 204');
+    });
+    fetchMock.mockResolvedValue({ ok: true, status: 204, json });
+    await expect(updateProfile({ name: 'Eva' })).resolves.toBeUndefined();
+    expect(json).not.toHaveBeenCalled();
+  });
+
+  it('merges the stored bearer token into the request headers alongside the JSON defaults', async () => {
+    getAuthHeader.mockReturnValue({ Authorization: 'Bearer tok_1' });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: 'u1', email: 'e@example.com', name: 'Eva' }),
+    });
+    await updateProfile({ name: 'Eva' });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/users/me');
+    expect(init.method).toBe('PUT');
+    // credentials:'include' covers the SSO cookie flow; the bearer header is the
+    // additive form-login path — both must survive on every authed request.
+    expect(init.credentials).toBe('include');
+    expect(init.headers.Authorization).toBe('Bearer tok_1');
+    expect(init.headers['Content-Type']).toBe('application/json');
   });
 });
