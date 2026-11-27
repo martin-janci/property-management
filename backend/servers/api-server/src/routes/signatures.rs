@@ -75,6 +75,21 @@ pub fn document_signature_router() -> Router<AppState> {
 
 type SignatureApiError = (StatusCode, Json<ErrorResponse>);
 
+/// Map a repository / database error to a sanitized 500 response.
+///
+/// The raw `sqlx`/repository error can carry internal schema, SQL text, column
+/// or constraint names — detail that must never reach an API client. We log the
+/// full error server-side (via `tracing::error`) for operators and return a
+/// fixed, generic message to the caller. Handlers MUST route DB errors through
+/// this helper instead of putting `e.to_string()` in the response body
+/// (code-review finding: raw DB error leaked in signatures handlers).
+fn db_error_response(_context: &str, e: impl std::fmt::Display) -> SignatureApiError {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+    )
+}
+
 /// Require a manager-tier membership role (DB-resolved by `RlsConnection`).
 fn require_manager(rls: &RlsConnection) -> Result<(), SignatureApiError> {
     if rls.role().is_manager() {
@@ -113,10 +128,7 @@ async fn load_signature_request_in_org(
                 "Signature request not found",
             )),
         )),
-        Err(e) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-        )),
+        Err(e) => Err(db_error_response("load_signature_request_in_org", e)),
     }
 }
 
@@ -182,10 +194,7 @@ pub(crate) async fn create_signature_request_for_document(
             ));
         }
         Err(e) => {
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            ));
+            return Err(db_error_response("find document for signature request", e));
         }
     };
 
@@ -197,10 +206,7 @@ pub(crate) async fn create_signature_request_for_document(
     {
         Ok(reqs) => reqs,
         Err(e) => {
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            ));
+            return Err(db_error_response("find existing signature requests", e));
         }
     };
 
@@ -229,10 +235,7 @@ pub(crate) async fn create_signature_request_for_document(
     {
         Ok(req) => req,
         Err(e) => {
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            ));
+            return Err(db_error_response("create signature request", e));
         }
     };
 
@@ -356,10 +359,7 @@ pub async fn list_signature_requests(
         }
         Err(e) => {
             rls.release().await;
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            ));
+            return Err(db_error_response("list: find document", e));
         }
     };
 
@@ -371,10 +371,7 @@ pub async fn list_signature_requests(
         Ok(reqs) => reqs,
         Err(e) => {
             rls.release().await;
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            ));
+            return Err(db_error_response("list: find signature requests", e));
         }
     };
 
@@ -569,10 +566,7 @@ pub async fn cancel_signature_request(
                     )),
                 )
             } else {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DATABASE_ERROR", &err_msg)),
-                )
+                db_error_response("cancel signature request", e)
             }
         })?;
 
@@ -704,12 +698,7 @@ pub async fn handle_webhook(
         .signature_request_repo
         .find_by_provider_request_id(&provider, &event.provider_request_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
+        .map_err(|e| db_error_response("webhook: find by provider request id", e))?
         .ok_or_else(|| {
             warn!(
                 provider = %provider,
@@ -794,12 +783,7 @@ pub async fn handle_webhook(
                 event.decline_reason.as_deref(),
             )
             .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-                )
-            })?;
+            .map_err(|e| db_error_response("webhook: update signer status", e))?;
 
         info!(
             signature_request_id = %signature_request.id,
@@ -1323,12 +1307,7 @@ async fn verify_and_load(
         .signature_request_repo
         .find_by_id(request_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
+        .map_err(|e| db_error_response("sign: load signature request", e))?
         .ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,
@@ -1413,12 +1392,8 @@ pub async fn get_sign_context(
         .e_signature_nonce_repo
         .nonce_state(request.id, token.nonce)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })? {
+        .map_err(|e| db_error_response("sign: read nonce state", e))?
+    {
         NonceState::Pending => {}
         NonceState::Consumed => {
             return Err((
@@ -1471,12 +1446,8 @@ pub async fn submit_signature(
         .e_signature_nonce_repo
         .consume_nonce(request.id, token.nonce)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })? {
+        .map_err(|e| db_error_response("sign: consume nonce", e))?
+    {
         ConsumeOutcome::Consumed => {}
         ConsumeOutcome::AlreadyConsumed => {
             warn!(
@@ -1544,4 +1515,43 @@ pub async fn submit_signature(
         status: updated.status.to_string(),
         message,
     }))
+}
+
+#[cfg(test)]
+mod db_error_leak_tests {
+    use super::*;
+
+    /// Regression (code-review finding
+    /// `code-review-api-handlers-signatures-raw-db-err-leak`): a repository /
+    /// database error must be mapped to a generic, sanitized response body. The
+    /// raw error text — which can expose SQL, schema, column or constraint names
+    /// — must NEVER reach the client. The detail is logged server-side instead.
+    #[test]
+    fn db_error_response_does_not_leak_raw_error() {
+        // Mimic a sqlx error string carrying internal schema detail.
+        let raw = "error returned from database: column \
+                   \"signature_requests.secret_hmac\" does not exist";
+        let (status, Json(body)) = db_error_response("unit test", raw);
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.code, "DATABASE_ERROR");
+        // The generic, fixed message is returned verbatim...
+        assert_eq!(body.message, "A database error occurred");
+        // ...and none of the raw internal detail leaks into the response body.
+        assert!(
+            !body.message.contains("signature_requests"),
+            "raw schema detail leaked into response body: {}",
+            body.message
+        );
+        assert!(
+            !body.message.contains("column"),
+            "raw SQL detail leaked into response body: {}",
+            body.message
+        );
+        assert!(
+            !body.message.contains("does not exist"),
+            "raw DB error text leaked into response body: {}",
+            body.message
+        );
+    }
 }
