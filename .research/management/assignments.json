@@ -69,18 +69,18 @@
     {
       "task_id": "code-review-ppt-web-core-api-ts-client-unconfigured",
       "branch": "auto-impl/code-review-ppt-web-core-api-ts-client-u-0fb210f4",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-27T08:28:29Z",
-      "last_updated": "2026-11-27T08:28:29Z",
-      "status_changed_at": "2026-11-27T08:28:29Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-27T08:45:43Z",
+      "status_changed_at": "2026-11-27T08:45:43Z",
+      "pr_number": 3862,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3862",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3862 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=ppt-web getApiClient() fails fast (clear Error) when used before configureApiClient(); IG3 two-commit split, verify green (16314 tests), goal-check PASS. drift: owner hint pm-backend but change is frontend (api.ts+api.test.tsx).",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -89,5 +89,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-27T08:38:11Z"
+  "generated": "2026-11-27T08:45:43Z"
 }
