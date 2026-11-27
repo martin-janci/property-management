@@ -407,12 +407,26 @@ pub(super) async fn review_aml_assessment(
         .edd_repo
         .review_aml_assessment(id, org_id, user.user_id, decision, req.notes.as_deref())
         .await
-        .map_err(|e| {
-            tracing::error!("Failed to review AML assessment: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to review assessment".to_string(),
-            )
+        .map_err(|e| match e {
+            // The repo keys its `UPDATE ... WHERE id = $1 AND organization_id = $5
+            // RETURNING *` on the caller's org, so an unknown id OR an assessment
+            // owned by another tenant matches no row and sqlx yields `RowNotFound`.
+            // That is a routine not-found (404), never a server fault (500): a
+            // foreign-org id must be indistinguishable from a missing one so it
+            // cannot be probed, matching the 403-vs-404 cross-tenant contract the
+            // moderation handlers (`assign_moderation_case`, `decide_appeal`, …)
+            // and the violations router (gh-issue-3187) already enforce.
+            sqlx::Error::RowNotFound => (
+                StatusCode::NOT_FOUND,
+                "AML assessment not found".to_string(),
+            ),
+            other => {
+                tracing::error!("Failed to review AML assessment: {}", other);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to review assessment".to_string(),
+                )
+            }
         })?;
 
     write_compliance_audit(
