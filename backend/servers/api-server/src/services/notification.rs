@@ -295,27 +295,40 @@ impl NotificationService {
         Ok(true)
     }
 
-    /// Deliver a notification on the Push channel.
+    /// Deliver a notification on the Push channel through the configured
+    /// FCM/APNs transport.
     ///
     /// Extracted from `send_to_user`'s per-channel match so the "Push dispatches
-    /// through the configured FCM/APNs transport — it is not a log-only no-op"
-    /// contract is unit-testable with a spy transport and without a live
-    /// database (see `push_channel_dispatches_through_transport`).
+    /// through the transport — it is not a log-only no-op" contract is
+    /// unit-testable with a spy transport and without a live database (see
+    /// `push_channel_dispatches_through_transport`).
+    ///
+    /// This arm used to only log ("Push notification (integration pending)"), so
+    /// scheduled events (vote started/closed, announcement published, meter and
+    /// payment reminders) that requested Push never reached a device while the
+    /// service still reported success. A delivery error is logged and swallowed
+    /// so it does not abort the remaining channels; `PushNotConfigured` (no
+    /// provider, or the user has no registered device) is an expected skip the
+    /// adapter already logged.
     async fn deliver_push_channel(
         &self,
         user_id: Uuid,
         notification: &Notification,
         entity_id: Option<Uuid>,
     ) {
-        // NOTE(code-review-api-core-notif-push-channel-noop): pre-fix behaviour
-        // reproduced for the regression test — this arm used to only log and
-        // never call a provider, so every opted-in Push notification was
-        // silently dropped while the service still returned Ok(()).
-        let _ = (notification, entity_id);
-        tracing::info!(
-            user_id = %user_id,
-            "Push notification (integration pending)"
-        );
+        let push = to_push_notification(user_id, notification, entity_id);
+        match self.push_transport.send(user_id, &push).await {
+            Ok(()) => {}
+            Err(common::notifications::NotificationError::PushNotConfigured) => {}
+            Err(e) => {
+                tracing::warn!(
+                    user_id = %user_id,
+                    notification_type = ?notification.notification_type,
+                    error = %e,
+                    "Push notification not delivered"
+                );
+            }
+        }
     }
 
     /// Send a notification to a single user.
