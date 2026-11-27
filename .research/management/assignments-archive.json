@@ -17649,6 +17649,28 @@
       "first_open_at": "2026-11-10T02:29:11Z"
     },
     {
+      "task_id": "code-review-reality-server-pwreset-email-not-wired",
+      "branch": "auto-impl/code-review-reality-server-pwreset-email-649c4c44",
+      "status": "failed",
+      "claimed_at": "2026-11-27T00:27:10Z",
+      "last_updated": "2026-11-27T00:33:52Z",
+      "status_changed_at": "2026-11-27T00:33:52Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": "pr=none status=blocked specialist=rust-backend scope_drift=false code_reuse_warn=none note=stale signal: reality-server pwreset email already fully wired+tested on dev; no dead wiring to fix",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-reality-server-realtor-respond-no-validation",
       "branch": "auto-impl/code-review-reality-server-realtor-respo-ae3e26df",
       "status": "merged",
@@ -36998,5 +37020,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-26T22:41:56Z"
+  "archived_at": "2026-11-27T00:37:19Z"
 }
