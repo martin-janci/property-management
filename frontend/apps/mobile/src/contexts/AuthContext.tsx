@@ -22,6 +22,25 @@ const BIOMETRIC_ENABLED_KEY = 'ppt_biometric_enabled';
 // bearer that dies on (or moments after) the first request.
 const TOKEN_REFRESH_SKEW_SECONDS = 30;
 
+/**
+ * Raised by `refreshToken()` when the `/auth/refresh` request could not reach
+ * the server (offline / DNS / timeout — i.e. `fetch` itself rejected), so the
+ * server never reached a verdict on the refresh token.
+ *
+ * This is deliberately distinct from a server *rejection* (a non-OK response —
+ * the refresh token is genuinely expired/revoked/reused). On a rejection the
+ * session is dead and `refreshToken()` tears it down (`logout()`); on this
+ * network error the session is NOT known to be dead, so callers keep the user
+ * on their stale access token + offline cache instead of evicting them and
+ * wiping their data. See the comments in `refreshToken()` / `initialize()`.
+ */
+class TokenRefreshNetworkError extends Error {
+  constructor(options?: { cause?: unknown }) {
+    super('Token refresh failed: server unreachable', options);
+    this.name = 'TokenRefreshNetworkError';
+  }
+}
+
 export interface User {
   id: string;
   email: string;
@@ -199,44 +218,63 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
   }, [queryClient]);
 
   const refreshToken = useCallback(async () => {
+    const storedRefreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+
+    if (!storedRefreshToken) {
+      // Nothing to refresh with — the session is unrecoverable, tear it down.
+      await logout();
+      throw new Error('No refresh token available');
+    }
+
+    let response: Response;
     try {
-      const storedRefreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-
-      if (!storedRefreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      const response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
+      response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ refreshToken: storedRefreshToken }),
       });
-
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
-      }
-
-      const tokens = readTokenPair(await response.json());
-      if (!tokens) {
-        throw new Error('Token refresh failed');
-      }
-      const { accessToken, refreshToken: newRefreshToken } = tokens;
-
-      // Store new tokens
-      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newRefreshToken);
-
-      setState((prev) => ({
-        ...prev,
-        accessToken,
-      }));
     } catch (error) {
-      // If refresh fails, log out
-      await logout();
-      throw error;
+      // Transport failure (offline / DNS / timeout): `fetch` rejected, so the
+      // server never reached a verdict on the refresh token — the session is
+      // NOT known to be dead. Do NOT log out here: `logout()` deletes the
+      // (still-valid) tokens AND calls `resetLocalData()`, which wipes the
+      // offline mutation queue, cached responses, NFC building-access
+      // credentials and widget data. Evicting a user — and destroying their
+      // offline data — merely because they opened the app without a network is
+      // the exact opposite of what the offline-support layer exists for. Keep
+      // the session intact and let the caller retry when connectivity returns;
+      // raise a distinguishable error so callers can tell "offline" apart from
+      // "refresh token rejected".
+      throw new TokenRefreshNetworkError({ cause: error });
     }
+
+    if (!response.ok) {
+      // The server reached a verdict and rejected the refresh token (expired,
+      // revoked, or already reused) — the session is genuinely dead, so tear it
+      // down.
+      await logout();
+      throw new Error('Token refresh failed');
+    }
+
+    const tokens = readTokenPair(await response.json().catch(() => null));
+    if (!tokens) {
+      // Server responded OK but the body was unusable — treat it as a failed
+      // refresh and tear the session down.
+      await logout();
+      throw new Error('Token refresh failed');
+    }
+    const { accessToken, refreshToken: newRefreshToken } = tokens;
+
+    // Store new tokens
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newRefreshToken);
+
+    setState((prev) => ({
+      ...prev,
+      accessToken,
+    }));
   }, [apiBaseUrl, logout]);
 
   const enableBiometric = useCallback(async (): Promise<boolean> => {
@@ -318,10 +356,19 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
             try {
               await refreshToken();
               activeToken = (await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)) ?? accessToken;
-            } catch {
-              // refreshToken() already logged out (clearing SecureStore) when
-              // the refresh failed — the session is dead, fall back to login.
-              return false;
+            } catch (error) {
+              if (!(error instanceof TokenRefreshNetworkError)) {
+                // The server rejected the refresh token — refreshToken() already
+                // logged out (clearing SecureStore). The session is dead, fall
+                // back to login.
+                return false;
+              }
+              // Offline: the refresh token may still be valid, we just can't
+              // reach the server. Restore the session on the stale access token
+              // so biometric unlock works without a network — apiRequest will
+              // refresh it opportunistically (or the server will 401 and the
+              // normal auth-gate will tear it down) once connectivity returns.
+              activeToken = accessToken;
             }
           }
           setState((prev) => ({
@@ -377,18 +424,39 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
                 biometricEnabled: biometricEnabledFlag,
                 biometricAvailable,
               });
-            } catch {
-              // refreshToken() already ran logout() (clearing SecureStore +
-              // caches) on failure; drop to the login screen.
-              setState((prev) => ({
-                ...prev,
-                isLoading: false,
-                isAuthenticated: false,
-                user: null,
-                accessToken: null,
-                biometricEnabled: biometricEnabledFlag,
-                biometricAvailable,
-              }));
+            } catch (error) {
+              if (error instanceof TokenRefreshNetworkError) {
+                // Offline cold start: the stored access token is expired but the
+                // refresh token may still be valid — we just can't reach the
+                // server to rotate it. Keep the user signed in on the stale
+                // access token so the app is usable offline (cached reads,
+                // queued writes via useOfflineSupport). apiRequest refreshes it
+                // opportunistically — or the server 401s and the normal
+                // auth-gate tears the session down — once the network returns.
+                // Logging out here would evict a user with a valid session and
+                // wipe their offline data purely because they launched offline.
+                setState({
+                  isLoading: false,
+                  isAuthenticated: true,
+                  user,
+                  accessToken,
+                  biometricEnabled: biometricEnabledFlag,
+                  biometricAvailable,
+                });
+              } else {
+                // Server rejected the refresh token — refreshToken() already ran
+                // logout() (clearing SecureStore + caches). Drop to the login
+                // screen.
+                setState((prev) => ({
+                  ...prev,
+                  isLoading: false,
+                  isAuthenticated: false,
+                  user: null,
+                  accessToken: null,
+                  biometricEnabled: biometricEnabledFlag,
+                  biometricAvailable,
+                }));
+              }
             }
           } else {
             setState({
