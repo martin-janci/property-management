@@ -464,6 +464,22 @@ TTL steals are visible per-run in the commit log.
 
    ```bash
    git fetch origin --quiet
+   # Unshallow guard (issue #3781 / dispatcher stall #3357). A fresh cron clone
+   # can be *shallow* (`git clone --depth=…`), which leaves NO common ancestor
+   # with origin/dev — so every merge-base-dependent phase misfires: Phase 2
+   # mis-classifies in-flight PRs as "orphaned" (empty `git merge-base`), the
+   # Phase 5 reviewer's head_oid/merge-base checks break, and Phase 5.6's rebaser
+   # burns a `rebase_attempts` slot each run on a phantom "no merge base". #3784
+   # deepened the clone *inside* the rebaser, but that runs LATE and only when a
+   # PR actually needs rebasing — so the earlier phases stay broken on a shallow
+   # clone. Deepen ONCE here, at the top of preflight, so the whole run is
+   # shallow-safe before the first merge-base is computed (and the rebaser's own
+   # guard becomes a cheap no-op). Guarded so it is a genuine no-op on a complete
+   # clone (`--is-shallow-repository` prints `false` and the block is skipped).
+   if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+     echo "preflight: shallow clone — deepening to full history (merge-base safety, #3357)"
+     git fetch --unshallow origin --quiet || git fetch --depth=2147483647 origin --quiet
+   fi
    git checkout dev 2>/dev/null || git checkout -B dev origin/dev
    AHEAD=$(git rev-list --count origin/dev..HEAD 2>/dev/null || echo 0)
    BEHIND=$(git rev-list --count HEAD..origin/dev 2>/dev/null || echo 0)
