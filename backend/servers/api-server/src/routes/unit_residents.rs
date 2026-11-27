@@ -415,25 +415,34 @@ pub async fn add_resident(
         ));
     }
 
-    // Verify user exists
-    let user_exists = state
-        .user_repo
-        .find_by_id(req.user_id)
+    // Verify the target user is an active member of the building's organization.
+    // A plain global existence check (`user_repo.find_by_id`) would let a manager
+    // add a user from a *different* organization as a resident — a cross-org /
+    // tenant-isolation gap. Membership implies existence, so this subsumes the
+    // existence check. The building's org is the caller's tenant (authorize_unit
+    // asserts `building.organization_id == rls.tenant_id()`). Respond with the
+    // same `USER_NOT_FOUND` as a missing user so cross-org user existence is not
+    // leaked.
+    let is_org_member = state
+        .org_member_repo
+        .is_member(rls.tenant_id(), req.user_id)
         .await
         .map_err(|e| {
-            tracing::error!(error = %e, "Failed to check user");
+            tracing::error!(error = %e, "Failed to check user org membership");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Database error")),
             )
-        })?
-        .is_some();
+        })?;
 
-    if !user_exists {
+    if !is_org_member {
         rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("USER_NOT_FOUND", "User not found")),
+            Json(ErrorResponse::new(
+                "USER_NOT_FOUND",
+                "User not found in this organization",
+            )),
         ));
     }
 
