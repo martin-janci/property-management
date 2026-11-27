@@ -231,31 +231,3 @@ pub struct SearchSuggestions {
     pub nearby_cities: Vec<String>,
     pub alternative_types: Vec<String>,
 }
-
-/// Full public listing detail.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct PublicListingDetail {
-    pub id: Uuid,
-    pub title: String,
-    pub description: Option<String>,
-    pub price: i64,
-    pub currency: String,
-    pub is_negotiable: bool,
-    pub size_sqm: Option<i32>,
-    pub rooms: Option<i32>,
-    pub bathrooms: Option<i32>,
-    pub floor: Option<i32>,
-    pub total_floors: Option<i32>,
-    pub street: String,
-    pub city: String,
-    pub postal_code: String,
-    pub country: String,
-    pub latitude: Option<f64>,
-    pub longitude: Option<f64>,
-    pub property_type: String,
-    pub transaction_type: String,
-    pub photos: Vec<String>,
-    pub features: Vec<String>,
-    pub published_at: DateTime<Utc>,
-    pub view_count: i64,
-}
