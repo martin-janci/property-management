@@ -23,6 +23,10 @@ use uuid::Uuid;
 // rejects `javascript:`, `data:`, `file:` and any non-http(s) URL.
 use crate::util::url::validate_image_or_link_url;
 
+// `primary_color` / `secondary_color` are rendered into inline `style` /
+// CSS custom properties on the frontend; accept only a canonical CSS hex color.
+use crate::util::color::validate_hex_color;
+
 /// Validate an optional URL field. Returns a generic 400 message that does
 /// NOT echo the rejected URL back (reflected-XSS guard).
 fn check_optional_url_field(
@@ -34,6 +38,26 @@ fn check_optional_url_field(
             return Err((
                 axum::http::StatusCode::BAD_REQUEST,
                 format!("{} must be a http(s) URL (max 2048 chars)", field),
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Validate an optional hex-color field. Returns a generic 400 message that
+/// does NOT echo the rejected value back (reflected-content guard).
+fn check_optional_color_field(
+    value: &Option<String>,
+    field: &'static str,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    if let Some(s) = value.as_deref() {
+        if !s.is_empty() && validate_hex_color(s).is_err() {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!(
+                    "{} must be a hex color (e.g. #1a2b3c with 3, 4, 6, or 8 digits)",
+                    field
+                ),
             ));
         }
     }
@@ -314,6 +338,12 @@ pub async fn update_branding(
     check_optional_url_field(&banner_url, "banner_url")?;
     check_optional_url_field(&watermark_url, "watermark_url")?;
 
+    // Validate color fields the same way: they are rendered into inline CSS on
+    // the frontend, so reject anything that is not a canonical hex color.
+    // Cleared/empty values are normalized to `None` above and skipped.
+    check_optional_color_field(&primary_color, "primary_color")?;
+    check_optional_color_field(&secondary_color, "secondary_color")?;
+
     let mut conn = state
         .acquire_public_conn()
         .await
@@ -419,4 +449,46 @@ pub async fn update_branding(
     };
 
     Ok(Json(BrandingResponse { branding }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::StatusCode;
+
+    #[test]
+    fn check_optional_color_field_accepts_valid_hex() {
+        // A well-formed hex color passes and the handler proceeds.
+        assert!(check_optional_color_field(&Some("#1a2b3c".to_string()), "primary_color").is_ok());
+        assert!(check_optional_color_field(&Some("#FFF".to_string()), "secondary_color").is_ok());
+    }
+
+    #[test]
+    fn check_optional_color_field_skips_absent_and_cleared() {
+        // Absent (None) and cleared ("") values are not validated — they clear
+        // the column rather than set an invalid one.
+        assert!(check_optional_color_field(&None, "primary_color").is_ok());
+        assert!(check_optional_color_field(&Some(String::new()), "primary_color").is_ok());
+    }
+
+    #[test]
+    fn check_optional_color_field_rejects_invalid_with_400() {
+        // An invalid color yields a 400 whose message does not echo the input.
+        let err = check_optional_color_field(&Some("red".to_string()), "primary_color")
+            .expect_err("named color must be rejected");
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert!(err.1.contains("primary_color"));
+        assert!(
+            !err.1.contains("red"),
+            "error must not echo the rejected value"
+        );
+
+        // A CSS-injection attempt is likewise a 400, not stored.
+        let inj = check_optional_color_field(
+            &Some("#fff;background:url(x)".to_string()),
+            "secondary_color",
+        )
+        .expect_err("injection attempt must be rejected");
+        assert_eq!(inj.0, StatusCode::BAD_REQUEST);
+    }
 }
