@@ -276,6 +276,106 @@ async fn get_inquiry_returns_persisted_messages(pool: PgPool) {
     );
 }
 
+// Regression (code-review-reality-server-get-inquiry-empty-msgs):
+// the empty-messages contract. An inquiry that exists but has no persisted
+// conversation messages yet (the common case right after it is created — the
+// buyer's opening text lives on the `listing_inquiries` row, NOT in
+// `inquiry_messages`) must still resolve to `200` with an EMPTY `messages`
+// array. It must NOT 404 (the inquiry exists) and the array must not collapse
+// to `null`/absent. The opening question stays on `inquiry.message`, so the
+// thread being empty is correct, not a "not found".
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_inquiry_with_no_messages_returns_200_and_empty_array(pool: PgPool) {
+    let realtor = seed_user(&pool, "empty-realtor").await;
+    let listing_id = seed_listing(&pool, "empty", realtor).await;
+    // Seeded inquiry carries message "Is this available?" and has NO
+    // inquiry_messages rows — an untouched, just-submitted inquiry.
+    let inquiry_id = seed_inquiry(&pool, listing_id, realtor).await;
+    let token = mint_token(realtor);
+    let app = inquiries_router(pool);
+
+    let (status, body) = send_read(
+        &app,
+        Method::GET,
+        &format!("/api/v1/inquiries/{inquiry_id}"),
+        Some(&token),
+    )
+    .await;
+
+    // Inquiry exists -> 200, never 404, even with an empty thread.
+    assert!(
+        status.is_success(),
+        "an inquiry with no messages must still be 200, got {status}"
+    );
+    let messages = body
+        .get("messages")
+        .expect("response must always carry a `messages` key");
+    let messages = messages
+        .as_array()
+        .expect("`messages` must be a JSON array, not null");
+    assert!(
+        messages.is_empty(),
+        "a thread with no persisted conversation messages must be empty, got {messages:?}"
+    );
+    // The opening question is carried on the inquiry itself, which is why the
+    // thread is legitimately empty rather than a 404.
+    assert_eq!(
+        body.get("inquiry")
+            .and_then(|i| i.get("message"))
+            .and_then(|m| m.as_str()),
+        Some("Is this available?"),
+        "the buyer's opening message lives on `inquiry.message`, not in the empty thread"
+    );
+}
+
+// Companion to the realtor case above, on the buyer-facing detail endpoint
+// `GET /api/v1/inquiries/mine/{id}`: the buyer's own just-submitted inquiry
+// (no realtor reply, no follow-up yet) must resolve 200 with an empty
+// `messages` array, not 404.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_buyer_inquiry_with_no_messages_returns_200_and_empty_array(pool: PgPool) {
+    let buyer = seed_user(&pool, "empty-buyer").await;
+    let listing_id = seed_listing(&pool, "empty-buyer", buyer).await;
+    // Scope the inquiry to the buyer (`user_id`) so the buyer-axis lookup
+    // (`get_inquiry_for_buyer`) resolves it.
+    let inquiry_id = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO listing_inquiries
+            (listing_id, realtor_id, user_id, name, email, message)
+        VALUES ($1, $2, $2, 'Buyer', 'buyer@inq-hp.test', 'Is this available?')
+        RETURNING id
+        "#,
+    )
+    .bind(listing_id)
+    .bind(buyer)
+    .fetch_one(&pool)
+    .await
+    .unwrap_or_else(|e| panic!("seed buyer inquiry: {e}"));
+    let token = mint_token(buyer);
+    let app = inquiries_router(pool);
+
+    let (status, body) = send_read(
+        &app,
+        Method::GET,
+        &format!("/api/v1/inquiries/mine/{inquiry_id}"),
+        Some(&token),
+    )
+    .await;
+
+    assert!(
+        status.is_success(),
+        "a buyer inquiry with no messages must still be 200, got {status}"
+    );
+    let messages = body
+        .get("messages")
+        .and_then(|m| m.as_array())
+        .expect("`messages` must be a JSON array, not null");
+    assert!(
+        messages.is_empty(),
+        "an untouched buyer thread must be empty, got {messages:?}"
+    );
+}
+
 // ── mark_as_read (PUT /{id}/read) ────────────────────────────────────────────
 
 #[sqlx::test(migrator = "db::MIGRATOR")]
