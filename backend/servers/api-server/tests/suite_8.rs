@@ -7,6 +7,8 @@
 
 mod common;
 
+#[path = "suites/aml_dsa_mutation_cross_org_idor_tests.rs"]
+mod aml_dsa_mutation_cross_org_idor_tests;
 #[path = "suites/finance_r4_authz_tests.rs"]
 mod finance_r4_authz_tests;
 #[path = "suites/mobile_config_route_tests.rs"]
