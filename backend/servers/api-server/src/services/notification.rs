@@ -194,9 +194,10 @@ fn claim_send_in_cache(
 fn in_app_group_key(event_type: &str, entity_id: Option<Uuid>) -> (&str, Uuid) {
     match entity_id {
         Some(id) => ("notification", id),
-        // BUG: a random fallback puts every entity-less notification in its own
-        // group — fixed in the following commit to a deterministic key.
-        None => ("notification", Uuid::new_v4()),
+        // No concrete entity: key the group on the event type with a fixed nil
+        // id so repeated entity-less notifications of the same type collapse
+        // into one stable group instead of each getting a fresh random group.
+        None => (event_type, Uuid::nil()),
     }
 }
 
