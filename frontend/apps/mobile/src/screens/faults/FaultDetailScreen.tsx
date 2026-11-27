@@ -106,6 +106,23 @@ const PRIORITY_LABEL_KEY: Record<string, string> = {
   urgent: 'faults.priorityUrgent',
 };
 
+/**
+ * i18n key for a server `fault.category` enum value. The server's `heating`
+ * value maps to the `categoryHvac` catalog key (HVAC groups heating + cooling),
+ * so a plain `faults.category${value}` interpolation won't do — an explicit
+ * map is required. Unknown/future category values are not listed here and fall
+ * back to the raw string via `defaultValue` at the call site.
+ */
+export const FAULT_CATEGORY_LABEL_KEY: Record<string, string> = {
+  plumbing: 'faults.categoryPlumbing',
+  electrical: 'faults.categoryElectrical',
+  structural: 'faults.categoryStructural',
+  heating: 'faults.categoryHvac',
+  elevator: 'faults.categoryElevator',
+  security: 'faults.categorySecurity',
+  other: 'faults.categoryOther',
+};
+
 interface FaultDetailScreenProps {
   faultId?: string;
   onBack?: () => void;
@@ -155,11 +172,16 @@ export function FaultDetailScreen({ faultId, onBack }: FaultDetailScreenProps) {
   const timeline = parseFaultTimeline(data);
   const statusKey = FAULT_STATUS_LABEL_KEY[fault.status];
   const priorityKey = PRIORITY_LABEL_KEY[fault.priority];
+  // Route the category enum through i18n (localized sk/cs/de/en), falling back
+  // to the raw server string for any unknown/future value instead of leaving a
+  // dangling catalog key on screen.
+  const categoryKey = FAULT_CATEGORY_LABEL_KEY[fault.category] ?? fault.category;
   const place = [fault.buildingName, fault.unitDesignation, fault.location]
     .filter(Boolean)
     .join(' · ');
 
   const rows: Array<[string, string]> = [
+    [t('faults.categoryLabel'), t(categoryKey, { defaultValue: fault.category })],
     [t('faults.priority'), priorityKey ? t(priorityKey) : fault.priority],
     [t('faults.location'), place],
     [t('faults.reportedBy'), fault.reporterName],
