@@ -832,6 +832,161 @@
         "vector": "bug",
         "generated": "2026-11-08"
       }
+    },
+    {
+      "id": "test-gap-hotfix-no-test-pr-3848",
+      "action": "Hotfix-no-test: PR #3848 fix(api-server) 2FA fail-closed ships without a dedicated test file",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-27T06:25:39Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:39Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3788",
+      "action": "Screen-map drift: PR #3788 touched reality-web /compare page without doc update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-27T06:25:39Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:39Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3793",
+      "action": "Screen-map drift: PR #3793 touched reality-web account listings-edit + password pages without doc update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-27T06:25:39Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:39Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-pr-3809",
+      "action": "Screen-map drift: PR #3809 touched reality-web layout.tsx without doc update",
+      "owner_role": "pm-qa",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-27T06:25:39Z (score=2 conf=medium vector=test-gap)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:39Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 2,
+        "vector": "test-gap"
+      }
+    },
+    {
+      "id": "churn-hotspot-frontend-apps-reality-web-src-lib-auth-api-ts",
+      "action": "Churn hotspot: frontend/apps/reality-web/src/lib/auth-api.ts touched by 2 PRs since last run",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-backlog-refill 2026-11-27T06:25:39Z (score=1 conf=high vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:39Z",
+      "backlog_ref": {
+        "plan": null,
+        "score": 1,
+        "vector": "refactor"
+      }
+    },
+    {
+      "id": "stalled-review-pr-3380-retry1",
+      "action": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3380]",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=stalled-review-pr-3380 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T02:45:34Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "stalled-review-pr-3380",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20-retry1",
+      "action": "Resolve dispatcher stall #3357: rebase or manually resolve the 3 approved conflicting PRs, merging security-flavored ones first [retry 1/2 of failed pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "pm-scrum-master-resolve-dispatcher-stall-3357-rebase-or-manually-resolve-the-2026-11-20",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20-retry1",
+      "action": "Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and merge before #3628 follow-up; fix #3649 so region de does not seed Wien [retry 1/2 of failed pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "pm-scrum-master-sequence-listings-rs-prs-rebase-3617-record-view-existence-p-2026-11-20",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20-retry1",
+      "action": "Sweep violations mutation handlers (moderation.rs/aml_dsa.rs) for the 403-vs-404 cross-tenant contract (assign still returns 403 per #3187) [retry 1/2 of failed pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "pm-scrum-master-sweep-violations-mutation-handlers-moderation-rs-aml-dsa-rs-2026-11-20",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20-retry1",
+      "action": "Resolve issue #3357 (stalled dispatcher): decide which approved PRs to rebase manually, and define an escalation path for non-mechanical conflicts that replaces the dead-end Tier-1d signal. [retry 1/2 of failed pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20]",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-27T06:25:40Z (retry_of=pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T04:36:48Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T06:25:40Z",
+      "retry_of": "pm-tech-lead-resolve-issue-3357-stalled-dispatcher-decide-which-approved-2026-11-20",
+      "retry_round": 1
     }
   ],
   "generated": "2026-11-25T04:15:10Z"
