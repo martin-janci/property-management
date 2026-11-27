@@ -14,9 +14,11 @@ use db::models::{
 use db::repositories::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECONDS};
 use db::{RlsGuard, RlsPool};
 use serde::{Deserialize, Serialize};
+use std::future::Future;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use thiserror::Error;
+use tokio::sync::Semaphore;
 use tracing::Instrument;
 use uuid::Uuid;
 
@@ -44,6 +46,37 @@ fn compute_backoff_seconds(base_delay_seconds: i32, attempt: i32) -> u64 {
     let multiplier = 1u64 << exp;
     let raw = base.saturating_mul(multiplier);
     raw.min(MAX_RETRY_DELAY_SECONDS as u64)
+}
+
+/// Spawn a workflow execution onto the Tokio runtime under a shared concurrency
+/// bound.
+///
+/// A single trigger event can match many enabled workflows, and
+/// [`WorkflowExecutor::handle_event`] fans the batch out by calling
+/// [`WorkflowExecutor::execute_workflow`] once per match — each of which detaches
+/// a background task here. Routed through one `limiter`
+/// ([`WorkflowExecutor::execution_limiter`], sized from
+/// `WorkflowExecutorConfig::max_concurrent_executions`), at most that many
+/// executions run their heavy body (DB writes, action calls, retry sleeps) at
+/// once; the rest are spawned but parked on the permit, so a large automation
+/// fan-out can no longer open an unbounded number of concurrent DB/RLS
+/// connections and action calls.
+fn spawn_bounded<F>(limiter: Arc<Semaphore>, span: tracing::Span, fut: F)
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    tokio::spawn(
+        async move {
+            // Park here until a slot frees up, then hold the permit for the
+            // whole execution so no more than `max_concurrent_executions`
+            // bodies run at once. `acquire_owned` only errors if the semaphore
+            // is closed, which this one never is; on that impossible path we
+            // fall back to running without a slot rather than dropping work.
+            let _permit = limiter.acquire_owned().await.ok();
+            fut.await;
+        }
+        .instrument(span),
+    );
 }
 
 /// Errors that can occur during workflow execution.
@@ -222,6 +255,11 @@ pub struct WorkflowExecutor {
     /// falls back to the logging sink; production passes `Some(..)` so the
     /// action actually delivers (see [`WorkflowExecutor::with_notification_service`]).
     notification_service: Option<Arc<NotificationService>>,
+    /// Bounds how many detached executions run their heavy body concurrently
+    /// (sized from `config.max_concurrent_executions`). Shared by every task
+    /// [`spawn_bounded`] detaches for this executor, so a single event batch
+    /// cannot fan out an unbounded number of concurrent executions.
+    execution_limiter: Arc<Semaphore>,
 }
 
 impl WorkflowExecutor {
@@ -240,12 +278,14 @@ impl WorkflowExecutor {
         workflow_repo: WorkflowRepository,
         config: WorkflowExecutorConfig,
     ) -> Self {
+        let execution_limiter = Arc::new(Semaphore::new(config.max_concurrent_executions.max(1)));
         Self {
             db,
             workflow_repo,
             action_registry: ActionRegistry::new(),
             config,
             notification_service: None,
+            execution_limiter,
         }
     }
 
@@ -259,14 +299,17 @@ impl WorkflowExecutor {
         workflow_repo: WorkflowRepository,
         notification_service: Arc<NotificationService>,
     ) -> Self {
+        let config = WorkflowExecutorConfig::default();
+        let execution_limiter = Arc::new(Semaphore::new(config.max_concurrent_executions.max(1)));
         Self {
             db,
             workflow_repo,
             action_registry: ActionRegistry::with_notification_service(
                 notification_service.clone(),
             ),
-            config: WorkflowExecutorConfig::default(),
+            config,
             notification_service: Some(notification_service),
+            execution_limiter,
         }
     }
 
@@ -327,7 +370,13 @@ impl WorkflowExecutor {
             config: self.config.clone(),
         };
 
-        tokio::spawn(
+        spawn_bounded(
+            Arc::clone(&self.execution_limiter),
+            tracing::info_span!(
+                "bg.workflow_step",
+                workflow_id = %workflow_id,
+                execution_id = %execution_id,
+            ),
             async move {
                 if let Err(e) = executor
                     .run(workflow, execution_id, trigger_event, context)
@@ -340,12 +389,7 @@ impl WorkflowExecutor {
                         "Workflow execution failed"
                     );
                 }
-            }
-            .instrument(tracing::info_span!(
-                "bg.workflow_step",
-                workflow_id = %workflow_id,
-                execution_id = %execution_id,
-            )),
+            },
         );
 
         Ok(execution_id)
@@ -1173,6 +1217,61 @@ impl WorkflowExecutorTask {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    /// Regression (code-review: unbounded workflow execution spawn).
+    ///
+    /// `handle_event` fans a trigger batch out through `spawn_bounded`, one
+    /// detached task per matching workflow. Those tasks share the executor's
+    /// `execution_limiter`, so no more than `max_concurrent_executions` may run
+    /// their body at once. Before the bound was enforced, every task ran
+    /// immediately and peak concurrency equalled the batch size — this test
+    /// pins the cap so that regression cannot return.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn spawn_bounded_caps_concurrent_executions() {
+        const LIMIT: usize = 2;
+        const TASKS: usize = 8;
+
+        let limiter = Arc::new(Semaphore::new(LIMIT));
+        let current = Arc::new(AtomicUsize::new(0));
+        let peak = Arc::new(AtomicUsize::new(0));
+        let done = Arc::new(AtomicUsize::new(0));
+
+        for _ in 0..TASKS {
+            let current = Arc::clone(&current);
+            let peak = Arc::clone(&peak);
+            let done = Arc::clone(&done);
+            spawn_bounded(Arc::clone(&limiter), tracing::Span::none(), async move {
+                let now = current.fetch_add(1, Ordering::SeqCst) + 1;
+                peak.fetch_max(now, Ordering::SeqCst);
+                // Hold the slot long enough that, unbounded, all TASKS would
+                // overlap and drive peak up to TASKS.
+                tokio::time::sleep(Duration::from_millis(30)).await;
+                current.fetch_sub(1, Ordering::SeqCst);
+                done.fetch_add(1, Ordering::SeqCst);
+            });
+        }
+
+        // Wait for the whole batch to drain without relying on JoinHandles
+        // (the production call site detaches the tasks).
+        for _ in 0..200 {
+            if done.load(Ordering::SeqCst) == TASKS {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+
+        assert_eq!(
+            done.load(Ordering::SeqCst),
+            TASKS,
+            "not all spawned executions completed"
+        );
+        assert!(
+            peak.load(Ordering::SeqCst) <= LIMIT,
+            "peak concurrent executions {} exceeded the configured limit {LIMIT}",
+            peak.load(Ordering::SeqCst)
+        );
+    }
 
     #[test]
     fn test_condition_parsing() {
