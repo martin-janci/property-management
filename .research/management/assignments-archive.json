@@ -7648,6 +7648,28 @@
       "merge_attempted_at": "2026-08-30T02:34:32Z"
     },
     {
+      "task_id": "code-review-api-handlers-unit-residents-add-xorg-user",
+      "branch": "auto-impl/code-review-api-handlers-unit-residents-0d00e769",
+      "status": "merged",
+      "claimed_at": "2026-11-27T20:27:05Z",
+      "last_updated": "2026-11-27T23:07:58Z",
+      "status_changed_at": "2026-11-27T23:07:58Z",
+      "pr_number": 3882,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3882",
+      "merged_at": "2026-11-27T22:37:49Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3882 status=done specialist=rust-backend scope_drift=false note=confirmed real xorg gap: add_resident validated target via non-RLS user_repo.find_by_id; now requires active org membership (org_member_repo.is_member); returns USER_NOT_FOUND to avoid leak; TDD split; fmt+clippy+new regression green; CI backend.yml authoritative",
+      "reviewer_summary": "verdict=approve head_oid=5c3314dcf4a9c2ab63535459f605ba18199eec17 note=xorg-fix-correct-via-is_member-approve-posted-as-COMMENT-self-approve-blocked",
+      "last_reviewed_oid": "5c3314dcf4a9c2ab63535459f605ba18199eec17",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-27T22:36:02Z"
+    },
+    {
       "task_id": "code-review-api-handlers-upload-folderid-parse-swallow",
       "branch": "auto-impl/code-review-api-handlers-upload-folderid-0e5254ee",
       "status": "merged",
@@ -38142,5 +38164,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-27T22:35:51Z"
+  "archived_at": "2026-11-27T23:08:10Z"
 }
