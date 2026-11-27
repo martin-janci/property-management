@@ -378,7 +378,9 @@ impl DocumentRepository {
     ) -> Result<Vec<DocumentClassificationHistory>, SqlxError> {
         sqlx::query_as::<_, DocumentClassificationHistory>(
             r#"
-            SELECT * FROM document_classification_history
+            SELECT id, document_id, predicted_category, confidence::float8 AS confidence,
+                   actual_category, was_accepted, feedback_by, created_at
+            FROM document_classification_history
             WHERE document_id = $1
             ORDER BY created_at DESC
             "#,
@@ -410,7 +412,9 @@ impl DocumentRepository {
     {
         sqlx::query_as::<_, DocumentClassificationHistory>(
             r#"
-            SELECT * FROM document_classification_history
+            SELECT id, document_id, predicted_category, confidence::float8 AS confidence,
+                   actual_category, was_accepted, feedback_by, created_at
+            FROM document_classification_history
             WHERE document_id = $1
             ORDER BY created_at DESC
             "#,
