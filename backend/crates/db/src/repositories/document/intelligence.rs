@@ -388,6 +388,38 @@ impl DocumentRepository {
         .await
     }
 
+    /// Get classification history for a document on an RLS-enabled connection.
+    ///
+    /// RLS-aware counterpart of [`Self::get_classification_history`].
+    /// `document_classification_history` is under FORCE ROW LEVEL SECURITY (its
+    /// tenant-isolation policy keys on the owning document's `organization_id`
+    /// via `get_current_org_id()`, migration 00179). The pool-based variant runs
+    /// on a connection with **no** request org context set, so under FORCE RLS
+    /// the policy collapses to deny-all — the caller's own history silently comes
+    /// back empty in production, and the query bypasses the per-request tenant
+    /// context entirely (the AI/OCR RLS-bypass pattern). This variant runs the
+    /// read on the caller's org-scoped connection so the classification history
+    /// (AI/OCR document-intelligence data) stays both correct and tenant-isolated.
+    pub async fn get_classification_history_rls<'e, E>(
+        &self,
+        executor: E,
+        document_id: Uuid,
+    ) -> Result<Vec<DocumentClassificationHistory>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, DocumentClassificationHistory>(
+            r#"
+            SELECT * FROM document_classification_history
+            WHERE document_id = $1
+            ORDER BY created_at DESC
+            "#,
+        )
+        .bind(document_id)
+        .fetch_all(executor)
+        .await
+    }
+
     // ------------------------------------------------------------------------
     // Story 28.4: Document Summarization
     // ------------------------------------------------------------------------
