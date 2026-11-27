@@ -295,6 +295,42 @@ impl NotificationService {
         Ok(true)
     }
 
+    /// Deliver a notification on the Push channel through the configured
+    /// FCM/APNs transport.
+    ///
+    /// Extracted from `send_to_user`'s per-channel match so the "Push dispatches
+    /// through the transport — it is not a log-only no-op" contract is
+    /// unit-testable with a spy transport and without a live database (see
+    /// `push_channel_dispatches_through_transport`).
+    ///
+    /// This arm used to only log ("Push notification (integration pending)"), so
+    /// scheduled events (vote started/closed, announcement published, meter and
+    /// payment reminders) that requested Push never reached a device while the
+    /// service still reported success. A delivery error is logged and swallowed
+    /// so it does not abort the remaining channels; `PushNotConfigured` (no
+    /// provider, or the user has no registered device) is an expected skip the
+    /// adapter already logged.
+    async fn deliver_push_channel(
+        &self,
+        user_id: Uuid,
+        notification: &Notification,
+        entity_id: Option<Uuid>,
+    ) {
+        let push = to_push_notification(user_id, notification, entity_id);
+        match self.push_transport.send(user_id, &push).await {
+            Ok(()) => {}
+            Err(common::notifications::NotificationError::PushNotConfigured) => {}
+            Err(e) => {
+                tracing::warn!(
+                    user_id = %user_id,
+                    notification_type = ?notification.notification_type,
+                    error = %e,
+                    "Push notification not delivered"
+                );
+            }
+        }
+    }
+
     /// Send a notification to a single user.
     pub async fn send_to_user(
         &self,
@@ -379,27 +415,8 @@ impl NotificationService {
                     }
                 }
                 NotificationChannel::Push => {
-                    // Deliver through the FCM/APNs transport. This branch used
-                    // to only log, so scheduled events (vote started/closed,
-                    // announcement published, meter and payment reminders)
-                    // never reached a device. A failure here is logged and
-                    // does not stop the remaining channels.
-                    let push = to_push_notification(user_id, notification, entity_id);
-                    match self.push_transport.send(user_id, &push).await {
-                        Ok(()) => {}
-                        // No provider configured, or the user has no device
-                        // registered: an expected skip, already logged by the
-                        // adapter.
-                        Err(common::notifications::NotificationError::PushNotConfigured) => {}
-                        Err(e) => {
-                            tracing::warn!(
-                                user_id = %user_id,
-                                notification_type = ?notification.notification_type,
-                                error = %e,
-                                "Push notification not delivered"
-                            );
-                        }
-                    }
+                    self.deliver_push_channel(user_id, notification, entity_id)
+                        .await;
                 }
                 NotificationChannel::InApp => {
                     // Create in-app notification using granular notification repository
@@ -827,6 +844,87 @@ fn to_push_notification(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    /// Spy push transport that records every `send` call so a test can assert
+    /// the Push channel actually dispatched through it.
+    #[derive(Default)]
+    struct RecordingPushTransport {
+        calls: Mutex<Vec<(Uuid, PushNotification)>>,
+    }
+
+    #[async_trait::async_trait]
+    impl PushTransport for RecordingPushTransport {
+        async fn send(
+            &self,
+            user_id: Uuid,
+            notification: &PushNotification,
+        ) -> common::notifications::TransportResult {
+            self.calls
+                .lock()
+                .unwrap()
+                .push((user_id, notification.clone()));
+            Ok(())
+        }
+    }
+
+    /// A lazy pool pointed at an unreachable address — `deliver_push_channel`
+    /// never queries the DB, so this is never connected to.
+    fn unused_pool() -> DbPool {
+        sqlx::PgPool::connect_lazy("postgres://never-used:never@127.0.0.1:1/never")
+            .expect("connect_lazy builds without connecting")
+    }
+
+    /// Regression (`code-review-api-core-notif-push-channel-noop`): the Push
+    /// channel must DISPATCH through the configured push transport, not silently
+    /// "succeed" without delivering. The arm was once a log-only no-op ("Push
+    /// notification (integration pending)"), so every push a user explicitly
+    /// opted into (vote reminders, payment-due, announcements) was dropped while
+    /// `send_to_user` still returned `Ok(())` and logged "Notification sent".
+    ///
+    /// This drives the exact delegation `send_to_user`'s Push arm performs,
+    /// through a spy transport and with no live database, and pins that the push
+    /// payload reaches the transport with the right recipient, category and
+    /// routing data — so a revert to the silent no-op fails here.
+    #[tokio::test]
+    async fn push_channel_dispatches_through_transport() {
+        let spy = Arc::new(RecordingPushTransport::default());
+        let service = NotificationService::new(
+            unused_pool(),
+            EmailService::development(),
+            NotificationServiceConfig::default(),
+        )
+        .with_push_transport(spy.clone());
+
+        let user_id = Uuid::new_v4();
+        let vote_id = Uuid::new_v4();
+        let notification = Notification {
+            notification_type: NotificationType::VoteReminderNotVoted,
+            title: "Reminder: Vote".to_string(),
+            body: "Cast your vote".to_string(),
+            data: serde_json::json!({ "vote_id": vote_id }),
+            channels: vec![NotificationChannel::Push],
+        };
+
+        service
+            .deliver_push_channel(user_id, &notification, Some(vote_id))
+            .await;
+
+        let calls = spy.calls.lock().unwrap();
+        assert_eq!(
+            calls.len(),
+            1,
+            "Push channel must dispatch exactly one push through the transport, \
+             not silently drop it"
+        );
+        assert_eq!(calls[0].0, user_id, "push must target the intended user");
+        let push = &calls[0].1;
+        assert_eq!(push.title, "Reminder: Vote");
+        assert_eq!(push.category, NotificationCategory::Votes);
+        let data = push.data.as_ref().expect("push routing data payload");
+        assert_eq!(data["event_type"], "vote.reminder_not_voted");
+        assert_eq!(data["entity_id"], vote_id.to_string());
+    }
 
     #[test]
     fn push_payload_carries_title_body_category_and_routing_data() {
