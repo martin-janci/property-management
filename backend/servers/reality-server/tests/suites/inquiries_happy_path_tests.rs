@@ -517,3 +517,98 @@ async fn buyer_thread_detail_reply_and_cancel(pool: PgPool) {
     .await;
     assert_eq!(closed_reply, 404);
 }
+
+// ── schedule_viewing (POST /{id}/schedule-viewing) ───────────────────────────
+// Story 33.3: the realtor promotes one of their own inquiries into a confirmed
+// `viewing_schedules` row. Before this endpoint existed, the viewing-schedule
+// table + reminder seam were dead (no writer).
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn schedule_viewing_creates_row_for_owning_realtor(pool: PgPool) {
+    let realtor = seed_user(&pool, "sched-realtor").await;
+    let listing_id = seed_listing(&pool, "sched", realtor).await;
+    let inquiry_id = seed_inquiry(&pool, listing_id, realtor).await;
+    let token = mint_token(realtor);
+    let app = inquiries_router(pool.clone());
+
+    let status = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/{inquiry_id}/schedule-viewing"),
+        Some(&token),
+        json!({ "scheduled_at": "2030-01-01T10:00:00Z", "duration_minutes": 45 }),
+    )
+    .await;
+    assert_eq!(
+        status, 201,
+        "owning realtor must be able to schedule a viewing"
+    );
+
+    // The persisted row copies attendee contact from the inquiry and keeps the
+    // realtor + requested duration.
+    let (att_email, duration, vrealtor): (String, i32, Uuid) = sqlx::query_as(
+        "SELECT attendee_email, duration_minutes, realtor_id
+         FROM viewing_schedules WHERE inquiry_id = $1",
+    )
+    .bind(inquiry_id)
+    .fetch_one(&pool)
+    .await
+    .expect("a viewing_schedules row must exist");
+    assert_eq!(att_email, "buyer@inq-hp.test");
+    assert_eq!(duration, 45);
+    assert_eq!(vrealtor, realtor);
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn schedule_viewing_rejects_past_time(pool: PgPool) {
+    let realtor = seed_user(&pool, "sched-past-realtor").await;
+    let listing_id = seed_listing(&pool, "sched-past", realtor).await;
+    let inquiry_id = seed_inquiry(&pool, listing_id, realtor).await;
+    let token = mint_token(realtor);
+    let app = inquiries_router(pool);
+
+    let status = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/{inquiry_id}/schedule-viewing"),
+        Some(&token),
+        json!({ "scheduled_at": "2000-01-01T10:00:00Z" }),
+    )
+    .await;
+    assert_eq!(status, 400, "a viewing in the past must be rejected");
+}
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn schedule_viewing_404_for_foreign_realtor(pool: PgPool) {
+    let realtor = seed_user(&pool, "sched-owner").await;
+    let other = seed_user(&pool, "sched-other").await;
+    let listing_id = seed_listing(&pool, "sched-foreign", realtor).await;
+    let inquiry_id = seed_inquiry(&pool, listing_id, realtor).await;
+    let other_token = mint_token(other);
+    let app = inquiries_router(pool.clone());
+
+    let status = send_json(
+        &app,
+        Method::POST,
+        &format!("/api/v1/inquiries/{inquiry_id}/schedule-viewing"),
+        Some(&other_token),
+        json!({ "scheduled_at": "2030-01-01T10:00:00Z" }),
+    )
+    .await;
+    assert_eq!(
+        status, 404,
+        "a realtor must not schedule another realtor's inquiry"
+    );
+
+    // IDOR: no row leaked into the table under the foreign realtor.
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM viewing_schedules WHERE inquiry_id = $1")
+            .bind(inquiry_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        count, 0,
+        "no viewing_schedules row may be created for a foreign realtor"
+    );
+}

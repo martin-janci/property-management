@@ -389,4 +389,47 @@ impl RealityPortalRepository {
         .await?;
         Ok(updated.is_some())
     }
+
+    /// Schedule a confirmed viewing for one of the realtor's own inquiries
+    /// (Story 33.3). IDOR-safe: the `viewing_schedules` row is created only
+    /// when `inquiry_id` resolves to an inquiry whose `realtor_id` matches
+    /// `realtor_id`, mirroring the ownership guard used by the other
+    /// realtor-scoped inquiry methods (`get_inquiry_for_realtor`,
+    /// `respond_to_inquiry`). The attendee contact fields are copied from the
+    /// originating inquiry so the schedule always reflects who actually
+    /// requested the viewing.
+    ///
+    /// Returns `Ok(Some(..))` with the created schedule, or `Ok(None)` when
+    /// there is no such inquiry for this realtor, so the caller can 404
+    /// without leaking whether the inquiry exists for a different realtor.
+    pub async fn schedule_viewing(
+        &self,
+        inquiry_id: Uuid,
+        realtor_id: Uuid,
+        data: ScheduleViewing,
+    ) -> Result<Option<ViewingSchedule>, SqlxError> {
+        sqlx::query_as::<_, ViewingSchedule>(
+            r#"
+            INSERT INTO viewing_schedules (
+                inquiry_id, listing_id, realtor_id,
+                attendee_name, attendee_email, attendee_phone,
+                scheduled_at, duration_minutes, internal_notes
+            )
+            SELECT
+                li.id, li.listing_id, li.realtor_id,
+                li.name, li.email, li.phone,
+                $3, COALESCE($4, 30), $5
+            FROM listing_inquiries li
+            WHERE li.id = $1 AND li.realtor_id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(inquiry_id)
+        .bind(realtor_id)
+        .bind(data.scheduled_at)
+        .bind(data.duration_minutes)
+        .bind(&data.internal_notes)
+        .fetch_optional(&self.pool)
+        .await
+    }
 }

@@ -14,7 +14,7 @@
 
 use api_core::middleware::RateLimitDecision;
 use async_trait::async_trait;
-use db::models::{CreateListingInquiry, ListingInquiry, ViewingSchedule};
+use db::models::{CreateListingInquiry, ListingInquiry, ScheduleViewing, ViewingSchedule};
 use db::repositories::RealityPortalRepository;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -447,10 +447,50 @@ impl InquiriesHandler {
         }
     }
 
+    /// Schedule a confirmed viewing for one of the realtor's own inquiries
+    /// (Story 33.3) and, on success, fire the best-effort reminder to both
+    /// parties.
+    ///
+    /// Ownership is enforced in the repository
+    /// (`RealityPortalRepository::schedule_viewing` only inserts when the
+    /// inquiry belongs to `realtor_id`), so `Ok(None)` means "no such inquiry
+    /// for this realtor" and the caller should 404. This is the sole caller of
+    /// [`Self::send_viewing_reminder`]: previously the reminder path existed
+    /// but nothing scheduled a viewing, so the notifier seam was dead.
+    pub async fn schedule_viewing(
+        &self,
+        inquiry_id: Uuid,
+        realtor_id: Uuid,
+        data: ScheduleViewing,
+    ) -> Result<Option<ViewingSchedule>, String> {
+        let viewing = self
+            .repo
+            .schedule_viewing(inquiry_id, realtor_id, data)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if let Some(ref viewing) = viewing {
+            // Best-effort: the schedule is already persisted, so a reminder
+            // transport failure must never fail the request.
+            self.send_viewing_reminder(viewing).await;
+        }
+
+        Ok(viewing)
+    }
+
     /// Best-effort: dispatch a viewing reminder to both parties through the
     /// handler's notifier.
     pub async fn send_viewing_reminder(&self, viewing: &ViewingSchedule) {
-        if let Err(err) = self.notifier.notify_viewing_reminder(viewing).await {
+        Self::dispatch_viewing_reminder(self.notifier.as_ref(), viewing).await;
+    }
+
+    /// Best-effort: dispatch the viewing-reminder notification through
+    /// `notifier`. A transport failure is logged and swallowed — the schedule
+    /// is already persisted, so notification delivery must never fail the
+    /// request. Static (like [`Self::dispatch_new_inquiry`]) so it is
+    /// unit-testable with a fake notifier and no DB-backed handler.
+    async fn dispatch_viewing_reminder(notifier: &dyn InquiryNotifier, viewing: &ViewingSchedule) {
+        if let Err(err) = notifier.notify_viewing_reminder(viewing).await {
             tracing::warn!(
                 target: "reality.inquiries",
                 viewing_id = %viewing.id,
@@ -538,9 +578,10 @@ mod tests {
         );
     }
 
-    /// Fake notifier that counts successful `notify_new_inquiry` calls.
+    /// Fake notifier that counts successful `notify_*` calls.
     struct CountingNotifier {
         new_inquiry_calls: AtomicUsize,
+        viewing_reminder_calls: AtomicUsize,
     }
 
     #[async_trait]
@@ -553,6 +594,7 @@ mod tests {
             Ok(())
         }
         async fn notify_viewing_reminder(&self, _viewing: &ViewingSchedule) -> Result<(), String> {
+            self.viewing_reminder_calls.fetch_add(1, Ordering::SeqCst);
             Ok(())
         }
     }
@@ -596,13 +638,58 @@ mod tests {
         }
     }
 
+    fn sample_viewing() -> ViewingSchedule {
+        let now = Utc::now();
+        ViewingSchedule {
+            id: Uuid::new_v4(),
+            inquiry_id: Uuid::new_v4(),
+            listing_id: Uuid::new_v4(),
+            realtor_id: Uuid::new_v4(),
+            attendee_name: "Jane Buyer".to_string(),
+            attendee_email: "jane@example.com".to_string(),
+            attendee_phone: None,
+            scheduled_at: now + chrono::Duration::days(1),
+            duration_minutes: 30,
+            status: "scheduled".to_string(),
+            confirmed_at: None,
+            cancelled_at: None,
+            cancellation_reason: None,
+            internal_notes: None,
+            meeting_notes: None,
+            reminder_sent_at: None,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
     #[tokio::test]
     async fn dispatch_new_inquiry_invokes_notifier() {
         let notifier = CountingNotifier {
             new_inquiry_calls: AtomicUsize::new(0),
+            viewing_reminder_calls: AtomicUsize::new(0),
         };
         InquiriesHandler::dispatch_new_inquiry(&notifier, &sample_inquiry()).await;
         assert_eq!(notifier.new_inquiry_calls.load(Ordering::SeqCst), 1);
+    }
+
+    /// IG3 regression: scheduling a viewing must fire the viewing-reminder
+    /// notification. Before this change `send_viewing_reminder` /
+    /// `notify_viewing_reminder` had no caller — the reminder seam was dead.
+    #[tokio::test]
+    async fn dispatch_viewing_reminder_invokes_notifier() {
+        let notifier = CountingNotifier {
+            new_inquiry_calls: AtomicUsize::new(0),
+            viewing_reminder_calls: AtomicUsize::new(0),
+        };
+        InquiriesHandler::dispatch_viewing_reminder(&notifier, &sample_viewing()).await;
+        assert_eq!(notifier.viewing_reminder_calls.load(Ordering::SeqCst), 1);
+    }
+
+    /// A down reminder transport must be swallowed — the schedule is already
+    /// persisted, so delivery is best-effort and must not panic or propagate.
+    #[tokio::test]
+    async fn dispatch_viewing_reminder_swallows_transport_failure() {
+        InquiriesHandler::dispatch_viewing_reminder(&FailingNotifier, &sample_viewing()).await;
     }
 
     #[tokio::test]
