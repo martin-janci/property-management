@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-27T04:27:50Z",
+  "archived_at": "2026-11-27T04:34:28Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3755,6 +3755,31 @@
       }
     },
     {
+      "id": "code-review-api-core-accounting-decimal-literal-unwrap",
+      "action": "api core accounting decimal literal unwrap",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-30T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3855,
+        "merged_at": "2026-11-27T04:33:07Z",
+        "at": "2026-11-27T04:34:28Z"
+      }
+    },
+    {
       "id": "code-review-api-core-admin-rs-swallowed-serialize",
       "action": "layout/admin.rs (+ tenant.rs) mutation handlers end with unwrap_or_default() serialize — a failed serialize returns 200 OK / body null instead of 500",
       "owner_role": "pm-backend",
@@ -4281,6 +4306,31 @@
       }
     },
     {
+      "id": "code-review-api-core-fcm-legacy-api-decommissioned",
+      "action": "api core fcm legacy api decommissioned",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T04:34:28Z"
+      }
+    },
+    {
       "id": "code-review-api-core-fcm-legacy-dead-endpoint",
       "action": "api-server push_fanout: FCM legacy fallback (`https://fcm.googleapis.com/fcm/send`) is Google-decommissioned dead code — send_fcm_legacy can never deliver in production",
       "owner_role": "pm-backend",
@@ -4302,6 +4352,31 @@
         "merged_pr": 2926,
         "merged_at": "2026-09-02T00:25:42Z",
         "at": "2026-09-02T00:32:55Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-fcm-oauth-token-not-refreshed",
+      "action": "api core fcm oauth token not refreshed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T04:34:28Z"
       }
     },
     {
@@ -4539,6 +4614,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-19T10:25:33Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-notif-push-channel-noop-retry1",
+      "action": "api core notif push channel noop [retry 1/2 of failed code-review-api-core-notif-push-channel-noop]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-26T14:25:01Z (retry_of=code-review-api-core-notif-push-channel-noop reason=failed-no-pr cooldown_ok newest_failure=2026-11-19T08:36:11Z) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T14:25:01Z",
+      "retry_of": "code-review-api-core-notif-push-channel-noop",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3857,
+        "merged_at": "2026-11-27T04:33:26Z",
+        "at": "2026-11-27T04:34:28Z"
       }
     },
     {
@@ -7620,6 +7716,31 @@
         "merged_pr": 2791,
         "merged_at": "2026-08-18T04:32:16Z",
         "at": "2026-08-18T06:23:41Z"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-timing-cmp",
+      "action": "api handlers voice timing cmp",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T04:34:28Z"
       }
     },
     {
@@ -16515,6 +16636,31 @@
       "last_updated": "2026-11-26T14:40:32Z"
     },
     {
+      "id": "code-review-ppt-web-ui-sharepanel-i18n",
+      "action": "ppt web ui sharepanel i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-07-30T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T04:34:28Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-signature-modal-raw-err",
       "action": "ppt web ui signature modal raw err",
       "owner_role": "pm-backend",
@@ -17603,6 +17749,31 @@
       }
     },
     {
+      "id": "code-review-reality-server-inquiries-no-rate-limit",
+      "action": "reality server inquiries no rate limit",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-26T16:25:12Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T16:25:12Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-29T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-27T04:34:28Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-inquiries-no-ratelimit",
       "action": "reality-server: InquiryResult::RateLimited variant is defined but never constructed or matc...",
       "owner_role": "pm-backend",
@@ -18653,6 +18824,31 @@
         "commit": "b1902b11c5387461893fe79a2f4d489c79a57100",
         "subject": "code-review-reality-server-sso-per-call-client-no-timeout: reuse pooled SSO HTTP client with timeouts (#2897)",
         "at": "2026-08-31T20:24:27Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-sso-redirect-backslash-openredirect",
+      "action": "reality server sso redirect backslash openredirect",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-26T10:25:48Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-27T04:34:28Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-26T10:25:48Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-07-30T00:00:00Z"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3856,
+        "merged_at": "2026-11-27T04:33:21Z",
+        "at": "2026-11-27T04:34:28Z"
       }
     },
     {
