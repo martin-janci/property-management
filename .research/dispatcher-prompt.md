@@ -186,7 +186,7 @@ visible every cycle.
 | review      | failed   | Phase 2 sees PR CLOSED without merge — OR the Phase 2 stale-review SLA fires (`review` > `DISPATCHER_REVIEW_SLA_DAYS` with red CI and `fix_rounds >= 1` → close PR, open `from-stalled-pr` issue) |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
 | quarantined | failed   | (NEW 2026-07-07) Phase 2 quarantine-exit SLA: `quarantined_at` older than `DISPATCHER_QUARANTINE_SLA_DAYS` (default 7) with no operator action → close PR (branch preserved), open `from-stalled-pr` issue |
-| review      | quarantined | (PR 5/5) Phase 5.7 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes` (the quarantine gate at the top of Phase 5.7, before respawn). Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. The PR is left OPEN on GitHub — the dispatcher just stops respawning + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
+| review      | quarantined | (PR 5/5) Phase 5.7 sees `fix_rounds >= 3` AND latest `reviewer_summary` starts with `verdict=changes` (the quarantine gate at the top of Phase 5.7, before respawn). Set `quarantined_at=now`, `quarantine_reason="fix_rounds=<n> exhausted; verdict still changes"`. **OR** (issue #3357) the Phase 5.6 non-mechanical-conflict escalation fires: an approved PR is still `mergeable=CONFLICTING` after `rebase_attempts >= 3` mechanical auto-rebases, so the conflict is non-mechanical and needs a human. Set `quarantined_at=now`, `quarantine_reason="rebase_attempts=<n> exhausted; non-mechanical conflict — needs manual rebase"`, label the PR `needs-human-review`, and open a `follow-up,needs-human-review,from-stalled-pr` issue. Either way the PR is left OPEN on GitHub — the dispatcher just stops respawning/rebasing + stops counting it toward WIP. Operator un-quarantines by editing `status` back to `review` (e.g. after a manual rebase or scope clarification). |
 
 `merged` / `failed` are TERMINAL. **`quarantined` is SEMI-TERMINAL**: no
 Phase 5/5.5 trigger returns from quarantined → other, and the operator may
@@ -2095,6 +2095,54 @@ The same single-owner pattern applies to every counter on the assignment
 row: only the dispatcher writes; subagents communicate via return lines.
 
 Phase 5.5 next run will pick up the now-clean PR via the standard path.
+
+### Non-mechanical-conflict escalation (issue #3357 — the `rebase_attempts >= 3` exit)
+
+The `rebase_attempts < 3` safety stop above is the loop's *entry* guard, not
+its *exit*. Before #3357 a row that exhausted its 3 mechanical rebases simply
+dropped out of the Phase 5.6 predicate and sat in `status=review` /
+`mergeable=CONFLICTING` **forever** — approved, unmergeable, holding a WIP
+slot, surfaced only as a Phase 7 WARN/ALERT print. That dead-end is exactly
+what the stalled-dispatcher signal pointed at. Three failed *mechanical*
+auto-rebases (Phase 5.4/5.6 only touch SQLx offline data, `Cargo.lock`,
+generated openapi/api-client, lockfiles) is a strong signal the conflict is
+**non-mechanical** — it needs human judgment, not a 4th identical retry.
+
+So give the exhausted row a bounded way out. For each row where
+`status == "review"` AND `reviewer_summary` starts with `"verdict=approve"`
+AND the PR's `mergeable == "CONFLICTING"` AND `rebase_attempts >= 3`
+(i.e. it no longer qualifies for a rebase spawn), escalate **once**:
+
+1. Best-effort capture the conflicting paths for the summary via a single
+   `gh pr diff <n> --name-only` (if it errors, say `conflict paths: unknown`).
+2. Add the `needs-human-review` label to the PR and comment explaining that
+   mechanical auto-rebase is exhausted after `<n>` attempts and a **manual
+   rebase against `dev`** is required — i.e. this is one of the approved PRs an
+   operator must rebase by hand.
+3. Open a GitHub issue titled `stalled-pr: <task_id> (approved PR #<n> —
+   non-mechanical conflict)` labeled `follow-up,needs-human-review,from-stalled-pr`
+   summarizing what was attempted (`rebase_attempts`, the mechanical-only set)
+   and the conflicting paths from step 1.
+4. Quarantine the row via the existing `review → quarantined` transition
+   (state-machine table): set `status="quarantined"`, `quarantined_at=now`,
+   `quarantine_reason="rebase_attempts=<n> exhausted; non-mechanical conflict — needs manual rebase"`,
+   `status_changed_at=now`, `last_updated=now`. The PR is left OPEN (the
+   approval + commits are preserved for the human doing the manual rebase).
+
+Why quarantine rather than close: the PR is **approved** — parking it keeps
+the review investment intact for the operator's manual rebase, and it reuses
+the existing semi-terminal machinery instead of adding a new terminal sink.
+The two documented exits then drain it automatically: the operator
+un-quarantines (`status → review`) after the manual rebase, OR the Phase 2
+quarantine-exit SLA fails + recycles it as a clean-slate `from-stalled-pr`
+issue after `DISPATCHER_QUARANTINE_SLA_DAYS` (default 7) of inaction. Either
+way the signal is no longer a dead-end.
+
+**Bounded: max 2 escalations per run** (oldest `status_changed_at` first),
+matching the Phase 2 stale-review SLA cap, so a backlog of stuck approvals
+drains gradually and each run's blast radius stays reviewable. SKIP the whole
+step if `$DISPATCHER_SKIP_MUTATING == 1`. Surface escalated rows in Phase 7
+under the existing `Stale-review escalations:` line.
 
 ---
 
