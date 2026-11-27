@@ -192,19 +192,38 @@ fn ensure_redirect_uri_allowed(state: &AppState, raw: &str) -> Result<(), String
 /// - Absolute URLs must use `http`/`https` (blocks `javascript:`, `data:`,
 ///   `file:`, …) and their origin (`scheme://host[:port]`) must appear in
 ///   `allowed_origins`.
+///
+/// The relative-path decision is taken on a **browser-normalised** copy of the
+/// input: browsers strip ASCII tab/newline/CR and treat `\` as `/` *before*
+/// resolving a redirect target, so we must do the same. A literal check on the
+/// raw bytes would miss a control char smuggled between the leading slash and a
+/// backslash (`/<tab>\evil.com`), which the browser collapses to the foreign
+/// authority `//evil.com` — an open-redirect bypass.
 fn check_redirect_uri_allowed(raw: &str, allowed_origins: &[String]) -> Result<(), String> {
+    // Normalise exactly as a browser does when resolving a Location/redirect
+    // target: remove ASCII tab (U+0009), LF (U+000A) and CR (U+000D), then map
+    // every backslash to a forward slash. The relative-path and allowlist
+    // decisions below are taken on this normalised form so no control-char or
+    // backslash obfuscation can smuggle a foreign authority past the check.
+    let normalized: String = raw
+        .chars()
+        .filter(|c| !matches!(c, '\t' | '\n' | '\r'))
+        .map(|c| if c == '\\' { '/' } else { c })
+        .collect();
+
     // Allow same-origin relative paths (e.g. "/dashboard") unconditionally —
     // the browser will resolve them against the reality-web origin that
     // initiated the flow, which by definition the user already trusts.
     //
-    // A leading "/" is a same-origin relative path ONLY when the next char is
-    // neither "/" nor "\" — browsers normalise "\" to "/", so "/\evil.com" and
-    // "//evil.com" both resolve to a foreign authority (open-redirect bypass).
-    if raw.starts_with('/') && !raw.starts_with("//") && !raw.starts_with("/\\") {
+    // After normalisation a leading "/" is a same-origin relative path ONLY
+    // when the next char is not also "/": "//evil.com" (and its backslash /
+    // control-char obfuscations, already collapsed above) resolve to a foreign
+    // authority and must fall through to allowlist matching.
+    if normalized.starts_with('/') && !normalized.starts_with("//") {
         return Ok(());
     }
 
-    let parsed = url::Url::parse(raw).map_err(|e| format!("invalid URL: {}", e))?;
+    let parsed = url::Url::parse(&normalized).map_err(|e| format!("invalid URL: {}", e))?;
     // Only http(s) — block javascript:, data:, file:, etc.
     match parsed.scheme() {
         "http" | "https" => {}
@@ -2453,6 +2472,40 @@ mod sso_consumer_security_tests {
         assert!(check_redirect_uri_allowed("/dashboard", &empty).is_ok());
         // Existing behaviour preserved: protocol-relative form also rejected.
         assert!(check_redirect_uri_allowed("//evil.com", &empty).is_err());
+    }
+
+    /// Regression (open-redirect, backslash + stripped control char): browsers
+    /// remove ASCII tab (`\t`), newline (`\n`) and carriage return (`\r`) from a
+    /// URL *before* normalising `\` to `/`. A literal-prefix check that only
+    /// rejects a backslash **immediately** after the leading slash therefore
+    /// misses a control char smuggled between them: the server sees
+    /// `/<tab>\evil.com` (second char is the tab, so neither `//` nor `/\`), but
+    /// the browser strips the tab and resolves `/\evil.com` -> `//evil.com`, the
+    /// foreign authority `evil.com`. All such forms must be rejected, while a
+    /// legitimate relative path is still allowed.
+    #[test]
+    fn redirect_backslash_with_stripped_control_char_is_not_treated_as_relative() {
+        let empty: Vec<String> = Vec::new();
+        for raw in [
+            "/\t\\evil.com",   // tab between slash and backslash
+            "/\n\\evil.com",   // newline
+            "/\r\\evil.com",   // carriage return
+            "/\r\n\\evil.com", // CRLF
+            "/\t/evil.com",    // tab then protocol-relative slash
+            "\\\\evil.com",    // bare leading double backslash -> //evil.com
+            "\\/evil.com",     // backslash + slash -> //evil.com
+        ] {
+            let res = check_redirect_uri_allowed(raw, &empty);
+            assert!(
+                res.is_err(),
+                "backslash authority with stripped control char must not bypass the allowlist: {raw:?} -> {res:?}"
+            );
+        }
+        // Guard against over-tightening: a plain relative path, and a relative
+        // path that merely contains a (same-origin) backslash deeper in the
+        // path, still pass.
+        assert!(check_redirect_uri_allowed("/dashboard", &empty).is_ok());
+        assert!(check_redirect_uri_allowed("/a\\b", &empty).is_ok());
     }
 
     /// Regression (issue #820): dangerous non-http(s) schemes (`javascript:`,
