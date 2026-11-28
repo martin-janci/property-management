@@ -353,4 +353,61 @@ mod tests {
     fn resolve_export_dir_defaults_to_root_when_absent() {
         assert_eq!(resolve_export_dir(None).unwrap(), export_root());
     }
+
+    // Regression (code-review: tenant-lifecycle path leak): the client-facing
+    // error body for an internal failure must never carry internal detail —
+    // filesystem paths, internal script paths, or raw DB/tarball errors. Those
+    // belong in the server log only; the caller gets a fixed, opaque phrase.
+
+    #[test]
+    fn internal_error_does_not_leak_paths_or_internal_detail() {
+        // `TenantOpsError`'s Display embeds an internal script path and the
+        // offending table name — exactly the kind of detail we must not return.
+        let leaky =
+            tenant_ops::TenantOpsError::ManifestStale("secret_internal_table".to_string());
+        let rendered = leaky.to_string();
+        // Precondition: the error genuinely carries detail we have to hide.
+        assert!(
+            rendered.contains("check-rls-coverage.sh"),
+            "test precondition changed: {rendered:?}"
+        );
+        assert!(rendered.contains("secret_internal_table"));
+
+        let (status, body) = internal(leaky);
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(
+            !body.contains("check-rls-coverage.sh"),
+            "client body leaked an internal script path: {body:?}"
+        );
+        assert!(
+            !body.contains("secret_internal_table"),
+            "client body leaked internal detail: {body:?}"
+        );
+        assert!(
+            !body.contains('/'),
+            "client body still contains a path-like component: {body:?}"
+        );
+    }
+
+    #[test]
+    fn load_manifest_failure_does_not_leak_filesystem_path() {
+        // Forcing a load failure must not surface the server-side manifest path
+        // (previously interpolated via `{path:?}`) to the client.
+        let bogus = "/var/lib/ppt-nonexistent/secret-manifest-location.json";
+        // Safe here: edition 2021, and no other test mutates this var.
+        std::env::set_var("PPT_TENANT_MANIFEST_PATH", bogus);
+        let result = load_manifest();
+        std::env::remove_var("PPT_TENANT_MANIFEST_PATH");
+
+        let (status, body) = result.expect_err("a missing manifest must error");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(
+            !body.contains("secret-manifest-location") && !body.contains(bogus),
+            "client body leaked the manifest filesystem path: {body:?}"
+        );
+        assert!(
+            !body.contains('/'),
+            "client body still contains a path-like component: {body:?}"
+        );
+    }
 }
