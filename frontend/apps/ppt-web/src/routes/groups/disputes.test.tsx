@@ -375,4 +375,28 @@ describe('DisputeDetailRoute (/disputes/:disputeId)', () => {
       )
     );
   });
+
+  // Regression: code-review-ppt-web-core-disputes-uidispute-nonnull-crash.
+  // A dispute query that settles with no data AND no error (200/empty body,
+  // 204, or any state where useDispute resolves data === undefined without
+  // throwing) must not crash the route. The error-gated early return is
+  // skipped (error is falsy), so the route maps an *undefined* dispute and
+  // hands `ui.dispute` (undefined, not a non-null-asserted value) to
+  // DisputeDetailPage, which owns the not-found state. Mapping an undefined
+  // dispute alongside present timeline/evidence/etc must not throw.
+  it('settles empty with no error: maps an undefined dispute without crashing', () => {
+    mocks.useDispute.mockReturnValue({ data: undefined, isLoading: false, error: undefined });
+
+    expect(() => renderDetailRoute()).not.toThrow();
+
+    // Not the error-only page — the detail page renders and receives an
+    // undefined dispute (it renders not-found itself).
+    expect(screen.getByTestId('dispute-detail-page')).toBeInTheDocument();
+    expect(document.querySelector('.error-page')).not.toBeInTheDocument();
+    const p = props();
+    expect(p.dispute).toBeUndefined();
+    expect(p.isError).toBe(false);
+    expect(p.parties).toEqual([]);
+    expect(mockShowToast).not.toHaveBeenCalled();
+  });
 });
