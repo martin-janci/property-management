@@ -3,18 +3,18 @@
     {
       "task_id": "code-review-listings-rs-raw-db-error-leak",
       "branch": "auto-impl/code-review-listings-rs-raw-db-error-lea-84b78bdd",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-28T02:22:05Z",
-      "last_updated": "2026-11-28T02:22:05Z",
-      "status_changed_at": "2026-11-28T02:22:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-28T03:02:00Z",
+      "status_changed_at": "2026-11-28T03:02:00Z",
+      "pr_number": 3893,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3893",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3893 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=sanitized 36 raw-DB-error leaks in api-server listings.rs via new db_error helper (fmt+clippy+listings tests green; 22 unrelated sqlx::test fails are DB-less-sandbox-only, CI has Postgres); IG3 split test:9c98a7c1c fix:224b52363",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -67,5 +67,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-28T02:58:00Z"
+  "generated": "2026-11-28T03:02:00Z"
 }
