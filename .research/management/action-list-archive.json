@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-28T12:29:15Z",
+  "archived_at": "2026-11-28T16:27:13Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8526,6 +8526,31 @@
       }
     },
     {
+      "id": "code-review-listings-rs-unstructured-error-body",
+      "action": "listings rs unstructured error body",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-28T02:25:23Z (tier1d api-handlers score=1 vector=bug) | gc1-reconcile 2026-11-28T16:23:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T02:25:23Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-06"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3908,
+        "merged_at": "2026-11-28T14:36:00Z",
+        "at": "2026-11-28T16:23:06Z"
+      }
+    },
+    {
       "id": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
       "action": "SECURITY: Android SSO deep-link handler skips CSRF state check — reality://sso?token=... enables account takeover",
       "owner_role": "pm-security",
@@ -10459,6 +10484,31 @@
         "merged_pr": 3884,
         "merged_at": "2026-11-28T00:40:47Z",
         "at": "2026-11-28T02:24:37Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-session-user-unnormalized",
+      "action": "mobile rn session user unnormalized",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-28T02:25:23Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-28T16:23:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T02:25:23Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-06"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3906,
+        "merged_at": "2026-11-28T14:38:12Z",
+        "at": "2026-11-28T16:23:06Z"
       }
     },
     {
@@ -14169,6 +14219,31 @@
         "commit": "0b967dbd6be39e226c420f0d05edad037bbdd3ea",
         "subject": "code-review-ppt-web-ui-aichat-first-message-settimeout-race: fix first-message setTimeout race in AI chat (#3503)",
         "at": "2026-11-14T08:31:11Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-aichat-first-msg-stale-sid",
+      "action": "ppt web ui aichat first msg stale sid",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d ppt-web-ui score=3 vector=bug) | gc1-reconcile 2026-11-28T16:23:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-11-01"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T16:23:06Z"
       }
     },
     {
@@ -19193,6 +19268,31 @@
       "stale_reconciled": {
         "at": "2026-08-09T14:11:09Z",
         "reason": "assignment merged in archive; action-list row left in-progress (reconciler gap — open-only)"
+      }
+    },
+    {
+      "id": "code-review-reality-server-pm-api-client-build-expect",
+      "action": "reality server pm api client build expect",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-28T02:25:23Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-28T16:23:06Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T02:25:23Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-06"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3907,
+        "merged_at": "2026-11-28T14:38:12Z",
+        "at": "2026-11-28T16:23:06Z"
       }
     },
     {
@@ -36677,6 +36777,25 @@
       }
     },
     {
+      "id": "pm-scrum-master-quarantine-burndown-weekly-target-2026-11-28",
+      "action": "Set a weekly quarantine burn-down target (~17/week) and publish a slice plan to hit 201 by 2027-02-19",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": "2027-02-19",
+      "source": "pm-analysis 2026-11-28 | gc1-reconcile 2026-11-28T16:23:06Z",
+      "first_open_at": "2026-11-28T04:15:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3905,
+        "merged_at": "2026-11-28T14:38:12Z",
+        "at": "2026-11-28T16:23:06Z"
+      }
+    },
+    {
       "id": "pm-scrum-master-reconcile-sprint-status-test-hardening-batch-items-480-487-s-2026-11-20",
       "action": "Reconcile sprint-status test_hardening_batch (items #480-#487 still marked open, batch in-progress) against GitHub issue state and close or defer",
       "owner_role": "pm-scrum-master",
@@ -37347,6 +37466,25 @@
         "merged_pr": 3480,
         "merged_at": "2026-11-13T10:43:05Z",
         "at": "2026-11-13T12:25:33Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-triage-stale-prs-2026-11-28",
+      "action": "Triage stale dependabot PRs (#3443, #3444, #3446-#3449, #3634) and human PRs #2555, #2559: merge, rebase or close",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28 | gc1-reconcile 2026-11-28T16:23:06Z",
+      "first_open_at": "2026-11-28T04:15:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3904,
+        "merged_at": "2026-11-28T14:38:12Z",
+        "at": "2026-11-28T16:23:06Z"
       }
     },
     {
