@@ -24,6 +24,32 @@ use serde_json::json;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/// Map a data-layer error to a sanitized client response.
+///
+/// SECURITY (code-review finding "listings raw DB error leak"): the listing
+/// handlers previously returned `format!("Failed to …: {e}")` straight to the
+/// caller in the 500 body. A raw `sqlx::Error` / repository-error `Display`
+/// leaks table and column names, SQL fragments, constraint names, and
+/// sometimes pool / connection detail — none of which an API client should
+/// ever see. Route every DB failure through this helper at the `map_err`
+/// boundary instead: it writes the full error to the tracing log (where ops
+/// can still find it) and returns an opaque `500 Internal server error` to the
+/// client. Mirrors the `db_error` helpers already used by the other
+/// api-server routes (e.g. `compliance`, `budgets`) and the reality-server
+/// listings routes.
+///
+/// `context` is a short description of the failed operation (e.g.
+/// `"create listing"`); it is logged but never returned to the client. The
+/// `Display` bound (rather than `sqlx::Error`) keeps the helper usable for the
+/// repository-wrapped error types the handlers surface.
+fn db_error(context: &str, e: impl std::fmt::Display) -> (axum::http::StatusCode, String) {
+    tracing::error!(context, error = %e, "listings handler DB error");
+    (
+        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        "Internal server error".to_string(),
+    )
+}
+
 /// Listing mutations require at least a real-estate-agent tier role in the
 /// tenant (managers, owners, property managers, agents). Plain tenants /
 /// residents / guests are read-only. The role is the membership-validated one
@@ -134,12 +160,7 @@ pub async fn create_listing(
         .listing_repo
         .create(data, tenant.tenant_id, tenant.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create listing: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("create listing", e))?;
 
     Ok(Json(listing))
 }
@@ -183,10 +204,7 @@ pub async fn create_from_unit(
         }
         Err(e) => {
             rls.release().await;
-            return Err((
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch unit: {}", e),
-            ));
+            return Err(db_error("fetch unit", e));
         }
     };
 
@@ -209,10 +227,7 @@ pub async fn create_from_unit(
         }
         Err(e) => {
             rls.release().await;
-            return Err((
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch building: {}", e),
-            ));
+            return Err(db_error("fetch building", e));
         }
     };
 
@@ -273,10 +288,7 @@ pub async fn create_from_unit(
         Ok(l) => l,
         Err(e) => {
             rls.release().await;
-            return Err((
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create listing: {}", e),
-            ));
+            return Err(db_error("create listing", e));
         }
     };
 
@@ -337,23 +349,13 @@ pub async fn list_listings(
         .listing_repo
         .list(tenant.tenant_id, &query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list listings: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("list listings", e))?;
 
     let total = state
         .listing_repo
         .count(tenant.tenant_id, &query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to count listings: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("count listings", e))?;
 
     Ok(Json(ListingsResponse {
         listings,
@@ -374,12 +376,7 @@ pub async fn list_listings(
 fn photos_or_error<E: std::fmt::Display>(
     result: Result<Vec<ListingPhoto>, E>,
 ) -> Result<Vec<ListingPhoto>, (axum::http::StatusCode, String)> {
-    result.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to fetch listing photos: {}", e),
-        )
-    })
+    result.map_err(|e| db_error("fetch listing photos", e))
 }
 
 /// Get listing by ID.
@@ -403,12 +400,7 @@ pub async fn get_listing(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -456,12 +448,7 @@ pub async fn update_listing(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -480,12 +467,7 @@ pub async fn update_listing(
         .listing_repo
         .update(id, tenant.tenant_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update listing: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("update listing", e))?;
 
     Ok(Json(listing))
 }
@@ -514,12 +496,7 @@ pub async fn delete_listing(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -539,12 +516,7 @@ pub async fn delete_listing(
         .listing_repo
         .delete(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to delete listing: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("delete listing", e))?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -592,12 +564,7 @@ pub async fn update_status(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -612,12 +579,7 @@ pub async fn update_status(
         .listing_repo
         .update_status(id, tenant.tenant_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update status: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("update status", e))?;
 
     // Epic 105, Story 105.2: Propagate status change to syndicated portals
     if previous_status != new_status {
@@ -675,12 +637,7 @@ pub async fn publish_listing(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -706,24 +663,14 @@ pub async fn publish_listing(
             },
         )
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update status: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("update status", e))?;
 
     // Create syndications
     let syndications = state
         .listing_repo
         .create_syndications(id, data.clone())
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create syndications: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("create syndications", e))?;
 
     // Build syndication results (initially all pending)
     let syndication_results: Vec<SyndicationResult> = syndications
@@ -780,12 +727,7 @@ pub async fn get_statistics(
         .listing_repo
         .get_statistics(tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get statistics: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("get statistics", e))?;
 
     Ok(Json(stats))
 }
@@ -816,12 +758,7 @@ pub async fn get_photos(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -829,12 +766,11 @@ pub async fn get_photos(
             )
         })?;
 
-    let photos = state.listing_repo.get_photos(id).await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get photos: {}", e),
-        )
-    })?;
+    let photos = state
+        .listing_repo
+        .get_photos(id)
+        .await
+        .map_err(|e| db_error("get photos", e))?;
 
     Ok(Json(photos))
 }
@@ -865,12 +801,7 @@ pub async fn add_photo(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -885,12 +816,11 @@ pub async fn add_photo(
         ));
     }
 
-    let photo = state.listing_repo.add_photo(id, data).await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to add photo: {}", e),
-        )
-    })?;
+    let photo = state
+        .listing_repo
+        .add_photo(id, data)
+        .await
+        .map_err(|e| db_error("add photo", e))?;
 
     Ok(Json(photo))
 }
@@ -920,12 +850,7 @@ pub async fn reorder_photos(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -937,12 +862,7 @@ pub async fn reorder_photos(
         .listing_repo
         .reorder_photos(id, data.photo_ids)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to reorder photos: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("reorder photos", e))?;
 
     Ok(axum::http::StatusCode::OK)
 }
@@ -973,12 +893,7 @@ pub async fn delete_photo(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -990,12 +905,7 @@ pub async fn delete_photo(
         .listing_repo
         .delete_photo(photo_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to delete photo: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("delete photo", e))?;
 
     if !deleted {
         return Err((
@@ -1029,12 +939,7 @@ pub async fn get_syndications(
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -1042,12 +947,11 @@ pub async fn get_syndications(
             )
         })?;
 
-    let syndications = state.listing_repo.get_syndications(id).await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get syndications: {}", e),
-        )
-    })?;
+    let syndications = state
+        .listing_repo
+        .get_syndications(id)
+        .await
+        .map_err(|e| db_error("get syndications", e))?;
 
     Ok(Json(syndications))
 }
@@ -1077,12 +981,7 @@ pub async fn get_listing_syndication_status(
         .listing_repo
         .get_syndication_status_dashboard(id, tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get syndication status: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("get syndication status", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -1113,23 +1012,13 @@ pub async fn get_syndication_dashboard(
         .listing_repo
         .get_syndication_dashboard(tenant.tenant_id, &query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get syndication dashboard: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("get syndication dashboard", e))?;
 
     let organization_stats = state
         .listing_repo
         .get_organization_syndication_stats(tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get organization stats: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("get organization stats", e))?;
 
     Ok(Json(SyndicationDashboardResponse {
         listings,
@@ -1158,12 +1047,7 @@ pub async fn get_organization_syndication_stats(
         .listing_repo
         .get_organization_syndication_stats(tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get syndication stats: {}", e),
-            )
-        })?;
+        .map_err(|e| db_error("get syndication stats", e))?;
 
     Ok(Json(stats))
 }
@@ -1222,12 +1106,7 @@ pub async fn global_publish(
         .listing_repo
         .find_by_id_and_org(id, org_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or((
             axum::http::StatusCode::NOT_FOUND,
             "Listing not found".to_string(),
@@ -1237,12 +1116,7 @@ pub async fn global_publish(
         .listing_repo
         .set_published(id, org_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to publish listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("publish listing", e))?
         .ok_or((
             axum::http::StatusCode::NOT_FOUND,
             "Listing not found".to_string(),
@@ -1323,12 +1197,7 @@ pub async fn global_unpublish(
         .listing_repo
         .find_by_id_and_org(id, org_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("fetch listing", e))?
         .ok_or((
             axum::http::StatusCode::NOT_FOUND,
             "Listing not found".to_string(),
@@ -1338,12 +1207,7 @@ pub async fn global_unpublish(
         .listing_repo
         .set_unpublished(id, org_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to unpublish listing: {}", e),
-            )
-        })?
+        .map_err(|e| db_error("unpublish listing", e))?
         .ok_or((
             axum::http::StatusCode::NOT_FOUND,
             "Listing not found".to_string(),
@@ -1388,6 +1252,35 @@ pub async fn global_unpublish(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Regression (code-review finding "listings raw DB error leak"): every
+    /// listing handler funnels DB failures through [`db_error`]. It must return
+    /// a generic body and never echo the raw sqlx / repository error (table or
+    /// column names, SQL fragments, constraint or connection detail) back to
+    /// the client. Guards against reintroducing the `format!("Failed to …: {e}")`
+    /// leak the handlers previously shipped.
+    #[test]
+    fn db_error_does_not_leak_raw_db_detail() {
+        // An error whose Display carries internals a client must never see.
+        let secret = "listings.secret_column constraint \"fk_secret\": connection to 10.0.0.5:5432";
+        let (status, body) = db_error("fetch listing", secret);
+
+        assert_eq!(
+            status,
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "a DB failure must map to 500"
+        );
+        assert!(
+            !body.contains("secret_column")
+                && !body.contains("fk_secret")
+                && !body.contains("10.0.0.5"),
+            "sanitized DB error body leaked raw detail: {body}"
+        );
+        assert_eq!(
+            body, "Internal server error",
+            "the client must only ever see the generic message"
+        );
+    }
 
     #[test]
     fn photos_or_error_surfaces_fetch_failure() {
