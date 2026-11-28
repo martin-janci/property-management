@@ -6,9 +6,11 @@ use crate::state::AppState;
 use api_core::extractors::{RlsConnection, ValidatedTenantExtractor};
 use axum::{
     extract::{Path, Query, State},
+    http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
 };
+use common::errors::ErrorResponse;
 use common::TenantRole;
 use db::models::{
     listing_status, property_type as prop_type, AuditAction, CreateAuditLog, CreateListing,
@@ -24,7 +26,21 @@ use serde_json::json;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-/// Map a data-layer error to a sanitized client response.
+/// Error half of every listings handler result.
+///
+/// API-CONTRACT (code-review finding "listings-rs-unstructured-error-body"):
+/// the listing handlers previously returned a bare `(StatusCode, String)`,
+/// which Axum serializes as a `text/plain` body. Every other api-server route
+/// group returns the structured JSON [`ErrorResponse`] envelope (`code` +
+/// `message`) that the OpenAPI spec and the generated TS / Kotlin clients
+/// expect, so listings diverged from the house contract and clients could not
+/// parse a stable error `code` off these endpoints. Returning
+/// `(StatusCode, Json<ErrorResponse>)` — the same alias used by
+/// `routes/automation.rs`, `routes/unit_residents.rs`, etc. — puts them back
+/// on the documented `application/json` error contract.
+type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
+
+/// Map a data-layer error to a sanitized, structured client response.
 ///
 /// SECURITY (code-review finding "listings raw DB error leak"): the listing
 /// handlers previously returned `format!("Failed to …: {e}")` straight to the
@@ -33,20 +49,47 @@ use uuid::Uuid;
 /// sometimes pool / connection detail — none of which an API client should
 /// ever see. Route every DB failure through this helper at the `map_err`
 /// boundary instead: it writes the full error to the tracing log (where ops
-/// can still find it) and returns an opaque `500 Internal server error` to the
+/// can still find it) and returns an opaque, structured
+/// `500 { code: "DATABASE_ERROR", message: "Internal server error" }` to the
 /// client. Mirrors the `db_error` helpers already used by the other
-/// api-server routes (e.g. `compliance`, `budgets`) and the reality-server
-/// listings routes.
+/// api-server routes (e.g. `automation`, `budgets`).
 ///
 /// `context` is a short description of the failed operation (e.g.
 /// `"create listing"`); it is logged but never returned to the client. The
 /// `Display` bound (rather than `sqlx::Error`) keeps the helper usable for the
 /// repository-wrapped error types the handlers surface.
-fn db_error(context: &str, e: impl std::fmt::Display) -> (axum::http::StatusCode, String) {
+fn db_error(context: &str, e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {
     tracing::error!(context, error = %e, "listings handler DB error");
     (
-        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-        "Internal server error".to_string(),
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new(
+            "DATABASE_ERROR",
+            "Internal server error",
+        )),
+    )
+}
+
+/// Build a structured `404 Not Found` envelope.
+fn not_found(message: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::not_found(message)),
+    )
+}
+
+/// Build a structured `400 Bad Request` envelope.
+fn bad_request(message: impl Into<String>) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(ErrorResponse::new("BAD_REQUEST", message)),
+    )
+}
+
+/// Build a structured `403 Forbidden` envelope.
+fn forbidden(message: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(ErrorResponse::forbidden(message)),
     )
 }
 
@@ -58,16 +101,11 @@ fn db_error(context: &str, e: impl std::fmt::Display) -> (axum::http::StatusCode
 /// SECURITY (audit4): listings previously used the non-validating
 /// `TenantExtractor` (no membership check, role always Guest) and had no role
 /// gate on mutations.
-fn require_listing_editor(
-    tenant: &common::TenantContext,
-) -> Result<(), (axum::http::StatusCode, String)> {
+fn require_listing_editor(tenant: &common::TenantContext) -> ApiResult<()> {
     if tenant.has_role(TenantRole::RealEstateAgent) {
         Ok(())
     } else {
-        Err((
-            axum::http::StatusCode::FORBIDDEN,
-            "Insufficient role to modify listings".to_string(),
-        ))
+        Err(forbidden("Insufficient role to modify listings"))
     }
 }
 
@@ -154,7 +192,7 @@ pub async fn create_listing(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Json(data): Json<CreateListing>,
-) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Listing>> {
     require_listing_editor(&tenant)?;
     let listing = state
         .listing_repo
@@ -183,7 +221,7 @@ pub async fn create_from_unit(
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     mut rls: RlsConnection,
     Json(data): Json<CreateListingFromUnit>,
-) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Listing>> {
     if let Err(e) = require_listing_editor(&tenant) {
         rls.release().await;
         return Err(e);
@@ -197,10 +235,7 @@ pub async fn create_from_unit(
         Ok(Some(u)) => u,
         Ok(None) => {
             rls.release().await;
-            return Err((
-                axum::http::StatusCode::NOT_FOUND,
-                "Unit not found".to_string(),
-            ));
+            return Err(not_found("Unit not found"));
         }
         Err(e) => {
             rls.release().await;
@@ -220,10 +255,7 @@ pub async fn create_from_unit(
         Ok(Some(b)) if b.organization_id == tenant.tenant_id => b,
         Ok(_) => {
             rls.release().await;
-            return Err((
-                axum::http::StatusCode::NOT_FOUND,
-                "Unit not found".to_string(),
-            ));
+            return Err(not_found("Unit not found"));
         }
         Err(e) => {
             rls.release().await;
@@ -334,7 +366,7 @@ pub async fn list_listings(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<ListingListQuery>,
-) -> Result<Json<ListingsResponse>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<ListingsResponse>> {
     // Clamp the page size at the HTTP boundary (defense-in-depth + truthful
     // pagination metadata). The repository also caps the fetch, but clamping
     // here also guards against negative limits and keeps the reported `limit`
@@ -375,7 +407,7 @@ pub async fn list_listings(
 /// the edge case is surfaced instead of swallowed.
 fn photos_or_error<E: std::fmt::Display>(
     result: Result<Vec<ListingPhoto>, E>,
-) -> Result<Vec<ListingPhoto>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Vec<ListingPhoto>> {
     result.map_err(|e| db_error("fetch listing photos", e))
 }
 
@@ -395,18 +427,13 @@ pub async fn get_listing(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
-) -> Result<Json<ListingWithDetails>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<ListingWithDetails>> {
     let listing = state
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let photos = photos_or_error(state.listing_repo.get_photos(id).await)?;
     let syndications = state
@@ -441,7 +468,7 @@ pub async fn update_listing(
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateListing>,
-) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Listing>> {
     require_listing_editor(&tenant)?;
     // Check listing exists and can be edited
     let existing = state
@@ -449,18 +476,13 @@ pub async fn update_listing(
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     if !existing.can_edit() {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            format!("Cannot edit listing in '{}' status", existing.status),
-        ));
+        return Err(bad_request(format!(
+            "Cannot edit listing in '{}' status",
+            existing.status
+        )));
     }
 
     let listing = state
@@ -489,7 +511,7 @@ pub async fn delete_listing(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
-) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+) -> ApiResult<StatusCode> {
     require_listing_editor(&tenant)?;
     // Check listing exists
     let existing = state
@@ -497,18 +519,12 @@ pub async fn delete_listing(
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     // Only allow deleting draft listings
     if existing.status != listing_status::DRAFT {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            "Cannot delete non-draft listing. Archive it instead.".to_string(),
+        return Err(bad_request(
+            "Cannot delete non-draft listing. Archive it instead.",
         ));
     }
 
@@ -540,7 +556,7 @@ pub async fn update_status(
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateListingStatus>,
-) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Listing>> {
     require_listing_editor(&tenant)?;
     // Validate status value
     let valid_statuses = [
@@ -553,10 +569,7 @@ pub async fn update_status(
     ];
 
     if !valid_statuses.contains(&data.status.as_str()) {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            format!("Invalid status: {}", data.status),
-        ));
+        return Err(bad_request(format!("Invalid status: {}", data.status)));
     }
 
     // Get current listing to track previous status
@@ -565,12 +578,7 @@ pub async fn update_status(
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let previous_status = existing.status.clone();
     let new_status = data.status.clone();
@@ -630,7 +638,7 @@ pub async fn publish_listing(
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateSyndication>,
-) -> Result<Json<PublishListingResponse>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<PublishListingResponse>> {
     require_listing_editor(&tenant)?;
     // Check listing exists and can be published
     let existing = state
@@ -638,18 +646,13 @@ pub async fn publish_listing(
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     if !existing.can_publish() {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            format!("Cannot publish listing in '{}' status", existing.status),
-        ));
+        return Err(bad_request(format!(
+            "Cannot publish listing in '{}' status",
+            existing.status
+        )));
     }
 
     // Update status to active
@@ -722,7 +725,7 @@ pub async fn publish_listing(
 pub async fn get_statistics(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
-) -> Result<Json<ListingStatistics>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<ListingStatistics>> {
     let stats = state
         .listing_repo
         .get_statistics(tenant.tenant_id)
@@ -752,19 +755,14 @@ pub async fn get_photos(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
-) -> Result<Json<Vec<ListingPhoto>>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Vec<ListingPhoto>>> {
     // Verify listing exists and belongs to org
     state
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let photos = state
         .listing_repo
@@ -794,7 +792,7 @@ pub async fn add_photo(
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<CreateListingPhoto>,
-) -> Result<Json<ListingPhoto>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<ListingPhoto>> {
     require_listing_editor(&tenant)?;
     // Verify listing exists and can be edited
     let listing = state
@@ -802,17 +800,11 @@ pub async fn add_photo(
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     if !listing.can_edit() {
-        return Err((
-            axum::http::StatusCode::BAD_REQUEST,
-            "Cannot add photos to listing in current status".to_string(),
+        return Err(bad_request(
+            "Cannot add photos to listing in current status",
         ));
     }
 
@@ -843,7 +835,7 @@ pub async fn reorder_photos(
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
     Json(data): Json<ReorderPhotos>,
-) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+) -> ApiResult<StatusCode> {
     require_listing_editor(&tenant)?;
     // Verify listing exists
     state
@@ -851,12 +843,7 @@ pub async fn reorder_photos(
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     state
         .listing_repo
@@ -886,7 +873,7 @@ pub async fn delete_photo(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path((id, photo_id)): Path<(Uuid, Uuid)>,
-) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+) -> ApiResult<StatusCode> {
     require_listing_editor(&tenant)?;
     // Verify listing exists
     state
@@ -894,12 +881,7 @@ pub async fn delete_photo(
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let deleted = state
         .listing_repo
@@ -908,10 +890,7 @@ pub async fn delete_photo(
         .map_err(|e| db_error("delete photo", e))?;
 
     if !deleted {
-        return Err((
-            axum::http::StatusCode::NOT_FOUND,
-            "Photo not found".to_string(),
-        ));
+        return Err(not_found("Photo not found"));
     }
 
     Ok(axum::http::StatusCode::NO_CONTENT)
@@ -933,19 +912,14 @@ pub async fn get_syndications(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
-) -> Result<Json<Vec<ListingSyndication>>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Vec<ListingSyndication>>> {
     // Verify listing exists
     state
         .listing_repo
         .find_by_id_and_org(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let syndications = state
         .listing_repo
@@ -976,18 +950,13 @@ pub async fn get_listing_syndication_status(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
-) -> Result<Json<SyndicationStatusDashboard>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<SyndicationStatusDashboard>> {
     let dashboard = state
         .listing_repo
         .get_syndication_status_dashboard(id, tenant.tenant_id)
         .await
         .map_err(|e| db_error("get syndication status", e))?
-        .ok_or_else(|| {
-            (
-                axum::http::StatusCode::NOT_FOUND,
-                "Listing not found".to_string(),
-            )
-        })?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     Ok(Json(dashboard))
 }
@@ -1007,7 +976,7 @@ pub async fn get_syndication_dashboard(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Query(query): Query<SyndicationDashboardQuery>,
-) -> Result<Json<SyndicationDashboardResponse>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<SyndicationDashboardResponse>> {
     let (listings, total) = state
         .listing_repo
         .get_syndication_dashboard(tenant.tenant_id, &query)
@@ -1042,7 +1011,7 @@ pub async fn get_syndication_dashboard(
 pub async fn get_organization_syndication_stats(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
-) -> Result<Json<OrganizationSyndicationStats>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<OrganizationSyndicationStats>> {
     let stats = state
         .listing_repo
         .get_organization_syndication_stats(tenant.tenant_id)
@@ -1090,14 +1059,13 @@ pub async fn global_publish(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
-) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Listing>> {
     // Authz (closes #809): publishing to the cross-org global portal is a
     // manager action. `has_role` is hierarchical, so OrgAdmin / PlatformAdmin /
     // SuperAdmin (all above Manager) also pass.
     if !tenant.has_role(TenantRole::Manager) {
-        return Err((
-            axum::http::StatusCode::FORBIDDEN,
-            "Manager role required to publish listings to the global portal".to_string(),
+        return Err(forbidden(
+            "Manager role required to publish listings to the global portal",
         ));
     }
     let org_id = tenant.tenant_id;
@@ -1107,20 +1075,14 @@ pub async fn global_publish(
         .find_by_id_and_org(id, org_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or((
-            axum::http::StatusCode::NOT_FOUND,
-            "Listing not found".to_string(),
-        ))?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let listing = state
         .listing_repo
         .set_published(id, org_id)
         .await
         .map_err(|e| db_error("publish listing", e))?
-        .ok_or((
-            axum::http::StatusCode::NOT_FOUND,
-            "Listing not found".to_string(),
-        ))?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     // Audit. Best-effort: a logging failure must not surface a 500 on the
     // happy path (the publish itself succeeded). We log but don't propagate.
@@ -1182,13 +1144,12 @@ pub async fn global_unpublish(
     State(state): State<AppState>,
     ValidatedTenantExtractor(tenant): ValidatedTenantExtractor,
     Path(id): Path<Uuid>,
-) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+) -> ApiResult<Json<Listing>> {
     // Authz (closes #809): withdrawing from the global portal is the inverse
     // management action and is gated identically to `global_publish`.
     if !tenant.has_role(TenantRole::Manager) {
-        return Err((
-            axum::http::StatusCode::FORBIDDEN,
-            "Manager role required to withdraw listings from the global portal".to_string(),
+        return Err(forbidden(
+            "Manager role required to withdraw listings from the global portal",
         ));
     }
     let org_id = tenant.tenant_id;
@@ -1198,20 +1159,14 @@ pub async fn global_unpublish(
         .find_by_id_and_org(id, org_id)
         .await
         .map_err(|e| db_error("fetch listing", e))?
-        .ok_or((
-            axum::http::StatusCode::NOT_FOUND,
-            "Listing not found".to_string(),
-        ))?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let listing = state
         .listing_repo
         .set_unpublished(id, org_id)
         .await
         .map_err(|e| db_error("unpublish listing", e))?
-        .ok_or((
-            axum::http::StatusCode::NOT_FOUND,
-            "Listing not found".to_string(),
-        ))?;
+        .ok_or_else(|| not_found("Listing not found"))?;
 
     let audit_result = state
         .audit_log_repo
@@ -1263,23 +1218,62 @@ mod tests {
     fn db_error_does_not_leak_raw_db_detail() {
         // An error whose Display carries internals a client must never see.
         let secret = "listings.secret_column constraint \"fk_secret\": connection to 10.0.0.5:5432";
-        let (status, body) = db_error("fetch listing", secret);
+        let (status, Json(body)) = db_error("fetch listing", secret);
 
         assert_eq!(
             status,
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            StatusCode::INTERNAL_SERVER_ERROR,
             "a DB failure must map to 500"
         );
         assert!(
-            !body.contains("secret_column")
-                && !body.contains("fk_secret")
-                && !body.contains("10.0.0.5"),
-            "sanitized DB error body leaked raw detail: {body}"
+            !body.message.contains("secret_column")
+                && !body.message.contains("fk_secret")
+                && !body.message.contains("10.0.0.5"),
+            "sanitized DB error body leaked raw detail: {}",
+            body.message
         );
         assert_eq!(
-            body, "Internal server error",
+            body.message, "Internal server error",
             "the client must only ever see the generic message"
         );
+        // API-CONTRACT (code-review finding "listings-rs-unstructured-error-body"):
+        // the structured envelope must expose a stable, machine-parseable `code`
+        // so clients can branch on it — the whole point of migrating off the raw
+        // `(StatusCode, String)` text body.
+        assert_eq!(
+            body.code, "DATABASE_ERROR",
+            "DB failures must carry a stable error code clients can match on"
+        );
+    }
+
+    /// Regression (code-review finding "listings-rs-unstructured-error-body"):
+    /// listings error responses must be the structured `application/json`
+    /// [`ErrorResponse`] envelope, NOT a bare `text/plain` string body. Before
+    /// the fix the handlers returned `(StatusCode, String)`, which Axum
+    /// serializes as `text/plain; charset=utf-8` — so the generated TS / Kotlin
+    /// clients (and the OpenAPI contract) could not parse a stable error `code`
+    /// off these endpoints. This asserts the wire content-type so a regression
+    /// back to a raw string body is caught. It is written against the public
+    /// `IntoResponse` output so it holds regardless of the concrete error tuple
+    /// shape.
+    #[test]
+    fn listings_errors_use_structured_json_envelope() {
+        use axum::http::header::CONTENT_TYPE;
+        use axum::response::IntoResponse;
+
+        for resp in [
+            db_error("fetch listing", "boom").into_response(),
+            not_found("Listing not found").into_response(),
+            bad_request("Invalid status: zzz").into_response(),
+            forbidden("Insufficient role to modify listings").into_response(),
+        ] {
+            assert_eq!(
+                resp.headers().get(CONTENT_TYPE),
+                Some(&axum::http::HeaderValue::from_static("application/json")),
+                "listings error bodies must be the application/json ErrorResponse \
+                 envelope, not a text/plain string body"
+            );
+        }
     }
 
     #[test]
