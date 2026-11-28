@@ -206,9 +206,12 @@ async fn check_database(pool: &sqlx::PgPool) -> DependencyHealth {
 /// anonymous internet client must never see. Log the full detail server-side
 /// (where ops can still read it) and return a fixed, generic string.
 fn pm_api_health_error(detail: Option<&str>) -> Option<String> {
-    // NOTE: current (leaky) behaviour — passes the raw detail straight through.
-    // Replaced by the sanitizing implementation in the following commit.
-    detail.map(|d| d.to_string())
+    // Log the full detail server-side (where ops can still read it) and return a
+    // fixed, generic string to the public client — never surface `detail`.
+    detail.map(|d| {
+        tracing::error!(error = %d, "PM API readiness probe reported an error");
+        "PM API unavailable".to_string()
+    })
 }
 
 /// Check PM API connectivity and measure latency (Epic 104.1).
