@@ -304,7 +304,26 @@
       "draftNote": "Ten dokument jest wersja robocza i jest widoczny tylko dla autora i menedzerow.",
       "archivedNote": "Ten dokument zostal zarchiwizowany i nie jest juz aktywnie udostepniany.",
       "rlsTitle": "Zabezpieczenia na poziomie wierszy",
-      "rlsBody": "Dostep do tego dokumentu jest wymuszany przez serwer. Pokazani odbiorcy odzwierciedlaja kto moze go zobaczyc."
+      "rlsBody": "Dostep do tego dokumentu jest wymuszany przez serwer. Pokazani odbiorcy odzwierciedlaja kto moze go zobaczyc.",
+      "audienceLabels": {
+        "organization": "Wszyscy mieszkańcy",
+        "building": "Tylko budynek",
+        "unit": "Tylko lokal",
+        "user": "Określeni użytkownicy",
+        "public": "Publiczne"
+      },
+      "audienceDescriptions": {
+        "organization": "Widoczne dla każdego mieszkańca w organizacji.",
+        "building": "Widoczne dla mieszkańców określonego budynku.",
+        "unit": "Widoczne tylko dla mieszkańców określonego lokalu.",
+        "user": "Widoczne tylko dla wyraźnie wskazanych użytkowników.",
+        "public": "Widoczne dla każdego, także dla niezalogowanych użytkowników."
+      },
+      "statusLabels": {
+        "published": "Opublikowano",
+        "draft": "Wersja robocza",
+        "archived": "Zarchiwizowano"
+      }
     },
     "folder": {
       "newTitle": "Nowy folder",

@@ -59,8 +59,10 @@ export function unwrapDocumentDetail(data: unknown): ApiDocumentDetailResponse |
 }
 
 interface AudienceMeta {
-  label: string;
-  description: string;
+  /** i18n key for the audience label (`documents.permissions.audienceLabels.*`). */
+  labelKey: string;
+  /** i18n key for the audience description (`documents.permissions.audienceDescriptions.*`). */
+  descriptionKey: string;
   color: string;
   bg: string;
   icon: string;
@@ -70,48 +72,48 @@ function getAudienceMeta(scope: AccessScope | undefined): AudienceMeta {
   switch (scope) {
     case 'organization':
       return {
-        label: 'All Residents',
-        description: 'Visible to every resident in the organization.',
+        labelKey: 'documents.permissions.audienceLabels.organization',
+        descriptionKey: 'documents.permissions.audienceDescriptions.organization',
         color: colors.accent,
         bg: colors.accentSoft,
         icon: '🏘️',
       };
     case 'building':
       return {
-        label: 'Building Only',
-        description: 'Visible to residents of the specific building.',
+        labelKey: 'documents.permissions.audienceLabels.building',
+        descriptionKey: 'documents.permissions.audienceDescriptions.building',
         color: '#4f46e5',
         bg: '#ede9fe',
         icon: '🏢',
       };
     case 'unit':
       return {
-        label: 'Unit Only',
-        description: 'Visible only to occupants of a specific unit.',
+        labelKey: 'documents.permissions.audienceLabels.unit',
+        descriptionKey: 'documents.permissions.audienceDescriptions.unit',
         color: colors.warning,
         bg: colors.warningBg,
         icon: '🚪',
       };
     case 'user':
       return {
-        label: 'Specific Users',
-        description: 'Visible only to explicitly named users.',
+        labelKey: 'documents.permissions.audienceLabels.user',
+        descriptionKey: 'documents.permissions.audienceDescriptions.user',
         color: colors.warningDark,
         bg: colors.warningBg,
         icon: '👤',
       };
     case 'public':
       return {
-        label: 'Public',
-        description: 'Visible to anyone, including unauthenticated users.',
+        labelKey: 'documents.permissions.audienceLabels.public',
+        descriptionKey: 'documents.permissions.audienceDescriptions.public',
         color: colors.success,
         bg: colors.successBg,
         icon: '🌍',
       };
     default:
       return {
-        label: 'All Residents',
-        description: 'Visible to every resident in the organization.',
+        labelKey: 'documents.permissions.audienceLabels.organization',
+        descriptionKey: 'documents.permissions.audienceDescriptions.organization',
         color: colors.accent,
         bg: colors.accentSoft,
         icon: '🏘️',
@@ -120,7 +122,8 @@ function getAudienceMeta(scope: AccessScope | undefined): AudienceMeta {
 }
 
 interface StatusMeta {
-  label: string;
+  /** i18n key for the status label (`documents.permissions.statusLabels.*`). */
+  labelKey: string;
   color: string;
   bg: string;
 }
@@ -128,11 +131,23 @@ interface StatusMeta {
 function getStatusMeta(status: DocumentStatus | undefined): StatusMeta {
   switch (status) {
     case 'draft':
-      return { label: 'Draft', color: colors.warningDark, bg: colors.warningBg };
+      return {
+        labelKey: 'documents.permissions.statusLabels.draft',
+        color: colors.warningDark,
+        bg: colors.warningBg,
+      };
     case 'archived':
-      return { label: 'Archived', color: colors.textMuted, bg: colors.surfaceMuted };
+      return {
+        labelKey: 'documents.permissions.statusLabels.archived',
+        color: colors.textMuted,
+        bg: colors.surfaceMuted,
+      };
     default:
-      return { label: 'Published', color: colors.successDark, bg: colors.successBg };
+      return {
+        labelKey: 'documents.permissions.statusLabels.published',
+        color: colors.successDark,
+        bg: colors.successBg,
+      };
   }
 }
 
@@ -218,9 +233,9 @@ export function DocumentPermissionsScreen({ documentId, onBack }: DocumentPermis
                 <Text style={styles.audienceIcon}>{audienceMeta.icon}</Text>
                 <View style={styles.audienceBody}>
                   <Text style={[styles.audienceLabel, { color: audienceMeta.color }]}>
-                    {audienceMeta.label}
+                    {t(audienceMeta.labelKey)}
                   </Text>
-                  <Text style={styles.audienceDesc}>{audienceMeta.description}</Text>
+                  <Text style={styles.audienceDesc}>{t(audienceMeta.descriptionKey)}</Text>
                 </View>
               </View>
             </View>
@@ -230,7 +245,7 @@ export function DocumentPermissionsScreen({ documentId, onBack }: DocumentPermis
               <Text style={styles.sectionLabel}>{t('documents.permissions.status')}</Text>
               <View style={[styles.statusPill, { backgroundColor: statusMeta.bg }]}>
                 <Text style={[styles.statusText, { color: statusMeta.color }]}>
-                  {statusMeta.label}
+                  {t(statusMeta.labelKey)}
                 </Text>
               </View>
               {data.status === 'draft' && (
