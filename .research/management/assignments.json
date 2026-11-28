@@ -25,18 +25,18 @@
     {
       "task_id": "code-review-ppt-web-core-errorhandler-i18n-leak",
       "branch": "auto-impl/code-review-ppt-web-core-errorhandler-i1-933cccfc",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-28T02:22:05Z",
-      "last_updated": "2026-11-28T02:22:05Z",
-      "status_changed_at": "2026-11-28T02:22:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-28T02:58:00Z",
+      "status_changed_at": "2026-11-28T02:58:00Z",
+      "pr_number": 3892,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3892",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=3892 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=localized validation field labels in lib/errorHandler.ts via errors.fields.* (15 keys x6 locales) + IG3 split test:46675606f fix:5458f77f9; verify green 16323 tests; scope_drift owner-hint only",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -67,5 +67,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-28T02:49:00Z"
+  "generated": "2026-11-28T02:58:00Z"
 }
