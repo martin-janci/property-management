@@ -33925,6 +33925,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-merge-dispatcher-drafts-3891-3893-2026-11-28",
+      "branch": "auto-impl/pm-scrum-master-merge-dispatcher-drafts-cd8c378e",
+      "status": "failed",
+      "claimed_at": "2026-11-28T08:29:08Z",
+      "last_updated": "2026-11-28T08:33:34Z",
+      "status_changed_at": "2026-11-28T08:33:34Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "none",
+      "implementer_summary": "pr=none status=done specialist=none scope_drift=false code_reuse_warn=none note=all-three-drafts-3891-3892-3893-already-merged-into-dev-nothing-to-implement",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": true,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
       "branch": "auto-impl/pm-scrum-master-mobile-rn-lint-hooks-i18-9ce28fff",
       "status": "merged",
@@ -38650,5 +38672,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-28T06:42:06Z"
+  "archived_at": "2026-11-28T08:43:19Z"
 }
