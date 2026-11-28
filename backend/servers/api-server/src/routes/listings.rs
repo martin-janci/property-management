@@ -24,6 +24,32 @@ use serde_json::json;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/// Map a data-layer error to a sanitized client response.
+///
+/// SECURITY (code-review finding "listings raw DB error leak"): the listing
+/// handlers previously returned `format!("Failed to …: {e}")` straight to the
+/// caller in the 500 body. A raw `sqlx::Error` / repository-error `Display`
+/// leaks table and column names, SQL fragments, constraint names, and
+/// sometimes pool / connection detail — none of which an API client should
+/// ever see. Route every DB failure through this helper at the `map_err`
+/// boundary instead: it writes the full error to the tracing log (where ops
+/// can still find it) and returns an opaque `500 Internal server error` to the
+/// client. Mirrors the `db_error` helpers already used by the other
+/// api-server routes (e.g. `compliance`, `budgets`) and the reality-server
+/// listings routes.
+///
+/// `context` is a short description of the failed operation (e.g.
+/// `"create listing"`); it is logged but never returned to the client. The
+/// `Display` bound (rather than `sqlx::Error`) keeps the helper usable for the
+/// repository-wrapped error types the handlers surface.
+fn db_error(context: &str, e: impl std::fmt::Display) -> (axum::http::StatusCode, String) {
+    tracing::error!(context, error = %e, "listings handler DB error");
+    (
+        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        "Internal server error".to_string(),
+    )
+}
+
 /// Listing mutations require at least a real-estate-agent tier role in the
 /// tenant (managers, owners, property managers, agents). Plain tenants /
 /// residents / guests are read-only. The role is the membership-validated one
@@ -1388,6 +1414,33 @@ pub async fn global_unpublish(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Regression (code-review finding "listings raw DB error leak"): every
+    /// listing handler funnels DB failures through [`db_error`]. It must return
+    /// a generic body and never echo the raw sqlx / repository error (table or
+    /// column names, SQL fragments, constraint or connection detail) back to
+    /// the client. Guards against reintroducing the `format!("Failed to …: {e}")`
+    /// leak the handlers previously shipped.
+    #[test]
+    fn db_error_does_not_leak_raw_db_detail() {
+        // An error whose Display carries internals a client must never see.
+        let secret = "listings.secret_column constraint \"fk_secret\": connection to 10.0.0.5:5432";
+        let (status, body) = db_error("fetch listing", secret);
+
+        assert_eq!(
+            status,
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "a DB failure must map to 500"
+        );
+        assert!(
+            !body.contains("secret_column") && !body.contains("fk_secret") && !body.contains("10.0.0.5"),
+            "sanitized DB error body leaked raw detail: {body}"
+        );
+        assert_eq!(
+            body, "Internal server error",
+            "the client must only ever see the generic message"
+        );
+    }
 
     #[test]
     fn photos_or_error_surfaces_fetch_failure() {
