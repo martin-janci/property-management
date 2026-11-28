@@ -1,6 +1,7 @@
 import { makeJwt } from '../test/jwt';
 import {
   buildSessionUser,
+  normalizeUser,
   parseStoredUser,
   readTenants,
   readTokenPair,
@@ -120,6 +121,33 @@ describe('buildSessionUser', () => {
     expect(user.role).toBe('resident');
     // Junk fields from the response are not carried into the session user.
     expect(user).not.toHaveProperty('isAdmin');
+  });
+});
+
+describe('normalizeUser', () => {
+  it('collapses the role through toAppRole and drops junk keys', () => {
+    // Shared by parseStoredUser (restore) and updateUser (merge), so a merged
+    // field can't drift away from the shape a later restore re-derives.
+    expect(
+      normalizeUser({ id: 'u1', firstName: 'Olive', role: 'super_admin', bogus: 'x' })
+    ).toEqual({
+      id: 'u1',
+      email: '',
+      firstName: 'Olive',
+      lastName: '',
+      role: 'admin',
+      buildingId: undefined,
+      unitId: undefined,
+      avatarUrl: undefined,
+      organizationId: undefined,
+      organizationName: undefined,
+    });
+  });
+
+  it('returns null for a non-object or id-less value', () => {
+    expect(normalizeUser(null)).toBeNull();
+    expect(normalizeUser(42)).toBeNull();
+    expect(normalizeUser({ role: 'admin' })).toBeNull();
   });
 });
 
