@@ -6,6 +6,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use anyhow::Context;
 use tokio::sync::{Mutex, RwLock};
 
 use db::{
@@ -753,13 +755,18 @@ pub struct PmApiClient {
 
 impl PmApiClient {
     /// Create a new PM API client.
-    pub fn new(health_url: String, timeout_seconds: u64) -> Self {
+    ///
+    /// Returns `Err` if the HTTP client fails to build (e.g. the TLS backend
+    /// fails to initialize). The error is propagated to the caller — and from
+    /// there to process startup — instead of panicking via `.expect(...)`, so a
+    /// bad environment produces a clean, logged startup failure rather than an
+    /// unwind through `main`.
+    pub fn new(health_url: String, timeout_seconds: u64) -> Result<Self, reqwest::Error> {
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(timeout_seconds))
-            .build()
-            .expect("Failed to create HTTP client");
+            .build()?;
 
-        Self { client, health_url }
+        Ok(Self { client, health_url })
     }
 
     /// Check PM API health.
@@ -842,10 +849,12 @@ pub const PM_OAUTH_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 /// timeouts so a hung PM endpoint can never block an SSO request indefinitely.
 ///
 /// A build failure (e.g. the TLS backend failing to initialize) is fatal: we
-/// `expect` rather than fall back to `reqwest::Client::default()`, which is a
-/// **timeout-less** client and would silently reintroduce the unbounded-hang
-/// bug this client exists to prevent. Mirrors `PmApiClient::new`'s fail-fast.
-pub fn build_pm_oauth_client() -> reqwest::Client {
+/// surface it as an `Err` rather than fall back to `reqwest::Client::default()`,
+/// which is a **timeout-less** client and would silently reintroduce the
+/// unbounded-hang bug this client exists to prevent. The error is propagated to
+/// the caller (and from there to process startup) instead of panicking via
+/// `.expect(...)`. Mirrors `PmApiClient::new`'s fail-fast.
+pub fn build_pm_oauth_client() -> Result<reqwest::Client, reqwest::Error> {
     build_pm_oauth_client_with(PM_OAUTH_REQUEST_TIMEOUT, PM_OAUTH_CONNECT_TIMEOUT)
 }
 
@@ -854,12 +863,11 @@ pub fn build_pm_oauth_client() -> reqwest::Client {
 pub fn build_pm_oauth_client_with(
     request_timeout: Duration,
     connect_timeout: Duration,
-) -> reqwest::Client {
+) -> Result<reqwest::Client, reqwest::Error> {
     reqwest::Client::builder()
         .timeout(request_timeout)
         .connect_timeout(connect_timeout)
         .build()
-        .expect("Failed to build PM OAuth HTTP client")
 }
 
 /// Application state shared across all handlers.
@@ -1000,7 +1008,7 @@ impl AppState {
         db: DbPool,
         tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
         tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
-    ) -> Self {
+    ) -> anyhow::Result<Self> {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
         let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
@@ -1020,8 +1028,11 @@ impl AppState {
         let config = AppConfig::from_env();
         let jwt_secret = config.jwt_secret.clone();
 
-        // Epic 104.1: Create PM API client for health checks
-        let pm_api_client = PmApiClient::new(config.pm_api_health_url.clone(), 5);
+        // Epic 104.1: Create PM API client for health checks. A builder failure
+        // (e.g. TLS backend init) is surfaced as a startup error instead of a
+        // panic, so a bad environment fails cleanly through `main`.
+        let pm_api_client = PmApiClient::new(config.pm_api_health_url.clone(), 5)
+            .context("failed to build PM API health-check HTTP client")?;
 
         // Shared pooled HTTP client for the SSO OAuth calls (exchange /
         // userinfo / introspect). Built once here so the three handlers reuse a
@@ -1029,8 +1040,10 @@ impl AppState {
         // (`PM_OAUTH_REQUEST_TIMEOUT` / `PM_OAUTH_CONNECT_TIMEOUT`), rather than
         // each spinning up a fresh, timeout-less `reqwest::Client::new()` per
         // request. `build_pm_oauth_client` fails fast on a builder error instead
-        // of falling back to the timeout-less `reqwest::Client::default()`.
-        let pm_oauth_client = build_pm_oauth_client();
+        // of falling back to the timeout-less `reqwest::Client::default()`; the
+        // error is propagated to startup rather than panicking.
+        let pm_oauth_client =
+            build_pm_oauth_client().context("failed to build PM OAuth/SSO HTTP client")?;
 
         // Epic 104.1: Health check cache with 30 second TTL
         let health_cache = HealthCheckCache::new(30);
@@ -1103,7 +1116,7 @@ impl AppState {
             .filter(|v| *v > 0)
             .unwrap_or(1);
 
-        Self {
+        Ok(Self {
             db,
             portal_repo,
             reality_portal_repo,
@@ -1130,7 +1143,7 @@ impl AppState {
             // Per-IP throttle for the unauthenticated portal login endpoint.
             login_rate_limiters,
             inquiry_trusted_proxy_hops,
-        }
+        })
     }
 
     /// Acquire a connection for public (non-tenant-scoped) queries such as
@@ -1339,11 +1352,15 @@ mod pm_oauth_client_timeout_tests {
     /// The default-configured SSO client must build successfully and the
     /// documented defaults must be bounded and non-zero. A build failure used to
     /// degrade silently to the timeout-less `reqwest::Client::default()` via
-    /// `.unwrap_or_default()`; `build_pm_oauth_client` now fails fast instead, and
-    /// this guards that the happy path still produces a client.
+    /// `.unwrap_or_default()`; `build_pm_oauth_client` now returns a `Result`
+    /// that is propagated to startup instead of panicking, and this guards that
+    /// the happy path still produces a client.
     #[test]
     fn default_sso_client_builds_with_bounded_timeouts() {
-        let _client = build_pm_oauth_client();
+        assert!(
+            build_pm_oauth_client().is_ok(),
+            "the default SSO client must build on a healthy environment",
+        );
         assert!(
             PM_OAUTH_REQUEST_TIMEOUT > Duration::ZERO,
             "request timeout must be a positive bound",
@@ -1378,7 +1395,8 @@ mod pm_oauth_client_timeout_tests {
         });
 
         let timeout = Duration::from_millis(300);
-        let client = build_pm_oauth_client_with(timeout, timeout);
+        let client = build_pm_oauth_client_with(timeout, timeout)
+            .expect("the SSO client must build on a healthy environment");
         let start = Instant::now();
         let result = client.get(format!("http://{addr}/")).send().await;
         let elapsed = start.elapsed();
@@ -1388,6 +1406,28 @@ mod pm_oauth_client_timeout_tests {
         assert!(
             elapsed < Duration::from_secs(5),
             "the request must abort near the 300ms bound, not hang (took {elapsed:?})",
+        );
+    }
+}
+
+#[cfg(test)]
+mod pm_api_client_build_tests {
+    use super::PmApiClient;
+
+    /// Regression (code-review: reality-server PM API client build `.expect`):
+    /// `PmApiClient::new` used to `.expect("Failed to create HTTP client")`,
+    /// which panics the process on a builder failure (e.g. TLS backend init).
+    /// It now returns a `Result` so the error is propagated to startup and
+    /// surfaced cleanly instead of unwinding. This test pins that contract: the
+    /// constructor returns a fallible `Result` and yields `Ok` on a healthy
+    /// environment. The assertion only compiles while `new` returns `Result`,
+    /// so a revert to a panicking constructor breaks the build here.
+    #[test]
+    fn new_returns_result_and_builds_on_healthy_env() {
+        let client = PmApiClient::new("http://127.0.0.1:9/readiness".to_string(), 5);
+        assert!(
+            client.is_ok(),
+            "PmApiClient::new must return Ok on a healthy environment, not panic",
         );
     }
 }

@@ -465,8 +465,10 @@ async fn main() -> anyhow::Result<()> {
         services::FavoriteAlertWorker::new(db.clone(), services::FavoriteAlertConfig::from_env());
     let _favorite_alert_worker_handle = favorite_alert_worker.start();
 
-    // Create application state
-    let state = AppState::new(db, tenant_resolution_cache, tenant_rate_limiters);
+    // Create application state. A failure to build the PM API / OAuth HTTP
+    // clients (e.g. TLS backend init) surfaces here as a clean startup error
+    // instead of panicking inside `AppState::new`.
+    let state = AppState::new(db, tenant_resolution_cache, tenant_rate_limiters)?;
 
     // Build router with state
     let app = Router::new()

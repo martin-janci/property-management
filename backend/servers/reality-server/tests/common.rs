@@ -40,7 +40,7 @@ pub fn make_app_state(pool: PgPool) -> AppState {
     ensure_test_env();
     let tenant_cache = Arc::new(TenantResolutionCache::new(60, 60, 1000));
     let rate_limiters = Arc::new(TenantRateLimiterSet::new());
-    AppState::new(pool, tenant_cache, rate_limiters)
+    AppState::new(pool, tenant_cache, rate_limiters).expect("build test AppState")
 }
 
 pub fn mint_token(user_id: Uuid) -> String {
