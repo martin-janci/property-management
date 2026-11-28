@@ -4,12 +4,26 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { ReactNode } from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { feedbackManager } from '../onboarding/FeedbackManager';
 import { resetLocalData } from '../services/resetLocalData';
 import { isJwtExpired } from '../utils/jwt';
-import { buildSessionUser, parseStoredUser, readTokenPair, TENANT_ID_KEY } from '../utils/session';
+import {
+  buildSessionUser,
+  normalizeUser,
+  parseStoredUser,
+  readTokenPair,
+  TENANT_ID_KEY,
+} from '../utils/session';
 
 // Token storage keys
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
@@ -108,6 +122,17 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
     biometricEnabled: false,
     biometricAvailable: false,
   });
+
+  // Mirror the signed-in user so `updateUser()` can merge against the current
+  // user synchronously. A `useCallback([])` can't close over fresh `state`, and
+  // reading it via the `setState` updater's side effect is unreliable: React may
+  // not run the updater synchronously (eager-state bailout only fires with an
+  // empty update queue), so the persist that depended on it could silently be
+  // skipped. The ref is always current.
+  const userRef = useRef<User | null>(state.user);
+  useEffect(() => {
+    userRef.current = state.user;
+  }, [state.user]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -311,15 +336,21 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
     // Build the next user synchronously so the persisted copy matches the
     // in-memory one exactly. Bail when signed out — there is nothing to merge
     // into and no session to persist.
-    let nextUser: User | null = null;
-    setState((prev) => {
-      if (!prev.user) return prev;
-      nextUser = { ...prev.user, ...changes };
-      return { ...prev, user: nextUser };
-    });
-    if (nextUser) {
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(nextUser));
-    }
+    const current = userRef.current;
+    if (!current) return;
+    // Normalise the merged user through the same canonical shaping the restore
+    // path uses (`normalizeUser`, shared with `parseStoredUser`), so a merged-in
+    // field can't drift the in-memory or persisted user away from the shape a
+    // later cold-start / biometric restore would re-derive — e.g. an arbitrary
+    // `role` is collapsed through `toAppRole` and junk keys are dropped, instead
+    // of being stored verbatim. `current` always has an id, so `normalizeUser`
+    // never returns null here; fall back to the raw merge defensively so a valid
+    // session is never dropped by an update.
+    const merged = { ...current, ...changes };
+    const nextUser = normalizeUser(merged) ?? merged;
+    userRef.current = nextUser;
+    setState((prev) => (prev.user ? { ...prev, user: nextUser } : prev));
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(nextUser));
   }, []);
 
   const authenticateWithBiometric = useCallback(async (): Promise<boolean> => {
