@@ -31,6 +31,18 @@ export interface SessionUser {
   organizationName?: string;
 }
 
+/**
+ * The user as persisted to SecureStore (`ppt_user`) and restored on cold start
+ * / biometric unlock. Superset of {@link SessionUser}: it also carries the
+ * profile fields `updateUser()` merges in after login. Structurally matches the
+ * auth context's `User`.
+ */
+export interface StoredUser extends SessionUser {
+  buildingId?: string;
+  unitId?: string;
+  avatarUrl?: string;
+}
+
 function str(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
@@ -140,6 +152,44 @@ export function buildSessionUser(
     organizationName: active?.tenantName,
   };
   return { user, tenantId };
+}
+
+/**
+ * Parse and validate the user persisted to SecureStore (`ppt_user`).
+ *
+ * The stored blob is on-device, mutable state restored on cold start and
+ * biometric unlock, so it must be validated like any other untrusted input
+ * rather than cast straight into a `User`. In particular the `role` is run
+ * through {@link toAppRole} — exactly as the login path does — so a tampered or
+ * drifted blob can never grant an arbitrary / privileged role, and every other
+ * field is narrowed off the object (non-string and junk keys dropped). Returns
+ * `null` when the blob is missing, not JSON, not an object, or has no id (an
+ * id-less user would restore a half-formed session).
+ */
+export function parseStoredUser(json: string | null | undefined): StoredUser | null {
+  if (!json) return null;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!raw || typeof raw !== 'object') return null;
+  const u = raw as Record<string, unknown>;
+  const id = str(u.id);
+  if (!id) return null;
+  return {
+    id,
+    email: str(u.email) ?? '',
+    firstName: str(u.firstName) ?? '',
+    lastName: str(u.lastName) ?? '',
+    role: toAppRole(str(u.role)),
+    buildingId: str(u.buildingId),
+    unitId: str(u.unitId),
+    avatarUrl: str(u.avatarUrl),
+    organizationId: str(u.organizationId),
+    organizationName: str(u.organizationName),
+  };
 }
 
 /**

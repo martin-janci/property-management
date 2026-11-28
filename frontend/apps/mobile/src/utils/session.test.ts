@@ -1,5 +1,11 @@
 import { makeJwt } from '../test/jwt';
-import { buildSessionUser, readTenants, readTokenPair, toAppRole } from './session';
+import {
+  buildSessionUser,
+  parseStoredUser,
+  readTenants,
+  readTokenPair,
+  toAppRole,
+} from './session';
 
 describe('readTokenPair', () => {
   it('reads the camelCase api-server shape', () => {
@@ -114,5 +120,65 @@ describe('buildSessionUser', () => {
     expect(user.role).toBe('resident');
     // Junk fields from the response are not carried into the session user.
     expect(user).not.toHaveProperty('isAdmin');
+  });
+});
+
+describe('parseStoredUser', () => {
+  it('parses a well-formed stored user', () => {
+    const json = JSON.stringify({
+      id: 'u1',
+      email: 'j@x.sk',
+      firstName: 'Ján',
+      lastName: 'Novák',
+      role: 'manager',
+      buildingId: 'b1',
+      unitId: 'un1',
+      avatarUrl: 'https://x/a.png',
+      organizationId: 'o1',
+      organizationName: 'SVB',
+    });
+    expect(parseStoredUser(json)).toEqual({
+      id: 'u1',
+      email: 'j@x.sk',
+      firstName: 'Ján',
+      lastName: 'Novák',
+      role: 'manager',
+      buildingId: 'b1',
+      unitId: 'un1',
+      avatarUrl: 'https://x/a.png',
+      organizationId: 'o1',
+      organizationName: 'SVB',
+    });
+  });
+
+  it('runs the persisted role through toAppRole instead of trusting it verbatim', () => {
+    // SecureStore `ppt_user` is on-device, mutable persisted state: a tampered
+    // or drifted blob must never grant an arbitrary role. An unknown role is
+    // narrowed to the safe default, and a privileged server role collapses onto
+    // the app's role set exactly like the login path does (code-review:
+    // session role cast bypass).
+    expect(parseStoredUser(JSON.stringify({ id: 'u1', role: 'root' }))?.role).toBe('resident');
+    expect(parseStoredUser(JSON.stringify({ id: 'u1', role: 'super_admin' }))?.role).toBe('admin');
+    // A non-string role must not be trusted either.
+    expect(parseStoredUser(JSON.stringify({ id: 'u1', role: 42 }))?.role).toBe('resident');
+  });
+
+  it('narrows non-string fields and drops junk keys', () => {
+    const user = parseStoredUser(
+      JSON.stringify({ id: 'u1', email: 7, firstName: null, isAdmin: true, role: 'owner' })
+    );
+    expect(user?.email).toBe('');
+    expect(user?.firstName).toBe('');
+    expect(user?.role).toBe('owner');
+    expect(user).not.toHaveProperty('isAdmin');
+  });
+
+  it('returns null for unusable input', () => {
+    expect(parseStoredUser(null)).toBeNull();
+    expect(parseStoredUser('not json')).toBeNull();
+    expect(parseStoredUser('42')).toBeNull();
+    // A stored user with no id is unusable — restoring it would create a
+    // half-formed session.
+    expect(parseStoredUser(JSON.stringify({ role: 'admin' }))).toBeNull();
   });
 });
