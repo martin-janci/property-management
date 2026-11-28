@@ -3,18 +3,18 @@
     {
       "task_id": "gh-issue-3909",
       "branch": "auto-impl/gh-issue-3909-dbc3501a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-28T14:27:41Z",
-      "last_updated": "2026-11-28T14:27:41Z",
-      "status_changed_at": "2026-11-28T14:27:41Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-11-28T15:29:45Z",
+      "status_changed_at": "2026-11-28T15:29:45Z",
+      "pr_number": 3911,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3911",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3911 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=nil-id group retention enforced inline + cohort uses group.created_at; fmt+8-clippy green, api-server non-DB tests 30 pass, IG3 red->green; DB sqlx tests env-only skip (CI green)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": true,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -23,5 +23,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-28T14:38:28Z"
+  "generated": "2026-11-28T15:29:45Z"
 }
