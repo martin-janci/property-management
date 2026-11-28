@@ -33807,6 +33807,28 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "pm-scrum-master-3612-supersede-check-2026-11-19-retry1",
+      "branch": "auto-impl/pm-scrum-master-3612-supersede-check-202-7f2f43df",
+      "status": "failed",
+      "claimed_at": "2026-11-28T12:28:48Z",
+      "last_updated": "2026-11-28T12:35:47Z",
+      "status_changed_at": "2026-11-28T12:35:47Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "pm-backend",
+      "implementer_summary": "pr=none status=done specialist=pm-backend note=moot: #3612 & #3610 already merged to dev; #3612 added pagination (not superseded); no code change warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "pm-scrum-master-add-digest-abandoned-at-column-2026-11-17",
       "branch": "auto-impl/pm-scrum-master-add-digest-abandoned-at-e544d71e",
       "status": "merged",
@@ -34049,6 +34071,28 @@
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19-retry1",
+      "branch": "auto-impl/pm-scrum-master-listings-rs-merge-sequen-d072acaa",
+      "status": "failed",
+      "claimed_at": "2026-11-28T12:28:48Z",
+      "last_updated": "2026-11-28T12:35:47Z",
+      "status_changed_at": "2026-11-28T12:35:47Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "generic",
+      "implementer_summary": "pr=none status=done specialist=generic note=moot: #3617 & #3628 both already merged into dev; disjoint fns, no rebase/sequence needed; triage-only",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
@@ -38848,5 +38892,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-28T10:45:24Z"
+  "archived_at": "2026-11-28T12:37:46Z"
 }
