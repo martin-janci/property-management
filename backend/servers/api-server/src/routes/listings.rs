@@ -1253,6 +1253,28 @@ pub async fn global_unpublish(
 mod tests {
     use super::*;
 
+    /// Regression (code-review finding "listings-rs-unstructured-error-body"):
+    /// listings error responses must be the structured `application/json`
+    /// [`common::errors::ErrorResponse`] envelope, NOT a bare `text/plain`
+    /// string body. The handlers return `(StatusCode, String)`, which Axum
+    /// serializes as `text/plain; charset=utf-8` — so the generated TS / Kotlin
+    /// clients (and the OpenAPI error contract) cannot parse a stable error
+    /// `code` off these endpoints. This asserts the wire content-type against
+    /// the public `IntoResponse` output so the raw-string body is caught.
+    #[test]
+    fn listings_errors_use_structured_json_envelope() {
+        use axum::http::header::CONTENT_TYPE;
+        use axum::response::IntoResponse;
+
+        let resp = db_error("fetch listing", "boom").into_response();
+        assert_eq!(
+            resp.headers().get(CONTENT_TYPE),
+            Some(&axum::http::HeaderValue::from_static("application/json")),
+            "listings error bodies must be the application/json ErrorResponse \
+             envelope, not a text/plain string body"
+        );
+    }
+
     /// Regression (code-review finding "listings raw DB error leak"): every
     /// listing handler funnels DB failures through [`db_error`]. It must return
     /// a generic body and never echo the raw sqlx / repository error (table or
