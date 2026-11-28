@@ -24,19 +24,21 @@ export function HelpCenterScreen({ onNavigate }: HelpCenterScreenProps) {
 
   const categories = useMemo(() => helpCenter.getFAQCategories(), []);
 
+  // `t` is a dependency so search results re-resolve against the active language
+  // when the user switches locale (react-i18next returns a fresh `t` on change).
   const filteredFAQs = useMemo(() => {
-    return helpCenter.searchFAQs(searchQuery, selectedCategory ?? undefined);
-  }, [searchQuery, selectedCategory]);
+    return helpCenter.searchFAQs(searchQuery, t, selectedCategory ?? undefined);
+  }, [searchQuery, selectedCategory, t]);
 
   const filteredTutorials = useMemo(() => {
     if (searchQuery) {
-      return helpCenter.searchTutorials(searchQuery);
+      return helpCenter.searchTutorials(searchQuery, t);
     }
     if (selectedCategory) {
       return helpCenter.getTutorialsByCategory(selectedCategory);
     }
     return helpCenter.getAllTutorials();
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, t]);
 
   const handleFAQPress = useCallback((faqId: string) => {
     setExpandedFAQ((prev) => (prev === faqId ? null : faqId));
@@ -61,13 +63,13 @@ export function HelpCenterScreen({ onNavigate }: HelpCenterScreenProps) {
       return (
         <View key={faq.id} style={styles.faqItem}>
           <Pressable style={styles.faqQuestion} onPress={() => handleFAQPress(faq.id)}>
-            <Text style={styles.faqQuestionText}>{faq.question}</Text>
+            <Text style={styles.faqQuestionText}>{t(faq.question)}</Text>
             <Text style={styles.expandIcon}>{isExpanded ? '−' : '+'}</Text>
           </Pressable>
 
           {isExpanded && (
             <View style={styles.faqAnswer}>
-              <Text style={styles.faqAnswerText}>{faq.answer}</Text>
+              <Text style={styles.faqAnswerText}>{t(faq.answer)}</Text>
 
               <View style={styles.faqFeedback}>
                 <Text style={styles.feedbackLabel}>{t('help.wasHelpful')}</Text>
@@ -125,16 +127,16 @@ export function HelpCenterScreen({ onNavigate }: HelpCenterScreenProps) {
             <Text style={styles.playIcon}>▶</Text>
           </View>
           <View style={styles.tutorialInfo}>
-            <Text style={styles.tutorialTitle}>{tutorial.title}</Text>
+            <Text style={styles.tutorialTitle}>{t(tutorial.title)}</Text>
             <Text style={styles.tutorialDescription} numberOfLines={2}>
-              {tutorial.description}
+              {t(tutorial.description)}
             </Text>
             <Text style={styles.tutorialDuration}>{durationMin} min</Text>
           </View>
         </Pressable>
       );
     },
-    [handleTutorialPress]
+    [handleTutorialPress, t]
   );
 
   return (
@@ -191,7 +193,7 @@ export function HelpCenterScreen({ onNavigate }: HelpCenterScreenProps) {
               selectedCategory === null && styles.categoryChipTextActive,
             ]}
           >
-            All
+            {t('help.allCategories')}
           </Text>
         </Pressable>
         {categories.map((cat) => (
@@ -209,7 +211,7 @@ export function HelpCenterScreen({ onNavigate }: HelpCenterScreenProps) {
                 selectedCategory === cat.category && styles.categoryChipTextActive,
               ]}
             >
-              {cat.label} ({cat.count})
+              {t(cat.labelKey)} ({cat.count})
             </Text>
           </Pressable>
         ))}

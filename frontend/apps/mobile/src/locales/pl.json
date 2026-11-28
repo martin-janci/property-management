@@ -439,7 +439,149 @@
     "learnMore": "Dowiedz sie wiecej",
     "relatedFAQs": "Powiazane pytania",
     "dontShowAgain": "Nie pokazuj ponownie",
-    "sendFeedbackButton": "Wyslij opinie"
+    "sendFeedbackButton": "Wyslij opinie",
+    "categories": {
+      "getting_started": "Pierwsze kroki",
+      "account": "Konto i profil",
+      "buildings": "Budynki",
+      "faults": "Usterki i konserwacja",
+      "voting": "Głosowanie",
+      "documents": "Dokumenty",
+      "payments": "Płatności",
+      "notifications": "Powiadomienia",
+      "security": "Bezpieczeństwo i prywatność",
+      "other": "Inne"
+    },
+    "faqs": {
+      "faq-1": {
+        "question": "Jak wyświetlić moje budynki?",
+        "answer": "Twoje budynki są wyświetlane na pulpicie. Dotknij karty budynku, aby zobaczyć jego szczegóły, w tym mieszkańców, usterki, dokumenty i więcej."
+      },
+      "faq-2": {
+        "question": "Jak otrzymywać powiadomienia?",
+        "answer": "Powiadomienia są domyślnie włączone. W sekcji Ustawienia > Powiadomienia możesz dostosować, które powiadomienia chcesz otrzymywać. Upewnij się, że zezwoliłeś aplikacji na powiadomienia w ustawieniach urządzenia."
+      },
+      "faq-3": {
+        "question": "Jak przełączać się między budynkami?",
+        "answer": "Na pulpicie lub ekranie Budynki dotknij innej karty budynku, aby się przełączyć. Możesz też użyć selektora budynku w górnym menu."
+      },
+      "faq-4": {
+        "question": "Jak zgłosić usterkę?",
+        "answer": "Dotknij przycisku „+” na pulpicie lub przejdź do Usterki > Zgłoś nową. Wybierz kategorię, opisz problem, w razie potrzeby dodaj zdjęcia i wyślij. Będziesz otrzymywać aktualizacje w miarę przetwarzania usterki."
+      },
+      "faq-5": {
+        "question": "Jak śledzić moje zgłoszenie usterki?",
+        "answer": "Przejdź do Usterki, aby zobaczyć wszystkie swoje zgłoszenia. Każde zgłoszenie pokazuje swój aktualny status (Otwarte, W toku, Rozwiązane itp.). Dotknij zgłoszenia, aby zobaczyć szczegóły i aktualizacje od zespołu konserwacji."
+      },
+      "faq-6": {
+        "question": "Jak głosować nad wnioskiem?",
+        "answer": "Przejdź do Głosowanie, aby zobaczyć aktywne głosowania. Dotknij głosowania, aby przeczytać wniosek, a następnie wybierz swoją opcję (Za, Przeciw lub Wstrzymuję się). Twój głos jest anonimowy i można go zmienić do zamknięcia głosowania."
+      },
+      "faq-7": {
+        "question": "Jak pobrać dokumenty?",
+        "answer": "Przejdź do Dokumenty, znajdź potrzebny dokument i dotknij ikony pobierania. Dokumenty są zapisywane na urządzeniu i można je przeglądać offline."
+      },
+      "faq-8": {
+        "question": "Jak zmienić hasło?",
+        "answer": "Przejdź do Ustawienia > Konto > Zmień hasło. Musisz wprowadzić obecne hasło, a następnie dwukrotnie nowe hasło. Użyj silnego hasła."
+      },
+      "faq-9": {
+        "question": "Czy moje dane są bezpieczne?",
+        "answer": "Tak. Wszystkie dane są szyfrowane podczas przesyłania i przechowywania. Stosujemy branżowe standardy bezpieczeństwa, w tym uwierzytelnianie dwuskładnikowe, bezpieczne przechowywanie tokenów i regularne audyty bezpieczeństwa."
+      },
+      "faq-10": {
+        "question": "Jak włączyć uwierzytelnianie dwuskładnikowe?",
+        "answer": "Przejdź do Ustawienia > Bezpieczeństwo > Uwierzytelnianie dwuskładnikowe. Zeskanuj kod QR za pomocą aplikacji uwierzytelniającej (np. Google Authenticator lub Authy) i wprowadź kod weryfikacyjny."
+      }
+    },
+    "tutorials": {
+      "tutorial-getting-started": {
+        "title": "Pierwsze kroki z PPT",
+        "description": "Poznaj podstawy nawigacji i korzystania z aplikacji.",
+        "steps": {
+          "step-1": {
+            "title": "Przegląd pulpitu",
+            "content": "Pulpit to Twój ekran główny. Pokazuje Twoje budynki, ostatnią aktywność i szybkie akcje."
+          },
+          "step-2": {
+            "title": "Nawigacja w aplikacji",
+            "content": "Użyj dolnej nawigacji, aby przełączać się między Pulpitem, Budynkami, Usterkami, Dokumentami i Więcej."
+          },
+          "step-3": {
+            "title": "Powiadomienia",
+            "content": "Ikona dzwonka pokazuje Twoje powiadomienia. Dotknij jej, aby zobaczyć, co wymaga Twojej uwagi."
+          }
+        }
+      },
+      "tutorial-faults": {
+        "title": "Jak zgłaszać i śledzić usterki",
+        "description": "Kompletny przewodnik po systemie zgłaszania usterek.",
+        "steps": {
+          "step-1": {
+            "title": "Utwórz zgłoszenie",
+            "content": "Dotknij przycisku „+”, aby rozpocząć nowe zgłoszenie usterki. Wybierz odpowiednią kategorię."
+          },
+          "step-2": {
+            "title": "Dodaj szczegóły",
+            "content": "Szczegółowo opisz problem. Podaj lokalizację, powagę i kiedy się zaczął."
+          },
+          "step-3": {
+            "title": "Dołącz zdjęcia",
+            "content": "Dodaj zdjęcia, aby pomóc technikom zrozumieć problem."
+          },
+          "step-4": {
+            "title": "Śledź postęp",
+            "content": "Po wysłaniu śledź status swojego zgłoszenia w sekcji Usterki."
+          }
+        }
+      },
+      "tutorial-voting": {
+        "title": "Udział w głosowaniach budynku",
+        "description": "Jak oddać głos i zobaczyć wyniki.",
+        "steps": {
+          "step-1": {
+            "title": "Znajdź aktywne głosowania",
+            "content": "Przejdź do sekcji Głosowanie, aby zobaczyć wszystkie aktywne głosowania dla swoich budynków."
+          },
+          "step-2": {
+            "title": "Przeczytaj wniosek",
+            "content": "Dotknij głosowania, aby przeczytać pełny wniosek i wszelkie dokumenty pomocnicze."
+          },
+          "step-3": {
+            "title": "Oddaj głos",
+            "content": "Wybierz swoją opcję i potwierdź. Twój głos jest anonimowy."
+          }
+        }
+      }
+    },
+    "content": {
+      "dashboard": {
+        "title": "Pomoc dotycząca pulpitu",
+        "shortDescription": "Twój przegląd wszystkich działań budynku",
+        "fullContent": "Pulpit pokazuje podsumowanie Twoich budynków, ostatnie powiadomienia i szybkie akcje. Na pierwszy rzut oka widzisz oczekujące głosowania, aktywne usterki i nadchodzące spotkania."
+      },
+      "buildings": {
+        "title": "Pomoc dotycząca budynków",
+        "shortDescription": "Zarządzaj swoim portfelem budynków",
+        "fullContent": "Wyświetl wszystkie budynki, do których masz dostęp. Dotknij budynku, aby zobaczyć szczegóły, mieszkańców, usterki, dokumenty i więcej."
+      },
+      "faults": {
+        "title": "Pomoc dotycząca zgłaszania usterek",
+        "shortDescription": "Zgłaszaj i śledź problemy budynku",
+        "fullContent": "Zgłaszaj problemy z konserwacją, śledź ich status i otrzymuj aktualizacje. Dołącz zdjęcia i szczegółowe opisy, aby przyspieszyć rozwiązanie."
+      },
+      "voting": {
+        "title": "Pomoc dotycząca głosowania",
+        "shortDescription": "Uczestnicz w decyzjach dotyczących budynku",
+        "fullContent": "Głosuj nad wnioskami dotyczącymi budynku. Wyświetlaj aktywne głosowania, wyniki z przeszłości i nadchodzące decyzje."
+      },
+      "documents": {
+        "title": "Pomoc dotycząca dokumentów",
+        "shortDescription": "Dostęp do dokumentów budynku",
+        "fullContent": "Przeglądaj i pobieraj dokumenty budynku, w tym regulaminy, protokoły ze spotkań, umowy i więcej."
+      }
+    },
+    "allCategories": "Wszystkie"
   },
   "feedback": {
     "title": "Wyslij opinie",

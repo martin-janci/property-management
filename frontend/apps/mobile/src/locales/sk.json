@@ -479,7 +479,149 @@
     "learnMore": "Dozvediet sa viac",
     "relatedFAQs": "Suvisiace otazky",
     "dontShowAgain": "Uz nezobrazovat",
-    "sendFeedbackButton": "Odoslat spatnu vazbu"
+    "sendFeedbackButton": "Odoslat spatnu vazbu",
+    "categories": {
+      "getting_started": "Začíname",
+      "account": "Účet a profil",
+      "buildings": "Budovy",
+      "faults": "Poruchy a údržba",
+      "voting": "Hlasovanie",
+      "documents": "Dokumenty",
+      "payments": "Platby",
+      "notifications": "Notifikácie",
+      "security": "Zabezpečenie a súkromie",
+      "other": "Ostatné"
+    },
+    "faqs": {
+      "faq-1": {
+        "question": "Ako zobrazím svoje budovy?",
+        "answer": "Vaše budovy sa zobrazujú na nástenke. Ťuknutím na kartu budovy zobrazíte jej podrobnosti vrátane obyvateľov, porúch, dokumentov a ďalších informácií."
+      },
+      "faq-2": {
+        "question": "Ako dostávam notifikácie?",
+        "answer": "Notifikácie sú predvolene zapnuté. V časti Nastavenia > Notifikácie si môžete prispôsobiť, ktoré notifikácie chcete dostávať. Uistite sa, že ste pre aplikáciu povolili notifikácie v nastaveniach zariadenia."
+      },
+      "faq-3": {
+        "question": "Ako prepínam medzi budovami?",
+        "answer": "Na nástenke alebo obrazovke Budovy prepnete ťuknutím na inú kartu budovy. Môžete použiť aj výber budovy v hornom menu."
+      },
+      "faq-4": {
+        "question": "Ako nahlásim poruchu?",
+        "answer": "Ťuknite na tlačidlo „+“ na nástenke alebo prejdite do časti Poruchy > Nahlásiť novú. Vyberte kategóriu, opíšte problém, v prípade potreby pridajte fotky a odošlite. O priebehu spracovania poruchy budete dostávať aktualizácie."
+      },
+      "faq-5": {
+        "question": "Ako sledujem svoje nahlásenie poruchy?",
+        "answer": "V časti Poruchy uvidíte všetky svoje nahlásenia. Každé nahlásenie zobrazuje svoj aktuálny stav (Otvorené, Prebieha, Vyriešené atď.). Ťuknutím na nahlásenie zobrazíte podrobnosti a aktualizácie od tímu údržby."
+      },
+      "faq-6": {
+        "question": "Ako hlasujem o návrhu?",
+        "answer": "V časti Hlasovanie uvidíte aktívne hlasovania. Ťuknutím na hlasovanie si prečítate návrh a potom vyberiete svoju voľbu (Za, Proti alebo Zdržať sa). Váš hlas je anonymný a môžete ho zmeniť až do uzavretia hlasovania."
+      },
+      "faq-7": {
+        "question": "Ako si stiahnem dokumenty?",
+        "answer": "Prejdite do časti Dokumenty, nájdite požadovaný dokument a ťuknite na ikonu stiahnutia. Dokumenty sa uložia do vášho zariadenia a môžete ich zobraziť offline."
+      },
+      "faq-8": {
+        "question": "Ako si zmením heslo?",
+        "answer": "Prejdite do časti Nastavenia > Účet > Zmeniť heslo. Budete musieť zadať svoje aktuálne heslo a potom dvakrát nové heslo. Použite silné heslo."
+      },
+      "faq-9": {
+        "question": "Sú moje údaje zabezpečené?",
+        "answer": "Áno. Všetky údaje sú šifrované pri prenose aj v úložisku. Používame bezpečnostné postupy podľa priemyselných štandardov vrátane dvojfaktorového overenia, bezpečného ukladania tokenov a pravidelných bezpečnostných auditov."
+      },
+      "faq-10": {
+        "question": "Ako zapnem dvojfaktorové overenie?",
+        "answer": "Prejdite do časti Nastavenia > Zabezpečenie > Dvojfaktorové overenie. Naskenujte QR kód pomocou autentifikačnej aplikácie (napríklad Google Authenticator alebo Authy) a zadajte overovací kód."
+      }
+    },
+    "tutorials": {
+      "tutorial-getting-started": {
+        "title": "Začíname s PPT",
+        "description": "Naučte sa základy navigácie a používania aplikácie.",
+        "steps": {
+          "step-1": {
+            "title": "Prehľad nástenky",
+            "content": "Nástenka je vaša domovská obrazovka. Zobrazuje vaše budovy, nedávnu aktivitu a rýchle akcie."
+          },
+          "step-2": {
+            "title": "Navigácia v aplikácii",
+            "content": "Pomocou spodnej navigácie prepínate medzi Nástenkou, Budovami, Poruchami, Dokumentmi a Viac."
+          },
+          "step-3": {
+            "title": "Notifikácie",
+            "content": "Ikona zvončeka zobrazuje vaše notifikácie. Ťuknutím na ňu zobrazíte, čo si vyžaduje vašu pozornosť."
+          }
+        }
+      },
+      "tutorial-faults": {
+        "title": "Ako nahlásiť a sledovať poruchy",
+        "description": "Kompletný návod k systému nahlasovania porúch.",
+        "steps": {
+          "step-1": {
+            "title": "Vytvorenie nahlásenia",
+            "content": "Ťuknutím na tlačidlo „+“ začnite nové nahlásenie poruchy. Vyberte príslušnú kategóriu."
+          },
+          "step-2": {
+            "title": "Pridanie podrobností",
+            "content": "Podrobne opíšte problém. Uveďte miesto, závažnosť a kedy sa začal."
+          },
+          "step-3": {
+            "title": "Priloženie fotiek",
+            "content": "Pridajte fotky, ktoré technikom pomôžu pochopiť problém."
+          },
+          "step-4": {
+            "title": "Sledovanie priebehu",
+            "content": "Po odoslaní sledujte stav svojho nahlásenia v časti Poruchy."
+          }
+        }
+      },
+      "tutorial-voting": {
+        "title": "Účasť na hlasovaní budovy",
+        "description": "Ako odovzdať svoj hlas a zobraziť výsledky.",
+        "steps": {
+          "step-1": {
+            "title": "Nájdenie aktívnych hlasovaní",
+            "content": "Prejdite do časti Hlasovanie a zobrazte všetky aktívne hlasovania pre vaše budovy."
+          },
+          "step-2": {
+            "title": "Prečítanie návrhu",
+            "content": "Ťuknutím na hlasovanie si prečítate celý návrh a prípadné podporné dokumenty."
+          },
+          "step-3": {
+            "title": "Odovzdanie hlasu",
+            "content": "Vyberte svoju voľbu a potvrďte. Váš hlas je anonymný."
+          }
+        }
+      }
+    },
+    "content": {
+      "dashboard": {
+        "title": "Pomoc k nástenke",
+        "shortDescription": "Váš prehľad všetkých aktivít budovy",
+        "fullContent": "Nástenka zobrazuje súhrn vašich budov, nedávne notifikácie a rýchle akcie. Na prvý pohľad vidíte čakajúce hlasovania, aktívne poruchy a nadchádzajúce schôdze."
+      },
+      "buildings": {
+        "title": "Pomoc k budovám",
+        "shortDescription": "Spravujte svoje portfólio budov",
+        "fullContent": "Zobrazte všetky budovy, ku ktorým máte prístup. Ťuknutím na budovu zobrazíte podrobnosti, obyvateľov, poruchy, dokumenty a ďalšie."
+      },
+      "faults": {
+        "title": "Pomoc k nahlasovaniu porúch",
+        "shortDescription": "Nahlasujte a sledujte problémy budovy",
+        "fullContent": "Nahlasujte problémy s údržbou, sledujte ich stav a dostávajte aktualizácie. Pre rýchlejšie vyriešenie priložte fotky a podrobné opisy."
+      },
+      "voting": {
+        "title": "Pomoc k hlasovaniu",
+        "shortDescription": "Zúčastnite sa rozhodovania o budove",
+        "fullContent": "Hlasujte o návrhoch týkajúcich sa budovy. Zobrazte aktívne hlasovania, minulé výsledky a nadchádzajúce rozhodnutia."
+      },
+      "documents": {
+        "title": "Pomoc k dokumentom",
+        "shortDescription": "Prístup k dokumentom budovy",
+        "fullContent": "Zobrazte a stiahnite si dokumenty budovy vrátane predpisov, zápisníc zo schôdzí, zmlúv a ďalších."
+      }
+    },
+    "allCategories": "Všetky"
   },
   "feedback": {
     "title": "Odoslat spatnu vazbu",
