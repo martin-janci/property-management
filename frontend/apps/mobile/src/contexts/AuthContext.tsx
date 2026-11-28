@@ -55,6 +55,20 @@ class TokenRefreshNetworkError extends Error {
   }
 }
 
+/**
+ * Outcome of `ensureFreshAccessToken()`: either a token the restored session can
+ * trust, or a dead session.
+ *
+ * - `usable` carries the access token to restore with — the stored one when it
+ *   is still fresh, the rotated one after a successful refresh, or the stale one
+ *   when the refresh could not reach the server (offline — the session is kept
+ *   so the app stays usable without a network, issue #2399).
+ * - `rejected` means the server killed the session (the refresh token was
+ *   expired/revoked/reused); `refreshToken()` has already torn it down via
+ *   `logout()`, so the caller must drop to the login screen.
+ */
+type FreshAccessToken = { status: 'usable'; accessToken: string } | { status: 'rejected' };
+
 export interface User {
   id: string;
   email: string;
@@ -302,6 +316,41 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
     }));
   }, [apiBaseUrl, logout]);
 
+  // Resolve a trustworthy access token for a session being restored (cold start
+  // or biometric unlock). A still-fresh token is returned as-is; an expired one
+  // is refreshed via `refreshToken()`. The two restore paths used to inline this
+  // identical expired-token dance — including the subtle offline-vs-rejection
+  // split that keeps an offline user signed in on their stale token (issue
+  // #2399) instead of evicting them and wiping their offline data. Both now
+  // share this helper so the contract lives in one place. Only the *token* is
+  // refreshed here: callers must NOT refetch the user's cached data on restore.
+  const ensureFreshAccessToken = useCallback(
+    async (accessToken: string): Promise<FreshAccessToken> => {
+      if (!isJwtExpired(accessToken, TOKEN_REFRESH_SKEW_SECONDS)) {
+        return { status: 'usable', accessToken };
+      }
+      try {
+        await refreshToken();
+        // `refreshToken()` persisted the rotated bearer before resolving; read
+        // it back so the restored session uses the fresh token.
+        const refreshed = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+        return { status: 'usable', accessToken: refreshed ?? accessToken };
+      } catch (error) {
+        if (error instanceof TokenRefreshNetworkError) {
+          // Offline: the refresh token may still be valid, we just can't reach
+          // the server. Keep the stale token so the session survives without a
+          // network — apiRequest refreshes it opportunistically (or the server
+          // 401s and the auth-gate tears it down) once connectivity returns.
+          return { status: 'usable', accessToken };
+        }
+        // Server rejected the refresh token — refreshToken() already logged out
+        // (clearing SecureStore). The session is dead.
+        return { status: 'rejected' };
+      }
+    },
+    [refreshToken]
+  );
+
   const enableBiometric = useCallback(async (): Promise<boolean> => {
     if (!state.biometricAvailable) {
       return false;
@@ -379,34 +428,19 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         if (accessToken && user) {
           // The device may have sat locked past the access-token TTL, so the
           // stored bearer can be expired even though the refresh token is still
-          // valid. Refresh it before restoring the session — but preserve the
-          // #2399 intent above: only the *token* is refreshed here, we still do
-          // NOT refetch the user's cached data.
-          let activeToken = accessToken;
-          if (isJwtExpired(accessToken, TOKEN_REFRESH_SKEW_SECONDS)) {
-            try {
-              await refreshToken();
-              activeToken = (await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)) ?? accessToken;
-            } catch (error) {
-              if (!(error instanceof TokenRefreshNetworkError)) {
-                // The server rejected the refresh token — refreshToken() already
-                // logged out (clearing SecureStore). The session is dead, fall
-                // back to login.
-                return false;
-              }
-              // Offline: the refresh token may still be valid, we just can't
-              // reach the server. Restore the session on the stale access token
-              // so biometric unlock works without a network — apiRequest will
-              // refresh it opportunistically (or the server will 401 and the
-              // normal auth-gate will tear it down) once connectivity returns.
-              activeToken = accessToken;
-            }
+          // valid. Refresh it before restoring the session. A server rejection
+          // means the session is dead (refreshToken() already logged out), so
+          // fall back to login; an offline refresh keeps the user on their stale
+          // token so biometric unlock works without a network.
+          const refreshed = await ensureFreshAccessToken(accessToken);
+          if (refreshed.status === 'rejected') {
+            return false;
           }
           setState((prev) => ({
             ...prev,
             isAuthenticated: true,
             user,
-            accessToken: activeToken,
+            accessToken: refreshed.accessToken,
           }));
           return true;
         }
@@ -417,11 +451,12 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       console.error('Biometric authentication failed:', error);
       return false;
     }
-  }, [state.biometricEnabled, state.biometricAvailable, t, refreshToken]);
+  }, [state.biometricEnabled, state.biometricAvailable, t, ensureFreshAccessToken]);
 
   // Check biometric availability and load any stored session on mount. This
-  // runs after the callbacks above so it can reuse `refreshToken()` when a
-  // restored access token has expired (rather than duplicating refresh logic).
+  // runs after the callbacks above so it can reuse `ensureFreshAccessToken()`
+  // when a restored access token has expired (rather than duplicating refresh
+  // logic — the same helper the biometric-unlock path uses).
   useEffect(() => {
     async function initialize() {
       try {
@@ -444,60 +479,30 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
 
           // Access tokens are short-lived: a cold start after the TTL would
           // otherwise restore `isAuthenticated: true` with an already-expired
-          // bearer. Refresh it first when the stored token is expired/near
-          // expiry, and only trust the session once a fresh token is in hand.
-          if (isJwtExpired(accessToken, TOKEN_REFRESH_SKEW_SECONDS)) {
-            try {
-              await refreshToken();
-              const refreshed = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-              setState({
-                isLoading: false,
-                isAuthenticated: true,
-                user,
-                accessToken: refreshed,
-                biometricEnabled: biometricEnabledFlag,
-                biometricAvailable,
-              });
-            } catch (error) {
-              if (error instanceof TokenRefreshNetworkError) {
-                // Offline cold start: the stored access token is expired but the
-                // refresh token may still be valid — we just can't reach the
-                // server to rotate it. Keep the user signed in on the stale
-                // access token so the app is usable offline (cached reads,
-                // queued writes via useOfflineSupport). apiRequest refreshes it
-                // opportunistically — or the server 401s and the normal
-                // auth-gate tears the session down — once the network returns.
-                // Logging out here would evict a user with a valid session and
-                // wipe their offline data purely because they launched offline.
-                setState({
-                  isLoading: false,
-                  isAuthenticated: true,
-                  user,
-                  accessToken,
-                  biometricEnabled: biometricEnabledFlag,
-                  biometricAvailable,
-                });
-              } else {
-                // Server rejected the refresh token — refreshToken() already ran
-                // logout() (clearing SecureStore + caches). Drop to the login
-                // screen.
-                setState((prev) => ({
-                  ...prev,
-                  isLoading: false,
-                  isAuthenticated: false,
-                  user: null,
-                  accessToken: null,
-                  biometricEnabled: biometricEnabledFlag,
-                  biometricAvailable,
-                }));
-              }
-            }
+          // bearer. Refresh an expired/near-expiry token first, and only trust
+          // the session once a usable token is in hand. A server rejection drops
+          // to the login screen (refreshToken() already ran logout()); an
+          // offline refresh keeps the user signed in on their stale token so the
+          // app stays usable offline (cached reads, queued writes) — evicting
+          // them merely because they launched offline would wipe that data
+          // (issue #2399).
+          const refreshed = await ensureFreshAccessToken(accessToken);
+          if (refreshed.status === 'rejected') {
+            setState((prev) => ({
+              ...prev,
+              isLoading: false,
+              isAuthenticated: false,
+              user: null,
+              accessToken: null,
+              biometricEnabled: biometricEnabledFlag,
+              biometricAvailable,
+            }));
           } else {
             setState({
               isLoading: false,
               isAuthenticated: true,
               user,
-              accessToken,
+              accessToken: refreshed.accessToken,
               biometricEnabled: biometricEnabledFlag,
               biometricAvailable,
             });
@@ -519,7 +524,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
     }
 
     initialize();
-  }, [refreshToken]);
+  }, [ensureFreshAccessToken]);
 
   // Keep the global FeedbackManager singleton's bearer in sync with the signed-in
   // session. The singleton is constructed once at module load with no token and
