@@ -155,6 +155,39 @@ export function buildSessionUser(
 }
 
 /**
+ * Normalise an arbitrary user-shaped value into the canonical {@link StoredUser}
+ * shape: narrow every field off the object (dropping non-strings and junk keys)
+ * and run `role` through {@link toAppRole} so no arbitrary / privileged role can
+ * leak through. Returns `null` when the value is not an object or has no id.
+ *
+ * This is the single source of truth for user-shape normalisation on the
+ * device. Both the cold-start / biometric restore path ({@link parseStoredUser})
+ * and the auth context's `updateUser()` merge path run their result through it,
+ * so the in-memory session, the persisted `ppt_user` blob, and a later restored
+ * session can never drift apart — a field merged in via `updateUser()` is shaped
+ * exactly as the restore path would re-shape it, instead of being stored
+ * verbatim.
+ */
+export function normalizeUser(raw: unknown): StoredUser | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const u = raw as Record<string, unknown>;
+  const id = str(u.id);
+  if (!id) return null;
+  return {
+    id,
+    email: str(u.email) ?? '',
+    firstName: str(u.firstName) ?? '',
+    lastName: str(u.lastName) ?? '',
+    role: toAppRole(str(u.role)),
+    buildingId: str(u.buildingId),
+    unitId: str(u.unitId),
+    avatarUrl: str(u.avatarUrl),
+    organizationId: str(u.organizationId),
+    organizationName: str(u.organizationName),
+  };
+}
+
+/**
  * Parse and validate the user persisted to SecureStore (`ppt_user`).
  *
  * The stored blob is on-device, mutable state restored on cold start and
@@ -174,22 +207,7 @@ export function parseStoredUser(json: string | null | undefined): StoredUser | n
   } catch {
     return null;
   }
-  if (!raw || typeof raw !== 'object') return null;
-  const u = raw as Record<string, unknown>;
-  const id = str(u.id);
-  if (!id) return null;
-  return {
-    id,
-    email: str(u.email) ?? '',
-    firstName: str(u.firstName) ?? '',
-    lastName: str(u.lastName) ?? '',
-    role: toAppRole(str(u.role)),
-    buildingId: str(u.buildingId),
-    unitId: str(u.unitId),
-    avatarUrl: str(u.avatarUrl),
-    organizationId: str(u.organizationId),
-    organizationName: str(u.organizationName),
-  };
+  return normalizeUser(raw);
 }
 
 /**
