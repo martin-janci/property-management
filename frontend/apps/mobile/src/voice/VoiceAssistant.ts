@@ -75,9 +75,13 @@ export class VoiceAssistant {
 
   /**
    * Start listening for voice commands.
+   *
+   * Allowed from `idle` and from `error` — the latter so a failed attempt can
+   * be retried directly instead of dead-ending. A start while already
+   * `listening` / `processing` / `speaking` is ignored.
    */
   async startListening(): Promise<void> {
-    if (this.state !== 'idle') {
+    if (this.state !== 'idle' && this.state !== 'error') {
       return;
     }
 
@@ -110,6 +114,33 @@ export class VoiceAssistant {
 
     if (NativeSpeech) {
       await NativeSpeech.stopListening();
+    }
+
+    this.updateState('idle');
+  }
+
+  /**
+   * Reset the controller back to `idle` so the UI can offer a retry / way
+   * forward after a failure.
+   *
+   * Without this, `error` was a terminal state: `startListening()` only ran
+   * from `idle`, `stopListening()` only from `listening`, and `updateState()`
+   * is private — so a failed start (missing native module, thrown native call)
+   * left the assistant permanently stuck with no recovery path. `reset()`
+   * best-effort stops any in-flight native recognition and returns to `idle`.
+   */
+  async reset(): Promise<void> {
+    if (this.state === 'idle') {
+      return;
+    }
+
+    // Best-effort: don't leave the native recognizer running if we were mid-listen.
+    if (this.state === 'listening' && NativeSpeech) {
+      try {
+        await NativeSpeech.stopListening();
+      } catch {
+        // Ignore — we reset to idle regardless so the user isn't stuck.
+      }
     }
 
     this.updateState('idle');
