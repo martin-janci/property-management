@@ -171,6 +171,60 @@ export function useDeleteAutomationRule() {
   });
 }
 
+/** Result of a manual rule run (POST /api/v1/automation/rules/{id}/run). */
+export interface AutomationRunSummary {
+  logId: string;
+  status: 'success' | 'partial_failure' | 'failed' | 'running';
+  actions: { type: string; name: string; status: string; durationMs: number; error?: string }[];
+}
+
+interface ApiAutomationRunSummary {
+  log_id: string;
+  status: AutomationRunSummary['status'];
+  actions?: { type: string; name: string; status: string; duration_ms: number; error?: string }[];
+}
+
+/**
+ * Run a rule now. The engine executes its actions immediately (a `delay`
+ * action parks the rest as a background job) and records an execution log.
+ */
+export function useRunAutomationRule() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data?: Record<string, unknown>;
+    }): Promise<AutomationRunSummary> => {
+      const raw = await requestJson<ApiAutomationRunSummary>(
+        `${API_BASE}/rules/${id}/run`,
+        { method: 'POST', body: JSON.stringify(data ? { data } : {}) },
+        'Failed to run automation rule'
+      );
+      return {
+        logId: raw.log_id,
+        status: raw.status,
+        actions: (raw.actions ?? []).map((a) => ({
+          type: a.type,
+          name: a.name,
+          status: a.status,
+          durationMs: a.duration_ms,
+          ...(a.error ? { error: a.error } : {}),
+        })),
+      };
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['automation-rules'] });
+      queryClient.invalidateQueries({ queryKey: ['automation-rule', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['execution-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['execution-stats'] });
+    },
+  });
+}
+
 // Template Hooks
 
 export function useAutomationTemplates(query: AutomationTemplatesQuery = {}) {

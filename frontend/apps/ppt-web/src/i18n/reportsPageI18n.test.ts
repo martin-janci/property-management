@@ -4,10 +4,10 @@
  * (code-review finding: ppt-web reports page hardcoded user-facing strings).
  *
  * `features/reports/pages/ReportsPage.tsx` is the unified reports surface
- * (report-builder tab + schedule-management tab). Every user-facing string it
- * renders — the page title, the tab labels, the "New report" / "New schedule"
- * buttons, the saved-reports empty state, the created-on caption, the "Public"
- * badge and the "Create schedule" heading — is routed through react-i18next
+ * (report-generation tab + schedule-management tab). Every user-facing string it
+ * renders — the page title, the tab labels, the "New schedule" button, the
+ * "Create schedule" heading and the delete-schedule confirmation — is routed
+ * through react-i18next
  * under the `reports.page.*` namespace, with full parity across the six shipped
  * locale bundles.
  *
@@ -48,29 +48,18 @@ const REQUIRED_KEYS = [
   'reports.page.title',
   'reports.page.tabs.reports',
   'reports.page.tabs.schedules',
-  'reports.page.newReport',
   'reports.page.newSchedule',
-  'reports.page.savedReports',
-  'reports.page.noReports',
-  'reports.page.createFirstReport',
-  'reports.page.createdOn',
-  'reports.page.public',
   'reports.page.createSchedule',
+  'reports.page.deleteSchedule.title',
+  'reports.page.deleteSchedule.message',
+  'reports.page.deleteSchedule.confirm',
 ];
 
 /**
  * Distinctive English copy that must not survive as a hardcoded JSX literal in
- * the page (the pre-i18n shape inlined these strings). The `createdOn` value
- * uses an interpolation (`Created {{date}}`) so it is covered by the key-parity
- * check above rather than a literal match.
+ * the page (the pre-i18n shape inlined these strings).
  */
-const FORBIDDEN_LITERALS = [
-  'Reports & analytics',
-  'Saved reports',
-  'No reports created yet',
-  'Create your first report',
-  'Create schedule',
-];
+const FORBIDDEN_LITERALS = ['Reports & analytics', 'Create schedule', 'Delete schedule?'];
 
 /**
  * Resolve the ppt-web `src/features/reports/pages` dir from the test's cwd

@@ -3674,7 +3674,11 @@
           "invalidEmails": "Neplatné e-maily: {{emails}}",
           "timeRequired": "Čas je povinný"
         }
-      }
+      },
+      "deleted": "Plán byl smazán.",
+      "deleteFailed": "Plán se nepodařilo smazat.",
+      "runQueued": "Spuštění sestavy je zařazeno. Brzy se zobrazí v historii.",
+      "runFailed": "Spuštění sestavy se nepodařilo."
     },
     "builtin": {
       "faults": "Statistika závad",
@@ -3707,7 +3711,6 @@
         "reports": "Sestavy",
         "schedules": "Plány"
       },
-      "newReport": "+ Nová sestava",
       "newSchedule": "+ Nový plán",
       "keyMetrics": "Klíčové ukazatele",
       "trends": "Trendy",
@@ -3715,12 +3718,25 @@
       "analytics": "Analýzy",
       "monthlyPerformance": "Měsíční výkonnost",
       "buildingPerformance": "Výkonnost budov",
-      "savedReports": "Uložené sestavy",
-      "noReports": "Zatím jste nevytvořili žádné sestavy",
-      "createFirstReport": "Vytvořit první sestavu",
-      "createdOn": "Vytvořeno {{date}}",
-      "public": "Veřejná",
-      "createSchedule": "Vytvořit plán"
+      "createSchedule": "Vytvořit plán",
+      "generate": {
+        "title": "Vygenerovat sestavu",
+        "description": "Vyberte sestavu, období a formát. Malé sestavy se stáhnou hned, větší se připraví na pozadí a stáhnou se, až budou hotové.",
+        "report": "Sestava",
+        "format": "Formát",
+        "from": "Od",
+        "to": "Do",
+        "submit": "Vygenerovat a stáhnout",
+        "generating": "Generuje se…",
+        "success": "Sestava byla vygenerována.",
+        "failed": "Sestavu se nepodařilo vygenerovat.",
+        "invalidRange": "Datum začátku musí být dříve nebo stejné jako datum konce."
+      },
+      "deleteSchedule": {
+        "title": "Smazat plán?",
+        "message": "Plán „{{name}}“ a jeho historie spuštění budou smazány.",
+        "confirm": "Smazat"
+      }
     }
   },
   "leases": {
@@ -6115,8 +6131,10 @@
       "updateErrorMessage": "Pravidlo automatizace se nepodařilo aktualizovat.",
       "runSuccessTitle": "Pravidlo spuštěno",
       "runSuccessMessage": "Pravidlo „{{name}}“ se nyní spouští.",
-      "runErrorTitle": "Spuštění se nezdařilo",
-      "runErrorMessage": "Pravidlo automatizace se nepodařilo spustit."
+      "runErrorTitle": "Spuštění pravidla selhalo",
+      "runErrorMessage": "Pravidlo se nepodařilo spustit.",
+      "runPartialTitle": "Pravidlo proběhlo s chybami",
+      "runMessage": "„{{name}}“ provedlo {{count}} akcí. Podrobnosti najdete v protokolu spuštění."
     },
     "ruleCard": {
       "unknownTrigger": "Neznámý spouštěč",
@@ -6196,10 +6214,6 @@
       "categoryDocuments": "Dokumenty",
       "categoryAnnouncements": "Oznámení",
       "categoryVoting": "Hlasování",
-      "categoryGuests": "Hosté",
-      "categoryMaintenance": "Údržba",
-      "categoryMeters": "Měřiče",
-      "categoryLeases": "Nájmy",
       "eventFaultCreated": "Porucha vytvořena",
       "eventFaultStatusChanged": "Stav poruchy změněn",
       "eventPaymentReceived": "Platba přijata",
@@ -6207,11 +6221,7 @@
       "eventDocumentUploaded": "Dokument nahrán",
       "eventAnnouncementPublished": "Oznámení zveřejněno",
       "eventVoteStarted": "Hlasování zahájeno",
-      "eventVoteEnded": "Hlasování ukončeno",
-      "eventGuestRegistered": "Host zaregistrován",
-      "eventMaintenanceScheduled": "Údržba naplánována",
-      "eventMeterReadingDue": "Odečet měřiče je splatný",
-      "eventLeaseExpiring": "Nájem končí"
+      "eventVoteEnded": "Hlasování ukončeno"
     },
     "conditionBuilder": {
       "title": "Podmínky",
@@ -6220,7 +6230,6 @@
       "emptyBody": "Podmínky filtrují, kdy se automatizace spustí. Bez podmínek se spustí pro všechny odpovídající spouštěče.",
       "and": "A",
       "selectPlaceholder": "Vyberte...",
-      "valuePlaceholder": "Hodnota",
       "removeCondition": "Odstranit podmínku",
       "allMustBeTrue": "Aby se automatizace spustila, musí být splněny všechny podmínky.",
       "fieldFaultCategory": "Kategorie poruchy",
@@ -6231,7 +6240,6 @@
       "fieldDaysOverdue": "Dní po splatnosti",
       "fieldDocumentType": "Typ dokumentu",
       "fieldDocumentSize": "Velikost dokumentu (MB)",
-      "fieldUserRole": "Role uživatele",
       "fieldBuilding": "Budova",
       "fieldUnit": "Jednotka",
       "opEquals": "se rovná",
@@ -6246,29 +6254,43 @@
       "opIsNotEmpty": "není prázdné",
       "opInList": "je jedno z",
       "opNotInList": "není jedno z",
-      "valFaultCategoryElectrical": "Elektroinstalace",
-      "valFaultCategoryPlumbing": "Vodoinstalace",
-      "valFaultCategoryHvac": "Topení a klimatizace",
-      "valFaultCategoryStructural": "Konstrukční",
-      "valFaultCategoryOther": "Jiné",
-      "valFaultPriorityLow": "Nízká",
-      "valFaultPriorityMedium": "Střední",
-      "valFaultPriorityHigh": "Vysoká",
-      "valFaultPriorityCritical": "Kritická",
-      "valFaultStatusReported": "Nahlášeno",
-      "valFaultStatusAcknowledged": "Potvrzeno",
-      "valFaultStatusInProgress": "Probíhá",
-      "valFaultStatusResolved": "Vyřešeno",
-      "valFaultStatusClosed": "Uzavřeno",
-      "valDocumentTypeContract": "Smlouva",
-      "valDocumentTypeInvoice": "Faktura",
-      "valDocumentTypeReport": "Zpráva",
-      "valDocumentTypeMinutes": "Zápis",
-      "valDocumentTypeOther": "Jiné",
-      "valUserRoleOwner": "Vlastník",
-      "valUserRoleTenant": "Nájemník",
-      "valUserRoleManager": "Správce",
-      "valUserRoleAdmin": "Administrátor"
+      "fieldDaysOpen": "Dny otevřená",
+      "faultCategory": {
+        "plumbing": "Vodoinstalace",
+        "electrical": "Elektřina",
+        "heating": "Topení",
+        "structural": "Stavební",
+        "exterior": "Exteriér",
+        "elevator": "Výtah",
+        "common_area": "Společné prostory",
+        "security": "Bezpečnost",
+        "cleaning": "Úklid",
+        "other": "Jiné"
+      },
+      "faultPriority": {
+        "low": "Nízká",
+        "medium": "Střední",
+        "high": "Vysoká",
+        "urgent": "Naléhavá"
+      },
+      "faultStatus": {
+        "new": "Nová",
+        "triaged": "Posouzená",
+        "in_progress": "Řeší se",
+        "waiting_parts": "Čeká na díly",
+        "scheduled": "Naplánovaná",
+        "resolved": "Vyřešená",
+        "closed": "Uzavřená",
+        "reopened": "Znovu otevřená"
+      },
+      "documentType": {
+        "contracts": "Smlouvy",
+        "invoices": "Faktury",
+        "reports": "Zprávy",
+        "manuals": "Návody",
+        "certificates": "Certifikáty",
+        "other": "Jiné"
+      }
     },
     "actionBuilder": {
       "title": "Akce",
@@ -6291,18 +6313,24 @@
       "typeSendNotificationDesc": "Odeslat push nebo e-mailové oznámení",
       "typeSendEmail": "Odeslat e-mail",
       "typeSendEmailDesc": "Odeslat e-mail zadaným příjemcům",
-      "typeCreateTask": "Vytvořit úkol",
-      "typeCreateTaskDesc": "Vytvořit nový úkol nebo pracovní příkaz",
       "typeUpdateStatus": "Aktualizovat stav",
       "typeUpdateStatusDesc": "Změnit stav položky",
       "typeAssignUser": "Přiřadit uživatele",
       "typeAssignUserDesc": "Přiřadit uživateli nebo týmu",
-      "typeAddTag": "Přidat štítek",
-      "typeAddTagDesc": "Přidat štítek nebo označení",
       "typeWebhook": "Zavolat webhook",
       "typeWebhookDesc": "Odeslat data externí službě",
       "typeDelay": "Přidat zpoždění",
-      "typeDelayDesc": "Počkat před další akcí"
+      "typeDelayDesc": "Počkat před další akcí",
+      "typeGenerateReport": "Vygenerovat sestavu",
+      "typeGenerateReportDesc": "Vygeneruje vestavěnou sestavu a pošle ji e-mailem",
+      "recipientsPlaceholder": "Příjemci: managers, reporter, assignee, unit_residents nebo ID uživatelů",
+      "emailBodyPlaceholder": "Text zprávy (podporuje zástupné znaky jako {{fault.title}})",
+      "reportLabel": "Sestava",
+      "reportFormatLabel": "Formát sestavy",
+      "reportPeriodDays": "dní zpět",
+      "statusLabel": "Nový stav",
+      "selectStatus": "Vyberte stav",
+      "assignUserPlaceholder": "ID uživatele, kterému se přiřadí"
     },
     "createPage": {
       "back": "Zpět na pravidla",
@@ -6458,7 +6486,7 @@
     "templates": {
       "weekly_maintenance_report": {
         "name": "Týdenní přehled údržby",
-        "description": "Každý týden pošle správcům přehled otevřených požadavků na údržbu"
+        "description": "Každý týden pošle správcům e-mailem PDF sestavu závad"
       },
       "overdue_payment_reminder": {
         "name": "Upomínka opožděné platby",
@@ -6466,11 +6494,11 @@
       },
       "high_priority_fault_escalation": {
         "name": "Eskalace závad s vysokou prioritou",
-        "description": "Automaticky přidělí závady s vysokou prioritou a upozorní správce"
+        "description": "Upozorní správce a pošle jim e-mail, když je nahlášena závada s vysokou prioritou"
       },
       "monthly_statement_generation": {
-        "name": "Měsíční vyúčtování",
-        "description": "Vygeneruje a odešle měsíční vyúčtování vždy 1. den v měsíci"
+        "name": "Měsíční sestava spotřeby",
+        "description": "1. den v měsíci pošle správcům e-mailem sestavu spotřeby"
       },
       "actionTypes": {
         "generate_report": "Vygenerovat přehled",

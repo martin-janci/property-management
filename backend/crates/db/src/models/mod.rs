@@ -585,7 +585,7 @@ pub mod report_schedule;
 
 pub use report_schedule::{
     report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
-    ExecutionHistoryResponse, ReportExecution, ReportSchedule,
+    ExecutionHistoryResponse, PendingReportExecution, ReportExecution, ReportSchedule,
 };
 
 // Epic 58: Package & Visitor Management

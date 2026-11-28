@@ -1,6 +1,9 @@
 //! Fault routes (Epic 4: Fault Reporting & Resolution).
 
 use crate::routes::pagination::clamp_limit;
+use crate::services::automation_engine::{
+    event as automation_event, fault_event_data, AutomationEngine,
+};
 use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
@@ -570,6 +573,14 @@ async fn create_fault(
         }
     }
 
+    // Gap audit 3.1: run automation rules listening for new faults.
+    AutomationEngine::emit(
+        &state,
+        fault.organization_id,
+        automation_event::FAULT_CREATED,
+        fault_event_data(&fault),
+    );
+
     rls.release().await;
     Ok((
         StatusCode::CREATED,
@@ -969,6 +980,13 @@ async fn triage_fault(
         );
     }
 
+    // Gap audit 3.1: run automation rules listening for status changes.
+    AutomationEngine::emit(
+        &state,
+        fault.organization_id,
+        automation_event::FAULT_STATUS_CHANGED,
+        fault_event_data(&fault),
+    );
     Ok(Json(FaultActionResponse {
         message: "Fault triaged successfully".to_string(),
         fault,
@@ -1165,6 +1183,13 @@ async fn update_status(
     }
 
     rls.release().await;
+    // Gap audit 3.1: run automation rules listening for status changes.
+    AutomationEngine::emit(
+        &state,
+        fault.organization_id,
+        automation_event::FAULT_STATUS_CHANGED,
+        fault_event_data(&fault),
+    );
     Ok(Json(FaultActionResponse {
         message: "Status updated successfully".to_string(),
         fault,
@@ -1268,6 +1293,13 @@ async fn withdraw_fault(
         })?;
 
     rls.release().await;
+    // Gap audit 3.1: run automation rules listening for status changes.
+    AutomationEngine::emit(
+        &state,
+        fault.organization_id,
+        automation_event::FAULT_STATUS_CHANGED,
+        fault_event_data(&fault),
+    );
     Ok(Json(FaultActionResponse {
         message: "Fault withdrawn".to_string(),
         fault,
@@ -1344,6 +1376,13 @@ async fn resolve_fault(
         }
     }
 
+    // Gap audit 3.1: run automation rules listening for status changes.
+    AutomationEngine::emit(
+        &state,
+        fault.organization_id,
+        automation_event::FAULT_STATUS_CHANGED,
+        fault_event_data(&fault),
+    );
     Ok(Json(FaultActionResponse {
         message: "Fault resolved successfully".to_string(),
         fault,
@@ -1443,6 +1482,13 @@ async fn confirm_fault(
         );
     }
 
+    // Gap audit 3.1: run automation rules listening for status changes.
+    AutomationEngine::emit(
+        &state,
+        fault.organization_id,
+        automation_event::FAULT_STATUS_CHANGED,
+        fault_event_data(&fault),
+    );
     Ok(Json(FaultActionResponse {
         message: "Resolution confirmed successfully".to_string(),
         fault,
@@ -1533,6 +1579,13 @@ async fn reopen_fault(
         }
     }
 
+    // Gap audit 3.1: run automation rules listening for status changes.
+    AutomationEngine::emit(
+        &state,
+        fault.organization_id,
+        automation_event::FAULT_STATUS_CHANGED,
+        fault_event_data(&fault),
+    );
     Ok(Json(FaultActionResponse {
         message: "Fault reopened successfully".to_string(),
         fault,

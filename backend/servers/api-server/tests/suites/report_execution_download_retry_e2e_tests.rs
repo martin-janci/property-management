@@ -215,7 +215,9 @@ async fn list_executions_populates_download_url_for_completed(pool: PgPool) {
 /// the stored file name, and a content type derived from the file extension.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn get_execution_download_url_returns_presigned_payload(pool: PgPool) {
-    let app = TestApp::new(pool.clone()).await;
+    // A real (dummy-bucket) S3 client: the handler mints an actual presigned
+    // URL, computed locally by the SDK.
+    let app = TestApp::with_storage(pool.clone()).await;
 
     let org = seed_org(&pool, "dl-ok").await;
     let schedule = seed_schedule(&pool, org).await;
@@ -287,18 +289,11 @@ async fn get_execution_download_url_returns_presigned_payload(pool: PgPool) {
 /// it fails if the handler is changed to cache and replay the first response,
 /// because a cached response's `expires_at` would not advance across calls.
 ///
-/// # Scope boundary
-///
-/// The URL returned by this handler is a static internal proxy path
-/// (`/api/v1/reports/files/{file_key}`), not a real S3 presigned URL. The
-/// actual S3 presigning happens one hop downstream (at the `/reports/files/…`
-/// handler). Consequently this test cannot assert a *distinct credential* per
-/// call — only that the `expires_at` window is freshly computed each time.
-/// A dedicated integration test against a live S3 stub would be required to
-/// verify the downstream presigning step; that is out of scope here.
+/// The handler presigns a real S3 GET for the execution's `file_key` (gap
+/// audit 3.1); the test app uses a dummy bucket, which the SDK signs locally.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
-    let app = TestApp::new(pool.clone()).await;
+    let app = TestApp::with_storage(pool.clone()).await;
 
     let org = seed_org(&pool, "dl-represign").await;
     let schedule = seed_schedule(&pool, org).await;
@@ -391,6 +386,45 @@ async fn download_url_can_be_repeatedly_represigned_after_expiry(pool: PgPool) {
         second_name, "monthly-summary.pdf",
         "#611 regression: re-presign must resolve the same execution's file, body={second_body}"
     );
+    assert!(
+        second_url.contains("exec-represign.pdf") && second_url.contains("X-Amz-Signature"),
+        "the download url must be an S3 presigned GET for the stored file_key, got {second_url}"
+    );
+}
+
+/// Without S3 configured there is no file to hand out: the handler answers 503
+/// `STORAGE_NOT_CONFIGURED` instead of a fabricated URL that would 404.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn download_url_without_storage_is_503(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org = seed_org(&pool, "dl-nostorage").await;
+    let schedule = seed_schedule(&pool, org).await;
+    let exec = seed_completed_execution_with_file(
+        &pool,
+        schedule,
+        "reports/2026/exec-nostorage.pdf",
+        "summary.pdf",
+    )
+    .await;
+    let token = authed_member(&app, &pool, org, "Manager").await;
+
+    let resp = app
+        .execute(auth_req(
+            Method::GET,
+            &format!("/api/v1/reports/executions/{}/download", exec),
+            org,
+            &token,
+        ))
+        .await;
+    assert_eq!(
+        resp.status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "no storage must be 503, got {} body={}",
+        resp.status,
+        resp.text()
+    );
+    assert!(resp.text().contains("STORAGE_NOT_CONFIGURED"));
 }
 
 /// An execution that has NOT produced a file (no `file_key`) must NOT yield a

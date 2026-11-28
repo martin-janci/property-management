@@ -7,8 +7,8 @@
 
 use crate::models::report_schedule::{
     report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
-    ExecutionHistoryResponse, NewReportSchedule, ReportExecution, ReportSchedule,
-    ReportScheduleRow,
+    ExecutionHistoryResponse, NewReportSchedule, PendingReportExecution, ReportExecution,
+    ReportSchedule, ReportScheduleRow,
 };
 use crate::DbPool;
 use chrono::{DateTime, Duration, Utc};
@@ -787,6 +787,215 @@ impl ReportScheduleRepository {
             tracing::error!(error = %e, schedule_id = %schedule_id, "Failed to record report execution");
             AppError::Database(e.to_string())
         })
+    }
+}
+
+impl ReportScheduleRepository {
+    // ========================================================================
+    // Report generator worker (gap audit 3.1)
+    // ========================================================================
+
+    /// List executions the generator should process: `pending` rows, plus
+    /// `running` rows whose claim is older than `stale_after_minutes` (a worker
+    /// that died mid-run must not strand the execution forever).
+    ///
+    /// RLS: cross-org read. The caller supplies a connection with
+    /// `set_global_read_context(TRUE)` applied (SELECT legs from 00218).
+    pub async fn list_pending_executions<'e, E>(
+        &self,
+        executor: E,
+        limit: i64,
+        stale_after_minutes: i64,
+    ) -> Result<Vec<PendingReportExecution>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, PendingReportExecution>(
+            r#"
+            SELECT e.id AS execution_id, e.schedule_id, s.organization_id, s.report_id,
+                   s.name AS schedule_name, s.format, s.frequency, s.timezone, s.recipients
+            FROM report_executions e
+            JOIN report_schedules s ON s.id = e.schedule_id
+            WHERE e.status = 'pending'
+               OR (e.status = 'running'
+                   AND e.started_at < NOW() - make_interval(mins => $2::int))
+            ORDER BY e.created_at ASC
+            LIMIT $1
+            "#,
+        )
+        .bind(limit)
+        .bind(stale_after_minutes as i32)
+        .fetch_all(executor)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list pending report executions");
+            AppError::Database(e.to_string())
+        })
+    }
+
+    /// Atomically claim an execution for generation (`pending` or stale
+    /// `running` → `running`, restarting the clock). Returns `false` when
+    /// another worker won the race.
+    ///
+    /// RLS: caller applies `set_tenant_context(organization_id)`.
+    pub async fn claim_execution<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        stale_after_minutes: i64,
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            r#"
+            UPDATE report_executions
+            SET status = 'running', started_at = NOW()
+            WHERE id = $1
+              AND (status = 'pending'
+                   OR (status = 'running'
+                       AND started_at < NOW() - make_interval(mins => $2::int)))
+            "#,
+        )
+        .bind(id)
+        .bind(stale_after_minutes as i32)
+        .execute(executor)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+        Ok(result.rows_affected() == 1)
+    }
+
+    /// Mark a claimed execution completed with its stored file.
+    ///
+    /// RLS: caller applies `set_tenant_context(organization_id)`.
+    pub async fn complete_execution<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        file_key: &str,
+        file_name: &str,
+        file_size: i64,
+    ) -> Result<(), AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            UPDATE report_executions
+            SET status = 'completed',
+                completed_at = NOW(),
+                duration_ms = (EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)::BIGINT,
+                file_key = $2,
+                file_name = $3,
+                file_size = $4,
+                error_code = NULL,
+                error_message = NULL,
+                error_details = NULL
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .bind(file_key)
+        .bind(file_name)
+        .bind(file_size)
+        .execute(executor)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Mark a claimed execution failed. It can be retried from the UI.
+    ///
+    /// RLS: caller applies `set_tenant_context(organization_id)`.
+    pub async fn fail_execution<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+        error_code: &str,
+        error_message: &str,
+    ) -> Result<(), AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query(
+            r#"
+            UPDATE report_executions
+            SET status = 'failed',
+                completed_at = NOW(),
+                duration_ms = (EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)::BIGINT,
+                error_code = $2,
+                error_message = $3
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .bind(error_code)
+        .bind(error_message)
+        .execute(executor)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Queue an immediate run ("Run now") of a schedule owned by `org_id`.
+    ///
+    /// Inserts a `pending` execution only when the schedule belongs to the
+    /// caller's org; returns `None` otherwise (handler answers 404).
+    ///
+    /// RLS: caller passes its request `RlsConnection`.
+    pub async fn queue_run_scoped<'e, E>(
+        &self,
+        executor: E,
+        schedule_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<ReportExecution>, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, ReportExecution>(
+            r#"
+            INSERT INTO report_executions (schedule_id, status)
+            SELECT s.id, 'pending'
+            FROM report_schedules s
+            WHERE s.id = $1 AND s.organization_id = $2
+            RETURNING id, schedule_id, status,
+                      started_at, completed_at, duration_ms,
+                      file_key, file_name, file_size,
+                      error_code, error_message, error_details,
+                      created_at
+            "#,
+        )
+        .bind(schedule_id)
+        .bind(org_id)
+        .fetch_optional(executor)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %schedule_id, "Failed to queue report run");
+            AppError::Database(e.to_string())
+        })
+    }
+
+    /// Delete a schedule owned by `org_id` (executions cascade). Returns
+    /// whether a row was deleted.
+    ///
+    /// RLS: caller passes its request `RlsConnection`.
+    pub async fn delete_scoped<'e, E>(
+        &self,
+        executor: E,
+        schedule_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<bool, AppError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result =
+            sqlx::query("DELETE FROM report_schedules WHERE id = $1 AND organization_id = $2")
+                .bind(schedule_id)
+                .bind(org_id)
+                .execute(executor)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?;
+        Ok(result.rows_affected() > 0)
     }
 }
 

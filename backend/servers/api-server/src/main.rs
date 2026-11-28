@@ -697,7 +697,8 @@ async fn main() -> anyhow::Result<()> {
     // which silently logged signature reminders instead of sending them and
     // baked localhost links into any URL the scheduler generated.
     let scheduler = Scheduler::new(scheduler_pool, announcement_repo, scheduler_config)
-        .with_email_service(email_service.clone());
+        .with_email_service(email_service.clone())
+        .with_automation(services::AutomationEngine::from_state(&state));
     let _scheduler_handle = scheduler.start();
 
     // Epic 8A-3: start the push notification fanout background worker.
@@ -732,6 +733,23 @@ async fn main() -> anyhow::Result<()> {
         ),
         services::syndication::SyndicationDrainConfig::from_env(),
     );
+
+    // Gap audit 3.1: generate scheduled report executions and large report
+    // exports (CSV/XLSX/PDF), store them in S3 and e-mail schedule recipients.
+    let _report_worker_handle = services::ReportWorker::new(
+        db_pool.clone(),
+        state.storage_service.clone(),
+        email_service.clone(),
+    )
+    .start(services::ReportWorkerConfig::from_env());
+
+    // Gap audit 3.1: run automation rules (schedule, condition, delayed
+    // continuations). Event rules run from the handlers that emit events.
+    let _automation_worker_handle = services::AutomationWorker::new(
+        services::AutomationEngine::from_state(&state),
+        services::AutomationWorkerConfig::from_env(),
+    )
+    .start();
 
     // Story 2B.3 / PM #969 gap 1: email a notification digest to users who have
     // been inactive for >24h and have unread (pending) notifications. Drives the

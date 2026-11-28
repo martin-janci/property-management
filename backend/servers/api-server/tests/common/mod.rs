@@ -61,6 +61,28 @@ impl TestApp {
 
     /// Create a new test application with custom configuration.
     pub async fn with_config(pool: PgPool, config: TestConfig) -> Self {
+        Self::build(pool, config, None).await
+    }
+
+    /// Create a test application whose `AppState` carries an S3 storage
+    /// service pointed at a dummy bucket. Presigning is computed locally by
+    /// the AWS SDK (no network), so download-URL endpoints can be exercised
+    /// without MinIO; anything that actually uploads would still fail.
+    pub async fn with_storage(pool: PgPool) -> Self {
+        let mut storage_config =
+            integrations::StorageConfig::new("ppt-test-bucket", "eu-central-1", "test", "test");
+        storage_config.endpoint = Some("http://127.0.0.1:9".to_string());
+        let storage = integrations::StorageService::with_s3_client(storage_config)
+            .await
+            .expect("Failed to build test storage service");
+        Self::build(pool, TestConfig::default(), Some(storage)).await
+    }
+
+    async fn build(
+        pool: PgPool,
+        config: TestConfig,
+        storage: Option<integrations::StorageService>,
+    ) -> Self {
         use api_server::services::{EmailService, JwtService};
         use api_server::state::AppState;
 
@@ -103,13 +125,16 @@ impl TestApp {
         // out by constructing a custom `HostTenantConfig` directly.
         let tenant_rate_limiters =
             std::sync::Arc::new(api_core::middleware::TenantRateLimiterSet::new());
-        let state = AppState::new(
+        let mut state = AppState::new(
             pool.clone(),
             email_service,
             jwt_service,
             tenant_cache,
             tenant_rate_limiters,
         );
+        if let Some(storage) = storage {
+            state = state.with_storage(storage);
+        }
 
         // Build the router with all routes.
         // MockConnectInfo injects a synthetic SocketAddr so handlers that

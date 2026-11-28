@@ -1251,7 +1251,26 @@ async fn record_payment(
         .financial_repo
         .record_payment(payload.organization_id, auth.user_id, payload.data)
         .await
-        .map(|payment| (StatusCode::CREATED, Json(payment)))
+        .map(|response| {
+            // Gap audit 3.1: automation rules listening for payments.
+            let payment = &response.payment;
+            crate::services::AutomationEngine::emit(
+                &state,
+                payment.organization_id,
+                crate::services::automation_engine::event::PAYMENT_RECEIVED,
+                serde_json::json!({
+                    "payment": {
+                        "id": payment.id,
+                        "amount": payment.amount.to_string().parse::<f64>().unwrap_or(0.0),
+                        "currency": payment.currency,
+                        "reference": payment.reference,
+                        "paymentDate": payment.payment_date,
+                    },
+                    "unit": { "id": payment.unit_id },
+                }),
+            );
+            (StatusCode::CREATED, Json(response))
+        })
         .map_err(|e| {
             tracing::error!("Failed to record payment: {:?}", e);
             (

@@ -8,6 +8,11 @@
 import type { ActionType, AutomationAction } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FAULT_STATUSES } from './conditionOptions';
+
+/** Built-in reports the `generate_report` action can produce. */
+const REPORT_KINDS = ['faults', 'voting', 'occupancy', 'consumption'] as const;
+const REPORT_FORMATS = ['pdf', 'excel', 'csv'] as const;
 
 interface ActionBuilderProps {
   actions: AutomationAction[];
@@ -30,10 +35,10 @@ const actionTypes: { value: ActionType; labelKey: string; icon: string; descript
       descriptionKey: 'automation.actionBuilder.typeSendEmailDesc',
     },
     {
-      value: 'create_task',
-      labelKey: 'automation.actionBuilder.typeCreateTask',
-      icon: '✅',
-      descriptionKey: 'automation.actionBuilder.typeCreateTaskDesc',
+      value: 'generate_report',
+      labelKey: 'automation.actionBuilder.typeGenerateReport',
+      icon: '📊',
+      descriptionKey: 'automation.actionBuilder.typeGenerateReportDesc',
     },
     {
       value: 'update_status',
@@ -46,12 +51,6 @@ const actionTypes: { value: ActionType; labelKey: string; icon: string; descript
       labelKey: 'automation.actionBuilder.typeAssignUser',
       icon: '👤',
       descriptionKey: 'automation.actionBuilder.typeAssignUserDesc',
-    },
-    {
-      value: 'add_tag',
-      labelKey: 'automation.actionBuilder.typeAddTag',
-      icon: '🏷️',
-      descriptionKey: 'automation.actionBuilder.typeAddTagDesc',
     },
     {
       value: 'webhook',
@@ -176,6 +175,18 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                   <div className="space-y-2">
                     <input
                       type="text"
+                      value={(action.config?.recipients as string) ?? ''}
+                      onChange={(e) =>
+                        updateAction(index, {
+                          config: { ...action.config, recipients: e.target.value },
+                        })
+                      }
+                      disabled={disabled}
+                      placeholder={t('automation.actionBuilder.recipientsPlaceholder')}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                    />
+                    <input
+                      type="text"
                       value={(action.config?.title as string) ?? ''}
                       onChange={(e) =>
                         updateAction(index, { config: { ...action.config, title: e.target.value } })
@@ -223,7 +234,118 @@ export function ActionBuilder({ actions, onChange, disabled }: ActionBuilderProp
                       placeholder={t('automation.actionBuilder.emailSubjectPlaceholder')}
                       className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
                     />
+                    <textarea
+                      value={(action.config?.message as string) ?? ''}
+                      onChange={(e) =>
+                        updateAction(index, {
+                          config: { ...action.config, message: e.target.value },
+                        })
+                      }
+                      disabled={disabled}
+                      placeholder={t('automation.actionBuilder.emailBodyPlaceholder')}
+                      rows={3}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                    />
                   </div>
+                )}
+
+                {action.type === 'generate_report' && (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <select
+                        aria-label={t('automation.actionBuilder.reportLabel')}
+                        value={(action.config?.report as string) ?? 'faults'}
+                        onChange={(e) =>
+                          updateAction(index, {
+                            config: { ...action.config, report: e.target.value },
+                          })
+                        }
+                        disabled={disabled}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                      >
+                        {REPORT_KINDS.map((kind) => (
+                          <option key={kind} value={kind}>
+                            {t(`reports.builtin.${kind}`)}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label={t('automation.actionBuilder.reportFormatLabel')}
+                        value={(action.config?.format as string) ?? 'pdf'}
+                        onChange={(e) =>
+                          updateAction(index, {
+                            config: { ...action.config, format: e.target.value },
+                          })
+                        }
+                        disabled={disabled}
+                        className="px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                      >
+                        {REPORT_FORMATS.map((format) => (
+                          <option key={format} value={format}>
+                            {t(`reports.schedule.form.formats.${format}`)}
+                          </option>
+                        ))}
+                      </select>
+                      <label className="inline-flex items-center gap-1 text-sm text-gray-600">
+                        <input
+                          type="number"
+                          min={1}
+                          max={366}
+                          value={(action.config?.period_days as number) ?? 30}
+                          onChange={(e) =>
+                            updateAction(index, {
+                              config: { ...action.config, period_days: Number(e.target.value) },
+                            })
+                          }
+                          disabled={disabled}
+                          className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                        />
+                        {t('automation.actionBuilder.reportPeriodDays')}
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={(action.config?.to as string) ?? ''}
+                      onChange={(e) =>
+                        updateAction(index, { config: { ...action.config, to: e.target.value } })
+                      }
+                      disabled={disabled}
+                      placeholder={t('automation.actionBuilder.emailToPlaceholder')}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                    />
+                  </div>
+                )}
+
+                {action.type === 'update_status' && (
+                  <select
+                    aria-label={t('automation.actionBuilder.statusLabel')}
+                    value={(action.config?.status as string) ?? ''}
+                    onChange={(e) =>
+                      updateAction(index, { config: { ...action.config, status: e.target.value } })
+                    }
+                    disabled={disabled}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                  >
+                    <option value="">{t('automation.actionBuilder.selectStatus')}</option>
+                    {FAULT_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {t(`automation.conditionBuilder.faultStatus.${status}`)}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {action.type === 'assign_user' && (
+                  <input
+                    type="text"
+                    value={(action.config?.user_id as string) ?? ''}
+                    onChange={(e) =>
+                      updateAction(index, { config: { ...action.config, user_id: e.target.value } })
+                    }
+                    disabled={disabled}
+                    placeholder={t('automation.actionBuilder.assignUserPlaceholder')}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+                  />
                 )}
 
                 {action.type === 'delay' && (

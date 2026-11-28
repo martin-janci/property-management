@@ -1,5 +1,8 @@
 //! Voting routes (Epic 5: Building Voting & Decisions).
 
+use crate::services::automation_engine::{
+    event as automation_event, vote_event_data, AutomationEngine,
+};
 use crate::state::AppState;
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -770,6 +773,16 @@ async fn publish_vote(
         }
     }
 
+    if vote.status == db::models::vote_status::ACTIVE {
+        // Gap audit 3.1: automation rules listening for started votes.
+        AutomationEngine::emit(
+            &state,
+            vote.organization_id,
+            automation_event::VOTE_STARTED,
+            vote_event_data(&vote),
+        );
+    }
+
     rls.release().await;
     Ok(Json(vote))
 }
@@ -915,6 +928,13 @@ async fn close_vote(
         )
     })?;
 
+    // Gap audit 3.1: automation rules listening for ended votes.
+    AutomationEngine::emit(
+        &state,
+        vote.organization_id,
+        automation_event::VOTE_ENDED,
+        vote_event_data(&vote),
+    );
     rls.release().await;
     Ok(Json(vote))
 }

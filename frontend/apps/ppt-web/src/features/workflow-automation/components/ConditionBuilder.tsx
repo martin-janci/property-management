@@ -7,6 +7,12 @@
 
 import type { ConditionOperator, TriggerCondition } from '@ppt/api-client';
 import { useTranslation } from 'react-i18next';
+import {
+  DOCUMENT_TYPES,
+  FAULT_CATEGORIES,
+  FAULT_PRIORITIES,
+  FAULT_STATUSES,
+} from './conditionOptions';
 
 interface ConditionBuilderProps {
   conditions: TriggerCondition[];
@@ -55,9 +61,13 @@ const fieldOptions = [
     labelKey: 'automation.conditionBuilder.fieldDocumentSize',
     type: 'number',
   },
-  { value: 'user.role', labelKey: 'automation.conditionBuilder.fieldUserRole', type: 'select' },
-  { value: 'building.id', labelKey: 'automation.conditionBuilder.fieldBuilding', type: 'select' },
-  { value: 'unit.id', labelKey: 'automation.conditionBuilder.fieldUnit', type: 'select' },
+  {
+    value: 'fault.daysOpen',
+    labelKey: 'automation.conditionBuilder.fieldDaysOpen',
+    type: 'number',
+  },
+  { value: 'building.id', labelKey: 'automation.conditionBuilder.fieldBuilding', type: 'text' },
+  { value: 'unit.id', labelKey: 'automation.conditionBuilder.fieldUnit', type: 'text' },
 ];
 
 const operatorOptions: { value: ConditionOperator; labelKey: string; types: string[] }[] = [
@@ -107,40 +117,14 @@ const operatorOptions: { value: ConditionOperator; labelKey: string; types: stri
   },
 ];
 
+const optionsFor = (values: readonly string[], group: string) =>
+  values.map((value) => ({ value, labelKey: `automation.conditionBuilder.${group}.${value}` }));
+
 const fieldValueOptions: Record<string, { value: string; labelKey: string }[]> = {
-  'fault.category': [
-    { value: 'electrical', labelKey: 'automation.conditionBuilder.valFaultCategoryElectrical' },
-    { value: 'plumbing', labelKey: 'automation.conditionBuilder.valFaultCategoryPlumbing' },
-    { value: 'hvac', labelKey: 'automation.conditionBuilder.valFaultCategoryHvac' },
-    { value: 'structural', labelKey: 'automation.conditionBuilder.valFaultCategoryStructural' },
-    { value: 'other', labelKey: 'automation.conditionBuilder.valFaultCategoryOther' },
-  ],
-  'fault.priority': [
-    { value: 'low', labelKey: 'automation.conditionBuilder.valFaultPriorityLow' },
-    { value: 'medium', labelKey: 'automation.conditionBuilder.valFaultPriorityMedium' },
-    { value: 'high', labelKey: 'automation.conditionBuilder.valFaultPriorityHigh' },
-    { value: 'critical', labelKey: 'automation.conditionBuilder.valFaultPriorityCritical' },
-  ],
-  'fault.status': [
-    { value: 'reported', labelKey: 'automation.conditionBuilder.valFaultStatusReported' },
-    { value: 'acknowledged', labelKey: 'automation.conditionBuilder.valFaultStatusAcknowledged' },
-    { value: 'in_progress', labelKey: 'automation.conditionBuilder.valFaultStatusInProgress' },
-    { value: 'resolved', labelKey: 'automation.conditionBuilder.valFaultStatusResolved' },
-    { value: 'closed', labelKey: 'automation.conditionBuilder.valFaultStatusClosed' },
-  ],
-  'document.type': [
-    { value: 'contract', labelKey: 'automation.conditionBuilder.valDocumentTypeContract' },
-    { value: 'invoice', labelKey: 'automation.conditionBuilder.valDocumentTypeInvoice' },
-    { value: 'report', labelKey: 'automation.conditionBuilder.valDocumentTypeReport' },
-    { value: 'minutes', labelKey: 'automation.conditionBuilder.valDocumentTypeMinutes' },
-    { value: 'other', labelKey: 'automation.conditionBuilder.valDocumentTypeOther' },
-  ],
-  'user.role': [
-    { value: 'owner', labelKey: 'automation.conditionBuilder.valUserRoleOwner' },
-    { value: 'tenant', labelKey: 'automation.conditionBuilder.valUserRoleTenant' },
-    { value: 'manager', labelKey: 'automation.conditionBuilder.valUserRoleManager' },
-    { value: 'admin', labelKey: 'automation.conditionBuilder.valUserRoleAdmin' },
-  ],
+  'fault.category': optionsFor(FAULT_CATEGORIES, 'faultCategory'),
+  'fault.priority': optionsFor(FAULT_PRIORITIES, 'faultPriority'),
+  'fault.status': optionsFor(FAULT_STATUSES, 'faultStatus'),
+  'document.type': optionsFor(DOCUMENT_TYPES, 'documentType'),
 };
 
 export function ConditionBuilder({ conditions, onChange, disabled }: ConditionBuilderProps) {

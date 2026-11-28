@@ -22,6 +22,7 @@ import { AutomationRulesPage } from './AutomationRulesPage';
 
 const deleteMutate = vi.fn();
 const updateMutate = vi.fn();
+const runMutate = vi.fn();
 
 const rules = [
   {
@@ -48,6 +49,7 @@ vi.mock('@ppt/api-client', () => ({
   })),
   useDeleteAutomationRule: vi.fn(() => ({ mutateAsync: deleteMutate, isPending: false })),
   useUpdateAutomationRule: vi.fn(() => ({ mutateAsync: updateMutate, isPending: false })),
+  useRunAutomationRule: vi.fn(() => ({ mutateAsync: runMutate, isPending: false })),
 }));
 
 function renderPage() {
@@ -85,6 +87,7 @@ describe('AutomationRulesPage mutation feedback', () => {
   beforeEach(() => {
     deleteMutate.mockReset();
     updateMutate.mockReset();
+    runMutate.mockReset();
   });
 
   afterEach(() => {
@@ -126,8 +129,29 @@ describe('AutomationRulesPage mutation feedback', () => {
     await waitFor(() => expect(hasToast(/update failed/i)).toBe(true));
   });
 
-  it('does not offer "Run now" — there is no manual-execution endpoint', () => {
+  it('runs a rule through POST /automation/rules/{id}/run and reports the result', async () => {
+    runMutate.mockResolvedValueOnce({
+      logId: 'log-1',
+      status: 'success',
+      actions: [{ type: 'send_email', name: 'E-mail', status: 'completed', durationMs: 5 }],
+    });
     renderPage();
-    expect(screen.queryByRole('button', { name: /run now/i })).not.toBeInTheDocument();
+
+    const runButtons = screen.getAllByRole('button', { name: /run now/i });
+    // Offered for manual and scheduled rules.
+    expect(runButtons).toHaveLength(2);
+    fireEvent.click(runButtons[0]);
+
+    await waitFor(() => expect(hasToast(/rule ran/i)).toBe(true));
+    expect(runMutate).toHaveBeenCalledWith({ id: 'rule-manual' });
+  });
+
+  it('surfaces an error toast when a run fails', async () => {
+    runMutate.mockRejectedValueOnce(new Error('engine down'));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /run now/i })[0]);
+
+    await waitFor(() => expect(hasToast(/engine down/i)).toBe(true));
   });
 });

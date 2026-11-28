@@ -3840,7 +3840,11 @@
           "invalidEmails": "Érvénytelen e-mail-cím(ek): {{emails}}",
           "timeRequired": "Az időpont megadása kötelező"
         }
-      }
+      },
+      "deleted": "Ütemezés törölve.",
+      "deleteFailed": "Nem sikerült törölni az ütemezést.",
+      "runQueued": "A kimutatás futtatása sorba állítva. Hamarosan megjelenik az előzményekben.",
+      "runFailed": "Nem sikerült elindítani a kimutatás futtatását."
     },
     "builtin": {
       "faults": "Hibastatisztika",
@@ -3873,7 +3877,6 @@
         "reports": "Kimutatások",
         "schedules": "Ütemezések"
       },
-      "newReport": "+ Új kimutatás",
       "newSchedule": "+ Új ütemezés",
       "keyMetrics": "Fő mutatók",
       "trends": "Trendek",
@@ -3881,12 +3884,25 @@
       "analytics": "Elemzések",
       "monthlyPerformance": "Havi teljesítmény",
       "buildingPerformance": "Épületek teljesítménye",
-      "savedReports": "Mentett kimutatások",
-      "noReports": "Még nem hozott létre kimutatást",
-      "createFirstReport": "Első kimutatás létrehozása",
-      "createdOn": "Létrehozva: {{date}}",
-      "public": "Nyilvános",
-      "createSchedule": "Ütemezés létrehozása"
+      "createSchedule": "Ütemezés létrehozása",
+      "generate": {
+        "title": "Kimutatás készítése",
+        "description": "Válasszon kimutatást, időszakot és formátumot. A kis kimutatások azonnal letöltődnek, a nagyobbak a háttérben készülnek el, és utána töltődnek le.",
+        "report": "Kimutatás",
+        "format": "Formátum",
+        "from": "Ettől",
+        "to": "Eddig",
+        "submit": "Készítés és letöltés",
+        "generating": "Készül…",
+        "success": "A kimutatás elkészült.",
+        "failed": "Nem sikerült elkészíteni a kimutatást.",
+        "invalidRange": "A kezdő dátum nem lehet későbbi a záró dátumnál."
+      },
+      "deleteSchedule": {
+        "title": "Törli az ütemezést?",
+        "message": "A(z) „{{name}}” ütemezés és a futtatási előzményei törlődnek.",
+        "confirm": "Törlés"
+      }
     }
   },
   "settings": {
@@ -5649,10 +5665,12 @@
       "pausedMessage": "A(z) „{{name}}” szüneteltetve lett.",
       "updateErrorTitle": "A frissítés sikertelen",
       "updateErrorMessage": "Az automatizálási szabályt nem sikerült frissíteni.",
-      "runSuccessTitle": "Szabály elindítva",
+      "runSuccessTitle": "A szabály lefutott",
       "runSuccessMessage": "A(z) „{{name}}” most fut.",
-      "runErrorTitle": "A futtatás sikertelen",
-      "runErrorMessage": "Az automatizálási szabályt nem sikerült futtatni."
+      "runErrorTitle": "A szabály futtatása sikertelen",
+      "runErrorMessage": "A szabályt nem sikerült futtatni.",
+      "runPartialTitle": "A szabály hibákkal futott le",
+      "runMessage": "„{{name}}” {{count}} műveletet hajtott végre. A részletek a futtatási naplóban."
     },
     "ruleCard": {
       "unknownTrigger": "Ismeretlen kiváltó",
@@ -5724,10 +5742,6 @@
       "categoryDocuments": "Dokumentumok",
       "categoryAnnouncements": "Közlemények",
       "categoryVoting": "Szavazás",
-      "categoryGuests": "Vendégek",
-      "categoryMaintenance": "Karbantartás",
-      "categoryMeters": "Mérőórák",
-      "categoryLeases": "Bérletek",
       "eventFaultCreated": "Hiba létrehozva",
       "eventFaultStatusChanged": "Hiba állapota megváltozott",
       "eventPaymentReceived": "Fizetés beérkezett",
@@ -5735,11 +5749,7 @@
       "eventDocumentUploaded": "Dokumentum feltöltve",
       "eventAnnouncementPublished": "Közlemény közzétéve",
       "eventVoteStarted": "Szavazás elindult",
-      "eventVoteEnded": "Szavazás befejeződött",
-      "eventGuestRegistered": "Vendég regisztrálva",
-      "eventMaintenanceScheduled": "Karbantartás ütemezve",
-      "eventMeterReadingDue": "Mérőóra-leolvasás esedékes",
-      "eventLeaseExpiring": "Bérlet lejár"
+      "eventVoteEnded": "Szavazás befejeződött"
     },
     "conditionBuilder": {
       "title": "Feltételek",
@@ -5748,7 +5758,6 @@
       "emptyBody": "A feltételek szűrik, mikor fut az automatizálás. Feltételek nélkül minden megfelelő kiváltóra lefut.",
       "and": "ÉS",
       "selectPlaceholder": "Válasszon...",
-      "valuePlaceholder": "Érték",
       "removeCondition": "Feltétel eltávolítása",
       "allMustBeTrue": "Az automatizálás futásához minden feltételnek teljesülnie kell.",
       "fieldFaultCategory": "Hiba kategóriája",
@@ -5759,7 +5768,6 @@
       "fieldDaysOverdue": "Késedelmes napok",
       "fieldDocumentType": "Dokumentum típusa",
       "fieldDocumentSize": "Dokumentum mérete (MB)",
-      "fieldUserRole": "Felhasználói szerep",
       "fieldBuilding": "Épület",
       "fieldUnit": "Egység",
       "opEquals": "egyenlő",
@@ -5774,29 +5782,43 @@
       "opIsNotEmpty": "nem üres",
       "opInList": "egyike a következőknek",
       "opNotInList": "nem egyike a következőknek",
-      "valFaultCategoryElectrical": "Elektromos",
-      "valFaultCategoryPlumbing": "Vízvezeték",
-      "valFaultCategoryHvac": "Fűtés/Légkondicionálás",
-      "valFaultCategoryStructural": "Szerkezeti",
-      "valFaultCategoryOther": "Egyéb",
-      "valFaultPriorityLow": "Alacsony",
-      "valFaultPriorityMedium": "Közepes",
-      "valFaultPriorityHigh": "Magas",
-      "valFaultPriorityCritical": "Kritikus",
-      "valFaultStatusReported": "Bejelentve",
-      "valFaultStatusAcknowledged": "Visszaigazolva",
-      "valFaultStatusInProgress": "Folyamatban",
-      "valFaultStatusResolved": "Megoldva",
-      "valFaultStatusClosed": "Lezárva",
-      "valDocumentTypeContract": "Szerződés",
-      "valDocumentTypeInvoice": "Számla",
-      "valDocumentTypeReport": "Jelentés",
-      "valDocumentTypeMinutes": "Jegyzőkönyv",
-      "valDocumentTypeOther": "Egyéb",
-      "valUserRoleOwner": "Tulajdonos",
-      "valUserRoleTenant": "Bérlő",
-      "valUserRoleManager": "Kezelő",
-      "valUserRoleAdmin": "Rendszergazda"
+      "fieldDaysOpen": "Nyitott napok",
+      "faultCategory": {
+        "plumbing": "Vízvezeték",
+        "electrical": "Elektromos",
+        "heating": "Fűtés",
+        "structural": "Szerkezeti",
+        "exterior": "Külső",
+        "elevator": "Lift",
+        "common_area": "Közös terület",
+        "security": "Biztonság",
+        "cleaning": "Takarítás",
+        "other": "Egyéb"
+      },
+      "faultPriority": {
+        "low": "Alacsony",
+        "medium": "Közepes",
+        "high": "Magas",
+        "urgent": "Sürgős"
+      },
+      "faultStatus": {
+        "new": "Új",
+        "triaged": "Értékelve",
+        "in_progress": "Folyamatban",
+        "waiting_parts": "Alkatrészre vár",
+        "scheduled": "Ütemezve",
+        "resolved": "Megoldva",
+        "closed": "Lezárva",
+        "reopened": "Újranyitva"
+      },
+      "documentType": {
+        "contracts": "Szerződések",
+        "invoices": "Számlák",
+        "reports": "Jelentések",
+        "manuals": "Kézikönyvek",
+        "certificates": "Tanúsítványok",
+        "other": "Egyéb"
+      }
     },
     "actionBuilder": {
       "title": "Műveletek",
@@ -5819,18 +5841,24 @@
       "typeSendNotificationDesc": "Push vagy e-mail értesítés küldése",
       "typeSendEmail": "E-mail küldése",
       "typeSendEmailDesc": "E-mail küldése a megadott címzetteknek",
-      "typeCreateTask": "Feladat létrehozása",
-      "typeCreateTaskDesc": "Új feladat vagy munkamegrendelés létrehozása",
       "typeUpdateStatus": "Állapot frissítése",
       "typeUpdateStatusDesc": "Egy elem állapotának módosítása",
       "typeAssignUser": "Felhasználó hozzárendelése",
       "typeAssignUserDesc": "Hozzárendelés felhasználóhoz vagy csapathoz",
-      "typeAddTag": "Címke hozzáadása",
-      "typeAddTagDesc": "Címke vagy jelölés hozzáadása",
       "typeWebhook": "Webhook meghívása",
       "typeWebhookDesc": "Adatok küldése külső szolgáltatásnak",
       "typeDelay": "Késleltetés hozzáadása",
-      "typeDelayDesc": "Várakozás a következő művelet előtt"
+      "typeDelayDesc": "Várakozás a következő művelet előtt",
+      "typeGenerateReport": "Kimutatás készítése",
+      "typeGenerateReportDesc": "Beépített kimutatást készít és e-mailben elküldi",
+      "recipientsPlaceholder": "Címzettek: managers, reporter, assignee, unit_residents vagy felhasználói azonosítók",
+      "emailBodyPlaceholder": "Üzenet szövege (támogatja a {{fault.title}} helyőrzőket)",
+      "reportLabel": "Kimutatás",
+      "reportFormatLabel": "Kimutatás formátuma",
+      "reportPeriodDays": "nap visszamenőleg",
+      "statusLabel": "Új állapot",
+      "selectStatus": "Válasszon állapotot",
+      "assignUserPlaceholder": "A felelős felhasználó azonosítója"
     },
     "createPage": {
       "back": "Vissza a szabályokhoz",
@@ -5982,7 +6010,7 @@
     "templates": {
       "weekly_maintenance_report": {
         "name": "Heti karbantartási jelentés",
-        "description": "Hetente összefoglalót küld a kezelőknek a nyitott karbantartási kérésekről"
+        "description": "Hetente PDF kimutatást küld e-mailben a kezelőknek a hibákról"
       },
       "overdue_payment_reminder": {
         "name": "Késedelmes fizetési emlékeztető",
@@ -5990,11 +6018,11 @@
       },
       "high_priority_fault_escalation": {
         "name": "Magas prioritású hibák eszkalálása",
-        "description": "Automatikusan kiosztja a magas prioritású hibákat és értesíti a kezelőt"
+        "description": "Értesíti a kezelőket és e-mailt küld, ha magas prioritású hibát jelentenek"
       },
       "monthly_statement_generation": {
-        "name": "Havi elszámolás",
-        "description": "Minden hónap 1. napján elkészíti és elküldi a havi elszámolást"
+        "name": "Havi fogyasztási kimutatás",
+        "description": "Minden hónap 1. napján e-mailben elküldi a kezelőknek a fogyasztási kimutatást"
       },
       "actionTypes": {
         "generate_report": "Jelentés készítése",

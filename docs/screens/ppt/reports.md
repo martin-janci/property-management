@@ -23,6 +23,7 @@ owner: pm-frontend
 
 ## Agent Log
 
+- 2026-11-25 — agent: gap audit 3.1 (reports + automations implemented). **Reports tab** is no longer an empty report-builder stub: it is an on-demand generator (`GenerateReportForm`) for the four built-in reports (faults / voting / occupancy / consumption) over a date range in PDF / Excel / CSV via `POST /api/v1/reports/export` (`useGenerateReport`: inline base64 for small reports, otherwise polls `/export/{job}/status` for the presigned link). **Backend:** real generator (`services/report_generator.rs`, CSV + XLSX + PDF) and a report worker (`services/report_worker.rs`) that turns pending `report_executions` and queued export jobs into files in S3 and e-mails recipients (attachment up to 10 MB, else link). **Schedules:** row actions "Run now" (`POST /schedules/{id}/run`) and "Delete" (`DELETE /schedules/{id}`, with confirmation) are wired. **Fix:** execution history + download link were snake_case on the wire but camelCase in the UI (start times / file names rendered `undefined`); now normalised in `@ppt/api-client`. Tests: `routes/groups/reports.actions.route.test.tsx`, `packages/api-client/src/reports/executions.api.test.ts`.
 - 2026-11-15 — agent: react-web (code-review-ppt-web-core-reports-route-stub-analytics). Removed the unwired **Dashboard / analytics** tab from `ReportsPage` + `ReportsPageRoute`. It was a Potemkin surface: the route fed hardcoded empty objects (`kpis=[]`, `buildings=[]`, zero-valued `trendAnalysis`/`periodComparison`, `trendLines=[]`) into KPI cards and trend/building charts, backed by api-client functions (`getAnalyticsSummary`, `getBuildingAnalytics`, `getTrendAnalysis`, `getTrendLines`, `comparePeriods`) that targeted `/api/v1/reports/analytics/*` + `/trends/*` routes the reports router never registers and that had **zero callers**. Deleted those 5 dead client fns and the 5 orphaned dashboard components (`AnalyticsChart`, `BuildingMetricsCard`, `KPICard`, `PeriodComparisonChart`, `TrendChart`). The route now defaults to the backend-wired **Schedules** tab. Regression test: `routes/groups/reports.no-analytics-stub.route.test.tsx`. Status unchanged (the removed surface was never wired). NOTE: the **Reports** (report-builder) tab remains an honest empty stub — no `/definitions` table by design (#2198), route passes no `onCreateReport`/`onPreviewReport` — left as a separate concern.
 - 2026-11-04 — agent: localized the page shell (`reports.page.*`): heading now "Zostavy a analýzy" in sk, tabs, section headings, chart titles, empty state; report dates use the active language.
 - 2026-11-04 — agent: schedule detail (`/reports/schedules/:scheduleId`) reads the schedule from the org schedule list and shows a spinner or a translated not-found state instead of stub details; "{frequency} at {time}" is translated (R3 #24). Status unchanged.
@@ -41,6 +42,11 @@ owner: pm-frontend
 - [x] [w] Update schedule (cron expression, recipients, enabled)
 - [x] [w] Enable / disable schedule (enabled toggle in EditScheduleModal)
 - [x] [w] Create new schedule (POST /schedules → create_schedule; useCreateSchedule wired in ReportsPageRoute)
+
+### On-demand generation (gap audit 3.1)
+- [x] [w] Generate a built-in report for a period in PDF / Excel / CSV and download it
+- [x] [w] Run a schedule now
+- [x] [w] Delete a schedule (with confirmation)
 
 ### Execution History (Story 81.2)
 - [x] [w] List executions with status filter

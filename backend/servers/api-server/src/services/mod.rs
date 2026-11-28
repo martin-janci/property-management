@@ -4,6 +4,7 @@ pub mod accounting;
 pub mod actions;
 pub mod auth;
 pub mod auth_policy;
+pub mod automation_engine;
 pub mod document_generation;
 pub mod email;
 pub mod feature_service;
@@ -16,6 +17,8 @@ pub mod oauth;
 pub mod push;
 pub mod quiet_hours;
 pub mod quiet_hours_drain;
+pub mod report_generator;
+pub mod report_worker;
 pub mod scheduler;
 pub mod stripe;
 pub mod syndication;
@@ -27,6 +30,7 @@ pub mod workflow_executor;
 pub use accounting::AccountingService;
 pub use auth::AuthService;
 pub use auth_policy::{AuthPolicyEnforcer, AuthPolicyError};
+pub use automation_engine::{AutomationEngine, AutomationWorker, AutomationWorkerConfig};
 #[allow(unused_imports)]
 pub use document_generation::DocumentGenerationService;
 pub use email::EmailService;
@@ -47,6 +51,7 @@ pub use push::{
 };
 #[allow(unused_imports)]
 pub use quiet_hours_drain::{QuietHoursDrainConfig, QuietHoursDrainWorker};
+pub use report_worker::{ReportWorker, ReportWorkerConfig};
 pub use scheduler::{Scheduler, SchedulerConfig};
 pub use syndication::SyndicationService;
 pub use totp::TotpService;
