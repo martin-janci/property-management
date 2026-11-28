@@ -1703,6 +1703,35 @@ pub async fn list_portal_connections(
     Ok(Json(Vec::new()))
 }
 
+/// Resolve the public API base URL used to build the portal webhook callback
+/// URL handed to the external provider.
+///
+/// Fails closed with `500 CONFIG_ERROR` when `API_BASE_URL` is unset or empty,
+/// rather than defaulting to a placeholder/example domain. An operator-unowned
+/// host silently breaks inbound webhooks and, if registered by a third party,
+/// could receive real HMAC-signed tenant payloads. Mirrors the fail-closed
+/// secret handling in the portal webhook receiver (`handle_portal_webhook`'s
+/// `CONFIG_ERROR` guard). The returned value has any trailing slash trimmed so
+/// the callback path is appended cleanly.
+fn resolve_webhook_base_url(
+    raw: Option<String>,
+) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
+    raw.map(|s| s.trim().trim_end_matches('/').to_string())
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| {
+            tracing::error!(
+                "API_BASE_URL is not configured — refusing to issue a portal webhook URL"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "CONFIG_ERROR",
+                    "Public API base URL is not configured; cannot issue portal webhook URL",
+                )),
+            )
+        })
+}
+
 /// Create portal connection.
 #[utoipa::path(
     post,
@@ -1745,8 +1774,10 @@ pub async fn create_portal_connection(
     })?;
 
     let connection_id = Uuid::new_v4();
-    let base_url =
-        std::env::var("API_BASE_URL").unwrap_or_else(|_| "https://api.ppt.example.com".to_string());
+
+    // Fail closed when the public base URL is not configured — never hand the
+    // external portal provider a webhook URL on a placeholder/example domain.
+    let base_url = resolve_webhook_base_url(std::env::var("API_BASE_URL").ok())?;
 
     Ok((
         StatusCode::CREATED,
@@ -2346,5 +2377,47 @@ mod tests {
         let req = make_rates_request(MAX_BATCH_SIZE + 1);
         let err = validate_push_rates(&req).unwrap_err();
         assert_eq!(err.0, "BATCH_TOO_LARGE");
+    }
+
+    // ---- portal webhook base-URL resolution (fail-closed) ----
+    //
+    // Regression for the hardcoded `https://api.ppt.example.com` fallback in
+    // `create_portal_connection`: an unset/empty `API_BASE_URL` must fail
+    // closed (`500 CONFIG_ERROR`) rather than issue a webhook URL on an
+    // operator-unowned placeholder domain.
+
+    #[test]
+    fn webhook_base_url_rejects_unset() {
+        let (status, body) = resolve_webhook_base_url(None).unwrap_err();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.0.code, "CONFIG_ERROR");
+    }
+
+    #[test]
+    fn webhook_base_url_rejects_empty_or_blank() {
+        for raw in ["", "   ", "\t\n"] {
+            let (status, body) = resolve_webhook_base_url(Some(raw.to_string())).unwrap_err();
+            assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+            assert_eq!(body.0.code, "CONFIG_ERROR");
+        }
+    }
+
+    #[test]
+    fn webhook_base_url_never_defaults_to_example_domain() {
+        // The old placeholder must never be produced from an unset value.
+        assert!(resolve_webhook_base_url(None).is_err());
+    }
+
+    #[test]
+    fn webhook_base_url_accepts_configured_value_and_trims_trailing_slash() {
+        let got = resolve_webhook_base_url(Some("https://api.ppt.example.org/".to_string()))
+            .expect("configured base URL must be accepted");
+        assert_eq!(got, "https://api.ppt.example.org");
+        // The resulting callback URL has exactly one slash before the path.
+        let webhook_url = format!("{}/api/v1/integrations/webhooks/portal/{}", got, "cid");
+        assert_eq!(
+            webhook_url,
+            "https://api.ppt.example.org/api/v1/integrations/webhooks/portal/cid"
+        );
     }
 }
