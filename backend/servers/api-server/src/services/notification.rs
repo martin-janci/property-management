@@ -272,6 +272,49 @@ fn nil_id_group_retention_deadline(now: DateTime<Utc>) -> DateTime<Utc> {
     now + Duration::days(NIL_ID_GROUP_RETENTION_DAYS)
 }
 
+/// Outcome of evaluating a nil-id event-type group when it is touched: the
+/// metrics cohort, the group's real staleness horizon, and whether the group
+/// has gone stale and must have its running count + retention window reset
+/// before the incoming notification is appended.
+///
+/// Extracting this from the `send` call site is what lets the cohort/retention
+/// metric and the reset decision be driven by the group's *own* history
+/// (`created_at` / `latest_notification_at`) and asserted in a unit test,
+/// rather than recomputed from `now` (which made the logged cohort a constant
+/// and left the retention constants without a real consumer).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct NilIdGroupTouch {
+    cohort: GroupCohort,
+    retention_deadline: DateTime<Utc>,
+    needs_reset: bool,
+}
+
+/// Evaluate a nil-id event-type group that is about to receive a notification.
+///
+/// * `created_at` — when the group was first created (drives the metrics
+///   cohort: a group created before the #3863 cutoff is a legacy singleton).
+/// * `latest_notification_at` — when the group was last touched (drives the
+///   retention deadline and the staleness decision).
+/// * `now` — the current instant.
+fn evaluate_nil_id_group_touch(
+    created_at: DateTime<Utc>,
+    latest_notification_at: DateTime<Utc>,
+    now: DateTime<Utc>,
+) -> NilIdGroupTouch {
+    // NOTE (pre-fix placeholder): this mirrors the original call-site defect —
+    // the cohort and deadline are recomputed from `now` (so the cohort is
+    // always `PostGrouping`) and no group is ever flagged for reset, so the
+    // retention constants have no real consumer. The `fix:` commit threads the
+    // group's own `created_at` / `latest_notification_at` through and derives
+    // the staleness decision from the retention window.
+    let _ = (created_at, latest_notification_at);
+    NilIdGroupTouch {
+        cohort: group_cohort(now),
+        retention_deadline: nil_id_group_retention_deadline(now),
+        needs_reset: false,
+    }
+}
+
 /// Notification service for sending notifications across channels.
 pub struct NotificationService {
     pool: DbPool,
@@ -1275,6 +1318,58 @@ mod tests {
         assert!(
             nil_id_group_retention_deadline(fresh_latest) > now,
             "a group idle for less than the retention window is not yet resettable"
+        );
+    }
+
+    /// IG3 regression (issue #3909): when a nil-id event-type group is touched,
+    /// the evaluation that feeds the metrics log + reset path must be driven by
+    /// the group's own history — `created_at` for the cohort, and
+    /// `latest_notification_at` for the retention deadline / staleness — not by
+    /// `now`. Pre-fix the call site passed `now` to `group_cohort` (so the
+    /// cohort was always `PostGrouping`) and performed no reset (so a stale
+    /// group accumulated forever). This drives a stale, pre-cutoff nil-id group
+    /// through the evaluation and asserts both defects are fixed.
+    #[test]
+    fn stale_nil_id_group_touch_uses_group_history_and_flags_reset() {
+        let cutoff = DateTime::<Utc>::from_timestamp(NOTIFICATION_GROUPING_3863_CUTOFF_UNIX, 0)
+            .expect("cutoff constant is a valid timestamp");
+        // A long-lived group: created before the #3863 cutoff and idle well past
+        // the retention window as of `now`.
+        let created_at = cutoff - Duration::days(5);
+        let now = cutoff + Duration::days(365);
+        let latest_notification_at = now - Duration::days(NIL_ID_GROUP_RETENTION_DAYS + 1);
+
+        let touch = evaluate_nil_id_group_touch(created_at, latest_notification_at, now);
+
+        assert_eq!(
+            touch.cohort,
+            GroupCohort::PreGrouping,
+            "cohort must reflect the group's created_at, not now (a pre-cutoff \
+             group is PreGrouping even when touched long after the cutoff)"
+        );
+        assert_eq!(
+            touch.retention_deadline,
+            nil_id_group_retention_deadline(latest_notification_at),
+            "the retention deadline must be derived from the group's last \
+             activity, not from now"
+        );
+        assert!(
+            touch.needs_reset,
+            "a nil-id group idle past the retention window must be flagged for \
+             reset so the retention constants have a real consumer"
+        );
+
+        // A group last touched inside the window is not reset, and a group
+        // created at/after the cutoff is bucketed as PostGrouping.
+        let fresh = evaluate_nil_id_group_touch(
+            cutoff + Duration::days(1),
+            now - Duration::days(1),
+            now,
+        );
+        assert_eq!(fresh.cohort, GroupCohort::PostGrouping);
+        assert!(
+            !fresh.needs_reset,
+            "a nil-id group touched inside the retention window must not be reset"
         );
     }
 }
