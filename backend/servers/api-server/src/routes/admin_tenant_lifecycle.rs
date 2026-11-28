@@ -202,8 +202,14 @@ async fn restore_handler(
     // Write to a tempfile so tenant-ops can stream it back in.
     let tmpdir = std::env::temp_dir();
     let tmpfile = tmpdir.join(format!("ppt-restore-{}.tar.gz", Uuid::new_v4()));
-    std::fs::write(&tmpfile, &bytes)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("write tmp: {e}")))?;
+    std::fs::write(&tmpfile, &bytes).map_err(|e| {
+        // The io::Error carries the temp path; log it, don't return it.
+        tracing::error!(path = ?tmpfile, error = %e, "restore tempfile write failed");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            INTERNAL_ERROR_BODY.to_string(),
+        )
+    })?;
 
     let manifest = load_manifest()?;
     let report = restore_tenant_export(&state.db, &tmpfile, &manifest)
@@ -225,6 +231,13 @@ async fn restore_handler(
 // ============================================================================
 // Helpers
 // ============================================================================
+
+/// Fixed, client-safe phrase returned for any *internal* tenant-lifecycle
+/// failure. The real cause — filesystem paths, internal script paths, raw
+/// `sqlx`/tarball errors carried by [`tenant_ops::TenantOpsError`] — is logged
+/// server-side and never surfaced to the caller (leak hardening: an admin
+/// error body must not expose server paths or internal infrastructure detail).
+const INTERNAL_ERROR_BODY: &str = "internal error during tenant lifecycle operation";
 
 /// Server-controlled root that every tenant export is confined to. A deploy
 /// can relocate it via `PPT_EXPORT_ROOT`; otherwise exports land under
@@ -283,16 +296,25 @@ fn load_manifest() -> Result<TenantDataManifest, (StatusCode, String)> {
         .map(PathBuf::from)
         .unwrap_or_else(|_| TenantDataManifest::default_path());
     TenantDataManifest::load(&path).map_err(|e| {
+        // Log the real path + cause server-side; never return either to the
+        // client (`{path:?}` previously leaked the server-side manifest path).
+        tracing::error!(path = ?path, error = %e, "tenant manifest load failed");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("manifest load failed at {path:?}: {e}"),
+            INTERNAL_ERROR_BODY.to_string(),
         )
     })
 }
 
 fn internal(e: tenant_ops::TenantOpsError) -> (StatusCode, String) {
+    // `TenantOpsError`'s Display embeds internal detail (OS paths from
+    // io::Error, internal script paths, raw sqlx/tarball errors). Log it, but
+    // return only the fixed opaque phrase to the caller.
     tracing::error!(error = %e, "tenant-ops error");
-    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        INTERNAL_ERROR_BODY.to_string(),
+    )
 }
 
 #[cfg(test)]
@@ -352,5 +374,61 @@ mod tests {
     #[test]
     fn resolve_export_dir_defaults_to_root_when_absent() {
         assert_eq!(resolve_export_dir(None).unwrap(), export_root());
+    }
+
+    // Regression (code-review: tenant-lifecycle path leak): the client-facing
+    // error body for an internal failure must never carry internal detail —
+    // filesystem paths, internal script paths, or raw DB/tarball errors. Those
+    // belong in the server log only; the caller gets a fixed, opaque phrase.
+
+    #[test]
+    fn internal_error_does_not_leak_paths_or_internal_detail() {
+        // `TenantOpsError`'s Display embeds an internal script path and the
+        // offending table name — exactly the kind of detail we must not return.
+        let leaky = tenant_ops::TenantOpsError::ManifestStale("secret_internal_table".to_string());
+        let rendered = leaky.to_string();
+        // Precondition: the error genuinely carries detail we have to hide.
+        assert!(
+            rendered.contains("check-rls-coverage.sh"),
+            "test precondition changed: {rendered:?}"
+        );
+        assert!(rendered.contains("secret_internal_table"));
+
+        let (status, body) = internal(leaky);
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(
+            !body.contains("check-rls-coverage.sh"),
+            "client body leaked an internal script path: {body:?}"
+        );
+        assert!(
+            !body.contains("secret_internal_table"),
+            "client body leaked internal detail: {body:?}"
+        );
+        assert!(
+            !body.contains('/'),
+            "client body still contains a path-like component: {body:?}"
+        );
+    }
+
+    #[test]
+    fn load_manifest_failure_does_not_leak_filesystem_path() {
+        // Forcing a load failure must not surface the server-side manifest path
+        // (previously interpolated via `{path:?}`) to the client.
+        let bogus = "/var/lib/ppt-nonexistent/secret-manifest-location.json";
+        // Safe here: edition 2021, and no other test mutates this var.
+        std::env::set_var("PPT_TENANT_MANIFEST_PATH", bogus);
+        let result = load_manifest();
+        std::env::remove_var("PPT_TENANT_MANIFEST_PATH");
+
+        let (status, body) = result.expect_err("a missing manifest must error");
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(
+            !body.contains("secret-manifest-location") && !body.contains(bogus),
+            "client body leaked the manifest filesystem path: {body:?}"
+        );
+        assert!(
+            !body.contains('/'),
+            "client body still contains a path-like component: {body:?}"
+        );
     }
 }
