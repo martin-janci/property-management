@@ -8647,6 +8647,14 @@
         "markReadFailed": "Warnung konnte nicht als gelesen markiert werden",
         "resolveFailed": "Warnung konnte nicht aufgelöst werden"
       }
+    },
+    "alert": {
+      "resolved": "Gelöst",
+      "markRead": "Als gelesen markieren",
+      "resolve": "Lösen",
+      "metric": "Kennzahl: {{name}}",
+      "current": "Aktuell: {{value}}",
+      "threshold": "Schwellenwert: {{value}}"
     }
   },
   "documentTemplates": {

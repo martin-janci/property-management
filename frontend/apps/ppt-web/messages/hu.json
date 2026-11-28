@@ -8647,6 +8647,14 @@
         "markReadFailed": "Nem sikerült a riasztást olvasottként megjelölni",
         "resolveFailed": "Nem sikerült a riasztást megoldani"
       }
+    },
+    "alert": {
+      "resolved": "Megoldva",
+      "markRead": "Megjelölés olvasottként",
+      "resolve": "Megoldás",
+      "metric": "Mutató: {{name}}",
+      "current": "Jelenlegi: {{value}}",
+      "threshold": "Küszöbérték: {{value}}"
     }
   },
   "documentTemplates": {

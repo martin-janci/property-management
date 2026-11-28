@@ -8819,6 +8819,14 @@
         "markReadFailed": "Nie udało się oznaczyć alertu jako przeczytanego",
         "resolveFailed": "Nie udało się rozwiązać alertu"
       }
+    },
+    "alert": {
+      "resolved": "Rozwiązano",
+      "markRead": "Oznacz jako przeczytane",
+      "resolve": "Rozwiąż",
+      "metric": "Metryka: {{name}}",
+      "current": "Bieżąca: {{value}}",
+      "threshold": "Próg: {{value}}"
     }
   },
   "documentTemplates": {

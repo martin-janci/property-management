@@ -9192,6 +9192,14 @@
         "markReadFailed": "Could not mark alert as read",
         "resolveFailed": "Could not resolve alert"
       }
+    },
+    "alert": {
+      "resolved": "Resolved",
+      "markRead": "Mark Read",
+      "resolve": "Resolve",
+      "metric": "Metric: {{name}}",
+      "current": "Current: {{value}}",
+      "threshold": "Threshold: {{value}}"
     }
   },
   "governmentPortal": {
