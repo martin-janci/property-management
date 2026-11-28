@@ -15,6 +15,38 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use uuid::Uuid;
 
+/// Payment-matching confidence weights (see [`score_invoice_match`]). Kept as
+/// named `dec!` constants — parsed at compile time, in one place — so production
+/// scoring and the tests that pin it can never drift apart, and a future edit to
+/// a weight is a single, reviewable change. The weights sum to at most 1.0, then
+/// are clamped.
+///
+/// Variable-symbol match — the primary "auto-match by reference" signal
+/// (FR-16.8 / BR-16.8.1) and the only one strong enough on its own to clear the
+/// auto-suggest threshold.
+const WEIGHT_VARIABLE_SYMBOL: Decimal = dec!(0.8);
+/// Amount corroboration when the line pays the invoice's remaining balance exactly.
+const WEIGHT_AMOUNT_EXACT: Decimal = dec!(0.15);
+/// Amount corroboration when the line is a partial payment (`0 < line ≤ remaining`).
+const WEIGHT_AMOUNT_PARTIAL: Decimal = dec!(0.05);
+/// Counterparty-IBAN corroboration when the line's payer account is the invoice
+/// contact's IBAN.
+const WEIGHT_COUNTERPARTY_IBAN: Decimal = dec!(0.05);
+
+/// Auto-suggest threshold: a (line, invoice) pair whose confidence is at least
+/// this is surfaced as a suggestion; below it the line stays unmatched for manual
+/// review.
+const AUTO_SUGGEST_THRESHOLD: Decimal = dec!(0.5);
+
+/// Whether a bank statement line and an invoice are denominated in the same
+/// currency. Compared case-insensitively since bank exports vary in ISO-code
+/// casing (`"eur"` vs `"EUR"`). A mismatch means the amounts are not comparable
+/// and a shared variable symbol must not auto-suggest a cross-currency invoice,
+/// so such a pair must never match.
+fn same_currency(line_currency: &str, invoice_currency: &str) -> bool {
+    line_currency.eq_ignore_ascii_case(invoice_currency)
+}
+
 /// Normalise an IBAN for comparison: drop all whitespace and upper-case it, so
 /// `"sk11 1000"` and `"SK111000"` compare equal. Bank exports vary in casing
 /// and grouping; the counterparty IBAN on a statement line and the IBAN stored
@@ -66,8 +98,7 @@ fn score_invoice_match(
     // amounts across currencies are not comparable, and a shared variable symbol
     // must not auto-suggest a cross-currency invoice. Mismatched currency scores
     // zero — below any threshold — so the line stays unmatched for manual review.
-    // Compared case-insensitively since bank exports vary in ISO-code casing.
-    if !line.currency.eq_ignore_ascii_case(&invoice.currency) {
+    if !same_currency(&line.currency, &invoice.currency) {
         return Decimal::ZERO;
     }
 
@@ -76,16 +107,16 @@ fn score_invoice_match(
     // 1. Variable Symbol match (highest weight).
     if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol) {
         if l_vs == i_vs && !l_vs.is_empty() {
-            confidence += dec!(0.8);
+            confidence += WEIGHT_VARIABLE_SYMBOL;
         }
     }
 
     // 2. Amount match (corroboration / tie-breaker).
     let remaining_amount = invoice.total_amount - invoice.paid_amount;
     if line.amount == remaining_amount {
-        confidence += dec!(0.15);
+        confidence += WEIGHT_AMOUNT_EXACT;
     } else if line.amount > Decimal::ZERO && line.amount <= remaining_amount {
-        confidence += dec!(0.05);
+        confidence += WEIGHT_AMOUNT_PARTIAL;
     }
 
     // 3. Counterparty IBAN match (corroboration / tie-breaker). When several
@@ -94,7 +125,7 @@ fn score_invoice_match(
     //    actually owns the originating IBAN above its VS-only peers.
     if let Some(l_iban) = line_iban {
         if contact_iban.get(&invoice.contact_id).map(String::as_str) == Some(l_iban) {
-            confidence += dec!(0.05);
+            confidence += WEIGHT_COUNTERPARTY_IBAN;
         }
     }
 
@@ -281,7 +312,7 @@ impl AccountingService {
             })
             .collect();
 
-        let threshold = dec!(0.5);
+        let threshold = AUTO_SUGGEST_THRESHOLD;
 
         for line in lines {
             if line.match_state != "unmatched" && line.match_state != "suggested" {
@@ -609,36 +640,61 @@ mod tests {
         assert_eq!(AccountingService::statement_account_iban(None), "");
     }
 
-    // The payment-matching confidence weights are hardcoded decimal literals in
-    // `run_payment_matcher`. They used to be built with `Decimal::from_str("..").unwrap()`
-    // — a runtime parse that could panic on a typo and carried a needless unwrap on
-    // a constant. They are now `dec!` literals, parsed at compile time. This test
-    // pins their exact values and the documented 0..1 scoring invariants so a future
-    // edit to a weight can't silently drift the auto-suggest behaviour (FR-16.8):
+    // The payment-matching confidence weights and the auto-suggest threshold are
+    // named `dec!` constants (parsed at compile time, in one place). This test
+    // references those same constants — not re-declared local copies — so it
+    // genuinely pins production scoring: a future edit to a weight that broke an
+    // invariant would fail here rather than passing against a stale literal. It
+    // asserts the documented 0..1 scoring invariants (FR-16.8):
     //   - a Variable-Symbol match alone (0.8) must clear the auto-suggest threshold
     //     (0.5), since VS is the only signal strong enough on its own;
     //   - amount/IBAN corroboration alone must NOT clear it;
     //   - the full weight set must sum to exactly 1.0 (the clamped maximum).
     #[test]
     fn confidence_weights_match_documented_scoring_invariants() {
-        let threshold = dec!(0.5);
-        let w_vs = dec!(0.8);
-        let w_amount_exact = dec!(0.15);
-        let w_amount_partial = dec!(0.05);
-        let w_iban = dec!(0.05);
-
         // VS match alone clears the auto-suggest threshold.
-        assert!(w_vs >= threshold, "VS match must auto-suggest on its own");
+        assert!(
+            WEIGHT_VARIABLE_SYMBOL >= AUTO_SUGGEST_THRESHOLD,
+            "VS match must auto-suggest on its own"
+        );
         // Corroboration signals alone must never clear the threshold.
-        assert!(w_amount_exact < threshold);
-        assert!(w_amount_partial < threshold);
-        assert!(w_iban < threshold);
+        assert!(WEIGHT_AMOUNT_EXACT < AUTO_SUGGEST_THRESHOLD);
+        assert!(WEIGHT_AMOUNT_PARTIAL < AUTO_SUGGEST_THRESHOLD);
+        assert!(WEIGHT_COUNTERPARTY_IBAN < AUTO_SUGGEST_THRESHOLD);
         // Exact-amount corroboration outweighs partial-amount corroboration.
-        assert!(w_amount_exact > w_amount_partial);
+        assert!(WEIGHT_AMOUNT_EXACT > WEIGHT_AMOUNT_PARTIAL);
         // The strongest combination (VS + exact amount + IBAN) sums to the
         // documented maximum of 1.0, so the `.min(Decimal::ONE)` clamp is exact,
         // never lossy.
-        assert_eq!(w_vs + w_amount_exact + w_iban, Decimal::ONE);
+        assert_eq!(
+            WEIGHT_VARIABLE_SYMBOL + WEIGHT_AMOUNT_EXACT + WEIGHT_COUNTERPARTY_IBAN,
+            Decimal::ONE
+        );
+    }
+
+    // The exact weight values are a contract (they appear in docs and drive the
+    // scored output asserted elsewhere), so pin them literally too: the invariants
+    // above would still hold under a proportional rescale of every weight, which
+    // would nonetheless change the numeric confidence surfaced to users.
+    #[test]
+    fn confidence_weights_have_expected_values() {
+        assert_eq!(WEIGHT_VARIABLE_SYMBOL, dec!(0.8));
+        assert_eq!(WEIGHT_AMOUNT_EXACT, dec!(0.15));
+        assert_eq!(WEIGHT_AMOUNT_PARTIAL, dec!(0.05));
+        assert_eq!(WEIGHT_COUNTERPARTY_IBAN, dec!(0.05));
+        assert_eq!(AUTO_SUGGEST_THRESHOLD, dec!(0.5));
+    }
+
+    // The currency guard is case-insensitive and rejects differing currencies.
+    // Pinned directly on the helper so the cross-currency invariant is anchored
+    // independently of the full scoring path.
+    #[test]
+    fn same_currency_is_case_insensitive_and_rejects_mismatches() {
+        assert!(same_currency("EUR", "EUR"));
+        assert!(same_currency("eur", "EUR"));
+        assert!(same_currency("Eur", "eUR"));
+        assert!(!same_currency("EUR", "CZK"));
+        assert!(!same_currency("CZK", "EUR"));
     }
 
     fn ts_line(amount: Decimal, currency: &str, vs: Option<&str>) -> BankStatementLine {
