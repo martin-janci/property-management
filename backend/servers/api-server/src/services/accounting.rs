@@ -43,6 +43,66 @@ fn closest_due_date<T>(
         .collect()
 }
 
+/// Confidence that bank statement `line` pays `invoice`, as a `0.0..=1.0` score.
+///
+/// Signals (the weights sum to at most 1.0, then are clamped):
+/// 1. Variable-symbol match — 0.8, the primary "auto-match by reference" signal
+///    (FR-16.8 / BR-16.8.1) and the only one strong enough on its own to clear
+///    the auto-suggest threshold.
+/// 2. Amount corroboration — 0.15 when the line pays the invoice's remaining
+///    balance exactly, 0.05 when it is a partial payment (`0 < line ≤ remaining`).
+/// 3. Counterparty-IBAN corroboration — 0.05 when the line's payer account is the
+///    invoice contact's IBAN.
+///
+/// `line_iban` is the line's counterparty IBAN already in canonical form (see
+/// [`normalize_iban`]); `contact_iban` maps each contact id to its canonical IBAN.
+fn score_invoice_match(
+    line: &BankStatementLine,
+    invoice: &Invoice,
+    line_iban: Option<&str>,
+    contact_iban: &HashMap<Uuid, String>,
+) -> Decimal {
+    // A bank line and an invoice in different currencies are never a match:
+    // amounts across currencies are not comparable, and a shared variable symbol
+    // must not auto-suggest a cross-currency invoice. Mismatched currency scores
+    // zero — below any threshold — so the line stays unmatched for manual review.
+    // Compared case-insensitively since bank exports vary in ISO-code casing.
+    if !line.currency.eq_ignore_ascii_case(&invoice.currency) {
+        return Decimal::ZERO;
+    }
+
+    let mut confidence = Decimal::ZERO;
+
+    // 1. Variable Symbol match (highest weight).
+    if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol) {
+        if l_vs == i_vs && !l_vs.is_empty() {
+            confidence += dec!(0.8);
+        }
+    }
+
+    // 2. Amount match (corroboration / tie-breaker).
+    let remaining_amount = invoice.total_amount - invoice.paid_amount;
+    if line.amount == remaining_amount {
+        confidence += dec!(0.15);
+    } else if line.amount > Decimal::ZERO && line.amount <= remaining_amount {
+        confidence += dec!(0.05);
+    }
+
+    // 3. Counterparty IBAN match (corroboration / tie-breaker). When several
+    //    invoices share a variable symbol (e.g. a tenant's recurring monthly
+    //    invoices), a matching payer account promotes the invoice whose contact
+    //    actually owns the originating IBAN above its VS-only peers.
+    if let Some(l_iban) = line_iban {
+        if contact_iban.get(&invoice.contact_id).map(String::as_str) == Some(l_iban) {
+            confidence += dec!(0.05);
+        }
+    }
+
+    // Confidence is a 0..1 score; the weights above sum to at most 1.0, but
+    // clamp defensively so future signals can't overflow the documented range.
+    confidence.min(Decimal::ONE)
+}
+
 #[derive(Debug, Deserialize)]
 struct CsvLine {
     date: String,
@@ -249,48 +309,12 @@ impl AccountingService {
                 .filter(|i| !i.is_empty());
 
             for invoice in &open_invoices {
-                let mut confidence = Decimal::ZERO;
-
-                // 1. Variable Symbol match (highest weight) — the primary
-                //    "auto-match by reference" signal (FR-16.8 / BR-16.8.1). It
-                //    is the only signal strong enough on its own to clear the
-                //    auto-suggest threshold; amount and IBAN below are
-                //    corroboration that breaks ties between VS-sharing invoices.
-                if let (Some(l_vs), Some(i_vs)) = (&line.variable_symbol, &invoice.variable_symbol)
-                {
-                    if l_vs == i_vs && !l_vs.is_empty() {
-                        confidence += dec!(0.8);
-                    }
-                }
-
-                // 2. Amount match (corroboration / tie-breaker)
-                let remaining_amount = invoice.total_amount - invoice.paid_amount;
-                if line.amount == remaining_amount {
-                    confidence += dec!(0.15);
-                } else if line.amount > Decimal::ZERO && line.amount <= remaining_amount {
-                    confidence += dec!(0.05);
-                }
-
-                // 3. Counterparty IBAN match (corroboration / tie-breaker).
-                //    When several invoices share a variable symbol (e.g. a
-                //    tenant's recurring monthly invoices), a matching payer
-                //    account promotes the invoice whose contact actually owns
-                //    the originating IBAN above its VS-only peers.
-                if let Some(l_iban) = &line_iban {
-                    if contact_iban.get(&invoice.contact_id) == Some(l_iban) {
-                        confidence += dec!(0.05);
-                    }
-                }
-
-                // 4. Date proximity is not scored here: it only breaks ties
-                //    between equal-confidence candidates below (see
-                //    `closest_due_date`), so it can never lift a line over the
-                //    auto-suggest threshold on its own.
-
-                // Confidence is a 0..1 score; the weights above sum to at most
-                // 1.0, but clamp defensively so future signals can't overflow
-                // the documented range.
-                let confidence = confidence.min(Decimal::ONE);
+                // Per-(line, invoice) confidence. Date proximity is deliberately
+                // NOT part of the score: it only breaks ties between equal-
+                // confidence candidates below (see `closest_due_date`), so it can
+                // never lift a line over the auto-suggest threshold on its own.
+                let confidence =
+                    score_invoice_match(&line, invoice, line_iban.as_deref(), &contact_iban);
 
                 if confidence >= threshold {
                     scored.push((invoice, confidence));
@@ -615,5 +639,87 @@ mod tests {
         // documented maximum of 1.0, so the `.min(Decimal::ONE)` clamp is exact,
         // never lossy.
         assert_eq!(w_vs + w_amount_exact + w_iban, Decimal::ONE);
+    }
+
+    fn ts_line(amount: Decimal, currency: &str, vs: Option<&str>) -> BankStatementLine {
+        BankStatementLine {
+            id: Uuid::new_v4(),
+            statement_id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            booking_date: d(2026, 3, 14),
+            amount,
+            currency: currency.to_string(),
+            counterparty_iban: None,
+            variable_symbol: vs.map(|s| s.to_string()),
+            raw_ref: None,
+            match_state: "unmatched".to_string(),
+        }
+    }
+
+    fn inv(total: Decimal, paid: Decimal, currency: &str, vs: Option<&str>) -> Invoice {
+        let now = Utc::now();
+        Invoice {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            contact_id: Uuid::new_v4(),
+            number: "2026-001".to_string(),
+            issue_date: d(2026, 3, 1),
+            due_date: d(2026, 3, 15),
+            taxable_supply_date: None,
+            currency: currency.to_string(),
+            total_amount: total,
+            base_amount: total,
+            vat_amount: Decimal::ZERO,
+            variable_symbol: vs.map(|s| s.to_string()),
+            status: InvoiceStatus::Issued,
+            paid_amount: paid,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    // Regression (code-review: matcher ignored currency): a bank statement line
+    // must never be matched to an invoice denominated in a DIFFERENT currency.
+    // Amounts across currencies are not comparable, and a shared variable symbol
+    // must not auto-suggest a cross-currency invoice. Here a 100 EUR line shares
+    // VS "1234" and an equal nominal amount with a 100 CZK invoice — before the
+    // fix this scored 0.8 (VS) + 0.15 (exact amount) = 0.95 and was auto-suggested;
+    // it must now score exactly zero, below any threshold.
+    #[test]
+    fn cross_currency_line_and_invoice_never_match() {
+        let empty: HashMap<Uuid, String> = HashMap::new();
+        let line = ts_line(dec!(100), "EUR", Some("1234"));
+        let invoice = inv(dec!(100), Decimal::ZERO, "CZK", Some("1234"));
+        let score = score_invoice_match(&line, &invoice, None, &empty);
+        assert_eq!(
+            score,
+            Decimal::ZERO,
+            "a EUR line must not match a CZK invoice even on a shared VS and equal nominal amount",
+        );
+    }
+
+    // The currency guard must not suppress a legitimate same-currency match: the
+    // VS match (0.8) plus exact-amount corroboration (0.15) clears the threshold.
+    #[test]
+    fn same_currency_matches_on_variable_symbol_and_amount() {
+        let empty: HashMap<Uuid, String> = HashMap::new();
+        let line = ts_line(dec!(100), "EUR", Some("1234"));
+        let invoice = inv(dec!(100), Decimal::ZERO, "EUR", Some("1234"));
+        let score = score_invoice_match(&line, &invoice, None, &empty);
+        assert_eq!(score, dec!(0.95));
+    }
+
+    // Currency comparison is case-insensitive: "eur" and "EUR" are one currency,
+    // so a case-only difference must still match (bank exports vary in casing).
+    #[test]
+    fn currency_match_is_case_insensitive() {
+        let empty: HashMap<Uuid, String> = HashMap::new();
+        let line = ts_line(dec!(100), "eur", Some("1234"));
+        let invoice = inv(dec!(100), Decimal::ZERO, "EUR", Some("1234"));
+        let score = score_invoice_match(&line, &invoice, None, &empty);
+        assert!(
+            score >= dec!(0.5),
+            "a case-only currency difference must still clear the auto-suggest threshold",
+        );
     }
 }
