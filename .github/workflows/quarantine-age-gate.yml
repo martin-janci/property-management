@@ -28,6 +28,7 @@ on:
       - '.github/quarantine/registry.toml'
       - '.github/workflows/quarantine-age-gate.yml'
       - '.github/workflows/scripts/check-quarantine-age.py'
+      - '.github/workflows/scripts/burndown-series.py'
   # Re-scan dev's tip on merge so a quarantine that ages out between PRs (its
   # deadline simply passes with no new commit touching it) is caught promptly.
   push:
@@ -37,6 +38,7 @@ on:
       - '.github/quarantine/registry.toml'
       - '.github/workflows/quarantine-age-gate.yml'
       - '.github/workflows/scripts/check-quarantine-age.py'
+      - '.github/workflows/scripts/burndown-series.py'
   # Catch deadlines that pass while the branch is idle (no code change fires
   # the path filters above). Daily at 06:00 UTC.
   schedule:
@@ -62,11 +64,38 @@ jobs:
         run: |
           python3 .github/workflows/scripts/check-quarantine-age.py --summary \
             | tee -a "$GITHUB_STEP_SUMMARY"
+      # Machine-readable Hardening burn-down SERIES (vs the point-in-time metric
+      # above). Emits today's per-workstream rows — date, workstream, rows_total,
+      # rows_deleted, rows_converted_to_gated_lane, due_bumps — diffed against the
+      # committed snapshot. The daily schedule is the "appended daily" cadence; we
+      # surface the rows to the step summary (dispatcher-visible over MCP) here.
+      #
+      # TODO(pm-devops): persist the daily append into the committed series file
+      # (.github/quarantine/burndown-series.jsonl). It cannot be a direct CI push
+      # — `dev` is protected and rejects CI pushes with GH006 (see the header of
+      # version-bump.yml). Reuse that workflow's exact pattern: a PAT
+      # (VERSION_BUMP_TOKEN-style) that pushes a branch, opens a PR and arms
+      # squash auto-merge. Until that token/job exists, the committed series grows
+      # only when the generator is run and committed in a normal PR; the number is
+      # still visible daily via the step below. Do not invent a new push path.
+      - name: Burn-down series (today's rows)
+        if: always()
+        run: |
+          {
+            echo ""
+            echo "### Hardening burn-down series — $(date -u +%F)"
+            echo ""
+            echo '```jsonl'
+            python3 .github/workflows/scripts/burndown-series.py --dry-run
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
   self-test:
-    name: Self-test — check-quarantine-age.py fixtures
+    name: Self-test — quarantine script fixtures
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - name: Run fixture-based parser + policy tests
         run: python3 .github/workflows/scripts/check-quarantine-age.py --self-test
+      - name: Run burn-down series fixtures
+        run: python3 .github/workflows/scripts/burndown-series.py --self-test
