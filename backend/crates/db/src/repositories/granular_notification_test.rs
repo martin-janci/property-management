@@ -349,4 +349,93 @@ mod tests {
         assert_eq!(candidates[0].email, "never-logged-in@example.com");
         assert_eq!(candidates[0].notification_count, 3);
     }
+
+    /// Insert a nil-id event-type group with an explicit creation / last-touch
+    /// instant, returning its id. The `(user, event_type, Uuid::nil())` shape
+    /// mirrors what `in_app_group_key` writes for entity-less notifications.
+    async fn add_nil_id_group(
+        pool: &sqlx::PgPool,
+        user_id: Uuid,
+        event_type: &str,
+        count: i32,
+        touched: chrono::DateTime<Utc>,
+    ) -> Uuid {
+        let entity_id = Uuid::nil();
+        let group_key = format!("{event_type}_{entity_id}");
+        sqlx::query(
+            "INSERT INTO notification_groups \
+             (user_id, group_key, entity_type, entity_id, title, notification_count, \
+              latest_notification_at, created_at) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $7) RETURNING id",
+        )
+        .bind(user_id)
+        .bind(&group_key)
+        .bind(event_type)
+        .bind(entity_id)
+        .bind(format!("{event_type} group"))
+        .bind(count)
+        .bind(touched)
+        .fetch_one(pool)
+        .await
+        .unwrap()
+        .get("id")
+    }
+
+    /// Issue #3909 enforcement: a stale nil-id event-type group can be fetched
+    /// by its `(user, entity)` key and reset — its running count is zeroed and
+    /// its retention window restarts at `NOW()` — so the lifetime-stable group
+    /// introduced by #3863 stops accumulating without bound.
+    #[sqlx::test(migrator = "crate::MIGRATOR")]
+    async fn reset_nil_id_group_window_zeroes_count_and_restarts_window(pool: sqlx::PgPool) {
+        let repo = GranularNotificationRepository::new(pool.clone());
+        let user = make_user(&pool, "nil-id-reset@example.com").await;
+
+        // A long-accumulated nil-id group last touched 60 days ago.
+        let stale_at = Utc::now() - Duration::days(60);
+        let group_id = add_nil_id_group(&pool, user, "session_expiring_soon", 500, stale_at).await;
+
+        // The group can be read back by its grouping entity.
+        let fetched = repo
+            .get_group_for_user_entity(user, "session_expiring_soon", Uuid::nil())
+            .await
+            .unwrap()
+            .expect("the nil-id group must be fetchable by its entity key");
+        assert_eq!(fetched.id, group_id);
+        assert_eq!(fetched.notification_count, 500);
+
+        // Reset the stale group.
+        let did_reset = repo
+            .reset_nil_id_group_window(user, group_id)
+            .await
+            .unwrap();
+        assert!(
+            did_reset,
+            "an existing group must report a successful reset"
+        );
+
+        let after = repo
+            .get_group_for_user_entity(user, "session_expiring_soon", Uuid::nil())
+            .await
+            .unwrap()
+            .expect("the group still exists after reset");
+        assert_eq!(
+            after.notification_count, 0,
+            "a reset group's running count must be zeroed"
+        );
+        assert!(
+            after.latest_notification_at > stale_at,
+            "a reset restarts the retention window at NOW()"
+        );
+        assert!(
+            after.created_at > stale_at,
+            "a reset starts a fresh creation instant"
+        );
+
+        // Resetting a non-existent group reports no rows affected.
+        let missing = repo
+            .reset_nil_id_group_window(user, Uuid::new_v4())
+            .await
+            .unwrap();
+        assert!(!missing, "resetting an unknown group id must return false");
+    }
 }

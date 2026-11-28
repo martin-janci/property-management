@@ -233,9 +233,12 @@ const NOTIFICATION_GROUPING_3863_CUTOFF_UNIX: i64 = 1_795_782_349;
 /// Reset semantics: a nil-id event-type group whose `latest_notification_at` is
 /// older than this window is **stale** and eligible for reset — its running
 /// `notification_count` restarts and a fresh retention period begins. Enforcement
-/// is out of band (a retention sweeper); this constant plus
+/// is inline on the in-app group-append path: before a nil-id group is touched,
+/// [`evaluate_nil_id_group_touch`] flags a stale group and the service resets it
+/// via `GranularNotificationRepository::reset_nil_id_group_window` so the group's
+/// lifetime growth stays bounded. This constant plus
 /// [`nil_id_group_retention_deadline`] are the single source of truth for the
-/// policy, so the sweeper and the metrics path never drift apart. Entity-backed
+/// policy, so the enforcement and the metrics path never drift apart. Entity-backed
 /// groups are exempt — they are self-limiting and keep their natural lifetime.
 const NIL_ID_GROUP_RETENTION_DAYS: i64 = 30;
 
@@ -270,6 +273,56 @@ fn group_cohort(created_at: DateTime<Utc>) -> GroupCohort {
 /// `latest_notification_at` precedes the deadline derived from the current time.
 fn nil_id_group_retention_deadline(now: DateTime<Utc>) -> DateTime<Utc> {
     now + Duration::days(NIL_ID_GROUP_RETENTION_DAYS)
+}
+
+/// Whether a nil-id event-type group last touched at `latest_notification_at`
+/// has gone stale by `now`: its retention deadline (last activity +
+/// [`NIL_ID_GROUP_RETENTION_DAYS`]) is in the past. A stale group has its
+/// running `notification_count` and retention window reset before the next
+/// notification is appended, bounding the group's lifetime growth.
+fn nil_id_group_is_stale(latest_notification_at: DateTime<Utc>, now: DateTime<Utc>) -> bool {
+    nil_id_group_retention_deadline(latest_notification_at) < now
+}
+
+/// Outcome of evaluating a nil-id event-type group when it is touched: the
+/// metrics cohort, the group's real staleness horizon, and whether the group
+/// has gone stale and must have its running count + retention window reset
+/// before the incoming notification is appended.
+///
+/// Extracting this from the `send` call site is what lets the cohort/retention
+/// metric and the reset decision be driven by the group's *own* history
+/// (`created_at` / `latest_notification_at`) and asserted in a unit test,
+/// rather than recomputed from `now` (which made the logged cohort a constant
+/// and left the retention constants without a real consumer).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct NilIdGroupTouch {
+    cohort: GroupCohort,
+    retention_deadline: DateTime<Utc>,
+    needs_reset: bool,
+}
+
+/// Evaluate a nil-id event-type group that is about to receive a notification.
+///
+/// * `created_at` — when the group was first created (drives the metrics
+///   cohort: a group created before the #3863 cutoff is a legacy singleton).
+/// * `latest_notification_at` — when the group was last touched (drives the
+///   retention deadline and the staleness decision).
+/// * `now` — the current instant.
+fn evaluate_nil_id_group_touch(
+    created_at: DateTime<Utc>,
+    latest_notification_at: DateTime<Utc>,
+    now: DateTime<Utc>,
+) -> NilIdGroupTouch {
+    NilIdGroupTouch {
+        // Cohort reflects when the group was *created*, so pre- and
+        // post-#3863 cohorts stay distinguishable (passing `now` here made
+        // every logged cohort `PostGrouping`).
+        cohort: group_cohort(created_at),
+        // Staleness horizon is measured from the group's *last activity*, not
+        // the current instant, so it describes the real reset deadline.
+        retention_deadline: nil_id_group_retention_deadline(latest_notification_at),
+        needs_reset: nil_id_group_is_stale(latest_notification_at, now),
+    }
 }
 
 /// Notification service for sending notifications across channels.
@@ -522,21 +575,65 @@ impl NotificationService {
                     // together instead of each landing in its own group.
                     let (group_entity_type, group_entity_id) =
                         in_app_group_key(event_type, entity_id);
-                    // Record the #3863 notification-group cohort + retention
-                    // deadline for metrics. Only nil-id event-type groups carry
-                    // the new unbounded-accumulation / time-based-reset semantics;
+                    // Enforce the #3863 nil-id event-type group retention and
+                    // record cohort metrics. Only nil-id event-type groups carry
+                    // the unbounded-accumulation / time-based-reset semantics;
                     // entity-backed groups are self-limiting and skipped here.
                     if is_nil_id_group(group_entity_id) {
                         let now = Utc::now();
+                        // Read the group's real history (if it already exists) so
+                        // the cohort and staleness reflect when the group was
+                        // created / last touched, not the current instant. A
+                        // not-yet-created group is treated as fresh (created now).
+                        let existing = match self
+                            .granular_notification_repo
+                            .get_group_for_user_entity(user_id, group_entity_type, group_entity_id)
+                            .await
+                        {
+                            Ok(group) => group,
+                            Err(e) => {
+                                tracing::warn!(
+                                    user_id = %user_id,
+                                    error = %e,
+                                    "Failed to read nil-id group for retention check"
+                                );
+                                None
+                            }
+                        };
+                        let (created_at, latest_notification_at) = existing
+                            .as_ref()
+                            .map(|g| (g.created_at, g.latest_notification_at))
+                            .unwrap_or((now, now));
+                        let touch =
+                            evaluate_nil_id_group_touch(created_at, latest_notification_at, now);
                         tracing::info!(
                             target: "notification_group_metrics",
                             user_id = %user_id,
                             event_type = %event_type,
-                            cohort = ?group_cohort(now),
+                            cohort = ?touch.cohort,
                             retention_days = NIL_ID_GROUP_RETENTION_DAYS,
-                            retention_deadline = %nil_id_group_retention_deadline(now),
+                            retention_deadline = %touch.retention_deadline,
+                            needs_reset = touch.needs_reset,
                             "nil-id event-type notification group touched"
                         );
+                        // A stale group has gone past its retention window: reset
+                        // its running count + window before the append below, so
+                        // the group's lifetime growth stays bounded.
+                        if touch.needs_reset {
+                            if let Some(group) = existing.as_ref() {
+                                if let Err(e) = self
+                                    .granular_notification_repo
+                                    .reset_nil_id_group_window(user_id, group.id)
+                                    .await
+                                {
+                                    tracing::error!(
+                                        user_id = %user_id,
+                                        error = %e,
+                                        "Failed to reset stale nil-id notification group"
+                                    );
+                                }
+                            }
+                        }
                     }
                     if let Err(e) = self
                         .granular_notification_repo
@@ -1275,6 +1372,55 @@ mod tests {
         assert!(
             nil_id_group_retention_deadline(fresh_latest) > now,
             "a group idle for less than the retention window is not yet resettable"
+        );
+    }
+
+    /// IG3 regression (issue #3909): when a nil-id event-type group is touched,
+    /// the evaluation that feeds the metrics log + reset path must be driven by
+    /// the group's own history — `created_at` for the cohort, and
+    /// `latest_notification_at` for the retention deadline / staleness — not by
+    /// `now`. Pre-fix the call site passed `now` to `group_cohort` (so the
+    /// cohort was always `PostGrouping`) and performed no reset (so a stale
+    /// group accumulated forever). This drives a stale, pre-cutoff nil-id group
+    /// through the evaluation and asserts both defects are fixed.
+    #[test]
+    fn stale_nil_id_group_touch_uses_group_history_and_flags_reset() {
+        let cutoff = DateTime::<Utc>::from_timestamp(NOTIFICATION_GROUPING_3863_CUTOFF_UNIX, 0)
+            .expect("cutoff constant is a valid timestamp");
+        // A long-lived group: created before the #3863 cutoff and idle well past
+        // the retention window as of `now`.
+        let created_at = cutoff - Duration::days(5);
+        let now = cutoff + Duration::days(365);
+        let latest_notification_at = now - Duration::days(NIL_ID_GROUP_RETENTION_DAYS + 1);
+
+        let touch = evaluate_nil_id_group_touch(created_at, latest_notification_at, now);
+
+        assert_eq!(
+            touch.cohort,
+            GroupCohort::PreGrouping,
+            "cohort must reflect the group's created_at, not now (a pre-cutoff \
+             group is PreGrouping even when touched long after the cutoff)"
+        );
+        assert_eq!(
+            touch.retention_deadline,
+            nil_id_group_retention_deadline(latest_notification_at),
+            "the retention deadline must be derived from the group's last \
+             activity, not from now"
+        );
+        assert!(
+            touch.needs_reset,
+            "a nil-id group idle past the retention window must be flagged for \
+             reset so the retention constants have a real consumer"
+        );
+
+        // A group last touched inside the window is not reset, and a group
+        // created at/after the cutoff is bucketed as PostGrouping.
+        let fresh =
+            evaluate_nil_id_group_touch(cutoff + Duration::days(1), now - Duration::days(1), now);
+        assert_eq!(fresh.cohort, GroupCohort::PostGrouping);
+        assert!(
+            !fresh.needs_reset,
+            "a nil-id group touched inside the retention window must not be reset"
         );
     }
 }
