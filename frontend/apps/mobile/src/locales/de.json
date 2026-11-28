@@ -442,6 +442,13 @@
   "feedback": {
     "title": "Feedback senden",
     "typeLabel": "Feedback-Typ",
+    "types": {
+      "bug": "Fehlerbericht",
+      "feature": "Funktionswunsch",
+      "improvement": "Verbesserung",
+      "question": "Frage",
+      "other": "Sonstiges"
+    },
     "titleLabel": "Titel",
     "titlePlaceholder": "Kurze Zusammenfassung Ihres Feedbacks",
     "descriptionLabel": "Beschreibung",

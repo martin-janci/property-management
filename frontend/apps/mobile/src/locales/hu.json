@@ -442,6 +442,13 @@
   "feedback": {
     "title": "Visszajelzes kuldese",
     "typeLabel": "Visszajelzes tipusa",
+    "types": {
+      "bug": "Hibajelentes",
+      "feature": "Funkciokeres",
+      "improvement": "Fejlesztes",
+      "question": "Kerdes",
+      "other": "Egyeb"
+    },
     "titleLabel": "Cim",
     "titlePlaceholder": "Visszajelzesenek rovid osszefoglalasa",
     "descriptionLabel": "Leiras",

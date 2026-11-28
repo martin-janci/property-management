@@ -208,14 +208,19 @@ export class FeedbackManager {
 
   /**
    * Get feedback type options.
+   *
+   * `labelKey` is an i18n key (not a user-facing string) — this manager is a
+   * plain, framework-free class with no access to the react-i18next hook, so
+   * the consuming screen resolves each key via `t()`. Keeping the label out of
+   * the manager avoids baking hardcoded English into a non-React layer.
    */
-  getFeedbackTypes(): Array<{ type: FeedbackType; label: string; icon: string }> {
+  getFeedbackTypes(): Array<{ type: FeedbackType; labelKey: string; icon: string }> {
     return [
-      { type: 'bug', label: 'Bug Report', icon: '🐛' },
-      { type: 'feature', label: 'Feature Request', icon: '💡' },
-      { type: 'improvement', label: 'Improvement', icon: '✨' },
-      { type: 'question', label: 'Question', icon: '❓' },
-      { type: 'other', label: 'Other', icon: '📝' },
+      { type: 'bug', labelKey: 'feedback.types.bug', icon: '🐛' },
+      { type: 'feature', labelKey: 'feedback.types.feature', icon: '💡' },
+      { type: 'improvement', labelKey: 'feedback.types.improvement', icon: '✨' },
+      { type: 'question', labelKey: 'feedback.types.question', icon: '❓' },
+      { type: 'other', labelKey: 'feedback.types.other', icon: '📝' },
     ];
   }
 

@@ -23,7 +23,7 @@ import { colors } from '../shared/screenStyles';
 
 interface FeedbackTypeOption {
   type: FeedbackType;
-  label: string;
+  labelKey: string;
   icon: string;
 }
 
@@ -144,7 +144,7 @@ export function FeedbackScreen({ onNavigate }: FeedbackScreenProps) {
                 <Text
                   style={[styles.typeLabel, feedbackType === type.type && styles.typeLabelActive]}
                 >
-                  {type.label}
+                  {t(type.labelKey)}
                 </Text>
               </Pressable>
             ))}

@@ -484,6 +484,13 @@
   "feedback": {
     "title": "Odoslat spatnu vazbu",
     "typeLabel": "Typ spatnej vazby",
+    "types": {
+      "bug": "Nahlasenie chyby",
+      "feature": "Poziadavka na funkciu",
+      "improvement": "Vylepsenie",
+      "question": "Otazka",
+      "other": "Ine"
+    },
     "titleLabel": "Nazov",
     "titlePlaceholder": "Kratke zhrnutie vasej spatnej vazby",
     "descriptionLabel": "Popis",

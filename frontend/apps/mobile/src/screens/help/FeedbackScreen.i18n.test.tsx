@@ -35,10 +35,20 @@ const DEVICE_INFO = {
   buildNumber: '456',
 };
 
+const FEEDBACK_TYPES = ['bug', 'feature', 'improvement', 'question', 'other'] as const;
+
 jest.mock('../../onboarding', () => ({
   feedbackManager: {
     updateContext: jest.fn(),
-    getFeedbackTypes: jest.fn(() => [{ type: 'bug', label: 'Bug', icon: '🐛' }]),
+    // Feedback-type labels are i18n KEYS resolved by the screen via `t()`,
+    // never hardcoded English literals (code-review-mobile-rn-feedback-types-i18n).
+    getFeedbackTypes: jest.fn(() => [
+      { type: 'bug', labelKey: 'feedback.types.bug', icon: '🐛' },
+      { type: 'feature', labelKey: 'feedback.types.feature', icon: '💡' },
+      { type: 'improvement', labelKey: 'feedback.types.improvement', icon: '✨' },
+      { type: 'question', labelKey: 'feedback.types.question', icon: '❓' },
+      { type: 'other', labelKey: 'feedback.types.other', icon: '📝' },
+    ]),
     getDeviceInfo: jest.fn(() => DEVICE_INFO),
     generateDiagnosticReport: jest.fn(() => 'diagnostic-report'),
     createFeedback: jest.fn(),
@@ -82,6 +92,50 @@ describe('feedback device-info keys resolve to real, locale-distinct translation
   it('translates the diagnostic-report title away from English in every other locale', () => {
     for (const locale of [sk, cs, de, pl, hu]) {
       expect(locale.feedback.diagnosticReportTitle).not.toBe(en.feedback.diagnosticReportTitle);
+    }
+  });
+});
+
+describe('FeedbackScreen feedback-type i18n', () => {
+  it('renders feedback-type label KEYS, not hardcoded English literals', async () => {
+    await render(<FeedbackScreen onNavigate={jest.fn()} />);
+    // The i18next mock resolves `t(key) => key`, so a localized label surfaces
+    // as its key. If the screen still rendered the manager's old English
+    // `label` field, these key lookups would fail.
+    for (const type of FEEDBACK_TYPES) {
+      expect(screen.getByText(`feedback.types.${type}`)).toBeTruthy();
+    }
+  });
+
+  it('no longer renders the old hardcoded English feedback-type literals', async () => {
+    await render(<FeedbackScreen onNavigate={jest.fn()} />);
+    expect(screen.queryByText('Bug Report')).toBeNull();
+    expect(screen.queryByText('Feature Request')).toBeNull();
+  });
+});
+
+describe('feedback-type keys resolve to real, locale-distinct translations', () => {
+  it('en carries the expected English copy', () => {
+    expect(en.feedback.types.bug).toBe('Bug Report');
+    expect(en.feedback.types.feature).toBe('Feature Request');
+    expect(en.feedback.types.improvement).toBe('Improvement');
+    expect(en.feedback.types.question).toBe('Question');
+    expect(en.feedback.types.other).toBe('Other');
+  });
+
+  it('every locale defines a non-empty label for each feedback type', () => {
+    for (const locale of [en, sk, cs, de, pl, hu]) {
+      for (const type of FEEDBACK_TYPES) {
+        expect(locale.feedback.types[type].length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('translates each feedback-type label away from English in every other locale', () => {
+    for (const locale of [sk, cs, de, pl, hu]) {
+      for (const type of FEEDBACK_TYPES) {
+        expect(locale.feedback.types[type]).not.toBe(en.feedback.types[type]);
+      }
     }
   });
 });
