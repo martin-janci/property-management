@@ -10762,6 +10762,28 @@
       "merge_attempted_at": "2026-11-15T04:35:16Z"
     },
     {
+      "task_id": "code-review-mobile-rn-widget-cache-json-parse",
+      "branch": "auto-impl/code-review-mobile-rn-widget-cache-json-49226ccc",
+      "status": "failed",
+      "claimed_at": "2026-11-28T02:22:05Z",
+      "last_updated": "2026-11-28T02:40:00Z",
+      "status_changed_at": "2026-11-28T02:40:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=none status=done specialist=react-native scope_drift=false code_reuse_warn=none note=already-fixed-on-dev by #3805; widget cache JSON.parse guarded via safeParse + regression test present; stale duplicate, no PR [fast-path pr=none -> failed]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-mobile-rn-widget-settings-alerts-i18n",
       "branch": "auto-impl/code-review-mobile-rn-widget-settings-al-42cc0abb",
       "status": "merged",
@@ -15262,6 +15284,28 @@
       "merge_attempted_at": "2026-11-26T14:38:37Z"
     },
     {
+      "task_id": "code-review-ppt-web-ui-forms-feature-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-forms-feature-i18-cbcf72b0",
+      "status": "failed",
+      "claimed_at": "2026-11-28T02:22:05Z",
+      "last_updated": "2026-11-28T02:40:00Z",
+      "status_changed_at": "2026-11-28T02:40:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=already-resolved on dev by PR #3757 (forms-feature-no-i18n); formsI18n.test.ts passes 797/797; stale duplicate, no PR [fast-path pr=none -> failed]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
       "task_id": "code-review-ppt-web-ui-forms-feature-no-i18n",
       "branch": "auto-impl/code-review-ppt-web-ui-forms-feature-no-0a7a94bb",
       "status": "merged",
@@ -16623,6 +16667,28 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": "pr=none status=blocked specialist=react-web note=finding-not-real: ppt-web registry pages already surface mutation errors via toast (PR#3359/#3009), locked by RegistryPage.toast.test.tsx; no change warranted",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-registry-rules-form-i18n",
+      "branch": "auto-impl/code-review-ppt-web-ui-registry-rules-fo-580edd0a",
+      "status": "failed",
+      "claimed_at": "2026-11-28T02:22:05Z",
+      "last_updated": "2026-11-28T02:40:00Z",
+      "status_changed_at": "2026-11-28T02:40:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": "react-web",
+      "implementer_summary": "pr=none status=done specialist=react-web note=already-resolved on dev by PR #3742 (commit cdad0b510); RegistryRulesForm fully i18n'd, registryRulesI18n.test.ts 7/7; stale duplicate, no PR [fast-path pr=none -> failed]",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
@@ -38296,5 +38362,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-28T00:43:56Z"
+  "archived_at": "2026-11-28T02:42:59Z"
 }

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-28T00:25:54Z",
+  "archived_at": "2026-11-28T02:30:55Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -3854,6 +3854,31 @@
       }
     },
     {
+      "id": "code-review-api-core-accounting-matcher-ignores-currency",
+      "action": "api core accounting matcher ignores currency",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d api-core score=2 vector=bug) | gc1-reconcile 2026-11-28T02:24:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3886,
+        "merged_at": "2026-11-28T00:39:17Z",
+        "at": "2026-11-28T02:24:37Z"
+      }
+    },
+    {
       "id": "code-review-api-core-accounting-nonatomic-statement-ingest",
       "action": "api core accounting nonatomic statement ingest",
       "owner_role": "pm-backend",
@@ -7329,6 +7354,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-rentals-raw-db-error-leak",
+      "action": "api handlers rentals raw db error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d api-handlers score=2 vector=bug) | gc1-reconcile 2026-11-28T02:24:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3885,
+        "merged_at": "2026-11-28T00:37:58Z",
+        "at": "2026-11-28T02:24:37Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-report-content-unbounded",
       "action": "api-handlers moderation.rs report_content — req.reason has no length validation on an endpoint open to all authenticated users; MB-scale rows persistable",
       "owner_role": "pm-backend",
@@ -10263,6 +10313,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-session-role-cast-bypass",
+      "action": "mobile rn session role cast bypass",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-28T02:24:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3884,
+        "merged_at": "2026-11-28T00:40:47Z",
+        "at": "2026-11-28T02:24:37Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-states-untested-hardcoded",
       "action": "mobile rn states untested hardcoded",
       "owner_role": "pm-qa",
@@ -10450,6 +10525,31 @@
         "merged_pr": 2837,
         "merged_at": "2026-08-23T08:37:46Z",
         "at": "2026-08-23T08:39:06Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-voiceassistant-error-deadend",
+      "action": "mobile rn voiceassistant error deadend",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-28T02:24:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3883,
+        "merged_at": "2026-11-28T00:42:29Z",
+        "at": "2026-11-28T02:24:37Z"
       }
     },
     {
@@ -10688,6 +10788,31 @@
         "merged_pr": 3401,
         "merged_at": "2026-11-10T20:32:04Z",
         "at": "2026-11-10T20:42:08Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-widget-apirequest-swallow",
+      "action": "mobile rn widget apirequest swallow",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d mobile-rn score=2 vector=bug) | gc1-reconcile 2026-11-28T02:24:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T02:24:37Z"
       }
     },
     {
@@ -18929,6 +19054,31 @@
         "merged_pr": 3854,
         "merged_at": "2026-11-27T02:28:30Z",
         "at": "2026-11-27T04:24:26Z"
+      }
+    },
+    {
+      "id": "code-review-reality-server-readiness-raw-db-error-leak",
+      "action": "reality server readiness raw db error leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d reality-server score=2 vector=bug) | gc1-reconcile 2026-11-28T02:24:37Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T02:24:37Z"
       }
     },
     {
