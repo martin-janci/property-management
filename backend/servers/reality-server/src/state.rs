@@ -1391,3 +1391,25 @@ mod pm_oauth_client_timeout_tests {
         );
     }
 }
+
+#[cfg(test)]
+mod pm_api_client_build_tests {
+    use super::PmApiClient;
+
+    /// Regression (code-review: reality-server PM API client build `.expect`):
+    /// `PmApiClient::new` used to `.expect("Failed to create HTTP client")`,
+    /// which panics the process on a builder failure (e.g. TLS backend init).
+    /// It now returns a `Result` so the error is propagated to startup and
+    /// surfaced cleanly instead of unwinding. This test pins that contract: the
+    /// constructor returns a fallible `Result` and yields `Ok` on a healthy
+    /// environment. The assertion only compiles while `new` returns `Result`,
+    /// so a revert to a panicking constructor breaks the build here.
+    #[test]
+    fn new_returns_result_and_builds_on_healthy_env() {
+        let client = PmApiClient::new("http://127.0.0.1:9/readiness".to_string(), 5);
+        assert!(
+            client.is_ok(),
+            "PmApiClient::new must return Ok on a healthy environment, not panic",
+        );
+    }
+}
