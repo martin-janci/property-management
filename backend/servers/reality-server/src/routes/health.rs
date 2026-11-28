@@ -197,6 +197,23 @@ async fn check_database(pool: &sqlx::PgPool) -> DependencyHealth {
     }
 }
 
+/// Build the client-facing `DependencyHealth.error` for the PM API dependency.
+///
+/// `/readiness` is a PUBLIC, unauthenticated endpoint and this value is
+/// serialized straight into the response body. The raw PM API probe error
+/// carries internal infrastructure detail — the PM API's URL / host / port and
+/// transport-level failure text (a `reqwest::Error`'s `Display`) — which an
+/// anonymous internet client must never see. Log the full detail server-side
+/// (where ops can still read it) and return a fixed, generic string.
+fn pm_api_health_error(detail: Option<&str>) -> Option<String> {
+    // Log the full detail server-side (where ops can still read it) and return a
+    // fixed, generic string to the public client — never surface `detail`.
+    detail.map(|d| {
+        tracing::error!(error = %d, "PM API readiness probe reported an error");
+        "PM API unavailable".to_string()
+    })
+}
+
 /// Check PM API connectivity and measure latency (Epic 104.1).
 ///
 /// Uses cached result if available and not expired (30 second TTL).
@@ -220,7 +237,7 @@ async fn check_pm_api(state: &AppState) -> DependencyHealth {
             name: "pm_api".to_string(),
             status: health_status,
             latency_ms: Some(cached.latency_ms),
-            error: cached.error,
+            error: pm_api_health_error(cached.error.as_deref()),
         };
     }
 
@@ -257,7 +274,7 @@ async fn check_pm_api(state: &AppState) -> DependencyHealth {
         name: "pm_api".to_string(),
         status: health_status,
         latency_ms: Some(result.latency_ms),
-        error: result.error,
+        error: pm_api_health_error(result.error.as_deref()),
     }
 }
 
@@ -392,5 +409,40 @@ mod tests {
                 "public /readiness body leaked DB detail: found `{needle}` in `{body}`"
             );
         }
+    }
+
+    /// Regression (reality-server public-error-leak): the PM API dependency
+    /// error on the PUBLIC, unauthenticated `/readiness` endpoint is serialized
+    /// straight into the response body. The raw probe error carries the internal
+    /// PM API URL / host / port and transport failure text (from a
+    /// `reqwest::Error`), which an anonymous internet client must never see.
+    /// The public body must be a fixed generic string; ops read the full detail
+    /// from the server log.
+    #[test]
+    fn pm_api_health_error_does_not_leak_internal_detail() {
+        // The kind of detail the fresh-check path builds, e.g.
+        // `format!("Connection failed: {e}")` over a `reqwest::Error` for an
+        // unreachable internal PM API host.
+        let detail = "Connection failed: error sending request for url \
+                      (http://pm-api.internal:8080/health): connection refused";
+
+        let body = pm_api_health_error(Some(detail))
+            .expect("Some(detail) must map to a Some generic string");
+
+        for needle in [
+            "pm-api.internal",
+            ":8080",
+            "http://",
+            "connection refused",
+            "error sending request",
+        ] {
+            assert!(
+                !body.contains(needle),
+                "public /readiness body leaked PM API detail: found `{needle}` in `{body}`"
+            );
+        }
+
+        // No detail → no error field (nothing to sanitize or leak).
+        assert!(pm_api_health_error(None).is_none());
     }
 }
