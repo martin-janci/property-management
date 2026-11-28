@@ -576,80 +576,8 @@
       }
     },
     {
-      "id": "code-review-api-handlers-delegation-xorg-delegate",
-      "action": "api handlers delegation xorg delegate",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T00:24:56Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T00:24:56Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-unit-residents-add-xorg-user",
-      "action": "api handlers unit residents add xorg user",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d api-handlers score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T10:25:35Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-page-hard-navigation",
-      "action": "ppt web ui registry page hard navigation",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T10:25:35Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-08"
-      }
-    },
-    {
       "id": "code-review-api-core-accounting-matcher-ignores-currency",
       "action": "api core accounting matcher ignores currency",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d api-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T10:25:35Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-11-07"
-      }
-    },
-    {
-      "id": "code-review-api-core-accounting-nonatomic-statement-ingest",
-      "action": "api core accounting nonatomic statement ingest",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -1036,6 +964,62 @@
       "first_open_at": "2026-11-27T20:24:52Z",
       "retry_of": "code-review-ppt-web-ui-filedisputedialog-i18n",
       "retry_round": 2
+    },
+    {
+      "id": "code-review-ppt-web-ui-rfqform-i18n-retry2",
+      "action": "[already-resolved-on-dev, no change needed] ppt web ui rfqform i18n [retry 2/2 of failed code-review-ppt-web-ui-rfqform-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=code-review-ppt-web-ui-rfqform-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "code-review-ppt-web-ui-rfqform-i18n",
+      "retry_round": 2
+    },
+    {
+      "id": "code-review-reality-web-inquiry-type-raw-enum-retry2",
+      "action": "[stale-resolved @ 2026-11-10T09:10:40Z: finding already fixed on dev (inquiry-type.ts helper + all locales present, landed c5d7ca5); implementer confirmed no diff needed, no PR] reality web inquiry type raw enum [retry 2/2 of failed code-review-reality-web-inquiry-type-raw-enum]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=code-review-reality-web-inquiry-type-raw-enum reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "code-review-reality-web-inquiry-type-raw-enum",
+      "retry_round": 2
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-pages-no-i18n-retry1",
+      "action": "reality web realtor account pages no i18n [retry 1/2 of failed code-review-reality-web-realtor-account-pages-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=code-review-reality-web-realtor-account-pages-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T18:22:00Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17-retry1",
+      "action": "Review draft PRs #3582 (T33 quarantine tests), #3585 and #3586 (ppt-web locale churn plans), then mark ready or close [retry 1/2 of failed pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17]",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T22:33:22Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
+      "retry_round": 1
     }
   ],
   "generated": "2026-11-25T04:15:10Z"
