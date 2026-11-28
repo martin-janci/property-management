@@ -383,7 +383,26 @@
       "draftNote": "Tento dokument je koncept a je viditelny pouze pro autora a spravce.",
       "archivedNote": "Tento dokument byl archivovan a jiz neni aktivne sdilet.",
       "rlsTitle": "Zabezpeceni na urovni radku",
-      "rlsBody": "Pristup k tomuto dokumentu je vynucen serverem. Zobrazene publikum odrazi kdo jej muze videt."
+      "rlsBody": "Pristup k tomuto dokumentu je vynucen serverem. Zobrazene publikum odrazi kdo jej muze videt.",
+      "audienceLabels": {
+        "organization": "Všichni obyvatelé",
+        "building": "Pouze budova",
+        "unit": "Pouze jednotka",
+        "user": "Konkrétní uživatelé",
+        "public": "Veřejné"
+      },
+      "audienceDescriptions": {
+        "organization": "Viditelné pro každého obyvatele v organizaci.",
+        "building": "Viditelné pro obyvatele konkrétní budovy.",
+        "unit": "Viditelné pouze pro obyvatele konkrétní jednotky.",
+        "user": "Viditelné pouze pro výslovně uvedené uživatele.",
+        "public": "Viditelné pro kohokoli včetně nepřihlášených uživatelů."
+      },
+      "statusLabels": {
+        "published": "Publikováno",
+        "draft": "Koncept",
+        "archived": "Archivováno"
+      }
     },
     "folderMove": {
       "title": "Presunout slozku",

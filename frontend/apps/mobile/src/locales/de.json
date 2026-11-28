@@ -302,7 +302,26 @@
       "draftNote": "Dieses Dokument ist ein Entwurf und nur fur den Autor und Manager sichtbar.",
       "archivedNote": "Dieses Dokument wurde archiviert und wird nicht mehr aktiv geteilt.",
       "rlsTitle": "Zeilenebenensicherheit",
-      "rlsBody": "Der Zugriff auf dieses Dokument wird vom Server erzwungen. Das oben gezeigte Publikum spiegelt wider, wer es sehen kann."
+      "rlsBody": "Der Zugriff auf dieses Dokument wird vom Server erzwungen. Das oben gezeigte Publikum spiegelt wider, wer es sehen kann.",
+      "audienceLabels": {
+        "organization": "Alle Bewohner",
+        "building": "Nur Gebäude",
+        "unit": "Nur Einheit",
+        "user": "Bestimmte Benutzer",
+        "public": "Öffentlich"
+      },
+      "audienceDescriptions": {
+        "organization": "Für jeden Bewohner der Organisation sichtbar.",
+        "building": "Für Bewohner des bestimmten Gebäudes sichtbar.",
+        "unit": "Nur für Bewohner einer bestimmten Einheit sichtbar.",
+        "user": "Nur für ausdrücklich genannte Benutzer sichtbar.",
+        "public": "Für jeden sichtbar, auch für nicht angemeldete Benutzer."
+      },
+      "statusLabels": {
+        "published": "Veröffentlicht",
+        "draft": "Entwurf",
+        "archived": "Archiviert"
+      }
     },
     "folder": {
       "newTitle": "Neuer Ordner",

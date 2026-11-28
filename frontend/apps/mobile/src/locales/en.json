@@ -302,7 +302,26 @@
       "draftNote": "This document is a draft and is only visible to the author and managers.",
       "archivedNote": "This document has been archived and is no longer actively shared.",
       "rlsTitle": "Row-Level Security",
-      "rlsBody": "Access to this document is enforced by the server. The audience shown above reflects who can see it — this cannot be overridden on the device."
+      "rlsBody": "Access to this document is enforced by the server. The audience shown above reflects who can see it — this cannot be overridden on the device.",
+      "audienceLabels": {
+        "organization": "All Residents",
+        "building": "Building Only",
+        "unit": "Unit Only",
+        "user": "Specific Users",
+        "public": "Public"
+      },
+      "audienceDescriptions": {
+        "organization": "Visible to every resident in the organization.",
+        "building": "Visible to residents of the specific building.",
+        "unit": "Visible only to occupants of a specific unit.",
+        "user": "Visible only to explicitly named users.",
+        "public": "Visible to anyone, including unauthenticated users."
+      },
+      "statusLabels": {
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      }
     },
     "preview": {
       "fetching": "Preparing preview…",

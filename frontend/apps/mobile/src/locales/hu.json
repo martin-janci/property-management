@@ -302,7 +302,26 @@
       "draftNote": "Ez a dokumentum piszkozat, es csak a szerzo es a kezelok szamara lathato.",
       "archivedNote": "Ez a dokumentum archivalva lett, es mar nem osztjak meg aktivan.",
       "rlsTitle": "Sor szintu biztonsag",
-      "rlsBody": "A dokumentumhoz valo hozzaferést a szerver kenyszeriti ki. A fent láthátó kozonseg azt tukrozi, ki lathatja azt."
+      "rlsBody": "A dokumentumhoz valo hozzaferést a szerver kenyszeriti ki. A fent láthátó kozonseg azt tukrozi, ki lathatja azt.",
+      "audienceLabels": {
+        "organization": "Minden lakó",
+        "building": "Csak az épület",
+        "unit": "Csak a lakás",
+        "user": "Meghatározott felhasználók",
+        "public": "Nyilvános"
+      },
+      "audienceDescriptions": {
+        "organization": "Látható a szervezet minden lakója számára.",
+        "building": "Látható az adott épület lakói számára.",
+        "unit": "Csak az adott lakás lakói számára látható.",
+        "user": "Csak a kifejezetten megnevezett felhasználók számára látható.",
+        "public": "Bárki számára látható, beleértve a be nem jelentkezett felhasználókat is."
+      },
+      "statusLabels": {
+        "published": "Közzétéve",
+        "draft": "Piszkozat",
+        "archived": "Archiválva"
+      }
     },
     "folder": {
       "newTitle": "Uj mappa",

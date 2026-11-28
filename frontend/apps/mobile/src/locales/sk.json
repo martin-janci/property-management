@@ -304,7 +304,26 @@
       "draftNote": "Tento dokument je koncept a je viditelny iba pre autora a spravcu.",
       "archivedNote": "Tento dokument bol archivovany a uz nie je aktyvne zdielany.",
       "rlsTitle": "Zabezpecenie na urovni riadkov",
-      "rlsBody": "Pristup k tomuto dokumentu je vynuceny serverom. Zobrazene publikum odrazaj tych, kto ho moze vidiet — toto nie je mozne obist na zariadeni."
+      "rlsBody": "Pristup k tomuto dokumentu je vynuceny serverom. Zobrazene publikum odrazaj tych, kto ho moze vidiet — toto nie je mozne obist na zariadeni.",
+      "audienceLabels": {
+        "organization": "Všetci obyvatelia",
+        "building": "Len budova",
+        "unit": "Len jednotka",
+        "user": "Konkrétni používatelia",
+        "public": "Verejné"
+      },
+      "audienceDescriptions": {
+        "organization": "Viditeľné pre každého obyvateľa v organizácii.",
+        "building": "Viditeľné pre obyvateľov konkrétnej budovy.",
+        "unit": "Viditeľné len pre obyvateľov konkrétnej jednotky.",
+        "user": "Viditeľné len pre výslovne určených používateľov.",
+        "public": "Viditeľné pre kohokoľvek vrátane neprihlásených používateľov."
+      },
+      "statusLabels": {
+        "published": "Publikované",
+        "draft": "Koncept",
+        "archived": "Archivované"
+      }
     },
     "preview": {
       "fetching": "Pripravujem nahled…",
