@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-28T16:27:13Z",
+  "archived_at": "2026-11-28T18:29:20Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -15930,6 +15930,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-groupdetail-delete-noop-retry2",
+      "action": "ppt web ui groupdetail delete noop [retry 2/2 of failed code-review-ppt-web-ui-groupdetail-delete-noop]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-28T02:25:22Z (retry_of=code-review-ppt-web-ui-groupdetail-delete-noop reason=failed-no-pr cooldown_ok newest_failure=2026-11-21T00:47:09Z) | gc1-reconcile 2026-11-28T18:24:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T02:25:22Z",
+      "retry_of": "code-review-ppt-web-ui-groupdetail-delete-noop",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T18:24:09Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-guest-report-submission-no-i18n",
       "action": "ppt web ui guest report submission no i18n",
       "owner_role": "pm-backend",
@@ -17523,6 +17544,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-20T18:25:08Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-rfqform-i18n-retry2",
+      "action": "[already-resolved-on-dev, no change needed] ppt web ui rfqform i18n [retry 2/2 of failed code-review-ppt-web-ui-rfqform-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=code-review-ppt-web-ui-rfqform-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z) | gc1-reconcile 2026-11-28T18:24:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "code-review-ppt-web-ui-rfqform-i18n",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T18:24:09Z"
       }
     },
     {
@@ -21568,6 +21610,27 @@
       }
     },
     {
+      "id": "code-review-reality-web-inquiry-type-raw-enum-retry2",
+      "action": "[stale-resolved @ 2026-11-10T09:10:40Z: finding already fixed on dev (inquiry-type.ts helper + all locales present, landed c5d7ca5); implementer confirmed no diff needed, no PR] reality web inquiry type raw enum [retry 2/2 of failed code-review-reality-web-inquiry-type-raw-enum]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=code-review-reality-web-inquiry-type-raw-enum reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z) | gc1-reconcile 2026-11-28T18:24:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "code-review-reality-web-inquiry-type-raw-enum",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T18:24:09Z"
+      }
+    },
+    {
       "id": "code-review-reality-web-inquiry-type-untranslated",
       "action": "reality-web inquiries page renders raw inquiry.type enum via .replace('_',' ') — untranslated for sk/cs/de users",
       "owner_role": "pm-tech-lead",
@@ -22320,6 +22383,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-20T20:27:59Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-realtor-account-pages-no-i18n-retry1",
+      "action": "reality web realtor account pages no i18n [retry 1/2 of failed code-review-reality-web-realtor-account-pages-no-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=code-review-reality-web-realtor-account-pages-no-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T18:22:00Z) | gc1-reconcile 2026-11-28T18:24:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "code-review-reality-web-realtor-account-pages-no-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T18:24:09Z"
       }
     },
     {
@@ -37059,6 +37143,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-21T00:26:25Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17-retry1",
+      "action": "Review draft PRs #3582 (T33 quarantine tests), #3585 and #3586 (ppt-web locale churn plans), then mark ready or close [retry 1/2 of failed pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17]",
+      "owner_role": "pm-scrum-master",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-28T00:23:48Z (retry_of=pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17 reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T22:33:22Z) | gc1-reconcile 2026-11-28T18:24:09Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T00:23:48Z",
+      "retry_of": "pm-scrum-master-review-draft-prs-3582-3585-3586-2026-11-17",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T18:24:09Z"
       }
     },
     {

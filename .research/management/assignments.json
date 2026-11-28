@@ -1,28 +1,6 @@
 {
   "assignments": [
     {
-      "task_id": "gh-issue-3909",
-      "branch": "auto-impl/gh-issue-3909-dbc3501a",
-      "status": "review",
-      "claimed_at": "2026-11-28T14:27:41Z",
-      "last_updated": "2026-11-28T16:33:21Z",
-      "status_changed_at": "2026-11-28T15:29:45Z",
-      "pr_number": 3911,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/3911",
-      "merged_at": null,
-      "specialist": "rust-backend",
-      "implementer_summary": "pr=3911 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=nil-id group retention enforced inline + cohort uses group.created_at; fmt+8-clippy green, api-server non-DB tests 30 pass, IG3 red->green; DB sqlx tests env-only skip (CI green)",
-      "reviewer_summary": "verdict=approve head_oid=d4e13f2993738f7d06d976662c6171cc0040a9be note=scope-drift-legit(api-server+db-repo in rust-backend domain); enforcement fires; IG3+DB tests present; CI green; review posted as COMMENT (self-approve blocked 422)",
-      "last_reviewed_oid": "d4e13f2993738f7d06d976662c6171cc0040a9be",
-      "scope_drift": true,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "code-review-mobile-rn-feedback-types-i18n",
       "branch": "auto-impl/code-review-mobile-rn-feedback-types-i18-087b736b",
       "status": "in-progress",
@@ -131,29 +109,7 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
-    },
-    {
-      "task_id": "code-review-ppt-web-ui-community-list-routes-empty-retry2",
-      "branch": "auto-impl/code-review-ppt-web-ui-community-list-ro-ea4f4a2b",
-      "status": "in-progress",
-      "claimed_at": "2026-11-28T18:28:32Z",
-      "last_updated": "2026-11-28T18:28:32Z",
-      "status_changed_at": "2026-11-28T18:28:32Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-28T16:34:51Z"
+  "generated": "2026-11-28T18:35:03Z"
 }
