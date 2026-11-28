@@ -1,6 +1,9 @@
 # Sprint Status Tracking
 # Generated: 2025-12-21
 # Updated: 2026-05-25 — added test-hardening batch (issues #480-#487)
+# Updated: 2026-11-28 — map-hardening-prs-to-counters (pm-tech-lead): mapped in-sprint merged hardening
+#   PRs to current_sprint counters — quarantine burn-down items_completed 0→3 (PR #3807, registry 201→198),
+#   modules-under-watch stays 0 (hardening PRs landed but no decomposition yet). See current_sprint.notes.
 # Updated: 2026-11-21 — sprint reset (pm-scrum-master): the Epic 6/7A/8A/10A/10B/80/79/82/84/85/9
 #   delivery sprint below is fully `done` (sprint_status: done). The active sprint is now the
 #   hardening/refactor track in `current_sprint:` (modules under watch, release-248 quarantine
@@ -287,12 +290,12 @@ current_sprint:
       name: "New modules under watch (oversized / high-churn refactors)"
       status: in-progress
       items_total: 6        # oversized modules flagged by repo-map / churn; split by domain seam
-      items_completed: 0
+      items_completed: 0    # DoD = module decomposed (split by domain seam) + tests green. 2026-11-28 (pm-tech-lead map-hardening-prs-to-counters): in-sprint hardening PRs HAVE landed against these modules (SSO #3744/#3854/#3856; lease #3702; reports #3786; llm_document #3694) but NONE decompose a module, so completed stays 0. Decomposition triage note landed via PR #3807 (docs/process/triage/2026-11-25-watch-module-decomposition.md) — planning only; refactors land one module per PR.
     release-248-quarantine-burndown:
       name: "release-248 quarantine burn-down (.github/quarantine/registry.toml)"
       status: in-progress
       items_total: 201      # quarantined #[ignore]d Rust tests grandfathered 2026-11-21, due 2027-02-19
-      items_completed: 0    # burn-down target = 0 rows (prefer fix+delete over bumping `due`)
+      items_completed: 3    # burn-down target = 0 rows (prefer fix+delete over bumping `due`). 2026-11-28 (pm-tech-lead map-hardening-prs-to-counters): 3 rows burned down via PR #3807 (merged 2026-11-25) — rag_retrieval_correctness, search_documents_pgvector_model_filter_provenance, get_feature_stats_returns_200 (all pm-backend, already released / no #[ignore]). Registry now 198 rows (201−3); owner split pm-backend 190 / pm-devops 6 / pm-security 2.
     mobile-native-backlog:
       name: "Mobile-native (KMP) backlog"
       status: blocked       # cloud-runner KMP builds unavailable (#2652, #2966); owner pm-devops
@@ -305,15 +308,15 @@ current_sprint:
     #    domain seams. Sizes from docs/repo-map.md "Largest route files" + live tree scan
     #    (2026-11-21). Each stays in-progress until the module is decomposed + tests kept green.
     watch-backend-repositories-vote: in-progress      # crates/db/src/repositories/vote.rs (~103K) — largest repo file
-    watch-reality-server-routes-sso: in-progress      # servers/reality-server/src/routes/sso.rs (~89K)
+    watch-reality-server-routes-sso: in-progress      # servers/reality-server/src/routes/sso.rs (~89K). In-sprint hardening PRs landed (NOT a decomposition): #3744 O(n) amortized pending-session capacity eviction, #3854 sanitize raw DB errors in SSO persistence handlers, #3856 reject backslash-obfuscated open-redirect. Module still oversized — domain-seam split still owed.
     watch-api-server-routes-financial: in-progress    # servers/api-server/src/routes/financial.rs (~85K)
-    watch-backend-repositories-lease: in-progress     # crates/db/src/repositories/lease.rs (~83K)
-    watch-api-server-routes-reports: in-progress      # servers/api-server/src/routes/reports/mod.rs (~80K)
-    watch-backend-repositories-llm-document: in-progress  # crates/db/src/repositories/llm_document.rs (~79K)
+    watch-backend-repositories-lease: in-progress     # crates/db/src/repositories/lease.rs (~83K). In-sprint PR #3702 (lease template delete + dispute term completion) touched this module — feature/gap-audit wiring, not a decomposition; domain-seam split still owed.
+    watch-api-server-routes-reports: in-progress      # servers/api-server/src/routes/reports/mod.rs (~80K). In-sprint PR #3786 (gap-audit rounds 12-16 wiring) touched this module — not a decomposition; domain-seam split still owed.
+    watch-backend-repositories-llm-document: in-progress  # crates/db/src/repositories/llm_document.rs (~79K). In-sprint PR #3694 (RAG embedding search pgvector fix, BIT-352) hardened this module — not a decomposition; domain-seam split still owed.
     # ── Track 2: release-248 quarantine burn-down — registry at .github/quarantine/registry.toml.
     #    201 rows, all due 2027-02-19; owners pm-backend (193), pm-devops (6), pm-security (2).
     #    Gate: .github/workflows/quarantine-age-gate.yml fails CI once a `due` passes. DoD = 0 rows.
-    quarantine-burndown-pm-backend: in-progress       # 193 rows — most are "requires Postgres test DB; run with --ignored"; convert to a gated integration-test lane + delete rows
+    quarantine-burndown-pm-backend: in-progress       # 190 rows remaining (was 193) — 3 burned down 2026-11-25 via PR #3807 (stale rows for already-released tests). Most remaining are "requires Postgres test DB; run with --ignored"; convert to a gated integration-test lane + delete rows
     quarantine-burndown-pm-devops: ready-for-dev       # 6 rows — devops-owned flaky/infra-gated tests
     quarantine-burndown-pm-security: ready-for-dev     # 2 rows — security-owned (RLS/penetration) tests
     # ── Track 3: mobile-native (KMP) backlog — structurally unclaimable in the cloud runner
@@ -330,6 +333,7 @@ current_sprint:
     - "Track 2 (release-248 quarantine burn-down): 201 #[ignore]d Rust tests registered in .github/quarantine/registry.toml on 2026-11-21 with a shared 2027-02-19 (90-day) deadline. Enforced by .github/workflows/quarantine-age-gate.yml (CI fails once a `due` passes). Policy docs/quarantine-policy.md: prefer FIXING the test and DELETING its row over bumping `due`. Burn-down target = 0 rows before the deadline. Owner split: pm-backend 193 / pm-devops 6 / pm-security 2."
     - "Track 3 (mobile-native backlog): the 4 open KMP items are structurally unclaimable in the cloud runner — Gradle/KMP builds are egress-blocked (#2652, compounded by #2966). Owner pm-devops for the cloud-build unblock; until then these stay `blocked`. Per risks.md, pair every mobile-native item with a contract test on jvmTest (not androidTest) so compiled-but-dead stubs are caught, and tag items that need a real device run."
     - "Parked (not one of the three named tracks this reset): NFR baselining (performance / reliability / security) from the 2026-11-20 draft — revisit once the quarantine burn-down frees backend capacity."
+    - "2026-11-28 (pm-tech-lead, map-hardening-prs-to-counters): mapped in-sprint merged hardening PRs to the two active tracks' counters. Track 2 (quarantine burn-down): PR #3807 (merged 2026-11-25) burned down 3 stale pm-backend rows (rag_retrieval_correctness, search_documents_pgvector_model_filter_provenance, get_feature_stats_returns_200) — registry 201→198 (pm-backend 193→190, pm-devops 6, pm-security 2); release-248-quarantine-burndown.items_completed 0→3. Track 1 (modules under watch): hardening PRs landed against SSO (#3744/#3854/#3856), lease (#3702), reports (#3786) and llm_document (#3694), plus the #3807 decomposition triage note (docs/process/triage/2026-11-25-watch-module-decomposition.md) — but NONE decompose a module (the track DoD), so modules-under-watch.items_completed stays 0. Track 3 (mobile-native) unchanged — still blocked on #2652/#2966."
 
   blockers:
     - "Mobile-native backlog (track 3) is blocked on pm-devops unblocking cloud-runner KMP + swagger-ui egress (#2652, #2966). Until fixed, ~4-9 of 72 backlog items remain structurally unclaimable in the cloud."
