@@ -20,7 +20,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 1,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-scrum-master-triage-stale-prs-2026-11-28",
@@ -42,7 +44,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-listings-rs-unstructured-error-body",
@@ -64,7 +68,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-mobile-rn-session-user-unnormalized",
@@ -86,7 +92,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "code-review-reality-server-pm-api-client-build-expect",
@@ -108,7 +116,9 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
     },
     {
       "task_id": "pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21-retry1",
@@ -125,6 +135,52 @@
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null,
+      "quarantined_at": null,
+      "quarantine_reason": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-aichat-first-msg-stale-sid",
+      "branch": "auto-impl/code-review-ppt-web-ui-aichat-first-msg-b0b30924",
+      "status": "in-progress",
+      "claimed_at": "2026-11-28T14:27:41Z",
+      "last_updated": "2026-11-28T14:27:41Z",
+      "status_changed_at": "2026-11-28T14:27:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gh-issue-3909",
+      "branch": "auto-impl/gh-issue-3909-dbc3501a",
+      "status": "in-progress",
+      "claimed_at": "2026-11-28T14:27:41Z",
+      "last_updated": "2026-11-28T14:27:41Z",
+      "status_changed_at": "2026-11-28T14:27:41Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
