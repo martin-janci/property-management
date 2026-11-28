@@ -129,6 +129,32 @@ pub fn router() -> Router<AppState> {
         .route("/units/{unit_id}/ical", get(get_unit_ical_feeds))
 }
 
+/// Log a rental repository/DB error server-side and return a sanitized
+/// `(500, <context>)` tuple for `String`-bodied handlers.
+///
+/// The raw error (`{e}`, which for `sqlx::Error` exposes SQL text, schema,
+/// column and constraint names) is written to the tracing log for operators and
+/// **never** placed in the client response body — only the fixed, caller-chosen
+/// `context` phrase is returned. Handlers MUST route DB errors through this
+/// helper instead of putting `format!("...: {e}")` in the body (code-review
+/// finding: raw DB error leaked in rentals handlers; mirrors the sanitized
+/// convention in `help.rs` and `signatures.rs::db_error_response`).
+fn db_err(context: &str, e: impl std::fmt::Display) -> (StatusCode, String) {
+    tracing::error!(error = %e, context = context, "Rental request database error");
+    (StatusCode::INTERNAL_SERVER_ERROR, context.to_string())
+}
+
+/// `ErrorResponse`-bodied sibling of [`db_err`] for the multipart handlers that
+/// return `Json<ErrorResponse>`. Logs the full error server-side and returns a
+/// fixed `DATABASE_ERROR` body carrying only the sanitized `context` phrase.
+fn db_err_json(context: &str, e: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {
+    tracing::error!(error = %e, context = context, "Rental request database error");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new("DATABASE_ERROR", context.to_string())),
+    )
+}
+
 /// SECURITY (#804): assert that `unit_id` belongs to `org_id`.
 ///
 /// Returns 404 (not 403) on a foreign/missing unit so the endpoint does not
@@ -142,12 +168,7 @@ async fn ensure_unit_in_org(
         .rental_repo
         .unit_belongs_to_org(org_id, unit_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to verify unit ownership: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to verify unit ownership", e))?;
 
     if owns {
         Ok(())
@@ -169,10 +190,7 @@ fn report_err(e: sqlx::Error, ctx: &str) -> (axum::http::StatusCode, String) {
             axum::http::StatusCode::NOT_FOUND,
             "Building not found".to_string(),
         ),
-        e => (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("{ctx}: {e}"),
-        ),
+        e => db_err(ctx, e),
     }
 }
 
@@ -198,12 +216,7 @@ pub async fn get_statistics(
         .rental_repo
         .get_statistics(tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get statistics: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get statistics", e))?;
 
     Ok(Json(stats))
 }
@@ -226,12 +239,7 @@ pub async fn get_sync_status(
         .rental_repo
         .get_platform_sync_status(tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get sync status: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get sync status", e))?;
 
     Ok(Json(status))
 }
@@ -258,12 +266,7 @@ pub async fn list_connections(
         .rental_repo
         .get_connections_for_org(tenant.tenant_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list connections: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to list connections", e))?;
 
     Ok(Json(connections))
 }
@@ -294,12 +297,7 @@ pub async fn create_connection(
         .rental_repo
         .create_connection(tenant.tenant_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create connection: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to create connection", e))?;
 
     Ok(Json(connection))
 }
@@ -328,12 +326,7 @@ pub async fn get_connection(
         .rental_repo
         .find_connection_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get connection: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get connection", e))?;
 
     match connection {
         Some(c) => Ok(Json(PlatformConnectionDetail::from(c))),
@@ -369,12 +362,7 @@ pub async fn update_connection(
         .rental_repo
         .update_connection_for_org(tenant.tenant_id, id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update connection: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to update connection", e))?;
 
     match connection {
         Some(c) => Ok(Json(PlatformConnectionDetail::from(c))),
@@ -408,12 +396,7 @@ pub async fn delete_connection(
         .rental_repo
         .delete_connection_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to delete connection: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to delete connection", e))?;
 
     if !deleted {
         return Err((
@@ -447,12 +430,7 @@ pub async fn get_unit_connections(
         .rental_repo
         .get_connections_for_unit_in_org(tenant.tenant_id, unit_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get connections: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get connections", e))?;
 
     Ok(Json(connections))
 }
@@ -498,12 +476,7 @@ pub async fn list_bookings(
         .rental_repo
         .list_bookings(tenant.tenant_id, query.clone())
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list bookings: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to list bookings", e))?;
 
     Ok(Json(BookingsResponse {
         bookings,
@@ -540,12 +513,7 @@ pub async fn create_booking(
         .rental_repo
         .check_availability(data.unit_id, data.check_in, data.check_out)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to check availability: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to check availability", e))?;
 
     if !available {
         return Err((
@@ -558,12 +526,7 @@ pub async fn create_booking(
         .rental_repo
         .create_booking(tenant.tenant_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create booking: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to create booking", e))?;
 
     Ok(Json(booking))
 }
@@ -597,12 +560,7 @@ pub async fn get_booking(
         .rental_repo
         .find_booking_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get booking: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get booking", e))?;
 
     match booking {
         Some(b) => Ok(Json(b)),
@@ -638,12 +596,7 @@ pub async fn update_booking(
         .rental_repo
         .update_booking_for_org(tenant.tenant_id, id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update booking: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to update booking", e))?;
 
     match booking {
         Some(b) => Ok(Json(b)),
@@ -679,12 +632,7 @@ pub async fn update_booking_status(
         .rental_repo
         .update_booking_status_for_org(tenant.tenant_id, id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update status: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to update status", e))?;
 
     match booking {
         Some(b) => Ok(Json(b)),
@@ -724,12 +672,7 @@ pub async fn get_booking_with_guests(
         .rental_repo
         .get_booking_with_guests_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get booking: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get booking", e))?;
 
     match result {
         Some(b) => Ok(Json(b)),
@@ -780,12 +723,7 @@ pub async fn get_calendar(
         .rental_repo
         .get_calendar_events(unit_id, query.start_date, query.end_date)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get calendar: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get calendar", e))?;
 
     Ok(Json(events))
 }
@@ -833,12 +771,7 @@ pub async fn check_availability(
         .rental_repo
         .check_availability(unit_id, query.start_date, query.end_date)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to check availability: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to check availability", e))?;
 
     Ok(Json(AvailabilityResponse {
         available,
@@ -872,12 +805,7 @@ pub async fn create_calendar_block(
         .rental_repo
         .create_calendar_block(tenant.tenant_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create block: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to create block", e))?;
 
     Ok(Json(block))
 }
@@ -905,12 +833,7 @@ pub async fn delete_calendar_block(
         .rental_repo
         .delete_calendar_block_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to delete block: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to delete block", e))?;
 
     if !deleted {
         return Err((
@@ -973,12 +896,7 @@ pub async fn list_guests(
         .rental_repo
         .list_guests_for_org(tenant.tenant_id, query)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list guests: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to list guests", e))?;
 
     Ok(Json(guests))
 }
@@ -1005,12 +923,7 @@ pub async fn create_guest(
         .rental_repo
         .create_guest(tenant.tenant_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create guest: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to create guest", e))?;
 
     Ok(Json(guest))
 }
@@ -1045,12 +958,7 @@ pub async fn get_guest(
         .rental_repo
         .find_guest_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get guest: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get guest", e))?;
 
     match guest {
         Some(g) => Ok(Json(g)),
@@ -1093,12 +1001,7 @@ pub async fn update_guest(
         .rental_repo
         .update_guest_for_org(tenant.tenant_id, id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update guest: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to update guest", e))?;
 
     match guest {
         Some(g) => Ok(Json(g)),
@@ -1132,12 +1035,7 @@ pub async fn delete_guest(
         .rental_repo
         .delete_guest_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to delete guest: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to delete guest", e))?;
 
     if !deleted {
         return Err((
@@ -1270,15 +1168,7 @@ pub async fn upload_guest_id_document(
         .rental_repo
         .find_guest_for_org(org_id, id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    format!("Failed to look up guest: {e}"),
-                )),
-            )
-        })?;
+        .map_err(|e| db_err_json("Failed to look up guest", e))?;
     if guest.is_none() {
         return Err((
             StatusCode::NOT_FOUND,
@@ -1396,15 +1286,7 @@ pub async fn upload_guest_id_document(
             },
         )
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    format!("Failed to record ID document: {e}"),
-                )),
-            )
-        })?;
+        .map_err(|e| db_err_json("Failed to record ID document", e))?;
 
     // --- Audit the PII upload (#1760/#1783) ---
     // Log who uploaded which guest's ID document and when. Best-effort: a
@@ -1437,15 +1319,7 @@ pub async fn upload_guest_id_document(
         .rental_repo
         .update_guest_for_org(org_id, id, update)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    format!("Failed to link document to guest: {e}"),
-                )),
-            )
-        })?;
+        .map_err(|e| db_err_json("Failed to link document to guest", e))?;
 
     Ok((StatusCode::CREATED, Json(doc)))
 }
@@ -1483,15 +1357,7 @@ pub async fn extract_guest_id_document(
         .rental_repo
         .latest_guest_id_document_for_org(org_id, id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    format!("Failed to look up ID document: {e}"),
-                )),
-            )
-        })?
+        .map_err(|e| db_err_json("Failed to look up ID document", e))?
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
@@ -1597,12 +1463,7 @@ pub async fn register_guest(
         .rental_repo
         .register_guest_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to register guest: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to register guest", e))?;
 
     match guest {
         Some(g) => Ok(Json(g)),
@@ -1645,12 +1506,7 @@ pub async fn get_checkin_reminders(
         .rental_repo
         .get_upcoming_checkins_needing_registration(tenant.tenant_id, query.days_ahead)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get reminders: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get reminders", e))?;
 
     Ok(Json(reminders))
 }
@@ -1695,12 +1551,7 @@ pub async fn list_reports(
         .rental_repo
         .list_reports(tenant.tenant_id, query.building_id, query.limit)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list reports: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to list reports", e))?;
 
     Ok(Json(reports))
 }
@@ -1794,12 +1645,7 @@ pub async fn get_report(
         .rental_repo
         .find_report_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get report: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get report", e))?;
 
     match report {
         Some(r) => Ok(Json(r)),
@@ -1833,12 +1679,7 @@ pub async fn submit_report(
         .rental_repo
         .submit_report_for_org(tenant.tenant_id, id, tenant.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to submit report: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to submit report", e))?;
 
     match report {
         Some(r) => Ok(Json(r)),
@@ -1878,12 +1719,7 @@ pub async fn create_ical_feed(
         .rental_repo
         .create_ical_feed(tenant.tenant_id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to create feed: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to create feed", e))?;
 
     Ok(Json(feed))
 }
@@ -1913,12 +1749,7 @@ pub async fn update_ical_feed(
         .rental_repo
         .update_ical_feed_for_org(tenant.tenant_id, id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update feed: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to update feed", e))?;
 
     match feed {
         Some(f) => Ok(Json(f)),
@@ -1952,12 +1783,7 @@ pub async fn delete_ical_feed(
         .rental_repo
         .delete_ical_feed_for_org(tenant.tenant_id, id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to delete feed: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to delete feed", e))?;
 
     if !deleted {
         return Err((
@@ -1991,12 +1817,62 @@ pub async fn get_unit_ical_feeds(
         .rental_repo
         .get_ical_feeds_for_unit_in_org(tenant.tenant_id, unit_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get feeds: {}", e),
-            )
-        })?;
+        .map_err(|e| db_err("Failed to get feeds", e))?;
 
     Ok(Json(feeds))
+}
+
+#[cfg(test)]
+mod db_error_leak_tests {
+    use super::*;
+
+    /// A sqlx-style error string carrying internal schema / PII-column detail.
+    const RAW: &str = "error returned from database: column \
+                       \"rental_guests.passport_mrz\" does not exist";
+
+    /// Regression (code-review finding
+    /// `code-review-api-handlers-rentals-raw-db-error-leak`): the `String`-bodied
+    /// rentals handlers must map a repository / database error to a sanitized
+    /// body. The raw error text — which can expose SQL, schema, column or
+    /// constraint names — must NEVER reach the client; it is logged server-side
+    /// instead. Only the fixed, caller-chosen context phrase is returned.
+    #[test]
+    fn db_err_does_not_leak_raw_error() {
+        let (status, body) = db_err("Failed to list bookings", RAW);
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body, "Failed to list bookings");
+        assert!(
+            !body.contains("rental_guests"),
+            "schema detail leaked: {body}"
+        );
+        assert!(!body.contains("column"), "raw SQL detail leaked: {body}");
+        assert!(
+            !body.contains("does not exist"),
+            "raw DB error text leaked: {body}"
+        );
+    }
+
+    /// Same contract for the `Json<ErrorResponse>`-bodied multipart handlers.
+    #[test]
+    fn db_err_json_does_not_leak_raw_error() {
+        let (status, Json(body)) = db_err_json("Failed to look up guest", RAW);
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(body.code, "DATABASE_ERROR");
+        assert_eq!(body.message, "Failed to look up guest");
+        assert!(
+            !body.message.contains("rental_guests"),
+            "schema detail leaked: {}",
+            body.message
+        );
+        assert!(
+            !body.message.contains("column"),
+            "raw SQL detail leaked: {}",
+            body.message
+        );
+        assert!(
+            !body.message.contains("does not exist"),
+            "raw DB error text leaked: {}",
+            body.message
+        );
+    }
 }
