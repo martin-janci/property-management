@@ -576,96 +576,6 @@
       }
     },
     {
-      "id": "code-review-ppt-web-core-privacy-route-unguarded",
-      "action": "ppt web core privacy route unguarded",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d ppt-web-core score=2 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T10:25:35Z",
-      "signal_ref": {
-        "segment": "ppt-web-core",
-        "score": 2,
-        "vector": "bug",
-        "generated": "2026-11-07"
-      }
-    },
-    {
-      "id": "code-review-api-handlers-tenant-lifecycle-path-leak",
-      "action": "api handlers tenant lifecycle path leak",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d api-handlers score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T14:25:21Z",
-      "signal_ref": {
-        "segment": "api-handlers",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-07"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-i18n-hardcoded-screen-strings",
-      "action": "mobile rn i18n hardcoded screen strings",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T14:25:21Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-07"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-nfc-controller-untested",
-      "action": "mobile rn nfc controller untested",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d mobile-rn score=1 vector=test)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T14:25:21Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "test",
-        "generated": "2026-11-07"
-      }
-    },
-    {
-      "id": "code-review-mobile-rn-widget-cache-json-parse",
-      "action": "mobile rn widget cache json parse",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d mobile-rn score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T14:25:21Z",
-      "signal_ref": {
-        "segment": "mobile-rn",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-07"
-      }
-    },
-    {
       "id": "code-review-ppt-web-core-errorhandler-i18n-leak",
       "action": "ppt web core errorhandler i18n leak",
       "owner_role": "pm-backend",
@@ -684,44 +594,8 @@
       }
     },
     {
-      "id": "code-review-ppt-web-ui-forms-feature-i18n",
-      "action": "ppt web ui forms feature i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T14:25:21Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-07"
-      }
-    },
-    {
       "id": "code-review-ppt-web-ui-portfolio-perf-i18n",
       "action": "ppt web ui portfolio perf i18n",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d ppt-web-ui score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-27T14:25:21Z",
-      "signal_ref": {
-        "segment": "ppt-web-ui",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-07"
-      }
-    },
-    {
-      "id": "code-review-ppt-web-ui-registry-rules-form-i18n",
-      "action": "ppt web ui registry rules form i18n",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",

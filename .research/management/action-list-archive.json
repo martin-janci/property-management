@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-28T02:30:55Z",
+  "archived_at": "2026-11-28T02:47:50Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -7608,6 +7608,31 @@
       }
     },
     {
+      "id": "code-review-api-handlers-tenant-lifecycle-path-leak",
+      "action": "api handlers tenant lifecycle path leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d api-handlers score=1 vector=bug) | gc1-reconcile 2026-11-28T02:47:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3890,
+        "merged_at": "2026-11-28T02:46:05Z",
+        "at": "2026-11-28T02:47:49Z"
+      }
+    },
+    {
       "id": "code-review-api-handlers-unbounded-pagination-limit",
       "action": "api-server list endpoints pass user-supplied `?limit=N` to SQL LIMIT unclamped — cheap DoS on ai/*, compliance, vendors, predictive_maintenance",
       "owner_role": "pm-security",
@@ -9333,6 +9358,31 @@
       }
     },
     {
+      "id": "code-review-mobile-rn-i18n-hardcoded-screen-strings",
+      "action": "mobile rn i18n hardcoded screen strings",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-28T02:47:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3888,
+        "merged_at": "2026-11-28T02:45:52Z",
+        "at": "2026-11-28T02:47:49Z"
+      }
+    },
+    {
       "id": "code-review-mobile-rn-imagecompress-width-only-resize",
       "action": "mobile rn imagecompress width only resize",
       "owner_role": "pm-backend",
@@ -9622,6 +9672,30 @@
         "vector": "bug"
       },
       "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-mobile-rn-nfc-controller-untested",
+      "action": "mobile rn nfc controller untested",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d mobile-rn score=1 vector=test) | dev-reconcile 2026-11-28T02:47:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "test",
+        "generated": "2026-11-07"
+      },
+      "dev_reconciled": {
+        "reason": "landed-on-dev",
+        "commit": "8c2f154b9b2412d1434825472d5eacd0acea5b8c",
+        "subject": "code-review-mobile-rn-nfc-controller-untested: cover NFCCredentialManager guest-invitation API paths (#3887)",
+        "at": "2026-11-28T02:47:29Z"
+      }
     },
     {
       "id": "code-review-mobile-rn-nfc-device-clock-expiry",
@@ -10863,6 +10937,31 @@
         "merged_pr": 3537,
         "merged_at": "2026-11-15T04:36:28Z",
         "at": "2026-11-15T06:26:16Z"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-widget-cache-json-parse",
+      "action": "mobile rn widget cache json parse",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d mobile-rn score=1 vector=bug) | gc1-reconcile 2026-11-28T02:47:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T02:47:29Z"
       }
     },
     {
@@ -12970,6 +13069,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-19T06:25:24Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-core-privacy-route-unguarded",
+      "action": "ppt web core privacy route unguarded",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T10:25:35Z (tier1d ppt-web-core score=2 vector=bug) | gc1-reconcile 2026-11-28T02:47:49Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T10:25:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3889,
+        "merged_at": "2026-11-28T02:47:00Z",
+        "at": "2026-11-28T02:47:49Z"
       }
     },
     {
@@ -15497,6 +15621,31 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-forms-feature-i18n",
+      "action": "ppt web ui forms feature i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-28T02:47:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T02:47:29Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-forms-feature-no-i18n",
       "action": "ppt web ui forms feature no i18n",
       "owner_role": "pm-backend",
@@ -16939,6 +17088,31 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-27T22:23:46Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-registry-rules-form-i18n",
+      "action": "ppt web ui registry rules form i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-28T02:47:29Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T02:47:29Z"
       }
     },
     {
