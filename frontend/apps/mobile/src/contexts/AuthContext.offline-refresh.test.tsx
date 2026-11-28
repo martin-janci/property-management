@@ -140,4 +140,41 @@ describe('AuthContext → offline token refresh', () => {
     expect(result.current.isAuthenticated).toBe(true);
     expect(deleteItemAsync).not.toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
   });
+
+  it('restores the session on the freshly rotated token when the stored one is expired and the server is reachable', async () => {
+    // Expired cold start + a reachable server: initialize() must refresh the
+    // token and restore the session on the ROTATED bearer read back from
+    // SecureStore (not the stale stored one). A stateful store makes the
+    // post-refresh read-back return the rotated token.
+    isJwtExpired.mockReturnValue(true);
+
+    const store: Record<string, string | null> = {
+      [ACCESS_TOKEN_KEY]: 'stale-access-token',
+      [REFRESH_TOKEN_KEY]: 'stored-refresh-token',
+      [USER_KEY]: JSON.stringify(storedUser),
+    };
+    getItemAsync.mockImplementation(async (key: string) => store[key] ?? null);
+    setItemAsync.mockImplementation(async (key: string, value: string) => {
+      store[key] = value;
+    });
+
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        accessToken: 'rotated-access-token',
+        refreshToken: 'rotated-refresh-token',
+      }),
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const { result } = await renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.accessToken).toBe('rotated-access-token');
+    // The rotated pair is persisted, and no logout happened.
+    expect(setItemAsync).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'rotated-access-token');
+    expect(setItemAsync).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'rotated-refresh-token');
+    expect(deleteItemAsync).not.toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
+  });
 });
