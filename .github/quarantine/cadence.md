@@ -138,13 +138,63 @@ Regenerate the registry skeleton after any batch lands:
 python3 .github/workflows/scripts/check-quarantine-age.py --census
 ```
 
+## The burn-down series (machine-readable history)
+
+The `--summary` metric above is a *snapshot* — it keeps no history, so
+week-over-week movement is only ever two step-summaries eyeballed side by side.
+The **burn-down series** turns that into an append-only time series:
+
+- **Series (the history):** [`burndown-series.jsonl`](burndown-series.jsonl) —
+  one JSON object per **workstream** (accountable `pm-*` owner) per run, with the
+  four ways that workstream's backlog moved since the previous run:
+
+  ```jsonl
+  {"date": "2026-11-28","workstream": "pm-backend","rows_total": 190,"rows_deleted": 0,"rows_converted_to_gated_lane": 0,"due_bumps": 0}
+  ```
+
+  | Field | Meaning |
+  |---|---|
+  | `date` | run date (YYYY-MM-DD) |
+  | `workstream` | accountable `pm-*` owner (mirrors the `--summary` owner breakdown) |
+  | `rows_total` | OPEN registry rows for that owner (gated-lane rows excluded) |
+  | `rows_deleted` | rows open last run, gone from the registry now (fix-and-delete) |
+  | `rows_converted_to_gated_lane` | rows open last run, now moved to a gated integration lane |
+  | `due_bumps` | rows open in both runs whose deadline moved *later* (a cadence failure) |
+
+- **Snapshot (for the diff):** `burndown-state.json` — the previous run's
+  per-test `{owner, due, gated}`, rewritten each run. This is what the deltas are
+  computed against; do not hand-edit it.
+- **Generator:** `check-quarantine-age.py`'s sibling
+  [`burndown-series.py`](../workflows/scripts/burndown-series.py). Run it to
+  append today's rows (idempotent per date):
+
+  ```bash
+  python3 .github/workflows/scripts/burndown-series.py            # append today's rows
+  python3 .github/workflows/scripts/burndown-series.py --dry-run  # preview, write nothing
+  python3 .github/workflows/scripts/burndown-series.py --self-test
+  ```
+
+A row is counted **gated** (out of the open `rows_total`, counted once as a
+conversion) when its registry row has `lane = "gated…"`, a truthy `gated` field,
+or a reason mentioning `gated lane` — the convention the pm-devops
+"needs-postgres → gated lane" wave adopts. No rows are gated today.
+
+> **Cadence wiring (TODO).** The daily `quarantine-age-gate` schedule surfaces
+> today's series rows to the step summary, but does **not** yet commit the append
+> — `dev` is protected and rejects CI pushes (GH006). Persisting the daily row
+> needs the `version-bump.yml` pattern (a PAT that pushes a branch, opens a PR and
+> arms squash auto-merge); see the TODO in `quarantine-age-gate.yml`. Until then,
+> run the generator and commit the series file in a normal PR as part of this
+> weekly cadence.
+
 ## Cadence checklist (weekly)
 
 1. Run `--summary`; capture the `QUARANTINE-BURNDOWN …` line.
 2. Compare `total` and `need_per_week` to last week. Flat/rising = escalate.
 3. Confirm each owner has a wave in flight sized to their quota.
 4. Clean up any new stale registry rows (WARN lines).
-5. Paste the metric line into the pm-devops rotation note.
+5. Append today's row to the series and paste the metric line into the pm-devops
+   rotation note: `python3 .github/workflows/scripts/burndown-series.py`.
 
 Prefer **fix-and-delete** over **bump-the-deadline** every time. A deadline bump
 is a cadence failure, not a cadence tool — it only moves the cliff.

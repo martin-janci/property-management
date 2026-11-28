@@ -1,0 +1,992 @@
+{
+  "backend/crates/db/src/repositories/integration.rs::non_terminal_workflow_is_updated": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/src/repositories/integration.rs::redelivered_event_does_not_overwrite_terminal_state": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/src/repositories/reality_portal/tests.rs::list_inquiry_messages_returns_persisted_message": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/src/repositories/reality_portal/tests.rs::realtor_a_can_respond_to_own_inquiry": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/src/repositories/reality_portal/tests.rs::realtor_b_cannot_respond_to_realtor_a_inquiry": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_cross_tenant_org_isolation": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_cross_tenant_role_isolation": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_null_context_blocks_access": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_permission_boundary_update": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_rls_context_cleared_after_release": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_rls_context_isolation_between_connections": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_rls_coverage_validation": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_sql_injection_prevention": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_penetration_tests.rs::test_super_admin_access": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_context_clearing": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_cross_tenant_isolation": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_null_context_blocks_access": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/rls_smoke_tests.rs::smoke_test_phase0_rls_cross_tenant_isolation": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/agency_domain_cache_tests.rs::release_invalidates_cached_resolution": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_comments_rls_tests.rs::comment_insert_is_tenant_isolated": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_comments_rls_tests.rs::comment_select_is_tenant_isolated": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_comments_rls_tests.rs::comment_soft_delete_is_tenant_isolated": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_acknowledge_announcement": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_attachments": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_rls_coverage": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_rls_isolation": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_status_transitions": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_announcement_targeting": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_auto_unpin_expired": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_create_announcement": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_mark_announcement_read": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_pin_announcement": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/announcement_tests.rs::test_scheduled_announcement": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/portal_user_merge_tests.rs::collision_writes_collision_row_no_silent_merge": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/portal_user_merge_tests.rs::merge_is_idempotent": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/portal_user_merge_tests.rs::non_collision_inserts_users_row_with_origin_pointer": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_building_repository_create": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_building_repository_rls_isolation": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_email_verification_token_lifecycle": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_organization_membership": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_organization_repository_create": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_organization_repository_unique_slug": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_create_success": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_email_exists": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_find_by_email_found": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_find_by_email_not_found": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_soft_delete": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_update_password": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/repository_tests.rs::test_user_repository_verify_email": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::clear_request_context_resets_global_read": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::four_context_listings_visibility": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::new_listing_defaults_to_not_published": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/crates/db/tests/suites/rls_listings_global_context_tests.rs::platform_host_cannot_write_listings": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/admin_mfa_recovery_tests.rs::concurrent_double_consume_skipped": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-security"
+  },
+  "backend/servers/api-server/tests/suites/admin_mfa_recovery_tests.rs::happy_path_consumes_code_and_opens_window": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/ai_auth_tests.rs::ai_chat_with_valid_jwt_ignores_forged_tenant_header": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/ai_auth_tests.rs::ai_equipment_list_without_auth_is_rejected": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/ai_auth_tests.rs::ai_workflows_list_without_auth_is_rejected": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs::pa_list_comparisons_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs::pp_get_dashboard_summary_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/analytics_portfolio_success_tests.rs::pp_get_metrics_summary_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/auth_partial_backfill_batch1_tests.rs::verify_email_with_valid_token_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/automation_auth_tests.rs::get_rule_from_other_org_returns_404": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::create_workflow_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::get_workflow_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::import_workflow_template_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/automation_workflow_batch3_tests.rs::list_workflows_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/caddy_ask_tests.rs::prod_mode_correct_token_and_known_host_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/caddy_ask_tests.rs::prod_mode_missing_token_returns_401": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/caddy_ask_tests.rs::prod_mode_wrong_token_returns_401": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs::complete_edd_transitions_status_to_completed": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/compliance_wave1b_tests.rs::initiate_edd_creates_record_and_returns_body_shape": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_actions_escalations_happy_path": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_kpis_happy_path": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_lifecycle_happy_path": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_sessions_happy_path": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/disputes_happy_path_tests.rs::dispute_withdraw_happy_path": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::add_field_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::archive_form_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::create_form_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::delete_field_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::delete_form_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::get_form_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::get_statistics_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::get_submission_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_available_forms_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_fields_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_forms_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::list_submissions_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::publish_form_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::record_download_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::reorder_fields_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::review_submission_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::update_field_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/documents_forms_happy_path_tests.rs::update_form_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_add_attachment": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_assign_fault_to_self": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_delete_attachment": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_get_ai_suggestion": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_list_attachments_empty": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_list_faults_returns_created_fault": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/faults_workflow_happy_path_tests.rs::test_triage_new_fault": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_check_feature_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_create_package_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_package_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_provider_complete_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_public_package_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_resolved_features_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_get_upgrade_options_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_list_packages_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_batch4_tests.rs::test_list_public_packages_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::award_badge_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::compare_packages_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::create_review_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::delete_review_returns_204": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_rating_breakdown_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_resolved_features_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::get_review_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::list_provider_badges_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::list_provider_reviews_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::list_public_packages_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::mark_review_helpful_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::moderate_review_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::respond_to_review_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::set_feature_preference_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/integrations_marketplace_reviews_tests.rs::update_review_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::acknowledge_legal_notice_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::apply_compliance_template_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::create_compliance_template_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::create_legal_notice_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::delete_compliance_template_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::delete_legal_notice_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::get_compliance_template_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::get_legal_notice_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_audit_trail_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_compliance_templates_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_legal_notices_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::list_notice_recipients_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::send_legal_notice_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::update_compliance_template_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/legal_notices_audit_tests.rs::update_legal_notice_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::create_connector_as_admin_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::create_marketplace_integration_as_admin_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::delete_marketplace_integration_as_admin_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::delete_review_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::delete_rfq_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_connector_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_marketplace_integration_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_rating_breakdown_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::get_review_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::list_connector_actions_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::list_provider_reviews_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::mark_review_helpful_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::moderate_review_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::respond_to_review_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::update_marketplace_integration_as_admin_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/marketplace_ecosystem_backfill_batch3_tests.rs::update_review_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/messaging_attachments_authz_tests.rs::download_url_authz_gate": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/messaging_attachments_authz_tests.rs::non_sender_cannot_link_attachment": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/mfa_e2e_tests.rs::test_mfa_verify_rate_limited": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-security"
+  },
+  "backend/servers/api-server/tests/suites/notification_preference_realtime_sync_tests.rs::preference_update_publishes_realtime_event": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-devops"
+  },
+  "backend/servers/api-server/tests/suites/notification_prefs_granular_tests.rs::update_event_preference_returns_ok": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/notification_prefs_granular_tests.rs::update_event_preference_unknown_type_returns_404": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/oauth_integration_tests/admin_analytics.rs::update_client_scope_change_writes_audit_with_reason": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/package_visitor_happy_path_tests.rs::packages_happy_path": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/package_visitor_happy_path_tests.rs::visitors_happy_path": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/push_token_tests.rs::register_push_token_valid_request_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_booking_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_calendar_block_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_connection_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_guest_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_ical_feed_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_create_report_returns_201": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_get_report_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/rentals_core_backfill_batch2_tests.rs::test_submit_report_returns_200": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::add_legal_document_version_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::create_compliance_verification_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::create_legal_document_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::create_legal_requirement_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::delete_legal_document_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::delete_legal_requirement_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::get_legal_document_version_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::get_legal_requirement_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_compliance_verifications_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_legal_document_versions_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_legal_documents_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::list_legal_requirements_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::update_legal_document_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/signatures_legal_docs_tests.rs::update_legal_requirement_succeeds": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/token_scope_tests.rs::token_is_rejected_after_membership_revoked": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/token_scope_tests.rs::token_is_rejected_for_org_without_active_membership": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/token_scope_tests.rs::token_works_for_org_with_active_membership": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/suites/workflow_cross_tenant_idor_tests.rs::trigger_workflow_from_owning_org_does_not_404": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-backend"
+  },
+  "backend/servers/api-server/tests/ws_integration_tests.rs::ws_pubsub_fanout_delivers_to_correct_subscriber": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-devops"
+  },
+  "backend/servers/deploy-server/src/infra/docker.rs::run_frontend_dev_against_local_docker": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-devops"
+  },
+  "backend/servers/deploy-server/tests/smoke.rs::dedicated_open_close_with_dump": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-devops"
+  },
+  "backend/servers/deploy-server/tests/smoke.rs::open_status_close_flow": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-devops"
+  },
+  "backend/servers/deploy-server/tests/smoke.rs::promote_and_rollback_flow": {
+    "due": "2027-02-19",
+    "gated": false,
+    "owner": "pm-devops"
+  }
+}
