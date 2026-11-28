@@ -1290,6 +1290,26 @@
         "vector": "i18n",
         "generated": "2026-11-01"
       }
+    },
+    {
+      "id": "gh-issue-3909",
+      "action": "Follow-up: nil-id notification-group retention is documented + logged but never enforced, and the cohort metric is a constant (PR #3901) (Closes #3909)",
+      "owner_role": "pm-tech-lead",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-issue-ingest 2026-11-28T14:24:49Z (#3909)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T14:24:49Z",
+      "issue_ref": {
+        "number": 3909,
+        "url": "https://github.com/martin-janci/property-management/issues/3909",
+        "labels": [
+          "follow-up",
+          "from-merged-review"
+        ]
+      }
     }
   ],
   "generated": "2026-11-28T04:15:00Z"
