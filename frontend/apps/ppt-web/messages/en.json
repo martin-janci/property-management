@@ -3161,6 +3161,23 @@
     }
   },
   "errors": {
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "name": "Name",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "phone": "Phone",
+      "title": "Title",
+      "description": "Description",
+      "amount": "Amount",
+      "date": "Date",
+      "address": "Address",
+      "street_name": "Street Name",
+      "city": "City",
+      "postal_code": "Postal Code",
+      "country": "Country"
+    },
     "generic": "An error occurred. Please try again.",
     "notFound": "Page not found",
     "unauthorized": "You are not authorized to view this page.",

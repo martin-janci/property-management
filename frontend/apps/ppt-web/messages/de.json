@@ -3161,6 +3161,23 @@
     "reactionsEnabled": "Reaktionen aktivieren"
   },
   "errors": {
+    "fields": {
+      "email": "E-Mail",
+      "password": "Passwort",
+      "name": "Name",
+      "first_name": "Vorname",
+      "last_name": "Nachname",
+      "phone": "Telefon",
+      "title": "Titel",
+      "description": "Beschreibung",
+      "amount": "Betrag",
+      "date": "Datum",
+      "address": "Adresse",
+      "street_name": "Straße",
+      "city": "Stadt",
+      "postal_code": "Postleitzahl",
+      "country": "Land"
+    },
     "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "notFound": "Seite nicht gefunden",
     "unauthorized": "Sie sind nicht berechtigt, diese Seite anzuzeigen.",

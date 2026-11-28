@@ -401,6 +401,50 @@ describe('formatValidationErrors', () => {
   });
 });
 
+describe('formatValidationErrors — localized field labels (regression)', () => {
+  // Regression for the errorHandler i18n leak: inline validation labels were
+  // produced by a hardcoded English title-caser (`formatFieldName`) that never
+  // routed through react-i18next, so every locale rendered English labels
+  // ("Email:", "Street Name:"). The label must now resolve from the shared
+  // `errors.fields.*` catalogue, falling back to the title-cased path segment
+  // only for fields with no translation key. The first case fails on `dev`
+  // (English title-case ignores the seeded catalogue entry) and passes once the
+  // label routes through `i18n.t`.
+  afterEach(() => {
+    i18n.changeLanguage('en');
+  });
+
+  it('routes the field label through the i18n catalogue', () => {
+    i18n.changeLanguage('en');
+    // Seed a translation for an otherwise-unmapped field key: pre-fix,
+    // formatFieldName emits the title-cased segment ("Customfield"); post-fix it
+    // resolves the catalogue entry.
+    i18n.addResource('en', 'translation', 'errors.fields.customfield', 'Preferred Name');
+
+    expect(formatValidationErrors(new Map([['profile.customfield', 'Required']]))).toBe(
+      'Preferred Name: Required'
+    );
+  });
+
+  it('falls back to the title-cased segment for fields without a translation key', () => {
+    i18n.changeLanguage('en');
+    expect(formatValidationErrors(new Map([['a.totally_unmapped_field', 'bad']]))).toBe(
+      'Totally Unmapped Field: bad'
+    );
+  });
+
+  it('localizes a seeded field label into the active (non-English) locale', () => {
+    i18n.addResourceBundle('sk', 'translation', sk, true, true);
+    i18n.changeLanguage('sk');
+
+    // sk.json ships `errors.fields.email` = "E-mail"; the English label must not
+    // leak through for a Slovak user.
+    const formatted = formatValidationErrors(new Map([['user.email', 'Neplatný e-mail']]));
+    expect(formatted).toBe('E-mail: Neplatný e-mail');
+    expect(formatted).not.toContain('Email:');
+  });
+});
+
 describe('getFieldError', () => {
   const errors = new Map<string, string>([['email', 'Invalid email']]);
 

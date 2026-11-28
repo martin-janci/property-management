@@ -544,22 +544,33 @@ export function formatValidationErrors(validationErrors: Map<string, string>): s
 }
 
 /**
- * Convert field path to human-readable name.
+ * Convert a validation field path to a localized, human-readable label.
+ *
+ * The label is resolved from the shared i18n bundle under `errors.fields.<name>`
+ * (keyed by the last snake_case path segment) so inline validation feedback
+ * follows the user's selected language instead of always emitting English.
+ * Fields without a dedicated translation key fall back to the title-cased path
+ * segment, so no field is ever left unlabeled.
  *
  * @example
- * formatFieldName('user.email') // 'Email'
- * formatFieldName('address.street_name') // 'Street Name'
+ * // en: formatFieldName('user.email') // 'Email'
+ * // sk: formatFieldName('user.email') // 'E-mail'
+ * // unmapped: formatFieldName('deeply.nested.field_name') // 'Field Name'
  */
 function formatFieldName(fieldPath: string): string {
   // Get last segment of path
   const parts = fieldPath.split('.');
   const field = parts[parts.length - 1];
 
-  // Convert snake_case to Title Case
-  return field
+  // Title-cased fallback for fields with no dedicated translation key.
+  const fallback = field
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+
+  // Route the label through the i18n catalogue; unmapped fields keep the
+  // title-cased fallback so the English label never leaks into other locales.
+  return i18n.t(`errors.fields.${field}`, { defaultValue: fallback });
 }
 
 /**
