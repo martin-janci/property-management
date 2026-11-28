@@ -437,7 +437,149 @@
     "learnMore": "Tovabb",
     "relatedFAQs": "Kapcsolodo kerdesek",
     "dontShowAgain": "Ne mutasd tobbe",
-    "sendFeedbackButton": "Visszajelzes kuldese"
+    "sendFeedbackButton": "Visszajelzes kuldese",
+    "categories": {
+      "getting_started": "Első lépések",
+      "account": "Fiók és profil",
+      "buildings": "Épületek",
+      "faults": "Hibák és karbantartás",
+      "voting": "Szavazás",
+      "documents": "Dokumentumok",
+      "payments": "Fizetések",
+      "notifications": "Értesítések",
+      "security": "Biztonság és adatvédelem",
+      "other": "Egyéb"
+    },
+    "faqs": {
+      "faq-1": {
+        "question": "Hogyan tekinthetem meg az épületeimet?",
+        "answer": "Az épületei az irányítópulton jelennek meg. Koppintson egy épületkártyára a részletek megtekintéséhez, beleértve a lakókat, hibákat, dokumentumokat és egyebeket."
+      },
+      "faq-2": {
+        "question": "Hogyan kapok értesítéseket?",
+        "answer": "Az értesítések alapértelmezés szerint be vannak kapcsolva. A Beállítások > Értesítések menüpontban testreszabhatja, mely értesítéseket szeretné megkapni. Győződjön meg róla, hogy engedélyezte az alkalmazás értesítéseit a készülék beállításaiban."
+      },
+      "faq-3": {
+        "question": "Hogyan válthatok az épületek között?",
+        "answer": "Az irányítópulton vagy az Épületek képernyőn koppintson egy másik épületkártyára a váltáshoz. Használhatja a felső menü épületválasztóját is."
+      },
+      "faq-4": {
+        "question": "Hogyan jelenthetek be egy hibát?",
+        "answer": "Koppintson a „+” gombra az irányítópulton, vagy lépjen a Hibák > Új bejelentése menüpontra. Válasszon kategóriát, írja le a problémát, szükség esetén adjon hozzá fényképeket, majd küldje be. A hiba feldolgozása során frissítéseket fog kapni."
+      },
+      "faq-5": {
+        "question": "Hogyan követhetem nyomon a hibabejelentésemet?",
+        "answer": "Lépjen a Hibák menüpontra az összes bejelentése megtekintéséhez. Minden bejelentés mutatja az aktuális állapotát (Nyitott, Folyamatban, Megoldva stb.). Koppintson egy bejelentésre a részletek és a karbantartó csapat frissítéseinek megtekintéséhez."
+      },
+      "faq-6": {
+        "question": "Hogyan szavazhatok egy javaslatról?",
+        "answer": "Lépjen a Szavazás menüpontra az aktív szavazások megtekintéséhez. Koppintson egy szavazásra a javaslat elolvasásához, majd válassza ki a döntését (Mellette, Ellene vagy Tartózkodik). A szavazata névtelen, és a szavazás lezárásáig módosítható."
+      },
+      "faq-7": {
+        "question": "Hogyan tölthetek le dokumentumokat?",
+        "answer": "Lépjen a Dokumentumok menüpontra, keresse meg a kívánt dokumentumot, és koppintson a letöltés ikonra. A dokumentumok a készülékére mentődnek, és offline is megtekinthetők."
+      },
+      "faq-8": {
+        "question": "Hogyan változtathatom meg a jelszavamat?",
+        "answer": "Lépjen a Beállítások > Fiók > Jelszó módosítása menüpontra. Meg kell adnia a jelenlegi jelszavát, majd kétszer az új jelszavát. Használjon erős jelszót."
+      },
+      "faq-9": {
+        "question": "Biztonságban vannak az adataim?",
+        "answer": "Igen. Minden adat titkosítva van az átvitel során és tárolás közben is. Iparági szabványoknak megfelelő biztonsági eljárásokat alkalmazunk, beleértve a kétfaktoros hitelesítést, a biztonságos tokentárolást és a rendszeres biztonsági auditokat."
+      },
+      "faq-10": {
+        "question": "Hogyan engedélyezhetem a kétfaktoros hitelesítést?",
+        "answer": "Lépjen a Beállítások > Biztonság > Kétfaktoros hitelesítés menüpontra. Olvassa be a QR-kódot egy hitelesítő alkalmazással (például Google Authenticator vagy Authy), és adja meg az ellenőrző kódot."
+      }
+    },
+    "tutorials": {
+      "tutorial-getting-started": {
+        "title": "Első lépések a PPT-vel",
+        "description": "Ismerje meg az alkalmazás navigációjának és használatának alapjait.",
+        "steps": {
+          "step-1": {
+            "title": "Irányítópult áttekintése",
+            "content": "Az irányítópult a kezdőképernyője. Megjeleníti az épületeit, a legutóbbi tevékenységet és a gyors műveleteket."
+          },
+          "step-2": {
+            "title": "Navigáció az alkalmazásban",
+            "content": "Az alsó navigáció segítségével válthat az Irányítópult, Épületek, Hibák, Dokumentumok és Továbbiak között."
+          },
+          "step-3": {
+            "title": "Értesítések",
+            "content": "A harang ikon megjeleníti az értesítéseit. Koppintson rá, hogy lássa, mi igényli a figyelmét."
+          }
+        }
+      },
+      "tutorial-faults": {
+        "title": "Hibák bejelentése és nyomon követése",
+        "description": "Teljes útmutató a hibabejelentő rendszerhez.",
+        "steps": {
+          "step-1": {
+            "title": "Bejelentés létrehozása",
+            "content": "Koppintson a „+” gombra új hibabejelentés indításához. Válassza ki a megfelelő kategóriát."
+          },
+          "step-2": {
+            "title": "Részletek hozzáadása",
+            "content": "Írja le részletesen a problémát. Adja meg a helyszínt, a súlyosságot és a kezdés időpontját."
+          },
+          "step-3": {
+            "title": "Fényképek csatolása",
+            "content": "Adjon hozzá fényképeket, hogy a technikusok megértsék a problémát."
+          },
+          "step-4": {
+            "title": "Haladás követése",
+            "content": "Beküldés után kövesse nyomon a bejelentése állapotát a Hibák szakaszban."
+          }
+        }
+      },
+      "tutorial-voting": {
+        "title": "Részvétel az épület szavazásain",
+        "description": "Hogyan adhatja le szavazatát és tekintheti meg az eredményeket.",
+        "steps": {
+          "step-1": {
+            "title": "Aktív szavazások keresése",
+            "content": "Lépjen a Szavazás szakaszba az épületeihez tartozó összes aktív szavazás megtekintéséhez."
+          },
+          "step-2": {
+            "title": "A javaslat elolvasása",
+            "content": "Koppintson egy szavazásra a teljes javaslat és a kapcsolódó dokumentumok elolvasásához."
+          },
+          "step-3": {
+            "title": "Szavazat leadása",
+            "content": "Válassza ki a döntését és erősítse meg. A szavazata névtelen."
+          }
+        }
+      }
+    },
+    "content": {
+      "dashboard": {
+        "title": "Irányítópult súgó",
+        "shortDescription": "Áttekintés az összes épülettevékenységről",
+        "fullContent": "Az irányítópult megjeleníti az épületei összefoglalóját, a legutóbbi értesítéseket és a gyors műveleteket. Egy pillantással láthatja a függőben lévő szavazásokat, az aktív hibákat és a közelgő üléseket."
+      },
+      "buildings": {
+        "title": "Épületek súgó",
+        "shortDescription": "Kezelje épületportfólióját",
+        "fullContent": "Tekintse meg az összes épületet, amelyhez hozzáfér. Koppintson egy épületre a részletek, lakók, hibák, dokumentumok és egyebek megtekintéséhez."
+      },
+      "faults": {
+        "title": "Hibabejelentési súgó",
+        "shortDescription": "Jelentse be és kövesse nyomon az épület problémáit",
+        "fullContent": "Jelentse be a karbantartási problémákat, kövesse nyomon az állapotukat, és kapjon frissítéseket. A gyorsabb megoldás érdekében csatoljon fényképeket és részletes leírásokat."
+      },
+      "voting": {
+        "title": "Szavazási súgó",
+        "shortDescription": "Vegyen részt az épülettel kapcsolatos döntésekben",
+        "fullContent": "Szavazzon az épülettel kapcsolatos javaslatokról. Tekintse meg az aktív szavazásokat, a korábbi eredményeket és a közelgő döntéseket."
+      },
+      "documents": {
+        "title": "Dokumentumok súgó",
+        "shortDescription": "Hozzáférés az épület dokumentumaihoz",
+        "fullContent": "Tekintse meg és töltse le az épület dokumentumait, beleértve a szabályzatokat, az ülések jegyzőkönyveit, a szerződéseket és egyebeket."
+      }
+    },
+    "allCategories": "Összes"
   },
   "feedback": {
     "title": "Visszajelzes kuldese",

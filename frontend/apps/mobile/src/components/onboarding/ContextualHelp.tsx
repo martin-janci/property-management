@@ -33,9 +33,9 @@ export function ContextualHelp({
   const relatedFAQs = useMemo(() => {
     if (!helpContent?.relatedFAQs) return [];
     return helpContent.relatedFAQs
-      .map((id) => helpCenter.searchFAQs('').find((f) => f.id === id))
+      .map((id) => helpCenter.searchFAQs('', t).find((f) => f.id === id))
       .filter(Boolean);
-  }, [helpContent]);
+  }, [helpContent, t]);
 
   const relatedTutorials = useMemo(() => {
     if (!helpContent?.relatedTutorials) return [];
@@ -60,18 +60,18 @@ export function ContextualHelp({
           <View style={styles.handle} />
 
           <View style={styles.header}>
-            <Text style={styles.title}>{helpContent.title}</Text>
+            <Text style={styles.title}>{t(helpContent.title)}</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
               <Text style={styles.closeText}>✕</Text>
             </Pressable>
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <Text style={styles.description}>{helpContent.shortDescription}</Text>
+            <Text style={styles.description}>{t(helpContent.shortDescription)}</Text>
 
             {showFullContent ? (
               <View style={styles.fullContent}>
-                <Text style={styles.fullContentText}>{helpContent.fullContent}</Text>
+                <Text style={styles.fullContentText}>{t(helpContent.fullContent)}</Text>
                 <Pressable onPress={() => setShowFullContent(false)}>
                   <Text style={styles.showLessText}>
                     {t('help.showLess', { defaultValue: 'Show less' })}
@@ -88,7 +88,7 @@ export function ContextualHelp({
 
             {relatedFAQs.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Related FAQs</Text>
+                <Text style={styles.sectionTitle}>{t('help.relatedFAQs')}</Text>
                 {relatedFAQs.map(
                   (faq) =>
                     faq && (
@@ -97,7 +97,7 @@ export function ContextualHelp({
                         style={styles.faqItem}
                         onPress={() => onNavigateToFAQ?.(faq.id)}
                       >
-                        <Text style={styles.faqQuestion}>{faq.question}</Text>
+                        <Text style={styles.faqQuestion}>{t(faq.question)}</Text>
                         <Text style={styles.chevron}>›</Text>
                       </Pressable>
                     )
@@ -107,7 +107,7 @@ export function ContextualHelp({
 
             {relatedTutorials.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Tutorials</Text>
+                <Text style={styles.sectionTitle}>{t('help.tutorialsTab')}</Text>
                 {relatedTutorials.map(
                   (tutorial) =>
                     tutorial && (
@@ -120,7 +120,7 @@ export function ContextualHelp({
                           <Text style={styles.playText}>▶</Text>
                         </View>
                         <View style={styles.tutorialInfo}>
-                          <Text style={styles.tutorialTitle}>{tutorial.title}</Text>
+                          <Text style={styles.tutorialTitle}>{t(tutorial.title)}</Text>
                           <Text style={styles.tutorialDuration}>
                             {Math.ceil(tutorial.duration / 60)} min
                           </Text>

@@ -479,7 +479,149 @@
     "learnMore": "Dozvedet se vice",
     "relatedFAQs": "Souvisejici otazky",
     "dontShowAgain": "Uz nezobrazovat",
-    "sendFeedbackButton": "Odeslat zpetnou vazbu"
+    "sendFeedbackButton": "Odeslat zpetnou vazbu",
+    "categories": {
+      "getting_started": "Začínáme",
+      "account": "Účet a profil",
+      "buildings": "Budovy",
+      "faults": "Závady a údržba",
+      "voting": "Hlasování",
+      "documents": "Dokumenty",
+      "payments": "Platby",
+      "notifications": "Oznámení",
+      "security": "Zabezpečení a soukromí",
+      "other": "Ostatní"
+    },
+    "faqs": {
+      "faq-1": {
+        "question": "Jak zobrazím své budovy?",
+        "answer": "Vaše budovy se zobrazují na nástěnce. Klepnutím na kartu budovy zobrazíte její podrobnosti včetně obyvatel, závad, dokumentů a dalších informací."
+      },
+      "faq-2": {
+        "question": "Jak dostávám oznámení?",
+        "answer": "Oznámení jsou ve výchozím nastavení zapnutá. V části Nastavení > Oznámení si můžete přizpůsobit, která oznámení chcete dostávat. Ujistěte se, že jste pro aplikaci povolili oznámení v nastavení zařízení."
+      },
+      "faq-3": {
+        "question": "Jak přepínám mezi budovami?",
+        "answer": "Na nástěnce nebo obrazovce Budovy přepnete klepnutím na jinou kartu budovy. Můžete také použít výběr budovy v horním menu."
+      },
+      "faq-4": {
+        "question": "Jak nahlásím závadu?",
+        "answer": "Klepněte na tlačítko „+“ na nástěnce nebo přejděte do části Závady > Nahlásit novou. Vyberte kategorii, popište problém, v případě potřeby přidejte fotky a odešlete. O průběhu zpracování závady budete dostávat aktualizace."
+      },
+      "faq-5": {
+        "question": "Jak sleduji své nahlášení závady?",
+        "answer": "V části Závady uvidíte všechna svá nahlášení. Každé nahlášení zobrazuje svůj aktuální stav (Otevřené, Probíhá, Vyřešeno atd.). Klepnutím na nahlášení zobrazíte podrobnosti a aktualizace od týmu údržby."
+      },
+      "faq-6": {
+        "question": "Jak hlasuji o návrhu?",
+        "answer": "V části Hlasování uvidíte aktivní hlasování. Klepnutím na hlasování si přečtete návrh a poté vyberete svou volbu (Pro, Proti nebo Zdržet se). Váš hlas je anonymní a můžete jej změnit až do uzavření hlasování."
+      },
+      "faq-7": {
+        "question": "Jak si stáhnu dokumenty?",
+        "answer": "Přejděte do části Dokumenty, najděte požadovaný dokument a klepněte na ikonu stažení. Dokumenty se uloží do vašeho zařízení a můžete je zobrazit offline."
+      },
+      "faq-8": {
+        "question": "Jak si změním heslo?",
+        "answer": "Přejděte do části Nastavení > Účet > Změnit heslo. Budete muset zadat své aktuální heslo a poté dvakrát nové heslo. Použijte silné heslo."
+      },
+      "faq-9": {
+        "question": "Jsou moje data zabezpečená?",
+        "answer": "Ano. Všechna data jsou šifrována při přenosu i v úložišti. Používáme bezpečnostní postupy podle průmyslových standardů včetně dvoufaktorového ověření, bezpečného ukládání tokenů a pravidelných bezpečnostních auditů."
+      },
+      "faq-10": {
+        "question": "Jak zapnu dvoufaktorové ověření?",
+        "answer": "Přejděte do části Nastavení > Zabezpečení > Dvoufaktorové ověření. Naskenujte QR kód pomocí autentizační aplikace (například Google Authenticator nebo Authy) a zadejte ověřovací kód."
+      }
+    },
+    "tutorials": {
+      "tutorial-getting-started": {
+        "title": "Začínáme s PPT",
+        "description": "Naučte se základy navigace a používání aplikace.",
+        "steps": {
+          "step-1": {
+            "title": "Přehled nástěnky",
+            "content": "Nástěnka je vaše domovská obrazovka. Zobrazuje vaše budovy, nedávnou aktivitu a rychlé akce."
+          },
+          "step-2": {
+            "title": "Navigace v aplikaci",
+            "content": "Pomocí spodní navigace přepínáte mezi Nástěnkou, Budovami, Závadami, Dokumenty a Více."
+          },
+          "step-3": {
+            "title": "Oznámení",
+            "content": "Ikona zvonku zobrazuje vaše oznámení. Klepnutím na ni zobrazíte, co vyžaduje vaši pozornost."
+          }
+        }
+      },
+      "tutorial-faults": {
+        "title": "Jak nahlásit a sledovat závady",
+        "description": "Kompletní návod k systému nahlašování závad.",
+        "steps": {
+          "step-1": {
+            "title": "Vytvoření nahlášení",
+            "content": "Klepnutím na tlačítko „+“ začněte nové nahlášení závady. Vyberte příslušnou kategorii."
+          },
+          "step-2": {
+            "title": "Přidání podrobností",
+            "content": "Podrobně popište problém. Uveďte místo, závažnost a kdy začal."
+          },
+          "step-3": {
+            "title": "Přiložení fotek",
+            "content": "Přidejte fotky, které technikům pomohou pochopit problém."
+          },
+          "step-4": {
+            "title": "Sledování průběhu",
+            "content": "Po odeslání sledujte stav svého nahlášení v části Závady."
+          }
+        }
+      },
+      "tutorial-voting": {
+        "title": "Účast na hlasování budovy",
+        "description": "Jak odevzdat svůj hlas a zobrazit výsledky.",
+        "steps": {
+          "step-1": {
+            "title": "Nalezení aktivních hlasování",
+            "content": "Přejděte do části Hlasování a zobrazte všechna aktivní hlasování pro vaše budovy."
+          },
+          "step-2": {
+            "title": "Přečtení návrhu",
+            "content": "Klepnutím na hlasování si přečtete celý návrh a případné podpůrné dokumenty."
+          },
+          "step-3": {
+            "title": "Odevzdání hlasu",
+            "content": "Vyberte svou volbu a potvrďte. Váš hlas je anonymní."
+          }
+        }
+      }
+    },
+    "content": {
+      "dashboard": {
+        "title": "Nápověda k nástěnce",
+        "shortDescription": "Váš přehled všech aktivit budovy",
+        "fullContent": "Nástěnka zobrazuje souhrn vašich budov, nedávná oznámení a rychlé akce. Na první pohled vidíte čekající hlasování, aktivní závady a nadcházející schůze."
+      },
+      "buildings": {
+        "title": "Nápověda k budovám",
+        "shortDescription": "Spravujte své portfolio budov",
+        "fullContent": "Zobrazte všechny budovy, ke kterým máte přístup. Klepnutím na budovu zobrazíte podrobnosti, obyvatele, závady, dokumenty a další."
+      },
+      "faults": {
+        "title": "Nápověda k nahlašování závad",
+        "shortDescription": "Nahlašujte a sledujte problémy budovy",
+        "fullContent": "Nahlašujte problémy s údržbou, sledujte jejich stav a dostávejte aktualizace. Pro rychlejší vyřešení přiložte fotky a podrobné popisy."
+      },
+      "voting": {
+        "title": "Nápověda k hlasování",
+        "shortDescription": "Zúčastněte se rozhodování o budově",
+        "fullContent": "Hlasujte o návrzích týkajících se budovy. Zobrazte aktivní hlasování, minulé výsledky a nadcházející rozhodnutí."
+      },
+      "documents": {
+        "title": "Nápověda k dokumentům",
+        "shortDescription": "Přístup k dokumentům budovy",
+        "fullContent": "Zobrazte a stáhněte si dokumenty budovy včetně předpisů, zápisů ze schůzí, smluv a dalších."
+      }
+    },
+    "allCategories": "Vše"
   },
   "feedback": {
     "title": "Odeslat zpetnou vazbu",

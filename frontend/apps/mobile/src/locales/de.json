@@ -437,7 +437,149 @@
     "learnMore": "Mehr erfahren",
     "relatedFAQs": "Verwandte Fragen",
     "dontShowAgain": "Nicht mehr anzeigen",
-    "sendFeedbackButton": "Feedback senden"
+    "sendFeedbackButton": "Feedback senden",
+    "categories": {
+      "getting_started": "Erste Schritte",
+      "account": "Konto & Profil",
+      "buildings": "Gebäude",
+      "faults": "Störungen & Wartung",
+      "voting": "Abstimmungen",
+      "documents": "Dokumente",
+      "payments": "Zahlungen",
+      "notifications": "Benachrichtigungen",
+      "security": "Sicherheit & Datenschutz",
+      "other": "Sonstiges"
+    },
+    "faqs": {
+      "faq-1": {
+        "question": "Wie sehe ich meine Gebäude?",
+        "answer": "Ihre Gebäude werden auf dem Dashboard angezeigt. Tippen Sie auf eine Gebäudekarte, um deren Details anzuzeigen, einschließlich Bewohner, Störungen, Dokumente und mehr."
+      },
+      "faq-2": {
+        "question": "Wie erhalte ich Benachrichtigungen?",
+        "answer": "Benachrichtigungen sind standardmäßig aktiviert. Unter Einstellungen > Benachrichtigungen können Sie anpassen, welche Benachrichtigungen Sie erhalten. Stellen Sie sicher, dass Sie Benachrichtigungen für die App in den Geräteeinstellungen zugelassen haben."
+      },
+      "faq-3": {
+        "question": "Wie wechsle ich zwischen Gebäuden?",
+        "answer": "Tippen Sie im Dashboard oder im Bildschirm Gebäude auf eine andere Gebäudekarte, um zu wechseln. Sie können auch die Gebäudeauswahl im oberen Menü verwenden."
+      },
+      "faq-4": {
+        "question": "Wie melde ich eine Störung?",
+        "answer": "Tippen Sie auf dem Dashboard auf die Schaltfläche „+“ oder gehen Sie zu Störungen > Neue melden. Wählen Sie eine Kategorie, beschreiben Sie das Problem, fügen Sie bei Bedarf Fotos hinzu und senden Sie es ab. Sie erhalten Updates, während die Störung bearbeitet wird."
+      },
+      "faq-5": {
+        "question": "Wie verfolge ich meine Störungsmeldung?",
+        "answer": "Gehen Sie zu Störungen, um alle Ihre Meldungen zu sehen. Jede Meldung zeigt ihren aktuellen Status (Offen, In Bearbeitung, Gelöst usw.). Tippen Sie auf eine Meldung, um Details und Updates vom Wartungsteam zu sehen."
+      },
+      "faq-6": {
+        "question": "Wie stimme ich über einen Vorschlag ab?",
+        "answer": "Gehen Sie zu Abstimmungen, um aktive Abstimmungen zu sehen. Tippen Sie auf eine Abstimmung, um den Vorschlag zu lesen, und wählen Sie dann Ihre Auswahl (Dafür, Dagegen oder Enthaltung). Ihre Stimme ist anonym und kann bis zum Ende der Abstimmung geändert werden."
+      },
+      "faq-7": {
+        "question": "Wie lade ich Dokumente herunter?",
+        "answer": "Gehen Sie zu Dokumente, suchen Sie das benötigte Dokument und tippen Sie auf das Download-Symbol. Dokumente werden auf Ihrem Gerät gespeichert und können offline angesehen werden."
+      },
+      "faq-8": {
+        "question": "Wie ändere ich mein Passwort?",
+        "answer": "Gehen Sie zu Einstellungen > Konto > Passwort ändern. Sie müssen Ihr aktuelles Passwort und dann zweimal Ihr neues Passwort eingeben. Verwenden Sie ein sicheres Passwort."
+      },
+      "faq-9": {
+        "question": "Sind meine Daten sicher?",
+        "answer": "Ja. Alle Daten werden während der Übertragung und im Ruhezustand verschlüsselt. Wir verwenden branchenübliche Sicherheitsverfahren, einschließlich Zwei-Faktor-Authentifizierung, sicherer Token-Speicherung und regelmäßiger Sicherheitsaudits."
+      },
+      "faq-10": {
+        "question": "Wie aktiviere ich die Zwei-Faktor-Authentifizierung?",
+        "answer": "Gehen Sie zu Einstellungen > Sicherheit > Zwei-Faktor-Authentifizierung. Scannen Sie den QR-Code mit einer Authenticator-App (wie Google Authenticator oder Authy) und geben Sie den Bestätigungscode ein."
+      }
+    },
+    "tutorials": {
+      "tutorial-getting-started": {
+        "title": "Erste Schritte mit PPT",
+        "description": "Lernen Sie die Grundlagen der Navigation und Nutzung der App.",
+        "steps": {
+          "step-1": {
+            "title": "Dashboard-Überblick",
+            "content": "Das Dashboard ist Ihr Startbildschirm. Es zeigt Ihre Gebäude, die letzten Aktivitäten und Schnellaktionen."
+          },
+          "step-2": {
+            "title": "Navigation in der App",
+            "content": "Verwenden Sie die untere Navigation, um zwischen Dashboard, Gebäuden, Störungen, Dokumenten und Mehr zu wechseln."
+          },
+          "step-3": {
+            "title": "Benachrichtigungen",
+            "content": "Das Glockensymbol zeigt Ihre Benachrichtigungen. Tippen Sie darauf, um zu sehen, was Ihre Aufmerksamkeit erfordert."
+          }
+        }
+      },
+      "tutorial-faults": {
+        "title": "So melden und verfolgen Sie Störungen",
+        "description": "Vollständige Anleitung zum Störungsmeldesystem.",
+        "steps": {
+          "step-1": {
+            "title": "Meldung erstellen",
+            "content": "Tippen Sie auf die Schaltfläche „+“, um eine neue Störungsmeldung zu starten. Wählen Sie die passende Kategorie."
+          },
+          "step-2": {
+            "title": "Details hinzufügen",
+            "content": "Beschreiben Sie das Problem detailliert. Geben Sie Ort, Schweregrad und Beginn an."
+          },
+          "step-3": {
+            "title": "Fotos anhängen",
+            "content": "Fügen Sie Fotos hinzu, damit Techniker das Problem verstehen."
+          },
+          "step-4": {
+            "title": "Fortschritt verfolgen",
+            "content": "Verfolgen Sie nach dem Absenden den Status Ihrer Meldung im Bereich Störungen."
+          }
+        }
+      },
+      "tutorial-voting": {
+        "title": "An Gebäudeabstimmungen teilnehmen",
+        "description": "So geben Sie Ihre Stimme ab und sehen die Ergebnisse.",
+        "steps": {
+          "step-1": {
+            "title": "Aktive Abstimmungen finden",
+            "content": "Gehen Sie zum Bereich Abstimmungen, um alle aktiven Abstimmungen für Ihre Gebäude zu sehen."
+          },
+          "step-2": {
+            "title": "Vorschlag lesen",
+            "content": "Tippen Sie auf eine Abstimmung, um den vollständigen Vorschlag und begleitende Dokumente zu lesen."
+          },
+          "step-3": {
+            "title": "Stimme abgeben",
+            "content": "Wählen Sie Ihre Auswahl und bestätigen Sie. Ihre Stimme ist anonym."
+          }
+        }
+      }
+    },
+    "content": {
+      "dashboard": {
+        "title": "Dashboard-Hilfe",
+        "shortDescription": "Ihr Überblick über alle Gebäudeaktivitäten",
+        "fullContent": "Das Dashboard zeigt eine Zusammenfassung Ihrer Gebäude, aktuelle Benachrichtigungen und Schnellaktionen. Sie sehen auf einen Blick ausstehende Abstimmungen, aktive Störungen und bevorstehende Versammlungen."
+      },
+      "buildings": {
+        "title": "Gebäude-Hilfe",
+        "shortDescription": "Verwalten Sie Ihr Gebäudeportfolio",
+        "fullContent": "Sehen Sie alle Gebäude, auf die Sie Zugriff haben. Tippen Sie auf ein Gebäude, um Details, Bewohner, Störungen, Dokumente und mehr zu sehen."
+      },
+      "faults": {
+        "title": "Hilfe zur Störungsmeldung",
+        "shortDescription": "Gebäudeprobleme melden und verfolgen",
+        "fullContent": "Melden Sie Wartungsprobleme, verfolgen Sie deren Status und erhalten Sie Updates. Fügen Sie Fotos und detaillierte Beschreibungen für eine schnellere Lösung hinzu."
+      },
+      "voting": {
+        "title": "Abstimmungs-Hilfe",
+        "shortDescription": "An Gebäudeentscheidungen teilnehmen",
+        "fullContent": "Stimmen Sie über Gebäudevorschläge ab. Sehen Sie aktive Abstimmungen, vergangene Ergebnisse und bevorstehende Entscheidungen."
+      },
+      "documents": {
+        "title": "Dokumente-Hilfe",
+        "shortDescription": "Zugriff auf Gebäudedokumente",
+        "fullContent": "Sehen und laden Sie Gebäudedokumente herunter, einschließlich Vorschriften, Sitzungsprotokolle, Verträge und mehr."
+      }
+    },
+    "allCategories": "Alle"
   },
   "feedback": {
     "title": "Feedback senden",

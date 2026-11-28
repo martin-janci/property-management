@@ -477,7 +477,149 @@
     "learnMore": "Learn more",
     "relatedFAQs": "Related FAQs",
     "dontShowAgain": "Don't show again",
-    "sendFeedbackButton": "Send Feedback"
+    "sendFeedbackButton": "Send Feedback",
+    "categories": {
+      "getting_started": "Getting Started",
+      "account": "Account & Profile",
+      "buildings": "Buildings",
+      "faults": "Faults & Maintenance",
+      "voting": "Voting",
+      "documents": "Documents",
+      "payments": "Payments",
+      "notifications": "Notifications",
+      "security": "Security & Privacy",
+      "other": "Other"
+    },
+    "faqs": {
+      "faq-1": {
+        "question": "How do I view my buildings?",
+        "answer": "Your buildings are displayed on the Dashboard. Tap on any building card to see its details, including residents, faults, documents, and more."
+      },
+      "faq-2": {
+        "question": "How do I receive notifications?",
+        "answer": "Notifications are enabled by default. You can customize which notifications you receive in Settings > Notifications. Make sure you've allowed notifications for the app in your device settings."
+      },
+      "faq-3": {
+        "question": "How do I switch between buildings?",
+        "answer": "From the Dashboard or Buildings screen, tap on a different building card to switch. You can also use the building selector in the top menu."
+      },
+      "faq-4": {
+        "question": "How do I report a fault?",
+        "answer": "Tap the '+' button on the Dashboard or go to Faults > Report New. Select a category, describe the issue, add photos if needed, and submit. You'll receive updates as the fault is processed."
+      },
+      "faq-5": {
+        "question": "How do I track my fault report?",
+        "answer": "Go to Faults to see all your reports. Each report shows its current status (Open, In Progress, Resolved, etc.). Tap on a report to see details and updates from the maintenance team."
+      },
+      "faq-6": {
+        "question": "How do I vote on a proposal?",
+        "answer": "Go to Voting to see active votes. Tap on a vote to read the proposal, then select your choice (For, Against, or Abstain). Your vote is anonymous and can be changed until voting closes."
+      },
+      "faq-7": {
+        "question": "How do I download documents?",
+        "answer": "Go to Documents, find the document you need, and tap the download icon. Documents are saved to your device and can be viewed offline."
+      },
+      "faq-8": {
+        "question": "How do I change my password?",
+        "answer": "Go to Settings > Account > Change Password. You'll need to enter your current password and then your new password twice. Make sure to use a strong password."
+      },
+      "faq-9": {
+        "question": "Is my data secure?",
+        "answer": "Yes. All data is encrypted in transit and at rest. We use industry-standard security practices including two-factor authentication, secure token storage, and regular security audits."
+      },
+      "faq-10": {
+        "question": "How do I enable two-factor authentication?",
+        "answer": "Go to Settings > Security > Two-Factor Authentication. Scan the QR code with an authenticator app (like Google Authenticator or Authy) and enter the verification code."
+      }
+    },
+    "tutorials": {
+      "tutorial-getting-started": {
+        "title": "Getting Started with PPT",
+        "description": "Learn the basics of navigating and using the app.",
+        "steps": {
+          "step-1": {
+            "title": "Dashboard Overview",
+            "content": "The dashboard is your home screen. It shows your buildings, recent activity, and quick actions."
+          },
+          "step-2": {
+            "title": "Navigating the App",
+            "content": "Use the bottom navigation to switch between Dashboard, Buildings, Faults, Documents, and More."
+          },
+          "step-3": {
+            "title": "Notifications",
+            "content": "The bell icon shows your notifications. Tap it to see what needs your attention."
+          }
+        }
+      },
+      "tutorial-faults": {
+        "title": "How to Report and Track Faults",
+        "description": "Complete guide to the fault reporting system.",
+        "steps": {
+          "step-1": {
+            "title": "Create a Report",
+            "content": "Tap the '+' button to start a new fault report. Select the appropriate category."
+          },
+          "step-2": {
+            "title": "Add Details",
+            "content": "Describe the problem in detail. Include location, severity, and when it started."
+          },
+          "step-3": {
+            "title": "Attach Photos",
+            "content": "Add photos to help technicians understand the issue."
+          },
+          "step-4": {
+            "title": "Track Progress",
+            "content": "After submitting, track your report's status in the Faults section."
+          }
+        }
+      },
+      "tutorial-voting": {
+        "title": "Participating in Building Votes",
+        "description": "How to cast your vote and view results.",
+        "steps": {
+          "step-1": {
+            "title": "Find Active Votes",
+            "content": "Go to the Voting section to see all active votes for your buildings."
+          },
+          "step-2": {
+            "title": "Read the Proposal",
+            "content": "Tap on a vote to read the full proposal and any supporting documents."
+          },
+          "step-3": {
+            "title": "Cast Your Vote",
+            "content": "Select your choice and confirm. Your vote is anonymous."
+          }
+        }
+      }
+    },
+    "content": {
+      "dashboard": {
+        "title": "Dashboard Help",
+        "shortDescription": "Your overview of all building activities",
+        "fullContent": "The dashboard shows a summary of your buildings, recent notifications, and quick actions. You can see pending votes, active faults, and upcoming meetings at a glance."
+      },
+      "buildings": {
+        "title": "Buildings Help",
+        "shortDescription": "Manage your building portfolio",
+        "fullContent": "View all buildings you have access to. Tap on a building to see details, residents, faults, documents, and more."
+      },
+      "faults": {
+        "title": "Fault Reporting Help",
+        "shortDescription": "Report and track building issues",
+        "fullContent": "Report maintenance issues, track their status, and receive updates. Include photos and detailed descriptions for faster resolution."
+      },
+      "voting": {
+        "title": "Voting Help",
+        "shortDescription": "Participate in building decisions",
+        "fullContent": "Cast your vote on building proposals. View active votes, past results, and upcoming decisions."
+      },
+      "documents": {
+        "title": "Documents Help",
+        "shortDescription": "Access building documents",
+        "fullContent": "View and download building documents including regulations, meeting minutes, contracts, and more."
+      }
+    },
+    "allCategories": "All"
   },
   "feedback": {
     "title": "Send Feedback",

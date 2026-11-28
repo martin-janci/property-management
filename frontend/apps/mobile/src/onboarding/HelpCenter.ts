@@ -11,7 +11,23 @@ import type { FAQCategory, FAQItem, HelpContent, Tutorial } from './types';
 const FAQ_VOTES_KEY = '@ppt/faq_votes';
 
 /**
+ * Minimal translator shape (compatible with react-i18next's `t`). Passed in by
+ * the UI layer so this non-React singleton stays decoupled from the i18n
+ * instance — see the i18n note on the class.
+ */
+export type Translator = (key: string) => string;
+
+/**
  * Provides help content, FAQs, and tutorials.
+ *
+ * i18n: all user-facing strings (FAQ questions/answers, category labels,
+ * tutorial titles/descriptions/steps, contextual-help copy) live in the locale
+ * resource files under the `help.*` namespace, NOT in this module. The display
+ * fields of the returned `FAQItem` / `Tutorial` / `HelpContent` objects, and
+ * the `labelKey` of `getFAQCategories()`, therefore hold **i18n keys** — the
+ * rendering components resolve them with `t(key)`. Search methods take a
+ * `Translator` so they can score against the localized text of the active
+ * language.
  */
 export class HelpCenter {
   private helpContent: Map<string, HelpContent> = new Map();
@@ -39,8 +55,12 @@ export class HelpCenter {
 
   /**
    * Search FAQs.
+   *
+   * `faq.question` / `faq.answer` hold i18n keys, so the `t` translator is used
+   * to score against the localized text of the active language. Returned items
+   * keep the keys (the UI resolves them with `t`).
    */
-  searchFAQs(query: string, category?: FAQCategory): FAQItem[] {
+  searchFAQs(query: string, t: Translator, category?: FAQCategory): FAQItem[] {
     const normalizedQuery = query.toLowerCase().trim();
     const results: Array<{ item: FAQItem; score: number }> = [];
 
@@ -50,13 +70,17 @@ export class HelpCenter {
         continue;
       }
 
+      // Resolve localized text for relevance scoring.
+      const question = t(faq.question).toLowerCase();
+      const answer = t(faq.answer).toLowerCase();
+
       // Calculate relevance score
       let score = 0;
 
-      if (faq.question.toLowerCase().includes(normalizedQuery)) {
+      if (question.includes(normalizedQuery)) {
         score += 10;
       }
-      if (faq.answer.toLowerCase().includes(normalizedQuery)) {
+      if (answer.includes(normalizedQuery)) {
         score += 5;
       }
       for (const tag of faq.tags) {
@@ -85,31 +109,21 @@ export class HelpCenter {
 
   /**
    * Get all FAQ categories with counts.
+   *
+   * Returns an i18n `labelKey` (`help.categories.<category>`) per category; the
+   * UI resolves it with `t(labelKey)`.
    */
-  getFAQCategories(): Array<{ category: FAQCategory; count: number; label: string }> {
+  getFAQCategories(): Array<{ category: FAQCategory; count: number; labelKey: string }> {
     const counts: Partial<Record<FAQCategory, number>> = {};
 
     for (const faq of this.faqs.values()) {
       counts[faq.category] = (counts[faq.category] ?? 0) + 1;
     }
 
-    const categoryLabels: Record<FAQCategory, string> = {
-      getting_started: 'Getting Started',
-      account: 'Account & Profile',
-      buildings: 'Buildings',
-      faults: 'Faults & Maintenance',
-      voting: 'Voting',
-      documents: 'Documents',
-      payments: 'Payments',
-      notifications: 'Notifications',
-      security: 'Security & Privacy',
-      other: 'Other',
-    };
-
     return Object.entries(counts).map(([category, count]) => ({
       category: category as FAQCategory,
       count: count ?? 0,
-      label: categoryLabels[category as FAQCategory],
+      labelKey: `help.categories.${category}`,
     }));
   }
 
@@ -171,14 +185,17 @@ export class HelpCenter {
 
   /**
    * Search tutorials.
+   *
+   * `title` / `description` hold i18n keys, so the `t` translator resolves them
+   * for matching against the active language. Returned tutorials keep the keys.
    */
-  searchTutorials(query: string): Tutorial[] {
+  searchTutorials(query: string, t: Translator): Tutorial[] {
     const normalizedQuery = query.toLowerCase().trim();
 
     return Array.from(this.tutorials.values()).filter(
-      (t) =>
-        t.title.toLowerCase().includes(normalizedQuery) ||
-        t.description.toLowerCase().includes(normalizedQuery)
+      (tut) =>
+        t(tut.title).toLowerCase().includes(normalizedQuery) ||
+        t(tut.description).toLowerCase().includes(normalizedQuery)
     );
   }
 
@@ -206,15 +223,21 @@ export class HelpCenter {
   }
 
   private loadDefaultContent(): void {
+    // NOTE: All display strings below are i18n KEYS (resolved by the UI with
+    // `t(key)`), not literal English. The copy lives in the locale resource
+    // files under the `help.*` namespace (`help.content.*`, `help.faqs.*`,
+    // `help.categories.*`, `help.tutorials.*`). Only language-independent,
+    // structural data (ids, categories, tags, seed vote counts, durations,
+    // relations) is hard-coded here.
+
     // Help content for screens
     const helpContents: HelpContent[] = [
       {
         id: 'dashboard',
         screen: 'Dashboard',
-        title: 'Dashboard Help',
-        shortDescription: 'Your overview of all building activities',
-        fullContent:
-          'The dashboard shows a summary of your buildings, recent notifications, and quick actions. You can see pending votes, active faults, and upcoming meetings at a glance.',
+        title: 'help.content.dashboard.title',
+        shortDescription: 'help.content.dashboard.shortDescription',
+        fullContent: 'help.content.dashboard.fullContent',
         relatedFAQs: ['faq-1', 'faq-2'],
         // Note: In production, lastUpdated should be fetched dynamically from CMS/API
         // to reflect actual content updates. This static value is temporary seed data.
@@ -223,20 +246,18 @@ export class HelpCenter {
       {
         id: 'buildings',
         screen: 'Buildings',
-        title: 'Buildings Help',
-        shortDescription: 'Manage your building portfolio',
-        fullContent:
-          'View all buildings you have access to. Tap on a building to see details, residents, faults, documents, and more.',
+        title: 'help.content.buildings.title',
+        shortDescription: 'help.content.buildings.shortDescription',
+        fullContent: 'help.content.buildings.fullContent',
         relatedFAQs: ['faq-3'],
         lastUpdated: '2025-06-01',
       },
       {
         id: 'faults',
         screen: 'Faults',
-        title: 'Fault Reporting Help',
-        shortDescription: 'Report and track building issues',
-        fullContent:
-          'Report maintenance issues, track their status, and receive updates. Include photos and detailed descriptions for faster resolution.',
+        title: 'help.content.faults.title',
+        shortDescription: 'help.content.faults.shortDescription',
+        fullContent: 'help.content.faults.fullContent',
         relatedFAQs: ['faq-4', 'faq-5'],
         relatedTutorials: ['tutorial-faults'],
         lastUpdated: '2025-06-01',
@@ -244,10 +265,9 @@ export class HelpCenter {
       {
         id: 'voting',
         screen: 'Voting',
-        title: 'Voting Help',
-        shortDescription: 'Participate in building decisions',
-        fullContent:
-          'Cast your vote on building proposals. View active votes, past results, and upcoming decisions.',
+        title: 'help.content.voting.title',
+        shortDescription: 'help.content.voting.shortDescription',
+        fullContent: 'help.content.voting.fullContent',
         relatedFAQs: ['faq-6'],
         relatedTutorials: ['tutorial-voting'],
         lastUpdated: '2025-06-01',
@@ -255,10 +275,9 @@ export class HelpCenter {
       {
         id: 'documents',
         screen: 'Documents',
-        title: 'Documents Help',
-        shortDescription: 'Access building documents',
-        fullContent:
-          'View and download building documents including regulations, meeting minutes, contracts, and more.',
+        title: 'help.content.documents.title',
+        shortDescription: 'help.content.documents.shortDescription',
+        fullContent: 'help.content.documents.fullContent',
         relatedFAQs: ['faq-7'],
         lastUpdated: '2025-06-01',
       },
@@ -269,6 +288,7 @@ export class HelpCenter {
     }
 
     // FAQs
+    // `question` / `answer` are i18n keys (`help.faqs.<id>.{question,answer}`).
     // Note: Vote counts (helpful/notHelpful) are:
     // 1. Initial seed values for demonstration
     // 2. User votes stored locally per-device in AsyncStorage (see FAQ_VOTES_KEY)
@@ -278,9 +298,8 @@ export class HelpCenter {
     const faqItems: FAQItem[] = [
       {
         id: 'faq-1',
-        question: 'How do I view my buildings?',
-        answer:
-          'Your buildings are displayed on the Dashboard. Tap on any building card to see its details, including residents, faults, documents, and more.',
+        question: 'help.faqs.faq-1.question',
+        answer: 'help.faqs.faq-1.answer',
         category: 'getting_started',
         tags: ['buildings', 'dashboard', 'view'],
         helpful: 42,
@@ -288,9 +307,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-2',
-        question: 'How do I receive notifications?',
-        answer:
-          "Notifications are enabled by default. You can customize which notifications you receive in Settings > Notifications. Make sure you've allowed notifications for the app in your device settings.",
+        question: 'help.faqs.faq-2.question',
+        answer: 'help.faqs.faq-2.answer',
         category: 'notifications',
         tags: ['notifications', 'settings', 'alerts'],
         helpful: 35,
@@ -298,9 +316,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-3',
-        question: 'How do I switch between buildings?',
-        answer:
-          'From the Dashboard or Buildings screen, tap on a different building card to switch. You can also use the building selector in the top menu.',
+        question: 'help.faqs.faq-3.question',
+        answer: 'help.faqs.faq-3.answer',
         category: 'buildings',
         tags: ['buildings', 'switch', 'select'],
         helpful: 28,
@@ -308,9 +325,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-4',
-        question: 'How do I report a fault?',
-        answer:
-          "Tap the '+' button on the Dashboard or go to Faults > Report New. Select a category, describe the issue, add photos if needed, and submit. You'll receive updates as the fault is processed.",
+        question: 'help.faqs.faq-4.question',
+        answer: 'help.faqs.faq-4.answer',
         category: 'faults',
         tags: ['faults', 'report', 'maintenance'],
         helpful: 56,
@@ -319,9 +335,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-5',
-        question: 'How do I track my fault report?',
-        answer:
-          'Go to Faults to see all your reports. Each report shows its current status (Open, In Progress, Resolved, etc.). Tap on a report to see details and updates from the maintenance team.',
+        question: 'help.faqs.faq-5.question',
+        answer: 'help.faqs.faq-5.answer',
         category: 'faults',
         tags: ['faults', 'track', 'status'],
         helpful: 38,
@@ -330,9 +345,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-6',
-        question: 'How do I vote on a proposal?',
-        answer:
-          'Go to Voting to see active votes. Tap on a vote to read the proposal, then select your choice (For, Against, or Abstain). Your vote is anonymous and can be changed until voting closes.',
+        question: 'help.faqs.faq-6.question',
+        answer: 'help.faqs.faq-6.answer',
         category: 'voting',
         tags: ['voting', 'vote', 'proposal'],
         helpful: 45,
@@ -340,9 +354,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-7',
-        question: 'How do I download documents?',
-        answer:
-          'Go to Documents, find the document you need, and tap the download icon. Documents are saved to your device and can be viewed offline.',
+        question: 'help.faqs.faq-7.question',
+        answer: 'help.faqs.faq-7.answer',
         category: 'documents',
         tags: ['documents', 'download', 'files'],
         helpful: 32,
@@ -350,9 +363,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-8',
-        question: 'How do I change my password?',
-        answer:
-          "Go to Settings > Account > Change Password. You'll need to enter your current password and then your new password twice. Make sure to use a strong password.",
+        question: 'help.faqs.faq-8.question',
+        answer: 'help.faqs.faq-8.answer',
         category: 'account',
         tags: ['password', 'account', 'security'],
         helpful: 29,
@@ -360,9 +372,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-9',
-        question: 'Is my data secure?',
-        answer:
-          'Yes. All data is encrypted in transit and at rest. We use industry-standard security practices including two-factor authentication, secure token storage, and regular security audits.',
+        question: 'help.faqs.faq-9.question',
+        answer: 'help.faqs.faq-9.answer',
         category: 'security',
         tags: ['security', 'privacy', 'data'],
         helpful: 51,
@@ -370,9 +381,8 @@ export class HelpCenter {
       },
       {
         id: 'faq-10',
-        question: 'How do I enable two-factor authentication?',
-        answer:
-          'Go to Settings > Security > Two-Factor Authentication. Scan the QR code with an authenticator app (like Google Authenticator or Authy) and enter the verification code.',
+        question: 'help.faqs.faq-10.question',
+        answer: 'help.faqs.faq-10.answer',
         category: 'security',
         tags: ['2fa', 'security', 'authentication'],
         helpful: 37,
@@ -385,86 +395,83 @@ export class HelpCenter {
     }
 
     // Tutorials
+    // `title` / `description` and each step's `title` / `content` are i18n keys
+    // under `help.tutorials.<id>.*`.
     const tutorialItems: Tutorial[] = [
       {
         id: 'tutorial-getting-started',
-        title: 'Getting Started with PPT',
-        description: 'Learn the basics of navigating and using the app.',
+        title: 'help.tutorials.tutorial-getting-started.title',
+        description: 'help.tutorials.tutorial-getting-started.description',
         duration: 180,
         category: 'getting_started',
         steps: [
           {
             id: 'step-1',
-            title: 'Dashboard Overview',
-            content:
-              'The dashboard is your home screen. It shows your buildings, recent activity, and quick actions.',
+            title: 'help.tutorials.tutorial-getting-started.steps.step-1.title',
+            content: 'help.tutorials.tutorial-getting-started.steps.step-1.content',
           },
           {
             id: 'step-2',
-            title: 'Navigating the App',
-            content:
-              'Use the bottom navigation to switch between Dashboard, Buildings, Faults, Documents, and More.',
+            title: 'help.tutorials.tutorial-getting-started.steps.step-2.title',
+            content: 'help.tutorials.tutorial-getting-started.steps.step-2.content',
           },
           {
             id: 'step-3',
-            title: 'Notifications',
-            content:
-              'The bell icon shows your notifications. Tap it to see what needs your attention.',
+            title: 'help.tutorials.tutorial-getting-started.steps.step-3.title',
+            content: 'help.tutorials.tutorial-getting-started.steps.step-3.content',
           },
         ],
       },
       {
         id: 'tutorial-faults',
-        title: 'How to Report and Track Faults',
-        description: 'Complete guide to the fault reporting system.',
+        title: 'help.tutorials.tutorial-faults.title',
+        description: 'help.tutorials.tutorial-faults.description',
         duration: 240,
         category: 'faults',
         steps: [
           {
             id: 'step-1',
-            title: 'Create a Report',
-            content:
-              "Tap the '+' button to start a new fault report. Select the appropriate category.",
+            title: 'help.tutorials.tutorial-faults.steps.step-1.title',
+            content: 'help.tutorials.tutorial-faults.steps.step-1.content',
           },
           {
             id: 'step-2',
-            title: 'Add Details',
-            content:
-              'Describe the problem in detail. Include location, severity, and when it started.',
+            title: 'help.tutorials.tutorial-faults.steps.step-2.title',
+            content: 'help.tutorials.tutorial-faults.steps.step-2.content',
           },
           {
             id: 'step-3',
-            title: 'Attach Photos',
-            content: 'Add photos to help technicians understand the issue.',
+            title: 'help.tutorials.tutorial-faults.steps.step-3.title',
+            content: 'help.tutorials.tutorial-faults.steps.step-3.content',
           },
           {
             id: 'step-4',
-            title: 'Track Progress',
-            content: "After submitting, track your report's status in the Faults section.",
+            title: 'help.tutorials.tutorial-faults.steps.step-4.title',
+            content: 'help.tutorials.tutorial-faults.steps.step-4.content',
           },
         ],
       },
       {
         id: 'tutorial-voting',
-        title: 'Participating in Building Votes',
-        description: 'How to cast your vote and view results.',
+        title: 'help.tutorials.tutorial-voting.title',
+        description: 'help.tutorials.tutorial-voting.description',
         duration: 120,
         category: 'voting',
         steps: [
           {
             id: 'step-1',
-            title: 'Find Active Votes',
-            content: 'Go to the Voting section to see all active votes for your buildings.',
+            title: 'help.tutorials.tutorial-voting.steps.step-1.title',
+            content: 'help.tutorials.tutorial-voting.steps.step-1.content',
           },
           {
             id: 'step-2',
-            title: 'Read the Proposal',
-            content: 'Tap on a vote to read the full proposal and any supporting documents.',
+            title: 'help.tutorials.tutorial-voting.steps.step-2.title',
+            content: 'help.tutorials.tutorial-voting.steps.step-2.content',
           },
           {
             id: 'step-3',
-            title: 'Cast Your Vote',
-            content: 'Select your choice and confirm. Your vote is anonymous.',
+            title: 'help.tutorials.tutorial-voting.steps.step-3.title',
+            content: 'help.tutorials.tutorial-voting.steps.step-3.content',
           },
         ],
       },
