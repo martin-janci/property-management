@@ -1,5 +1,6 @@
 // Epic 144: Portfolio Performance Analytics - Performance Alert Component
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PerformanceAlertProps {
   id: string;
@@ -31,6 +32,8 @@ export const PerformanceAlert: React.FC<PerformanceAlertProps> = ({
   onMarkRead,
   onResolve,
 }) => {
+  const { t } = useTranslation();
+
   const getSeverityStyles = () => {
     switch (severity.toLowerCase()) {
       case 'critical':
@@ -126,7 +129,7 @@ export const PerformanceAlert: React.FC<PerformanceAlertProps> = ({
               </span>
               {isResolved && (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
-                  Resolved
+                  {t('portfolio.alert.resolved')}
                 </span>
               )}
             </div>
@@ -135,10 +138,14 @@ export const PerformanceAlert: React.FC<PerformanceAlertProps> = ({
             {/* Metric details */}
             {metricName && (
               <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                <span>Metric: {metricName}</span>
-                {currentValue !== undefined && <span>Current: {currentValue.toFixed(2)}</span>}
+                <span>{t('portfolio.alert.metric', { name: metricName })}</span>
+                {currentValue !== undefined && (
+                  <span>{t('portfolio.alert.current', { value: currentValue.toFixed(2) })}</span>
+                )}
                 {thresholdValue !== undefined && (
-                  <span>Threshold: {thresholdValue.toFixed(2)}</span>
+                  <span>
+                    {t('portfolio.alert.threshold', { value: thresholdValue.toFixed(2) })}
+                  </span>
                 )}
               </div>
             )}
@@ -156,7 +163,7 @@ export const PerformanceAlert: React.FC<PerformanceAlertProps> = ({
                 onClick={onMarkRead}
                 className="text-xs text-blue-600 hover:text-blue-800 font-medium"
               >
-                Mark Read
+                {t('portfolio.alert.markRead')}
               </button>
             )}
             {!isResolved && onResolve && (
@@ -165,7 +172,7 @@ export const PerformanceAlert: React.FC<PerformanceAlertProps> = ({
                 onClick={onResolve}
                 className="text-xs text-green-600 hover:text-green-800 font-medium"
               >
-                Resolve
+                {t('portfolio.alert.resolve')}
               </button>
             )}
           </div>

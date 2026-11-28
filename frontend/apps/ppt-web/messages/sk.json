@@ -9363,6 +9363,14 @@
         "markReadFailed": "Upozornenie sa nepodarilo označiť ako prečítané",
         "resolveFailed": "Upozornenie sa nepodarilo vyriešiť"
       }
+    },
+    "alert": {
+      "resolved": "Vyriešené",
+      "markRead": "Označiť ako prečítané",
+      "resolve": "Vyriešiť",
+      "metric": "Metrika: {{name}}",
+      "current": "Aktuálne: {{value}}",
+      "threshold": "Prahová hodnota: {{value}}"
     }
   },
   "governmentPortal": {
