@@ -1,0 +1,225 @@
+{
+  "generated": "2026-11-28T04:15:00Z",
+  "run": {
+    "last_pr_seen_before": 3854,
+    "last_pr_seen_after": 3890,
+    "last_issue_seen_before": 3842,
+    "last_issue_seen_after": 3842,
+    "last_commit_sha_before": "aac1a60e0d47c17f8dfddde6056df5a4dc0de38b",
+    "last_commit_sha_after": "9126992cfa5a33e4fd6e778ee2bc1e5d11806e40",
+    "merged_pr_count": 36,
+    "commit_count": 79,
+    "open_pr_touched_count": 3,
+    "closed_unmerged_count": 0,
+    "issue_count": 0
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-frontend-apps-mobile-src-contexts-authcontext-tsx",
+      "type": "churn-hotspot",
+      "source": "commit-log-since-aac1a60e (2 touches, 118 additions, 47 deletions on dev)",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/mobile/src/contexts/AuthContext.tsx \u2014 2 touches, 118/47 lines since 2026-11-27T04:12:49Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-notification-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-since-aac1a60e (2 touches, 203 additions, 24 deletions on dev)",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/notification.rs \u2014 2 touches, 203/24 lines since 2026-11-27T04:12:49Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend-servers-api-server-src-services-accounting-rs",
+      "type": "churn-hotspot",
+      "source": "commit-log-since-aac1a60e (2 touches, 186 additions, 48 deletions on dev)",
+      "score_delta": 1,
+      "evidence": [
+        "backend/servers/api-server/src/services/accounting.rs \u2014 2 touches, 186/48 lines since 2026-11-27T04:12:49Z"
+      ],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-mobile-rn-helpcenter-content-hardcoded-english",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-28 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/HelpCenter.ts:96-107 \u2014 categoryLabels Record<FAQCategory,string> is all hardcoded English, returned by getFAQCategories() as the user-facing label",
+        "frontend/apps/mobile/src/onboarding/HelpCenter.ts:208-380 \u2014 loadDefaultContent() hardcodes every FAQ question/answer/tags and every HelpContent title/shortDescription/fullContent as English string literals",
+        "frontend/apps/mobile/src/screens/help/HelpCenterScreen.tsx:212 \u2014 renders {cat.label} straight from HelpCenter; lines 64 and 70 render {faq.question} and {faq.answer}; surrounding chrome uses t('help.*'), so sk/cs/de/pl/hu users get localized nav around an entirely English FAQ list"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-feedback-types-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-28 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/FeedbackManager.ts:212-220 \u2014 getFeedbackTypes() returns hardcoded English labels: 'Bug Report', 'Feature Request', 'Improvement', 'Question', 'Other'",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.tsx:53,137-150 \u2014 maps feedbackTypes and renders {type.label} directly in the type-picker grid, so non-English users see English type labels on the main feedback flow",
+        "frontend/apps/mobile/src/screens/help/FeedbackScreen.i18n.test.tsx:38-48 \u2014 the existing i18n test stubs getFeedbackTypes with a single mocked label and never asserts the real labels resolve through t()"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-helpcenter-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review (dispatcher Tier-1d 2026-11-28 mobile-rn)",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "frontend/apps/mobile/src/onboarding/HelpCenter.ts:1-480 \u2014 480 LOC module with non-trivial behaviour: searchFAQs() relevance scoring, voteFAQ with vote-reversal + AsyncStorage persistence, loadUserVotes JSON-parse recovery \u2014 no colocated .test.ts",
+        "frontend/apps/mobile/src/onboarding/ \u2014 sibling TourManager.ts and FeedbackManager.ts both ship .test.ts files; HelpCenter.ts has no colocated test",
+        "frontend/apps/mobile/src/screens/help/HelpCenterScreen.tsx:25-47 \u2014 consumer calls helpCenter.getFAQCategories / searchFAQs / voteFAQ / getUserVote directly; a regression ships silently"
+      ],
+      "expert": "tester"
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches '# 2026-11-28'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state.json advanced vs HEAD (cursors + seen_signals + hotspot_history + pm_cursor)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "non-cumulative signals not double-scored",
+      "observed": "true (0 offenders)",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-cap",
+      "passed": true,
+      "command": "no score > 8",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5-decay",
+      "passed": true,
+      "command": "all open items \u226414d old",
+      "observed": "[] (no decay violations)",
+      "expected": "[]"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial pass annotation",
+      "observed": "no new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "\u22642 new plans",
+      "observed": "0",
+      "expected": "\u22642"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "staged diff only under .research/",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets / private hostnames in staged non-baseline",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff -q backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases that failed reflected in brief",
+      "observed": "'- Phases that failed: none'; no cursor skipped",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "every prior-run plan present (plans/ or _archive/)",
+      "observed": "no missing",
+      "expected": "no missing"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count non-decreasing",
+      "observed": "HEAD=24 NOW=24",
+      "expected": "NOW\u2265HEAD"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff -q IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix caps + idempotency",
+      "observed": "empty auto_fix_actions",
+      "expected": "\u22643 total, \u22641 per action_type"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid + GC7 coverage_cursor advanced",
+      "observed": "CC 12\u21920, PM 6\u21927, EPICS=13",
+      "expected": "all ok"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no Telegram bot-token value in staged diff",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

@@ -1,55 +1,50 @@
-# PPT delivery — project state
+# Project state — 2026-11-28
 
-<sub>Generated: 2026-11-25 by routine Phase 1.6 (pm-scrum-master + pm-security)</sub>
+## Exec summary
 
-## Executive summary
+Delivery sprint CLOSED 2026-11-21 with all 49 stories done across 13 epics. The
+Hardening & Refactor sprint is in its second week: **36 PRs merged on `dev`**
+in the last 24h (#3855–#3890), almost entirely dispatcher-driven security &
+error-leak sanitation. No workstream counter moved: `modules-under-watch`
+remains 0/6, `release-248-quarantine-burndown` 0/201 (deadline 2027-02-19),
+`mobile-native-backlog` 0/4 (blocked on pm-devops cloud-runner).
 
-Sprint "Hardening & Refactor" has 0 of 3 workstreams done: watch-module refactors and quarantine burn-down are in-progress, and the mobile-native KMP track is blocked. Coverage was 49/49 stories done at the last scan (2026-11-24), so planning is hardening-driven, not gap-driven. 15 PRs (#3769–#3785) merged on 2026-11-24, headlined by the UC-10 resident person-month submissions slice (#3775) and the seed-RLS-context fix (#3770). The i18n warn→error flip is T-6d (2026-12-01).
+## Active sprint
 
-## Sprint progress
+- **Name:** Hardening & Refactor — Modules Under Watch, release-248 Quarantine Burn-down, Mobile-native Backlog
+- **Started:** 2026-11-21
+- **Workstreams:**
+  - `modules-under-watch` — 0/6 (in-progress; merged hardening PRs not mapped to modules)
+  - `release-248-quarantine-burndown` — 0/201 (in-progress, due 2027-02-19 — needs ≈17/week from here to zero)
+  - `mobile-native-backlog` — 0/4 (blocked on pm-devops cloud-runner, #2652/#2966)
 
-- **Sprint:** Hardening & Refactor — Modules Under Watch, release-248 Quarantine Burn-down, Mobile-native Backlog
-- **Workstreams done:** 0 / 3
-- **Churn hotspots this run:** PersonMonthsScreen.tsx (444), person_months.rs (436), apns.rs (415)
-- **Code review slice:** api-core (churn-aligned) — 0 findings, segment is clean post recent fixes
+## Shipped since last run (36 PRs)
 
-## Shipped since last run
-
-Fifteen PRs merged on 2026-11-24. Highlights:
-
-- **feat(UC-10):** resident person-month submissions with manager approval (#3775) — new UC-10 slice
-- **fix(api-server):** evict APNs token on 410 even when error body is unparseable (#3769)
-- **code-review-api-core-rls-context-pool-not-conn (#3770):** bind seed RLS context to the query connection
-- **Push hotspot characterization:** FCM regression tests (#3771), APNs+FCM hotspots (#3780), voice OAuth error-channel test (#3772)
-- **Dependabot/axum-test 21.0.0→21.1.0** (#3773), **quarantine burn-down cadence** (#3774)
-- **pm-integration** property_type i18n enum stability (#3776)
-- **pm-scrum-master** airbnb env-leak flake fix (#3778)
-- **ppt-web i18n + UI** code-review PRs: #3779, #3782, #3783, #3785
-- **Dispatcher unshallow fix** (#3784 closes #3781)
+- **Security authz/RLS hardening** — #3869 (deny-by-default when platform admin has no resolved role), #3868 (OCR classification history under tenant RLS), #3860 (`review_aml_assessment` cross-org 403/500 → 404), #3856 (reject backslash-obfuscated SSO open-redirect).
+- **Error-leak sanitation sweep** (api-server + reality-server) — #3890, #3885, #3880, #3849, #3843, #3854.
+- **Robustness** — #3879 bounded concurrent workflow executions via shared semaphore with regression test.
+- **Dispatcher/process fixes** — #3861 (bounded Phase 5.6 non-mechanical-conflict escalation) and #3859 (deepened shallow clone in dispatcher Phase 1 preflight).
+- **Remainder** — ~20 dispatcher-driven `code-review-*`, `test-gap-*`, `pm-*` implementation PRs (grouped).
 
 ## What's next (top 5)
 
-1. **[high]** Promote or close mobile-RN i18n drafts #3676 and #3677 before the 2026-12-01 flip — pm-frontend (deadline 2026-11-29).
-2. **[high]** Verify dispatcher stall #3357 status after #3784 and resolve remaining non-mechanical conflicts — pm-tech-lead.
-3. **[high]** `FORCE ROW LEVEL SECURITY` on `person_month_submissions` (and `person_months` if not forced) + route submission repo calls through the RLS connection + cross-tenant integration test — pm-security.
-4. **[high]** Unblock KMP + swagger-ui egress for the cloud runner (#2652, #2966), or formally defer mobile-native track 3 — pm-devops.
-5. **[medium]** Restrict non-manager reads on person-month endpoints — any org resident can read other units' occupancy counts — pm-security.
+1. **[high]** Map merged hardening PRs to `modules-under-watch` and `quarantine-burndown` counters, update `sprint-status.yaml` — owner `pm-tech-lead`.
+2. **[high]** Review and merge dispatcher drafts #3891, #3892, #3893 (listings.rs db-error leak first) — owner `pm-security`.
+3. **[high]** Provision/confirm the cloud-runner needed to unblock `mobile-native-backlog` (0/4) — owner `pm-devops`.
+4. **[high]** Define grouped-notification retention/reset semantics for nil-id event-type groups (+ pre/post-#3863 cutoff for metrics) — owner `pm-backend` (from `pm-data` 2026-11-28).
+5. **[high]** Add a machine-readable Hardening burn-down series from `.github/quarantine/registry.toml`, appended daily — owner `pm-devops` (from `pm-data` 2026-11-28).
 
 ## Blockers
 
-- **Mobile-native KMP backlog** (create-listing-screen, inquiries-response-contract, ktor-http-timeout, sso-error-body) — cloud-runner Gradle/KMP + swagger-ui egress blocked (#2652, #2966). Carried since 2026-08.
-- **Dispatcher stall #3357** — non-mechanical merge conflicts; #3784 closed the unshallow symptom.
-- **i18n flip gate** — mobile-RN drafts #3676 / #3677 stale with no reviewDecision.
+- `mobile-native-backlog` (0/4) — waiting on `pm-devops` cloud-runner.
+- PRs #2555 and #2559 (July 2026 ACC features) — stalled for months; need owner decision.
+- Dependabot PRs #3443, #3444, #3446–#3449, #3634 — open and unmerged across multiple runs.
 
 ## Role focus today
 
-- `pm-scrum-master` (always-on)
-- `pm-security` (rotating; last run 2026-11-16)
+- Rotation: **pm-data** (last-run 2026-11-17 → ran today 2026-11-28; next: pm-integration)
+- Scrum Master: synthesized the above
 
-### pm-scrum-master one-liner
+## Per-role one-line
 
-Hardening sprint — 0/3 workstreams done. 15 PRs merged yesterday. i18n flip at T-6d gated on two stale mobile-RN drafts.
-
-### pm-security one-liner
-
-UC-10 authorization is correct at handler level but lacks DB-level defense in depth (`person_month_submissions` not `FORCE`'d; repo uses the pool). Residents can also read any unit's person-month counts via GET endpoints. Add `FORCE RLS` + RLS-connection refactor + gate reads on residency / manager; audit the pattern repo-wide.
+- **pm-data** — notification group-key fix (#3863) verified deterministic; flagged the **new edge** that entity-less event types now share one group per user (unbounded `notification_count` growth), and the hardening sprint has **no machine-readable burn-down series**. See `roles/pm-data.md`.

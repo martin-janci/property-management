@@ -3,7 +3,7 @@
   "items": [
     {
       "id": "pm-devops-unblock-mobile-native-cloud-builds",
-      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) — still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
+      "action": "Unblock mobile-native/KMP builds in the cloud runner (issue #2652) \u2014 still 5+ open backlog items structurally unclaimable in cloud; now compounded by #2966 so claimable=9/72 (buffer-low)",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -23,7 +23,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-create-listing-not-wired",
-      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub — form data discarded",
+      "action": "KMP realtor CreateListingScreen onSubmit is a NotImplementedError stub \u2014 form data discarded",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -40,7 +40,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-inquiries-response-contract",
-      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` — MissingFieldException on every real /inquiries + /realtors/inquiries call",
+      "action": "mobile-native-kmp InquiriesResponse required page_size mismatches reality-server `limit` \u2014 MissingFieldException on every real /inquiries + /realtors/inquiries call",
       "owner_role": "pm-backend",
       "priority": "medium",
       "status": "open",
@@ -91,7 +91,7 @@
     },
     {
       "id": "code-review-mobile-native-kmp-sso-error-body-unguarded",
-      "action": "KMP realtor SSO error-body parsing is unguarded — crashes on non-JSON response",
+      "action": "KMP realtor SSO error-body parsing is unguarded \u2014 crashes on non-JSON response",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "open",
@@ -247,7 +247,7 @@
     },
     {
       "id": "pm-scrum-master-unblock-kmp-swagger-ui-egress-2652-2966-2026-11-21",
-      "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) — claimable still ≈9/72",
+      "action": "Unblock KMP + swagger-ui egress in the cloud runner (#2652, #2966) \u2014 claimable still \u22489/72",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
@@ -273,7 +273,7 @@
     },
     {
       "id": "pm-scrum-master-land-the-2026-12-01-i18n-warn-error-lint-flip-burn-down-merg-2026-11-22",
-      "action": "Land the 2026-12-01 i18n warn→error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
+      "action": "Land the 2026-12-01 i18n warn\u2192error lint-flip burn-down: merge or close the 10+ open `code-review-*-i18n-retry1` items + drafts #3676/#3677 within 9 days",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
@@ -286,7 +286,7 @@
     },
     {
       "id": "pm-scrum-master-unblock-mobile-native-kmp-swagger-ui-egress-in-the-cloud-run-2026-11-22",
-      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable",
+      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) \u2014 4 KMP backlog items still structurally unclaimable",
       "owner_role": "pm-scrum-master",
       "priority": "high",
       "dependency": "none",
@@ -317,7 +317,7 @@
     },
     {
       "id": "code-review-api-core-idempotency-tx-across-handler",
-      "action": "[NEEDS-RESCOPE: confirmed real bug; true fix needs a db-migration slice (pending-claim ledger) + #[sqlx::test] w/ Postgres — out of rust-backend scope] api core idempotency tx across handler",
+      "action": "[NEEDS-RESCOPE: confirmed real bug; true fix needs a db-migration slice (pending-claim ledger) + #[sqlx::test] w/ Postgres \u2014 out of rust-backend scope] api core idempotency tx across handler",
       "owner_role": "pm-backend",
       "priority": "low",
       "status": "in-progress",
@@ -336,7 +336,7 @@
     },
     {
       "id": "pm-scrum-master-unblock-kmp-and-swagger-ui-egress-2652-2966-2026-11-24",
-      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) — 4 KMP backlog items still structurally unclaimable.",
+      "action": "Unblock mobile-native/KMP + swagger-ui egress in the cloud runner (#2652, #2966) \u2014 4 KMP backlog items still structurally unclaimable.",
       "owner_role": "pm-devops",
       "priority": "high",
       "dependency": "none",
@@ -649,7 +649,7 @@
     },
     {
       "id": "stalled-review-pr-3380-retry1",
-      "action": "Stalled review: PR #3380 (reality-web analytics i18n) — 8d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3380]",
+      "action": "Stalled review: PR #3380 (reality-web analytics i18n) \u2014 8d, no reviewDecision [retry 1/2 of failed stalled-review-pr-3380]",
       "owner_role": "pm-devops",
       "priority": "low",
       "status": "open",
@@ -1030,7 +1030,103 @@
         "vector": "bug",
         "generated": "2026-11-02"
       }
+    },
+    {
+      "id": "pm-scrum-master-map-hardening-prs-to-counters-2026-11-28",
+      "action": "Map merged hardening PRs to modules-under-watch and quarantine-burndown counters and update sprint-status.yaml",
+      "owner_role": "pm-tech-lead",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
+    },
+    {
+      "id": "pm-scrum-master-merge-dispatcher-drafts-3891-3893-2026-11-28",
+      "action": "Review and merge dispatcher drafts #3891, #3892 and #3893 (listings.rs db-error leak first)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
+    },
+    {
+      "id": "pm-scrum-master-provision-cloud-runner-2026-11-28",
+      "action": "Provision or confirm the cloud-runner needed to unblock the mobile-native backlog (0/4)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
+    },
+    {
+      "id": "pm-scrum-master-quarantine-burndown-weekly-target-2026-11-28",
+      "action": "Set a weekly quarantine burn-down target (~17/week) and publish a slice plan to hit 201 by 2027-02-19",
+      "owner_role": "pm-qa",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": "2027-02-19",
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
+    },
+    {
+      "id": "pm-scrum-master-triage-stale-prs-2026-11-28",
+      "action": "Triage stale dependabot PRs (#3443, #3444, #3446-#3449, #3634) and human PRs #2555, #2559: merge, rebase or close",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
+    },
+    {
+      "id": "pm-data-notification-group-retention-2026-11-28",
+      "action": "Define grouped-notification retention/reset semantics for nil-id event-type groups (#3863 aftermath); record pre/post-#3863 cutoff for notification-group metrics",
+      "owner_role": "pm-backend",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
+    },
+    {
+      "id": "pm-data-hardening-burndown-series-2026-11-28",
+      "action": "Add a machine-readable Hardening burn-down series (date, workstream, rows_total, rows_deleted, rows_converted_to_gated_lane, due_bumps) generated from .github/quarantine/registry.toml and appended daily",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
+    },
+    {
+      "id": "pm-data-audit-research-management-churn-2026-11-28",
+      "action": "Audit .research/management/*.json churn: diff two consecutive dispatcher runs for non-deterministic fields (timestamps, random ids, ordering); make writes idempotent/sorted",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28",
+      "first_open_at": "2026-11-28T04:15:00Z"
     }
   ],
-  "generated": "2026-11-25T04:15:10Z"
+  "generated": "2026-11-28T04:15:00Z"
 }

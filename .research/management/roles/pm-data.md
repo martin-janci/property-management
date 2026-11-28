@@ -1,42 +1,66 @@
-# pm-data
-
-<sub>Generated: 2026-11-17 — rotating role analysis for the research routine.</sub>
+# pm-data — 2026-11-28
 
 ## Summary
 
-Static check only. ppt-web has a `trackEvent` / `registerAnalyticsSink` layer and admin-web has onboarding analytics, but I did not verify that moderation routing (PR #3562) or mobile ReportFault (PR #3567) emit events, and mobile has no obvious analytics layer. The three Phase 1.5 digest findings are reporting-correctness defects: an INNER JOIN cohort drop, no persisted abandoned state, and no digest metrics in the api-server source.
+The notification group-key fix (#3863) is verified in code, so in-app grouping
+is now deterministic. The Hardening sprint has no KPI or data-quality
+instrumentation. `.research/management/*.json`, `coverage.json` and the
+quarantine registry were not opened this pass.
+
+## Exec summary
+
+In `backend/servers/api-server/src/services/notification.rs`, `in_app_group_key()`
+returns `(notification, entity_id)` for entity-bound notifications and
+`(event_type, Uuid::nil())` for entity-less ones. Regression tests sit at lines
+~1070-1100. That removes the random-UUID singleton groups that distorted
+grouped-notification counts, but it creates a new unbounded per-user,
+per-event-type group. Separately, the three Hardening workstreams (0/6, 0/201,
+0/4) are tracked only as hand-edited counters in `sprint-status.yaml`, with no
+machine-readable burn-down series and no `coverage.json` entries.
+
+## Findings
+
+- **VERIFIED:** `in_app_group_key` is deterministic. Tests `in_app_group_key_is_deterministic_for_entity_less_notifications` and `in_app_group_key_separates_event_types_and_honours_entity_id`. The flagged item `code-review-api-core-notification-random-group-key` can be closed on this evidence.
+- **NEW EDGE:** entity-less notifications of one event type now share one group per user (`UNIQUE (user_id, group_key)` + key `event_type_<nil-uuid>`). `notification_count` grows for the life of the account unless groups are reset on read or archived.
+- **LEGACY DATA:** rows written before #3863 keep random-UUID group keys (singleton groups each). Pre- and post-2026-11-28 metrics are not comparable without a cutoff.
+- **DEDUP CAVEAT** (notification.rs:170-175): send-dedup cache looks in-process. Multi-replica deployments can still double-deliver. Not verified further.
+- **HARDENING TRACKING GAP:** workstreams exist only as `items_completed` counters in `sprint-status.yaml`. No time series → no burn-down rate against 2027-02-19 (needed ≈17 rows/week).
+- **QUARANTINE METRIC DEFINITION:** 193 of 201 rows are "requires Postgres test DB; run with --ignored". Deleting versus moving to a gated integration lane gives different curves. "prefer fix+delete over bumping `due`" is not formally codified in the metric.
+- **FINANCIAL KPI:** #3886 (payment matcher skips cross-currency invoices) fixes false matches, but skipped invoices now surface as unmatched and will inflate unmatched-payments/overdue KPIs unless tracked as a distinct reason.
+- **PRIVACY:** error-leak sanitation PRs (#3855–#3890) reduce PII exposure in API errors. No data-retention changes in Hardening scope.
 
 ## Next actions
 
-- **[high · backend]** Fix `find_inactive_digest_candidates` to `LEFT JOIN last_activity` with `COALESCE(la.last_active, u.created_at)`, and add a regression test for users with no refresh_tokens row.
-  - DoD: users with no or pruned refresh tokens are included in the sweep; test passes.
-- **[high · backend]** Add `notification_digests.abandoned_at TIMESTAMPTZ` (new migration after 00061) and set it in `report_abandoned`, so abandoned state is queryable.
-  - DoD: migration merged; abandoned rows are queryable and counted; `report_abandoned` is idempotent.
-- **[medium · backend]** Define digest KPIs and emit counters (`candidates_considered`, `sent`, `failed`, `abandoned`, `excluded_by_filter`) plus a per-sweep summary log or metric.
-  - DoD: metrics are documented in the sprint doc or analytics spec and visible on a dashboard.
-- **[medium · frontend]** Add `trackEvent` calls for `fault_report_submitted`/`failed` (mobile ReportFault) and moderation route decisions (SPA), with a name, trigger and property schema, using the existing ppt-web `trackEvent` sink; mobile needs an equivalent sink.
-  - DoD: event catalogue entry exists for each; tests assert emission; no PII in properties.
-- **[low · pm]** Backfill KPI definitions for shipped stories in `sprint-status.yaml` or the epic docs, and add an events/KPI column to the story template.
-  - DoD: each in-progress/review story names its KPI and events.
+- **[high]** Define grouped-notification retention/reset semantics for nil-id event-type groups; record a pre/post-#3863 cutoff for notification-group metrics — owner `pm-backend`.
+- **[high]** Add a machine-readable Hardening burn-down series (date, workstream, rows_total, rows_deleted, rows_converted_to_gated_lane, due_bumps) generated from `.github/quarantine/registry.toml` and appended daily — owner `pm-devops`.
+- **[medium]** Audit `.research/management/*.json` churn by diffing two consecutive dispatcher runs for non-deterministic fields (timestamps, random ids, ordering); make writes idempotent/sorted — owner `pm-scrum-master`.
 
 ## Risks
 
-- **[high · high] Digest engagement/re-activation KPIs biased by INNER JOIN.** The cohort with no live refresh token (long-tail inactive users) is excluded without any record. Mitigate: LEFT JOIN fix, then backfill the cohort size and report it as `excluded_by_filter`.
-- **[medium · high] Abandoned digests visible only in logs.** After log loss or a restart the failure rate is under-reported and cannot be audited. Mitigate: add `abandoned_at` and alert on count.
-- **[low · medium] Advisory-lock release leak can silently skip sweep runs.** Creates unreported gaps in digest delivery data. Mitigate: detach or close the connection on release error; emit a sweep-skipped counter.
-- **[medium · medium] Mobile has no evident analytics layer.** Mobile fault-report attempt and conversion funnels cannot be measured; web and mobile metric definitions may diverge. Mitigate: agree one event catalogue and a shared event schema.
-- **[medium · low] Events added late to shipped features have no baseline.** Before/after comparisons are weak. Mitigate: make events part of the story definition of done.
+- **[medium/medium]** Entity-less notification groups become unbounded per-user counters (`nil-uuid, event_type` key). Skews unread/grouped-count KPIs and can produce a very large `notification_count` or UX/query hot spot. _Mitigation:_ reset/archive on mark-read or after TTL; add count-reset test; monitor p99 `notification_count` per group.
+- **[high/medium]** Burn-down of 201 quarantined tests invisible until 2027-02-19 age gate fails CI; `due` can be bumped; 193 DB-lane rows likely move in late batch so a linear trend will mislead. _Mitigation:_ daily series with explicit `due-bump` counter; interim milestone (≥50% by 2027-01-15) with alert if weekly rate drops below ≈17.
+
+## Metrics proposed
+
+- `quarantine_rows_remaining` (by owner), daily, with required-vs-actual burn rate and projected zero date.
+- `quarantine_rows_deleted` vs `quarantine_rows_converted_to_gated_lane` vs `quarantine_due_bumps` (anti-gaming counter, target 0).
+- `modules_under_watch`: LOC per module, weekly, target decreasing trend with `just verify` green.
+- `notification_groups_per_user` and p99 `notification_count` per group, split by nil-id event-type groups vs entity groups, with pre/post-#3863 cutoff.
+- `notification_delivery_dedup_hits` vs duplicate deliveries observed, to validate dedup reliability across replicas.
+- `payment_matcher_skipped_cross_currency_total` (counter, with invoice and payment currency labels) so #3886 skips surface as an explicit reason rather than silent unmatched.
+- `research_artifact_churn`: lines changed per run in `.research/management/*.json` (target ~0 on no-op runs).
+- `mobile-native` backlog: days blocked per item (4 items, blocked on #2652/#2966), as a proxy for cloud-runner unblock urgency.
 
 ## Open questions
 
-- Do PR #3562 and PR #3567 add `trackEvent` calls? I did not open the diffs or `merged_prs_meta.json`.
-- Is there a central event catalogue or metrics doc? I found none in the files I read.
-- Does mobile have a telemetry SDK? Grep found only 21 incidental matches and no sink.
-- Does any Prometheus or metrics module cover the digest service? Search of api-server metric files returned no matches.
-- What are the retention and privacy rules for `notification_digests` rows and `refresh_tokens.last_used_at` (used as an activity signal)?
+- Does the DB function behind `notification_groups` (migration 00061) or a scheduler reset, archive or expire groups? If not, how large can a nil-id event-type group grow?
+- Was any backfill or cleanup planned for pre-#3863 singleton groups with random keys?
+- Is the send-dedup cache in `notification.rs` shared across replicas (Redis) or per-process?
+- Do `.research/management/coverage.json` and related files hold fields that change on every run?
+- Which events or counters, if any, report payment-matcher skips from #3886?
 
 ## Decisions needed
 
-- Define 'abandoned' semantics and retention (soft-terminal column vs. dead-letter table) — owner: backend/architect.
-- Choose the canonical analytics event schema and naming convention, and the mobile sink — owner: pm/frontend lead.
-- Decide whether inactivity should be computed from `refresh_tokens` or from a dedicated `last_active_at` column — owner: backend/architect.
+- Metric definition for quarantine burn-down: count rows as done only when deleted, or also when moved to a gated integration lane? — owner `pm-scrum-master` with `pm-backend`.
+- Retention or reset policy for entity-less notification groups, and whether to backfill or clean legacy random-key groups — owner `pm-backend`.
+- Whether `coverage.json` should model Hardening workstreams, or `sprint-status.yaml` remains the sole source and `coverage.json` is retired for this sprint — owner operator.

@@ -195,3 +195,12 @@ All five sequenced Epic 2B stories have effectively landed — **PR #463 (notifi
 - **NEW (2026-11-25, pm-security):** Allow residents to read other units' person-month counts in the same org, or restrict to own-unit / manager? Owner: pm-product.
 - **NEW (2026-11-25, pm-security):** For a second co-resident pending submission on the same (unit, year, month), reject, keep audit trail, or merge? Owner: pm-product.
 - **NEW (2026-11-25, pm-security):** Is `FORCE RLS` on `person_month_submissions` (and routing repo calls through the RLS connection) a UC-10 release blocker, or hardening item? Recommendation: hardening item, land this sprint. Owner: pm-security.
+
+## Decisions logged 2026-11-28 (Phase 1.6 — pm-scrum-master + pm-data)
+
+- **NEW (2026-11-28, pm-scrum-master):** Merge, rebase or close ACC PRs #2555 and #2559 (open since July 2026). Owner: pm-product-owner.
+- **NEW (2026-11-28, pm-scrum-master):** Is #3794 (report generation / workflow automation) in scope for the Hardening sprint, or next? Owner: pm-product-owner.
+- **NEW (2026-11-28, pm-scrum-master):** Accept or adjust the 2027-02-19 quarantine burn-down deadline if the weekly pace stays at 0. Owner: pm-tech-lead.
+- **NEW (2026-11-28, pm-data):** Metric definition for quarantine burn-down: count rows as done only when deleted, or also when moved to a gated integration lane? Owner: pm-scrum-master with pm-backend.
+- **NEW (2026-11-28, pm-data):** Retention/reset policy for entity-less notification groups (nil-id event-type key), and whether to backfill or clean legacy random-key groups. Owner: pm-backend.
+- **NEW (2026-11-28, pm-data):** Should `coverage.json` model Hardening workstreams, or does `sprint-status.yaml` remain the sole source (coverage.json retired for this sprint)? Owner: operator.
