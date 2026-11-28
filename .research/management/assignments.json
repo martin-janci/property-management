@@ -3,15 +3,15 @@
     {
       "task_id": "pm-scrum-master-quarantine-burndown-weekly-target-2026-11-28",
       "branch": "auto-impl/pm-scrum-master-quarantine-burndown-week-bd32ac1a",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-11-28T10:32:46Z",
-      "last_updated": "2026-11-28T12:37:07Z",
-      "status_changed_at": "2026-11-28T12:37:07Z",
+      "last_updated": "2026-11-28T12:40:30Z",
+      "status_changed_at": "2026-11-28T12:40:30Z",
       "pr_number": 3905,
       "pr_url": "https://github.com/martin-janci/property-management/pull/3905",
       "merged_at": null,
       "specialist": "generic",
-      "implementer_summary": "pr=3905 status=done specialist=generic scope_drift=true code_reuse_warn=none note=added .github/quarantine/slice-plan.md (12-wk ~17/wk quota to 201 by 2027-02-19) + cadence.md cross-link; verify OK docs-only; draft PR #3905",
+      "implementer_summary": "pr=3905 status=done specialist=generic scope_drift=true code_reuse_warn=none note=added .github/quarantine/slice-plan.md (12-wk ~17/wk quota to 201 by 2027-02-19) + cadence.md cross-link; verify OK docs-only; draft PR #3905 [followup round1: restored cadence.md burn-down-series section (base-drift deletion); new head 4727b94fa; re-arm review]",
       "reviewer_summary": "verdict=changes note=cadence.md deletes 51-line burn-down-series doc undisclosed (body says one-line cross-link), orphaning burndown-series.py/.jsonl/.json still on branch; slice-plan.md good",
       "last_reviewed_oid": "e3d6b440efe3fdaef09f0fe4dc435f266dbfb754",
       "scope_drift": true,
@@ -121,7 +121,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/3910",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=3910 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=sweep PASS — no RLS-before-verify bug survived split; audit note docs/multitenancy/reviews/07; verify green",
+      "implementer_summary": "pr=3910 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=sweep PASS \u2014 no RLS-before-verify bug survived split; audit note docs/multitenancy/reviews/07; verify green",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": false,
@@ -133,5 +133,5 @@
       "merge_attempted_at": null
     }
   ],
-  "generated": "2026-11-28T12:38:19Z"
+  "generated": "2026-11-28T12:40:30Z"
 }
