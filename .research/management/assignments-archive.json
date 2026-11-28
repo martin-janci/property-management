@@ -11747,6 +11747,29 @@
       "merge_attempted_at": null
     },
     {
+      "task_id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash-retry2",
+      "branch": "auto-impl/code-review-ppt-web-core-disputes-uidisp-08edda9c",
+      "status": "merged",
+      "claimed_at": "2026-11-28T04:26:32Z",
+      "last_updated": "2026-11-28T06:41:37Z",
+      "status_changed_at": "2026-11-28T06:41:37Z",
+      "pr_number": 3895,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3895",
+      "merged_at": "2026-11-28T06:39:14Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3895 status=done specialist=react-web scope_drift=true note=finding already remediated in dev (uiDispute! gone; error-independent page guard); added route-side regression test for empty+no-error case; VERIFY OK 16323 tests",
+      "reviewer_summary": "verdict=approve head_oid=34dc248a273b4b350e74cf34c1591be21ea5b13b note=route-side regression test correct; CI green; scope-drift is owner-role mislabel only; GH self-approve blocked (post review out-of-band)",
+      "last_reviewed_oid": "34dc248a273b4b350e74cf34c1591be21ea5b13b",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-28T06:37:00Z",
+      "generated": "2026-11-28T04:43:59Z"
+    },
+    {
       "task_id": "code-review-ppt-web-core-doc-download-hardcoded-i18n",
       "branch": "auto-impl/code-review-ppt-web-core-doc-download-ha-74f8e5f1",
       "status": "failed",
@@ -14164,6 +14187,28 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": null
+    },
+    {
+      "task_id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n-retry2",
+      "branch": "auto-impl/code-review-ppt-web-ui-ballotquestion-ye-bd7c1aab",
+      "status": "merged",
+      "claimed_at": "2026-11-28T04:26:32Z",
+      "last_updated": "2026-11-28T06:41:37Z",
+      "status_changed_at": "2026-11-28T06:41:37Z",
+      "pr_number": 3894,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3894",
+      "merged_at": "2026-11-28T06:40:44Z",
+      "specialist": "react-web",
+      "implementer_summary": "pr=3894 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=BallotQuestion already localized on dev; added missing focused i18n regression test (ballotQuestionI18n.test.tsx, 27 cases, fails-before-fix); verify OK 16349 tests; drift benign owner-map artifact",
+      "reviewer_summary": "verdict=approve head_oid=b1045cdd668d7c5d799e05f950c92914579627a1 note=i18n-test-only-scope-drift-benign-ci-green",
+      "last_reviewed_oid": "b1045cdd668d7c5d799e05f950c92914579627a1",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-28T06:37:00Z"
     },
     {
       "task_id": "code-review-ppt-web-ui-bookfacility-silent-availability",
@@ -18923,6 +18968,29 @@
       "reclaim_attempts": 0,
       "fix_rounds": 0,
       "merge_attempted_at": "2026-11-27T02:28:40Z"
+    },
+    {
+      "task_id": "code-review-reality-server-readiness-internal-detail-public",
+      "branch": "auto-impl/code-review-reality-server-readiness-int-cdf37746",
+      "status": "merged",
+      "claimed_at": "2026-11-28T04:26:32Z",
+      "last_updated": "2026-11-28T06:41:37Z",
+      "status_changed_at": "2026-11-28T06:41:37Z",
+      "pr_number": 3896,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/3896",
+      "merged_at": "2026-11-28T06:38:52Z",
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=3896 status=done specialist=rust-backend scope_drift=false note=sanitized PM API error in public /readiness (pm_api_health_error logs detail, returns generic); IG3 two-commit proof; verify green w/ local PG",
+      "reviewer_summary": "verdict=approve head_oid=ef9746e9ab8f4f65c63dfc8221a569f8521d1e9a note=pm-api-readiness-leak-sanitized-mirrors-db_health_error-tested-scoped; approve posted as COMMENT (GitHub blocks self-approval on own PR)",
+      "last_reviewed_oid": "ef9746e9ab8f4f65c63dfc8221a569f8521d1e9a",
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": "2026-11-28T06:37:00Z",
+      "generated": "2026-11-28T04:53:58Z"
     },
     {
       "task_id": "code-review-reality-server-readiness-raw-db-error-leak",
@@ -38582,5 +38650,5 @@
       "merge_attempted_at": null
     }
   ],
-  "archived_at": "2026-11-28T04:39:00Z"
+  "archived_at": "2026-11-28T06:42:06Z"
 }

@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-28T02:47:50Z",
+  "archived_at": "2026-11-28T06:42:17Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -8476,6 +8476,31 @@
       }
     },
     {
+      "id": "code-review-listings-rs-raw-db-error-leak",
+      "action": "listings rs raw db error leak",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d api-handlers score=2 vector=security) | gc1-reconcile 2026-11-28T06:23:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-11-06"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3893,
+        "merged_at": "2026-11-28T04:36:19Z",
+        "at": "2026-11-28T06:23:55Z"
+      }
+    },
+    {
       "id": "code-review-mobile-native-kmp-android-sso-deeplink-missing-csrf-state",
       "action": "SECURITY: Android SSO deep-link handler skips CSRF state check — reality://sso?token=... enables account takeover",
       "owner_role": "pm-security",
@@ -11870,6 +11895,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash-retry2",
+      "action": "ppt web core disputes uidispute nonnull crash [retry 2/2 of failed code-review-ppt-web-core-disputes-uidispute-nonnull-crash]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-ppt-web-core-disputes-uidispute-nonnull-crash reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z) | gc1-reconcile 2026-11-28T06:42:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-ppt-web-core-disputes-uidispute-nonnull-crash",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3895,
+        "merged_at": "2026-11-28T06:39:14Z",
+        "at": "2026-11-28T06:42:17Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-core-doc-download-hardcoded-i18n",
       "action": "ppt web core doc download hardcoded i18n",
       "owner_role": "pm-backend",
@@ -11985,6 +12031,31 @@
         "vector": "bug"
       },
       "dispatcher_merged": "2026-08-17T08:41:00Z"
+    },
+    {
+      "id": "code-review-ppt-web-core-errorhandler-i18n-leak",
+      "action": "ppt web core errorhandler i18n leak",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d ppt-web-core score=1 vector=bug) | gc1-reconcile 2026-11-28T06:23:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "ppt-web-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3892,
+        "merged_at": "2026-11-28T04:35:56Z",
+        "at": "2026-11-28T06:23:55Z"
+      }
     },
     {
       "id": "code-review-ppt-web-core-errorhandler-network-misclassify",
@@ -14337,6 +14408,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-ballotquestion-yesno-i18n-retry2",
+      "action": "ppt web ui ballotquestion yesno i18n [retry 2/2 of failed code-review-ppt-web-ui-ballotquestion-yesno-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-ppt-web-ui-ballotquestion-yesno-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z) | gc1-reconcile 2026-11-28T06:42:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-ppt-web-ui-ballotquestion-yesno-i18n",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3894,
+        "merged_at": "2026-11-28T06:40:44Z",
+        "at": "2026-11-28T06:42:17Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-budgetform-index-key-editable-list",
       "action": "ppt web ui budgetform index key editable list",
       "owner_role": "pm-backend",
@@ -15596,6 +15688,27 @@
       }
     },
     {
+      "id": "code-review-ppt-web-ui-filedisputedialog-i18n-retry2",
+      "action": "ppt web ui filedisputedialog i18n [retry 2/2 of failed code-review-ppt-web-ui-filedisputedialog-i18n]",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-ppt-web-ui-filedisputedialog-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T16:40:06Z) | gc1-reconcile 2026-11-28T06:23:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-ppt-web-ui-filedisputedialog-i18n",
+      "retry_round": 2,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T06:23:55Z"
+      }
+    },
+    {
       "id": "code-review-ppt-web-ui-financial-dash-swallows-query-errors",
       "action": "ppt web ui financial dash swallows query errors",
       "owner_role": "pm-backend",
@@ -16631,6 +16744,31 @@
         "merged_pr": 2664,
         "merged_at": "2026-08-06T08:12:22Z",
         "at": "2026-08-06T10:11:51Z"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-perf-i18n",
+      "action": "ppt web ui portfolio perf i18n",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d ppt-web-ui score=1 vector=bug) | gc1-reconcile 2026-11-28T06:23:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3891,
+        "merged_at": "2026-11-28T04:37:41Z",
+        "at": "2026-11-28T06:23:55Z"
       }
     },
     {
@@ -19231,6 +19369,31 @@
       }
     },
     {
+      "id": "code-review-reality-server-readiness-internal-detail-public",
+      "action": "reality server readiness internal detail public",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "done",
+      "source": "dispatcher-signals-promote 2026-11-27T14:25:21Z (tier1d reality-server score=1 vector=bug) | gc1-reconcile 2026-11-28T06:42:17Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T14:25:21Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-07"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3896,
+        "merged_at": "2026-11-28T06:38:52Z",
+        "at": "2026-11-28T06:42:17Z"
+      }
+    },
+    {
       "id": "code-review-reality-server-readiness-raw-db-error-leak",
       "action": "reality server readiness raw db error leak",
       "owner_role": "pm-backend",
@@ -20077,6 +20240,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-20T16:25:06Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-account-routes-i18n-retry1",
+      "action": "reality web account routes i18n [retry 1/2 of failed code-review-reality-web-account-routes-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-reality-web-account-routes-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T14:34:14Z) | gc1-reconcile 2026-11-28T06:23:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-reality-web-account-routes-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T06:23:55Z"
       }
     },
     {
@@ -21472,6 +21656,27 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-20T16:25:06Z"
+      }
+    },
+    {
+      "id": "code-review-reality-web-listing-edit-slovak-i18n-retry1",
+      "action": "reality web listing edit slovak i18n [retry 1/2 of failed code-review-reality-web-listing-edit-slovak-i18n]",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-retry-remint 2026-11-27T20:24:52Z (retry_of=code-review-reality-web-listing-edit-slovak-i18n reason=failed-no-pr cooldown_ok newest_failure=2026-11-20T14:34:14Z) | gc1-reconcile 2026-11-28T06:23:55Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-27T20:24:52Z",
+      "retry_of": "code-review-reality-web-listing-edit-slovak-i18n",
+      "retry_round": 1,
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T06:23:55Z"
       }
     },
     {
