@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-28T06:42:17Z",
+  "archived_at": "2026-11-28T10:32:59Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -36501,6 +36501,25 @@
       "source": "pm-analysis 2026-11-16",
       "resolved_at": "2026-11-19",
       "resolution": "ongoing routine behavior; picked up by daily routine Phase 1.6"
+    },
+    {
+      "id": "pm-scrum-master-merge-dispatcher-drafts-3891-3893-2026-11-28",
+      "action": "Review and merge dispatcher drafts #3891, #3892 and #3893 (listings.rs db-error leak first)",
+      "owner_role": "pm-security",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "dropped",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28 | gc1-reconcile 2026-11-28T10:25:51Z",
+      "first_open_at": "2026-11-28T04:15:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T10:25:51Z"
+      }
     },
     {
       "id": "pm-scrum-master-mobile-rn-lint-hooks-i18n-2026-08-25",
