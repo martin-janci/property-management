@@ -484,6 +484,13 @@
   "feedback": {
     "title": "Odeslat zpetnou vazbu",
     "typeLabel": "Typ zpetne vazby",
+    "types": {
+      "bug": "Nahlaseni chyby",
+      "feature": "Pozadavek na funkci",
+      "improvement": "Vylepseni",
+      "question": "Otazka",
+      "other": "Jine"
+    },
     "titleLabel": "Nazev",
     "titlePlaceholder": "Kratke shrnuti vasi zpetne vazby",
     "descriptionLabel": "Popis",

@@ -482,6 +482,13 @@
   "feedback": {
     "title": "Send Feedback",
     "typeLabel": "Feedback Type",
+    "types": {
+      "bug": "Bug Report",
+      "feature": "Feature Request",
+      "improvement": "Improvement",
+      "question": "Question",
+      "other": "Other"
+    },
     "titleLabel": "Title",
     "titlePlaceholder": "Brief summary of your feedback",
     "descriptionLabel": "Description",

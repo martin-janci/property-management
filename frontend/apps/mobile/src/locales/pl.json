@@ -444,6 +444,13 @@
   "feedback": {
     "title": "Wyslij opinie",
     "typeLabel": "Typ opinii",
+    "types": {
+      "bug": "Zgloszenie bledu",
+      "feature": "Propozycja funkcji",
+      "improvement": "Ulepszenie",
+      "question": "Pytanie",
+      "other": "Inne"
+    },
     "titleLabel": "Tytul",
     "titlePlaceholder": "Krotkie podsumowanie Twojej opinii",
     "descriptionLabel": "Opis",
