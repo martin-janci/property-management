@@ -747,6 +747,87 @@ impl GranularNotificationRepository {
         Ok(row.get(0))
     }
 
+    /// Fetch a single notification group for `user_id` by its grouping entity,
+    /// if one exists.
+    ///
+    /// Used by the nil-id event-type retention path (#3909) to read a group's
+    /// real `created_at` / `latest_notification_at` / `notification_count`
+    /// *before* an append, so the metrics cohort and the staleness decision are
+    /// derived from the group's own history rather than the current instant.
+    ///
+    /// Like [`Self::add_notification_to_group_for_user`], this sets the RLS
+    /// `app.current_user_id` context (transaction-local) so the read is
+    /// authorised for a service-role caller with no per-request user context.
+    pub async fn get_group_for_user_entity(
+        &self,
+        user_id: Uuid,
+        entity_type: &str,
+        entity_id: Uuid,
+    ) -> Result<Option<crate::models::NotificationGroup>, SqlxError> {
+        let group_key = format!("{entity_type}_{entity_id}");
+
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT set_config('app.current_user_id', $1, true)")
+            .bind(user_id.to_string())
+            .execute(&mut *tx)
+            .await?;
+
+        let group = sqlx::query_as::<_, crate::models::NotificationGroup>(
+            r#"
+            SELECT * FROM notification_groups
+            WHERE user_id = $1 AND group_key = $2
+            "#,
+        )
+        .bind(user_id)
+        .bind(&group_key)
+        .fetch_optional(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(group)
+    }
+
+    /// Reset a stale nil-id event-type group's running count and retention
+    /// window (#3909): zero the `notification_count` and restart the
+    /// `created_at` / `latest_notification_at` window at `NOW()`, so the very
+    /// next append (which increments the count) starts a fresh, bounded group
+    /// instead of letting the lifetime-stable `(user, event_type)` group
+    /// accumulate without end.
+    ///
+    /// Returns `true` when a group row was reset. Sets the RLS
+    /// `app.current_user_id` context (transaction-local) for the write.
+    pub async fn reset_nil_id_group_window(
+        &self,
+        user_id: Uuid,
+        group_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SELECT set_config('app.current_user_id', $1, true)")
+            .bind(user_id.to_string())
+            .execute(&mut *tx)
+            .await?;
+
+        let result = sqlx::query(
+            r#"
+            UPDATE notification_groups
+            SET notification_count = 0,
+                latest_notification_at = NOW(),
+                created_at = NOW(),
+                is_read = false,
+                read_at = NULL,
+                updated_at = NOW()
+            WHERE id = $1 AND user_id = $2
+            "#,
+        )
+        .bind(group_id)
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(result.rows_affected() > 0)
+    }
+
     /// Get grouped notifications for a user.
     pub async fn get_grouped_notifications(
         &self,
