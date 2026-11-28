@@ -3233,6 +3233,23 @@
     "reactionsEnabled": "Włącz reakcje"
   },
   "errors": {
+    "fields": {
+      "email": "E-mail",
+      "password": "Hasło",
+      "name": "Imię",
+      "first_name": "Imię",
+      "last_name": "Nazwisko",
+      "phone": "Telefon",
+      "title": "Tytuł",
+      "description": "Opis",
+      "amount": "Kwota",
+      "date": "Data",
+      "address": "Adres",
+      "street_name": "Ulica",
+      "city": "Miasto",
+      "postal_code": "Kod pocztowy",
+      "country": "Kraj"
+    },
     "generic": "Wystąpił błąd. Spróbuj ponownie.",
     "notFound": "Strona nie została znaleziona",
     "unauthorized": "Nie masz uprawnień do wyświetlenia tej strony.",

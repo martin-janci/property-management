@@ -3136,6 +3136,23 @@
     }
   },
   "errors": {
+    "fields": {
+      "email": "E-mail",
+      "password": "Heslo",
+      "name": "Jméno",
+      "first_name": "Křestní jméno",
+      "last_name": "Příjmení",
+      "phone": "Telefon",
+      "title": "Název",
+      "description": "Popis",
+      "amount": "Částka",
+      "date": "Datum",
+      "address": "Adresa",
+      "street_name": "Ulice",
+      "city": "Město",
+      "postal_code": "PSČ",
+      "country": "Země"
+    },
     "generic": "Vyskytla se chyba. Zkuste to znovu.",
     "notFound": "Stránka nebyla nalezena",
     "unauthorized": "Nemáte oprávnění k zobrazení této stránky.",

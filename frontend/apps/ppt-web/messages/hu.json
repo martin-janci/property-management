@@ -3161,6 +3161,23 @@
     "reactionsEnabled": "Reakciók engedélyezése"
   },
   "errors": {
+    "fields": {
+      "email": "E-mail",
+      "password": "Jelszó",
+      "name": "Név",
+      "first_name": "Keresztnév",
+      "last_name": "Vezetéknév",
+      "phone": "Telefon",
+      "title": "Cím",
+      "description": "Leírás",
+      "amount": "Összeg",
+      "date": "Dátum",
+      "address": "Cím",
+      "street_name": "Utca",
+      "city": "Város",
+      "postal_code": "Irányítószám",
+      "country": "Ország"
+    },
     "generic": "Hiba történt. Próbálja újra.",
     "notFound": "Az oldal nem található",
     "unauthorized": "Nincs jogosultsága az oldal megtekintéséhez.",

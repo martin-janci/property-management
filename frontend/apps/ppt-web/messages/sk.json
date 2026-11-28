@@ -3136,6 +3136,23 @@
     }
   },
   "errors": {
+    "fields": {
+      "email": "E-mail",
+      "password": "Heslo",
+      "name": "Meno",
+      "first_name": "Krstné meno",
+      "last_name": "Priezvisko",
+      "phone": "Telefón",
+      "title": "Názov",
+      "description": "Popis",
+      "amount": "Suma",
+      "date": "Dátum",
+      "address": "Adresa",
+      "street_name": "Ulica",
+      "city": "Mesto",
+      "postal_code": "PSČ",
+      "country": "Krajina"
+    },
     "generic": "Vyskytla sa chyba. Skúste to znova.",
     "notFound": "Stránka nebola nájdená",
     "unauthorized": "Nemáte oprávnenie na zobrazenie tejto stránky.",
