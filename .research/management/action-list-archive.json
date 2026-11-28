@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-09T06:45:00Z",
-  "archived_at": "2026-11-28T10:32:59Z",
+  "archived_at": "2026-11-28T12:29:15Z",
   "items": [
     {
       "id": "10b-1-organization-management-dashboard",
@@ -5292,6 +5292,31 @@
         "merged_pr": 3409,
         "merged_at": "2026-11-10T22:41:01Z",
         "at": "2026-11-11T08:24:49Z"
+      }
+    },
+    {
+      "id": "code-review-api-core-rng-expect-panic",
+      "action": "api core rng expect panic",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "dropped",
+      "source": "dispatcher-signals-promote 2026-11-28T02:25:23Z (tier1d api-core score=1 vector=bug) | gc1-reconcile 2026-11-28T12:23:41Z",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T02:25:23Z",
+      "signal_ref": {
+        "segment": "api-core",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-06"
+      },
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "failed",
+        "merged_pr": null,
+        "merged_at": null,
+        "at": "2026-11-28T12:23:41Z"
       }
     },
     {
@@ -35053,6 +35078,25 @@
       }
     },
     {
+      "id": "pm-data-audit-research-management-churn-2026-11-28",
+      "action": "Audit .research/management/*.json churn: diff two consecutive dispatcher runs for non-deterministic fields (timestamps, random ids, ordering); make writes idempotent/sorted",
+      "owner_role": "pm-scrum-master",
+      "priority": "medium",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28 | gc1-reconcile 2026-11-28T12:23:41Z",
+      "first_open_at": "2026-11-28T04:15:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3903,
+        "merged_at": "2026-11-28T10:43:22Z",
+        "at": "2026-11-28T12:23:41Z"
+      }
+    },
+    {
       "id": "pm-data-backfill-kpi-definitions-stories-2026-11-17",
       "action": "Backfill KPI definitions for shipped stories in sprint-status.yaml or the epic docs, and add an events/KPI column to the story template",
       "owner_role": "pm-data",
@@ -36593,6 +36637,25 @@
         "merged_pr": null,
         "merged_at": null,
         "at": "2026-11-22T14:29:02Z"
+      }
+    },
+    {
+      "id": "pm-scrum-master-provision-cloud-runner-2026-11-28",
+      "action": "Provision or confirm the cloud-runner needed to unblock the mobile-native backlog (0/4)",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "none",
+      "depends_on": [],
+      "status": "done",
+      "deadline": null,
+      "source": "pm-analysis 2026-11-28 | gc1-reconcile 2026-11-28T12:23:41Z",
+      "first_open_at": "2026-11-28T04:15:00Z",
+      "gc1_closed": {
+        "reason": "archive-terminal",
+        "archive_status": "merged",
+        "merged_pr": 3902,
+        "merged_at": "2026-11-28T10:43:36Z",
+        "at": "2026-11-28T12:23:41Z"
       }
     },
     {

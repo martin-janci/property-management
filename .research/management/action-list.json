@@ -674,24 +674,6 @@
       "retry_round": 2
     },
     {
-      "id": "code-review-api-core-rng-expect-panic",
-      "action": "api core rng expect panic",
-      "owner_role": "pm-backend",
-      "priority": "low",
-      "status": "open",
-      "source": "dispatcher-signals-promote 2026-11-28T02:25:23Z (tier1d api-core score=1 vector=bug)",
-      "deadline": null,
-      "dependency": null,
-      "depends_on": [],
-      "first_open_at": "2026-11-28T02:25:23Z",
-      "signal_ref": {
-        "segment": "api-core",
-        "score": 1,
-        "vector": "bug",
-        "generated": "2026-11-06"
-      }
-    },
-    {
       "id": "code-review-listings-rs-unstructured-error-body",
       "action": "listings rs unstructured error body",
       "owner_role": "pm-backend",
@@ -902,18 +884,6 @@
       "first_open_at": "2026-11-28T04:15:00Z"
     },
     {
-      "id": "pm-scrum-master-provision-cloud-runner-2026-11-28",
-      "action": "Provision or confirm the cloud-runner needed to unblock the mobile-native backlog (0/4)",
-      "owner_role": "pm-devops",
-      "priority": "high",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-28",
-      "first_open_at": "2026-11-28T04:15:00Z"
-    },
-    {
       "id": "pm-scrum-master-quarantine-burndown-weekly-target-2026-11-28",
       "action": "Set a weekly quarantine burn-down target (~17/week) and publish a slice plan to hit 201 by 2027-02-19",
       "owner_role": "pm-qa",
@@ -957,18 +927,6 @@
       "dependency": "none",
       "depends_on": [],
       "status": "in-progress",
-      "deadline": null,
-      "source": "pm-analysis 2026-11-28",
-      "first_open_at": "2026-11-28T04:15:00Z"
-    },
-    {
-      "id": "pm-data-audit-research-management-churn-2026-11-28",
-      "action": "Audit .research/management/*.json churn: diff two consecutive dispatcher runs for non-deterministic fields (timestamps, random ids, ordering); make writes idempotent/sorted",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "depends_on": [],
-      "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-11-28",
       "first_open_at": "2026-11-28T04:15:00Z"
@@ -1073,6 +1031,264 @@
         "plan": null,
         "score": 1,
         "vector": "refactor"
+      }
+    },
+    {
+      "id": "pm-scrum-master-3612-supersede-check-2026-11-19-retry1",
+      "action": "Decide fate of #3612 (paginate agency import history): #3610 fixed total; confirm if #3612 still adds page/offset or close as superseded [retry 1/2 of failed pm-scrum-master-3612-supersede-check-2026-11-19]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-11-28T12:24:35Z (retry_of=pm-scrum-master-3612-supersede-check-2026-11-19 reason=failed-no-pr cooldown_ok newest_failure=2026-11-21T02:38:13Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "retry_of": "pm-scrum-master-3612-supersede-check-2026-11-19",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19-retry1",
+      "action": "Sequence listings.rs PRs: rebase #3617 (record_view existence + per-IP throttle) and #3628 (suggestions region seed); merge #3617 first (security-flavored) [retry 1/2 of failed pm-scrum-master-listings-rs-merge-sequence-2026-11-19]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-11-28T12:24:35Z (retry_of=pm-scrum-master-listings-rs-merge-sequence-2026-11-19 reason=failed-no-pr cooldown_ok newest_failure=2026-11-21T02:38:13Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "retry_of": "pm-scrum-master-listings-rs-merge-sequence-2026-11-19",
+      "retry_round": 1
+    },
+    {
+      "id": "pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21-retry1",
+      "action": "Sweep the new push/ and voice_webhooks/ child modules for the RLS-before-verify ordering bug that survived the split [retry 1/2 of failed pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21]",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "status": "in-progress",
+      "source": "dispatcher-retry-remint 2026-11-28T12:24:35Z (retry_of=pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21 reason=failed-no-pr cooldown_ok newest_failure=2026-11-21T08:43:19Z)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "retry_of": "pm-scrum-master-sweep-postsplit-modules-rls-before-verify-2026-11-21",
+      "retry_round": 1
+    },
+    {
+      "id": "code-review-reality-web-pricealerts-raw-err-log",
+      "action": "reality web pricealerts raw err log",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d reality-web score=2 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 2,
+        "vector": "security",
+        "generated": "2026-11-02"
+      }
+    },
+    {
+      "id": "code-review-api-handlers-voice-oauth-redirect-fallback",
+      "action": "api handlers voice oauth redirect fallback",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d api-handlers score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "api-handlers",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-02"
+      }
+    },
+    {
+      "id": "code-review-reality-web-comparison-raw-err-log",
+      "action": "reality web comparison raw err log",
+      "owner_role": "pm-security",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d reality-web score=1 vector=security)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "reality-web",
+        "score": 1,
+        "vector": "security",
+        "generated": "2026-11-02"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-aichat-first-msg-stale-sid",
+      "action": "ppt web ui aichat first msg stale sid",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d ppt-web-ui score=3 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 3,
+        "vector": "bug",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-feedbackmgr-json-parse",
+      "action": "mobile rn feedbackmgr json parse",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-qrhistory-json-parse",
+      "action": "mobile rn qrhistory json parse",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d mobile-rn score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-aichat-mutation-err-swallowed",
+      "action": "ppt web ui aichat mutation err swallowed",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d ppt-web-ui score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-price-map-unthrottled-agg-dos",
+      "action": "price map unthrottled agg dos",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d reality-server score=2 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "reality-server",
+        "score": 2,
+        "vector": "bug",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-mobile-rn-feedbackmgr-no-tests",
+      "action": "mobile rn feedbackmgr no tests",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d mobile-rn score=1 vector=test)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "mobile-rn",
+        "score": 1,
+        "vector": "test",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-disputes-cards-no-i18n",
+      "action": "ppt web ui disputes cards no i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d ppt-web-ui score=1 vector=refactor)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "refactor",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-card-noop-click",
+      "action": "ppt web ui portfolio card noop click",
+      "owner_role": "pm-backend",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d ppt-web-ui score=1 vector=bug)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "bug",
+        "generated": "2026-11-01"
+      }
+    },
+    {
+      "id": "code-review-ppt-web-ui-portfolio-dash-no-i18n",
+      "action": "ppt web ui portfolio dash no i18n",
+      "owner_role": "pm-tech-lead",
+      "priority": "low",
+      "status": "open",
+      "source": "dispatcher-signals-promote 2026-11-28T12:24:35Z (tier1d ppt-web-ui score=1 vector=i18n)",
+      "deadline": null,
+      "dependency": null,
+      "depends_on": [],
+      "first_open_at": "2026-11-28T12:24:35Z",
+      "signal_ref": {
+        "segment": "ppt-web-ui",
+        "score": 1,
+        "vector": "i18n",
+        "generated": "2026-11-01"
       }
     }
   ],
