@@ -68,7 +68,7 @@ fn imports_router(pool: PgPool) -> Router {
 
     let tenant_cache = Arc::new(api_core::TenantResolutionCache::new(60, 60, 1000));
     let rate_limiters = Arc::new(api_core::TenantRateLimiterSet::new());
-    let state = AppState::new(pool, tenant_cache, rate_limiters);
+    let state = AppState::new(pool, tenant_cache, rate_limiters).expect("build test AppState");
     Router::new()
         .nest("/api/v1/imports", routes::imports::router())
         .with_state(state)
