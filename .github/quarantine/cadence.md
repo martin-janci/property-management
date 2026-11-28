@@ -7,6 +7,8 @@ never hits the fail-cliff.
 - **Policy (the contract):** [`docs/quarantine-policy.md`](../../docs/quarantine-policy.md)
 - **Registry (the backlog):** [`registry.toml`](registry.toml)
 - **Metric (this cadence's number):** `check-quarantine-age.py --summary`
+- **Slice plan (the schedule):** [`slice-plan.md`](slice-plan.md) — the 12-week
+  ~17/week quota + wave plan this cadence drives to zero by `2027-02-19`.
 
 > Owner: **pm-devops** (with pm-tech-lead). This file is the operating cadence;
 > the policy file is the enforced contract. Keep them consistent.
